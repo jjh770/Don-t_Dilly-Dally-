@@ -7,13 +7,15 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 {
  
     [SerializeField]
-    private int roomIdLength = 6;
+    private int _roomIdLength = 6;
 
-    private readonly string gameVersion = "1.0";
+    private readonly string _gameVersion = "1.0";
 
     private string _nickName = "Player";
 
     private string _roomCode;
+
+    private readonly System.Random _random = new System.Random();
 
     private void Start()
     {
@@ -22,7 +24,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     private void Connect()
     {
-        PhotonNetwork.GameVersion = gameVersion;
+        PhotonNetwork.GameVersion = _gameVersion;
         PhotonNetwork.NickName = _nickName;
 
         PhotonNetwork.AutomaticallySyncScene = true;
@@ -51,43 +53,40 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
         Debug.LogError($"Failed to join room: {message}");
-
-        if (returnCode == ErrorCode.GameDoesNotExist && _roomCode != null)
-        {
-            OpenRoom(_roomCode);
-            _roomCode = null;
-        }     
     }
 
     public void CreateNewRoom()
     {
-        string roomName = RandomString(roomIdLength);
+        string roomName = RandomString(_roomIdLength);
         OpenRoom(roomName);
     }
 
     public void OpenRoom(string roomName)
     {
+        PhotonNetwork.CreateRoom(roomName, GetRoomOptions());
+    }
+
+    public RoomOptions GetRoomOptions()
+    {
         RoomOptions roomOptions = new RoomOptions();
         roomOptions.MaxPlayers = 4;   
         roomOptions.IsOpen = true; 
         roomOptions.IsVisible = true; 
-
-        PhotonNetwork.CreateRoom(roomName, roomOptions);
+        return roomOptions;
     }
 
     private string RandomString(int length)
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        System.Random random = new System.Random();
         return new string(Enumerable.Repeat(chars, length)
-          .Select(s => s[random.Next(s.Length)]).ToArray());
+          .Select(s => s[_random.Next(s.Length)]).ToArray());
     }
 
     public void TryJoinRoom(string roomCode)
     {
-        // TODO : µ•¿Ã≈Õø° ¡∏¿Á«œ¥¬ πÊ¿Œ¡ˆ √º≈©
+        // TODO : Îç∞Ïù¥ÌÑ∞Ïóê Ï°¥Ïû¨ÌïòÎäî Î∞©Ïù∏ÏßÄ Ï≤¥ÌÅ¨
         _roomCode = roomCode;
-        PhotonNetwork.JoinRoom(_roomCode);
+        PhotonNetwork.JoinOrCreateRoom(_roomCode, GetRoomOptions(), TypedLobby.Default);
     }
 
     public void SetNickname(string nickname)

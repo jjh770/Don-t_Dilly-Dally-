@@ -1,5 +1,3 @@
-using System;
-using System.Xml.Serialization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -42,7 +40,8 @@ public class RoomView : MonoBehaviour
 
     private void OnDisable()
     {
-        enterHospitalButton.onClick.RemoveAllListeners();
-        createHospitalButton.onClick.RemoveAllListeners();
+        enterHospitalButton.onClick.RemoveListener(OnEnterButtonClick);
+        createHospitalButton.onClick.RemoveListener(OnCreateButtonClick);
+        nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
     }
 }
