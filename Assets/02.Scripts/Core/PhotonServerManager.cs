@@ -10,6 +10,9 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     [SerializeField]
     private int _roomIdLength = 6;
 
+    [SerializeField]
+    private int _maxPlayersPerRoom = 4;
+
     private readonly string _gameVersion = "1.0";
 
     private string _nickName = "Player";
@@ -85,7 +88,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public RoomOptions GetRoomOptions()
     {
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 1;   
+        roomOptions.MaxPlayers = _maxPlayersPerRoom;   
         roomOptions.IsOpen = true; 
         roomOptions.IsVisible = true; 
         return roomOptions;

@@ -41,7 +41,8 @@ public class RoomView : MonoBehaviour
 
     public void ShowErrorMessage(string message)
     {
-        errorMessageText.text = message;
+        if (errorMessageText != null)
+            errorMessageText.text = message;
     }
     private void OnDisable()
     {
