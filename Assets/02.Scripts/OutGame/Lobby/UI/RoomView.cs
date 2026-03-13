@@ -1,3 +1,4 @@
+using System;
 using System.Xml.Serialization;
 using TMPro;
 using UnityEngine;
@@ -8,6 +9,7 @@ public class RoomView : MonoBehaviour
     [SerializeField] private Button enterHospitalButton;
     [SerializeField] private Button createHospitalButton;
     [SerializeField] private TMP_InputField roomCodeInputField;
+    [SerializeField] private TMP_InputField nickNameInputField;
 
     private RoomPresenter _presenter;
 
@@ -15,6 +17,12 @@ public class RoomView : MonoBehaviour
     {
         enterHospitalButton.onClick.AddListener(OnEnterButtonClick);
         createHospitalButton.onClick.AddListener(OnCreateButtonClick);
+        nickNameInputField.onDeselect.AddListener(OnNickNameInputDeselect);
+    }
+
+    private void OnNickNameInputDeselect(string name)
+    {
+        _presenter.SetNickName(name);
     }
 
     public void Init(RoomPresenter presenter)

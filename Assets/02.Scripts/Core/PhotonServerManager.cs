@@ -45,7 +45,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnJoinedRoom()
     {
         _roomCode = null;
-        Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.Name}");
+        Debug.Log($"{PhotonNetwork.LocalPlayer.NickName} Joined room: {PhotonNetwork.CurrentRoom.Name}");
         Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
@@ -88,5 +88,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
         // TODO : 데이터에 존재하는 방인지 체크
         _roomCode = roomCode;
         PhotonNetwork.JoinRoom(_roomCode);
+    }
+
+    public void SetNickname(string nickname)
+    {
+        _nickName = nickname;
+        PhotonNetwork.NickName = _nickName;
     }
 }

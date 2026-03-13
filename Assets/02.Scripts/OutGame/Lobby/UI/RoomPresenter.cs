@@ -20,4 +20,9 @@ public class RoomPresenter
     {
         PhotonServerManager.Instance.CreateNewRoom();
     }
+
+    public void SetNickName(string name)
+    {
+        PhotonServerManager.Instance.SetNickname(name);
+    }
 }
