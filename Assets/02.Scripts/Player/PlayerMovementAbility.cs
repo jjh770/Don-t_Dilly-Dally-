@@ -6,13 +6,17 @@ public class PlayerMovementAbility : MonoBehaviour
     [SerializeField] private float _moveSpeed = 3f;
     [SerializeField] private float _rotationSpeed = 10f;
 
-    private Vector3 moveDirection;
-    private Rigidbody rb;
+    private Vector3 _moveDirection;
+    private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
+
+    private const string HorizontalAxis = "Horizontal";
+    private const string VerticalAxis = "Vertical";
+    private const float MinMoveSqrMagnitude = 0.01f;
 
     private void Awake()
     {
-        rb = GetComponent<Rigidbody>();
+        _rigidbody = GetComponent<Rigidbody>();
         _playerAnimator = GetComponent<PlayerAnimator>();
     }
 
@@ -31,30 +35,30 @@ public class PlayerMovementAbility : MonoBehaviour
 
     private void HandleInput()
     {
-        float h = Input.GetAxis("Horizontal");
-        float v = Input.GetAxis("Vertical");
-        moveDirection = new Vector3(h, 0, v).normalized;
+        float h = Input.GetAxis(HorizontalAxis);
+        float v = Input.GetAxis(VerticalAxis);
+        _moveDirection = new Vector3(h, 0, v).normalized;
     }
 
     private void HandleRotation()
     {
-        if (moveDirection.sqrMagnitude > 0.01f)
+        if (_moveDirection.sqrMagnitude > MinMoveSqrMagnitude)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            Quaternion targetRotation = Quaternion.LookRotation(_moveDirection);
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
         }
     }
 
     private void HandleMovement()
     {
-        Vector3 velocity = moveDirection * _moveSpeed;
-        velocity.y = rb.linearVelocity.y;
-        rb.linearVelocity = velocity;
+        Vector3 velocity = _moveDirection * _moveSpeed;
+        velocity.y = _rigidbody.linearVelocity.y;
+        _rigidbody.linearVelocity = velocity;
     }
 
     private void UpdateAnimation()
     {
-        float speed = moveDirection.magnitude;
+        float speed = _moveDirection.magnitude;
         _playerAnimator.PlayMoveAnimation(speed);
     }
 }
