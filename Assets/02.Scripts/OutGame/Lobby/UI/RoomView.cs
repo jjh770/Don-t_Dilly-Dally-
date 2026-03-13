@@ -8,6 +8,7 @@ public class RoomView : MonoBehaviour
     [SerializeField] private Button createHospitalButton;
     [SerializeField] private TMP_InputField roomCodeInputField;
     [SerializeField] private TMP_InputField nickNameInputField;
+    [SerializeField] private TextMeshProUGUI errorMessageText;
 
     private RoomPresenter _presenter;
 
@@ -38,10 +39,15 @@ public class RoomView : MonoBehaviour
         _presenter.CreateRoom();
     }
 
+    public void ShowErrorMessage(string message)
+    {
+        errorMessageText.text = message;
+    }
     private void OnDisable()
     {
         enterHospitalButton.onClick.RemoveListener(OnEnterButtonClick);
         createHospitalButton.onClick.RemoveListener(OnCreateButtonClick);
         nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
+        _presenter.Dispose();
     }
 }

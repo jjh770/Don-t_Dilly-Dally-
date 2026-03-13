@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Photon.Pun;
 using Photon.Realtime;
@@ -16,6 +17,8 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     private string _roomCode;
 
     private readonly System.Random _random = new System.Random();
+
+    public event Action<string> OnFailedToJoinRoom;
 
     private void Start()
     {
@@ -53,6 +56,19 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
         Debug.LogError($"Failed to join room: {message}");
+
+        switch (returnCode)
+        {
+            case ErrorCode.GameDoesNotExist:
+                OnFailedToJoinRoom?.Invoke("방이 존재하지 않습니다.");
+                break;
+            case ErrorCode.GameFull:
+                OnFailedToJoinRoom?.Invoke("방이 가득 찼습니다.");
+                break;
+            default:
+                OnFailedToJoinRoom?.Invoke($"알 수 없는 오류: {message}");
+                break;
+        }
     }
 
     public void CreateNewRoom()
@@ -69,7 +85,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public RoomOptions GetRoomOptions()
     {
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = 4;   
+        roomOptions.MaxPlayers = 1;   
         roomOptions.IsOpen = true; 
         roomOptions.IsVisible = true; 
         return roomOptions;
