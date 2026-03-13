@@ -20,7 +20,6 @@ public class PlayerMovementAbility : MonoBehaviour
         _playerAnimator = GetComponent<PlayerAnimator>();
     }
 
-
     private void Update()
     {
         HandleInput();

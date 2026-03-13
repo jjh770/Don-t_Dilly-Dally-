@@ -1,18 +1,27 @@
+﻿using System.Collections;
 using UnityEngine;
 
 public class PlayerInteractionAbility : MonoBehaviour
 {
     [SerializeField] private float _detectionRadius = 2f;
+    [SerializeField] private float _pushSpeed = 3f;
+    [SerializeField] private float _throwForce = 5f;
+    [SerializeField] private float _throwRotationSpeed = 20f;
+
     [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
 
-    private InteractableItem _currentItem;
-    private InteractableItem _nearestItem;
+    // 집는 아이템
+    private HoldableItem _currentHoldable;
+    private HoldableItem _nearestHoldable;
+
     private PlayerAnimator _playerAnimator;
+    private Camera _camera;
 
     private void Awake()
     {
         _playerAnimator = GetComponent<PlayerAnimator>();
+        _camera = Camera.main;
     }
 
     private void Update()
@@ -25,18 +34,19 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         Collider[] colliders = Physics.OverlapSphere(transform.position, _detectionRadius, _interactableLayer);
 
-        _nearestItem = null;
-        float nearestDistance = float.MaxValue;
+        _nearestHoldable = null;
+        float nearestHoldableDistance = float.MaxValue;
 
         foreach (Collider col in colliders)
         {
-            if (col.TryGetComponent(out InteractableItem item) && !item.IsHeld)
+            float distance = Vector3.Distance(transform.position, col.transform.position);
+
+            if (col.TryGetComponent(out HoldableItem holdable) && !holdable.IsHeld)
             {
-                float distance = Vector3.Distance(transform.position, col.transform.position);
-                if (distance < nearestDistance)
+                if (distance < nearestHoldableDistance)
                 {
-                    nearestDistance = distance;
-                    _nearestItem = item;
+                    nearestHoldableDistance = distance;
+                    _nearestHoldable = holdable;
                 }
             }
         }
@@ -44,35 +54,76 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void HandleInteractInput()
     {
+        // Holdable: 들고/놓기
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (_currentItem != null)
+            if (_currentHoldable != null)
             {
                 DropItem();
             }
-            else if (_nearestItem != null)
+            else if (_nearestHoldable != null)
             {
-                PickUpItem(_nearestItem);
+                PickUpItem(_nearestHoldable);
             }
+        }
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (_currentHoldable == null) return;
+
+            StartCoroutine(ThrowItemCoroutine());
         }
     }
 
-    private void PickUpItem(InteractableItem item)
+    private void PickUpItem(HoldableItem item)
     {
-        _currentItem = item;
-        _currentItem.Interact(gameObject);
-        _currentItem.transform.SetParent(_holdPoint);
-        _currentItem.transform.localPosition = Vector3.zero;
-        _currentItem.transform.localRotation = Quaternion.identity;
-        _playerAnimator.SetCarrying(true);
+        _currentHoldable = item;
+        _currentHoldable.Hold(_holdPoint);
+        _playerAnimator.PlayCarryingAnimation(true);
     }
 
     private void DropItem()
     {
-        _currentItem.Drop();
-        _currentItem.transform.SetParent(null);
-        _currentItem = null;
-        _playerAnimator.SetCarrying(false);
+        _currentHoldable.Drop();
+        _currentHoldable = null;
+        _playerAnimator.PlayCarryingAnimation(false);
+    }
+
+    private IEnumerator ThrowItemCoroutine()
+    {
+        Vector3 throwDirection = GetMouseWorldDirection();
+        Quaternion targetRotation = Quaternion.LookRotation(throwDirection);
+
+        // 캐릭터 회전
+        while (Quaternion.Angle(transform.rotation, targetRotation) > 5f)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _throwRotationSpeed * Time.deltaTime);
+            yield return null;
+        }
+
+        transform.rotation = targetRotation;
+        _playerAnimator.PlayThrowAnimation();
+        _currentHoldable.Throw(throwDirection, _throwForce);
+        _currentHoldable = null;
+
+        yield return new WaitForSeconds(1.9f);
+        _playerAnimator.ResetThrowAnimation();
+        _playerAnimator.PlayCarryingAnimation(false);
+    }
+
+    private Vector3 GetMouseWorldDirection()
+    {
+        Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
+        Plane groundPlane = new Plane(Vector3.up, transform.position);
+
+        if (groundPlane.Raycast(ray, out float distance))
+        {
+            Vector3 hitPoint = ray.GetPoint(distance);
+            Vector3 direction = (hitPoint - transform.position).normalized;
+            return direction;
+        }
+
+        return transform.forward;
     }
 
     private void OnDrawGizmosSelected()

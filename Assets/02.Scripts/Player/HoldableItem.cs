@@ -2,7 +2,7 @@
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
-public class InteractableItem : MonoBehaviour, IInteractable
+public class HoldableItem : MonoBehaviour, IHoldable
 {
     public bool IsHeld { get; private set; }
 
@@ -15,16 +15,29 @@ public class InteractableItem : MonoBehaviour, IInteractable
         _collider = GetComponent<Collider>();
     }
 
-    public void Interact(GameObject interactor)
+    public void Hold(Transform holdPoint)
     {
         IsHeld = true;
         _rigidbody.isKinematic = true;
         _collider.enabled = false;
+        transform.SetParent(holdPoint);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
+    }
+
+    public void Throw(Vector3 direction, float force)
+    {
+        IsHeld = false;
+        transform.SetParent(null);
+        _rigidbody.isKinematic = false;
+        _collider.enabled = true;
+        _rigidbody.AddForce(direction * force, ForceMode.Impulse);
     }
 
     public void Drop()
     {
         IsHeld = false;
+        transform.SetParent(null);
         _rigidbody.isKinematic = false;
         _collider.enabled = true;
     }
