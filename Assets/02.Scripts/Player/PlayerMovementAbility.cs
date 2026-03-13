@@ -6,21 +6,22 @@ public class PlayerMovementAbility : MonoBehaviour
     [SerializeField] private float _moveSpeed = 3f;
     [SerializeField] private float _rotationSpeed = 10f;
 
-    public event Action<float> OnMoveSpeedChanged;
-
-    private Rigidbody rb;
     private Vector3 moveDirection;
+    private Rigidbody rb;
+    private PlayerAnimator _playerAnimator;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        _playerAnimator = GetComponent<PlayerAnimator>();
     }
+
 
     private void Update()
     {
         HandleInput();
         HandleRotation();
-        OnMoveSpeedChanged?.Invoke(moveDirection.magnitude);
+        UpdateAnimation();
     }
 
     private void FixedUpdate()
@@ -49,6 +50,11 @@ public class PlayerMovementAbility : MonoBehaviour
         Vector3 velocity = moveDirection * _moveSpeed;
         velocity.y = rb.linearVelocity.y;
         rb.linearVelocity = velocity;
+    }
 
+    private void UpdateAnimation()
+    {
+        float speed = moveDirection.magnitude;
+        _playerAnimator.PlayMoveAnimation(speed);
     }
 }
