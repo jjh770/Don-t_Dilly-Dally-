@@ -8,6 +8,12 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private InteractableItem _currentItem;
     private InteractableItem _nearestItem;
+    private PlayerAnimator _playerAnimator;
+
+    private void Awake()
+    {
+        _playerAnimator = GetComponent<PlayerAnimator>();
+    }
 
     private void Update()
     {
@@ -58,6 +64,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         _currentItem.transform.SetParent(_holdPoint);
         _currentItem.transform.localPosition = Vector3.zero;
         _currentItem.transform.localRotation = Quaternion.identity;
+        _playerAnimator.SetCarrying(true);
     }
 
     private void DropItem()
@@ -65,6 +72,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         _currentItem.Drop();
         _currentItem.transform.SetParent(null);
         _currentItem = null;
+        _playerAnimator.SetCarrying(false);
     }
 
     private void OnDrawGizmosSelected()
