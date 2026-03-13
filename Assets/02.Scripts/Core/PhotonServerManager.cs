@@ -13,6 +13,8 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     private string _nickName = "Player";
 
+    private string _roomCode;
+
     private void Start()
     {
         Connect();
@@ -42,11 +44,19 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     public override void OnJoinedRoom()
     {
+        _roomCode = null;
         Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.Name}");
+        Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
         Debug.LogError($"Failed to join room: {message}");
+
+        if (returnCode == ErrorCode.GameDoesNotExist && _roomCode != null)
+        {
+            OpenRoom(_roomCode);
+            _roomCode = null;
+        }     
     }
 
     public void CreateNewRoom()
@@ -75,9 +85,8 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     public void TryJoinRoom(string roomCode)
     {
-        if (!PhotonNetwork.JoinRoom(roomCode))
-        {
-            OpenRoom(roomCode);
-        }
+        // TODO : 데이터에 존재하는 방인지 체크
+        _roomCode = roomCode;
+        PhotonNetwork.JoinRoom(_roomCode);
     }
 }
