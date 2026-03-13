@@ -6,6 +6,7 @@ public class RoomPresenter
     public RoomPresenter(RoomView view)
     {
         _view = view;
+        PhotonServerManager.Instance.OnFailedToJoinRoom += OnFailedToJoinRoom;
     }
     public void EnterRoom(string code)
     {
@@ -20,5 +21,15 @@ public class RoomPresenter
     public void SetNickName(string name)
     {
         PhotonServerManager.Instance.SetNickname(name);
+    }
+
+    public void OnFailedToJoinRoom(string message)
+    {
+        _view?.ShowErrorMessage(message);
+    }
+
+    public void Dispose()
+    {
+        PhotonServerManager.Instance.OnFailedToJoinRoom -= OnFailedToJoinRoom;
     }
 }

@@ -4,7 +4,7 @@ public class RobbyBootstrapper : MonoBehaviour
 {
     [SerializeField] private RoomView _roomView;
 
-    private void Awake()
+    private void Start()
     {
         // 1. Model 생성
 
