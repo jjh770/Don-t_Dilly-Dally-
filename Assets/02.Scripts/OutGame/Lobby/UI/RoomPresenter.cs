@@ -1,7 +1,3 @@
-using System.Xml.Serialization;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
 
 public class RoomPresenter
 {
@@ -9,7 +5,7 @@ public class RoomPresenter
 
     public RoomPresenter(RoomView view)
     {
-        view = _view;
+        _view = view;
     }
     public void EnterRoom(string code)
     {

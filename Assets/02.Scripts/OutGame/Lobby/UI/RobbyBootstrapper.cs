@@ -2,17 +2,17 @@ using UnityEngine;
 
 public class RobbyBootstrapper : MonoBehaviour
 {
-    [SerializeField] private RoomView roomView;
+    [SerializeField] private RoomView _roomView;
 
     private void Awake()
     {
-        // 1. Model »ı¼º
+        // 1. Model ìƒì„±
 
-        // 2. Presenter »ı¼º
-        RoomPresenter presenter = new RoomPresenter(roomView);
+        // 2. Presenter ìƒì„±
+        RoomPresenter presenter = new RoomPresenter(_roomView);
 
-        // 3. View ÃÊ±âÈ­
-        roomView.Init(presenter);
+        // 3. View ì´ˆê¸°í™”
+        _roomView.Init(presenter);
     }
 
 }
