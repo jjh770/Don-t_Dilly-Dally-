@@ -1,9 +1,12 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
-public class PlayerMovement : MonoBehaviour
+public class PlayerMovementAbility : MonoBehaviour
 {
     [SerializeField] private float _moveSpeed = 3f;
     [SerializeField] private float _rotationSpeed = 10f;
+
+    public event Action<float> OnMoveSpeedChanged;
 
     private Rigidbody rb;
     private Vector3 moveDirection;
@@ -17,6 +20,7 @@ public class PlayerMovement : MonoBehaviour
     {
         HandleInput();
         HandleRotation();
+        OnMoveSpeedChanged?.Invoke(moveDirection.magnitude);
     }
 
     private void FixedUpdate()
@@ -45,5 +49,6 @@ public class PlayerMovement : MonoBehaviour
         Vector3 velocity = moveDirection * _moveSpeed;
         velocity.y = rb.linearVelocity.y;
         rb.linearVelocity = velocity;
+
     }
 }
