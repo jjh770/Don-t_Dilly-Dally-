@@ -100,13 +100,15 @@ public class PlayerInteractionAbility : MonoBehaviour
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _throwRotationSpeed * Time.deltaTime);
             yield return null;
         }
-
         transform.rotation = targetRotation;
+        
+        // 던지기
         _playerAnimator.PlayThrowAnimation();
+        yield return new WaitForSeconds(0.2f);
         _currentHoldable.Throw(throwDirection, _throwForce);
         _currentHoldable = null;
 
-        yield return new WaitForSeconds(1.9f);
+        // 잡는 애니메이션 취소
         _playerAnimator.ResetThrowAnimation();
         _playerAnimator.PlayCarryingAnimation(false);
     }

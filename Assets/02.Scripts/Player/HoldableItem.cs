@@ -6,6 +6,9 @@ public class HoldableItem : MonoBehaviour, IHoldable
 {
     public bool IsHeld { get; private set; }
 
+    [Header("던지기 설정")]
+    [SerializeField] private float _upAngle = 0.5f;
+
     private Rigidbody _rigidbody;
     private Collider _collider;
 
@@ -31,7 +34,9 @@ public class HoldableItem : MonoBehaviour, IHoldable
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
         _collider.enabled = true;
-        _rigidbody.AddForce(direction * force, ForceMode.Impulse);
+
+        Vector3 throwDirection = (direction + Vector3.up * _upAngle).normalized;
+        _rigidbody.AddForce(throwDirection * force, ForceMode.Impulse);
     }
 
     public void Drop()
