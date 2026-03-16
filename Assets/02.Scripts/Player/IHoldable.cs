@@ -7,8 +7,3 @@ public interface IHoldable
     void Throw(Vector3 direction, float force);
     void Drop();
 }
-
-public interface IPushable
-{
-    void Push(Vector3 direction, float force);
-}

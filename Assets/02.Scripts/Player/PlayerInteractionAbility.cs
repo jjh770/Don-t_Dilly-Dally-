@@ -7,13 +7,15 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private float _pushSpeed = 3f;
     [SerializeField] private float _throwForce = 5f;
     [SerializeField] private float _throwRotationSpeed = 20f;
+    [SerializeField] private float _throwDelay = 0.2f;
+    [SerializeField] private float _rotationAngleThreshold = 5f;
 
     [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
 
     // 집는 아이템
-    private HoldableItem _currentHoldable;
-    private HoldableItem _nearestHoldable;
+    private IHoldable _currentHoldable;
+    private IHoldable _nearestHoldable;
 
     private PlayerAnimator _playerAnimator;
     private Camera _camera;
@@ -75,7 +77,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         }
     }
 
-    private void PickUpItem(HoldableItem item)
+    private void PickUpItem(IHoldable item)
     {
         _currentHoldable = item;
         _currentHoldable.Hold(_holdPoint);
@@ -95,17 +97,20 @@ public class PlayerInteractionAbility : MonoBehaviour
         Quaternion targetRotation = Quaternion.LookRotation(throwDirection);
 
         // 캐릭터 회전
-        while (Quaternion.Angle(transform.rotation, targetRotation) > 5f)
+        while (Quaternion.Angle(transform.rotation, targetRotation) > _rotationAngleThreshold)
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _throwRotationSpeed * Time.deltaTime);
             yield return null;
         }
         transform.rotation = targetRotation;
-        
+
         // 던지기
+        var item = _currentHoldable;
+        if (item == null) yield break;
+
         _playerAnimator.PlayThrowAnimation();
-        yield return new WaitForSeconds(0.2f);
-        _currentHoldable.Throw(throwDirection, _throwForce);
+        yield return new WaitForSeconds(_throwDelay);
+        item.Throw(throwDirection, _throwForce);
         _currentHoldable = null;
 
         // 잡는 애니메이션 취소
