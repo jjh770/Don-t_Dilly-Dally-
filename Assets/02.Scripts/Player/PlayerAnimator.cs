@@ -1,12 +1,12 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 public class PlayerAnimator : MonoBehaviour
 {
     private Animator _animator;
 
-    private static readonly int IsCarrying = Animator.StringToHash("IsCarrying");
+    private static readonly int IsHolding = Animator.StringToHash("IsHolding");
+    private static readonly int IsGrabbing = Animator.StringToHash("IsGrabbing");
     private static readonly int IsPushing = Animator.StringToHash("IsPushing");
-    private static readonly int IsPulling = Animator.StringToHash("IsPulling");
     private static readonly int IsWalking = Animator.StringToHash("IsWalking");
     private static readonly int Throw = Animator.StringToHash("Throw");
 
@@ -20,9 +20,14 @@ public class PlayerAnimator : MonoBehaviour
         _animator.SetBool(IsWalking, isWalking);
     }
 
-    public void PlayCarryingAnimation(bool isCarrying)
+    public void PlayHoldAnimation(bool isHolding)
     {
-        _animator.SetBool(IsCarrying, isCarrying);
+        _animator.SetBool(IsHolding, isHolding);
+    }
+
+    public void PlayGrabAnimation(bool isGrabbing)
+    {
+        _animator.SetBool(IsGrabbing, isGrabbing);
     }
 
     public void PlayThrowAnimation()
@@ -35,13 +40,8 @@ public class PlayerAnimator : MonoBehaviour
         _animator.ResetTrigger(Throw);
     }
 
-    public void PlayPushingAnimation(bool isPushing)
+    public void PlayPushAnimation(bool isPushing)
     {
         _animator.SetBool(IsPushing, isPushing);
-    }
-
-    public void PlayPullingAnimation(bool isPulling)
-    {
-        _animator.SetBool(IsPulling, isPulling);
     }
 }

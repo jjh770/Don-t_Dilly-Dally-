@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 public class PlayerMovementAbility : MonoBehaviour
@@ -9,8 +9,13 @@ public class PlayerMovementAbility : MonoBehaviour
 
     private Vector3 _moveDirection;
     private float _currentSpeed;
+    private float _moveSpeedMultiplier = 1f;
+    private float _rotationSpeedMultiplier = 1f;
     private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
+
+    public Vector3 MoveDirection => _moveDirection;
+    public float CurrentSpeed => _currentSpeed * _moveSpeedMultiplier;
 
     private const string HorizontalAxis = "Horizontal";
     private const string VerticalAxis = "Vertical";
@@ -46,7 +51,7 @@ public class PlayerMovementAbility : MonoBehaviour
         if (_moveDirection.sqrMagnitude > MinMoveSqrMagnitude)
         {
             Quaternion targetRotation = Quaternion.LookRotation(_moveDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * _rotationSpeedMultiplier * Time.deltaTime);
         }
     }
 
@@ -56,9 +61,15 @@ public class PlayerMovementAbility : MonoBehaviour
         float targetSpeed = _moveDirection.sqrMagnitude > MinMoveSqrMagnitude ? _moveSpeed : 0f;
         _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, _acceleration * Time.fixedDeltaTime);
 
-        Vector3 velocity = _moveDirection * _currentSpeed;
+        Vector3 velocity = _moveDirection * _currentSpeed * _moveSpeedMultiplier;
         velocity.y = _rigidbody.linearVelocity.y;
         _rigidbody.linearVelocity = velocity;
+    }
+
+    public void SetSpeedMultiplier(float moveSpeedMultiplier, float rotationSpeedMultiplier)
+    {
+        _moveSpeedMultiplier = moveSpeedMultiplier;
+        _rotationSpeedMultiplier = rotationSpeedMultiplier;
     }
 
     private void UpdateAnimation()

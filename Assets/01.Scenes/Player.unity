@@ -986,7 +986,7 @@ GameObject:
   - component: {fileID: 631297126}
   - component: {fileID: 631297125}
   - component: {fileID: 631297124}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Plane
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1425,7 +1425,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 755401507}
   serializedVersion: 5
-  m_Mass: 10
+  m_Mass: 15
   m_LinearDamping: 0
   m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -2198,11 +2198,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2175109114607489061, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
       propertyPath: _moveSpeed
-      value: 2.5
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 2175109114607489061, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
       propertyPath: _acceleration
       value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2175109114607489061, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: _rotationSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 2175109114607489061, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: _groundLayer.m_Bits
+      value: 128
       objectReference: {fileID: 0}
     - target: {fileID: 2404741193923598014, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
       propertyPath: m_LocalPosition.x
@@ -2240,6 +2248,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5382673438139947550, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: m_Mass
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 6536501996314029870, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
       propertyPath: m_Name
       value: Player
@@ -2265,8 +2277,24 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8957677483026851650, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: _detectionHeight
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957677483026851650, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: _detectionRadius
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957677483026851650, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
       propertyPath: _throwRotationSpeed
       value: 20
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957677483026851650, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: _pushSpeedMultiplier
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8957677483026851650, guid: 7440f2fc200b42d49952018f0d0e60a8, type: 3}
+      propertyPath: _pushRotationMultiplier
+      value: 0.1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
