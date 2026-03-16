@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public interface IPushable
+public interface IPushable : IInteractable
 {
-    void Push(Vector3 direction, float force);
+    void Push(Vector3 direction, float speed);
 }

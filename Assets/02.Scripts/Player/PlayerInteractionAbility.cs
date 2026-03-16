@@ -1,10 +1,15 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 
 public class PlayerInteractionAbility : MonoBehaviour
 {
+    [Header("아이템 탐지 설정")]
     [SerializeField] private float _detectionRadius = 2f;
-    [SerializeField] private float _pushSpeed = 3f;
+
+    [Header("밀고 당기기 설정")]
+    [SerializeField] private float _pushSpeedMultiplier = 0.5f;
+
+    [Header("던지기 설정")]
     [SerializeField] private float _throwForce = 5f;
     [SerializeField] private float _throwRotationSpeed = 20f;
     [SerializeField] private float _throwDelay = 0.2f;
@@ -13,17 +18,18 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
 
-    // 집는 아이템
-    private IHoldable _currentHoldable;
-    private IHoldable _nearestHoldable;
+    private IInteractable _currentInteractable;
+    private IInteractable _nearestInteractable;
 
     private PlayerAnimator _playerAnimator;
+    private PlayerMovementAbility _playerMovement;
     private Camera _camera;
     private bool _isThrowing;
 
     private void Awake()
     {
         _playerAnimator = GetComponent<PlayerAnimator>();
+        _playerMovement = GetComponent<PlayerMovementAbility>();
         _camera = Camera.main;
     }
 
@@ -31,25 +37,25 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         FindNearestInteractable();
         HandleInteractInput();
+        HandlePushableMovement();
     }
 
     private void FindNearestInteractable()
     {
         Collider[] colliders = Physics.OverlapSphere(transform.position, _detectionRadius, _interactableLayer);
 
-        _nearestHoldable = null;
-        float nearestHoldableDistance = float.MaxValue;
+        _nearestInteractable = null;
+        float nearestDistance = float.MaxValue;
 
         foreach (Collider col in colliders)
         {
-            float distance = Vector3.Distance(transform.position, col.transform.position);
-
-            if (col.TryGetComponent(out HoldableItem holdable) && !holdable.IsHeld)
+            if (col.TryGetComponent(out IInteractable interactable) && !interactable.IsInteracting)
             {
-                if (distance < nearestHoldableDistance)
+                float distance = Vector3.Distance(transform.position, col.transform.position);
+                if (distance < nearestDistance)
                 {
-                    nearestHoldableDistance = distance;
-                    _nearestHoldable = holdable;
+                    nearestDistance = distance;
+                    _nearestInteractable = interactable;
                 }
             }
         }
@@ -57,40 +63,77 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void HandleInteractInput()
     {
-        // Holdable: 들고/놓기
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (_currentHoldable != null)
+            // 손에 아이템이 있으면 동작 그만 두기
+            if (_currentInteractable != null)
             {
-                DropItem();
+                StopInteract();
             }
-            else if (_nearestHoldable != null)
+            // 근처에 아이템이 있으면 동작하기
+            else if (_nearestInteractable != null)
             {
-                PickUpItem(_nearestHoldable);
+                StartInteract(_nearestInteractable);
             }
         }
 
+        // Holdable 전용: 던지기
         if (Input.GetMouseButtonDown(0))
         {
-            if (_currentHoldable == null) return;
-            if (_isThrowing == true) return;
+            if (_currentInteractable is not IHoldable) return;
+            if (_isThrowing) return;
 
             StartCoroutine(ThrowItemCoroutine());
         }
     }
 
-    private void PickUpItem(IHoldable item)
+    private void StartInteract(IInteractable interactable)
     {
-        _currentHoldable = item;
-        _currentHoldable.Hold(_holdPoint);
-        _playerAnimator.PlayCarryingAnimation(true);
+        _currentInteractable = interactable;
+
+        // 아이템 집기
+        if (interactable is IHoldable holdable)
+        {
+            holdable.Hold(_holdPoint);
+            _playerAnimator.PlayHoldAnimation(true);
+        }
+        // 아이템 밀기
+        else if (interactable is IPushable pushable)
+        {
+            pushable.Interact();
+            ((PushableItem)pushable).SetPlayer(transform);
+            _playerAnimator.PlayGrabAnimation(true);
+            _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier);
+        }
     }
 
-    private void DropItem()
+    private void StopInteract()
     {
-        _currentHoldable.Drop();
-        _currentHoldable = null;
-        _playerAnimator.PlayCarryingAnimation(false);
+        // 아이템 놓기
+        if (_currentInteractable is IHoldable holdable)
+        {
+            holdable.Drop();
+            _playerAnimator.PlayHoldAnimation(false);
+        }
+        // 아이템 손에서 떼기
+        else if (_currentInteractable is IPushable)
+        {
+            _currentInteractable.StopInteract();
+            _playerAnimator.PlayGrabAnimation(false);
+            _playerAnimator.PlayPushAnimation(false);
+            _playerMovement.SetSpeedMultiplier(1f);
+        }
+
+        _currentInteractable = null;
+    }
+
+    private void HandlePushableMovement()
+    {
+        if (_currentInteractable is not IPushable) return;
+
+        Vector3 moveDirection = _playerMovement.MoveDirection;
+        bool isMoving = moveDirection.sqrMagnitude > 0.01f;
+        _playerAnimator.PlayPushAnimation(isMoving);
     }
 
     private IEnumerator ThrowItemCoroutine()
@@ -109,8 +152,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         transform.rotation = targetRotation;
 
         // 던지기
-        var item = _currentHoldable;
-        if (item == null)
+        if (_currentInteractable is not IHoldable holdable)
         {
             _isThrowing = false;
             yield break;
@@ -118,12 +160,12 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         _playerAnimator.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
-        item.Throw(throwDirection, _throwForce);
-        _currentHoldable = null;
+        holdable.Throw(throwDirection, _throwForce);
+        _currentInteractable = null;
 
         // 잡는 애니메이션 취소
         _playerAnimator.ResetThrowAnimation();
-        _playerAnimator.PlayCarryingAnimation(false);
+        _playerAnimator.PlayHoldAnimation(false);
 
         _isThrowing = false;
     }

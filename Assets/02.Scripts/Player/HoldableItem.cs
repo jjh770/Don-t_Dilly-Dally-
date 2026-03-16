@@ -1,16 +1,18 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
 public class HoldableItem : MonoBehaviour, IHoldable
 {
-    public bool IsHeld { get; private set; }
+    public bool IsInteracting { get; private set; }
+    public Transform Transform => transform;
 
     [Header("던지기 설정")]
     [SerializeField] private float _upAngle = 0.5f;
 
     private Rigidbody _rigidbody;
     private Collider _collider;
+    private Transform _holdPoint;
 
     private void Awake()
     {
@@ -18,11 +20,23 @@ public class HoldableItem : MonoBehaviour, IHoldable
         _collider = GetComponent<Collider>();
     }
 
+    public void Interact()
+    {
+        Hold(_holdPoint);
+    }
+
+    public void StopInteract()
+    {
+        Drop();
+    }
+
     public void Hold(Transform holdPoint)
     {
-        IsHeld = true;
+        _holdPoint = holdPoint;
+        IsInteracting = true;
         _rigidbody.isKinematic = true;
         _collider.enabled = false;
+
         transform.SetParent(holdPoint);
         transform.localPosition = Vector3.zero;
         transform.localRotation = Quaternion.identity;
@@ -30,7 +44,7 @@ public class HoldableItem : MonoBehaviour, IHoldable
 
     public void Throw(Vector3 direction, float force)
     {
-        IsHeld = false;
+        IsInteracting = false;
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
         _collider.enabled = true;
@@ -41,7 +55,7 @@ public class HoldableItem : MonoBehaviour, IHoldable
 
     public void Drop()
     {
-        IsHeld = false;
+        IsInteracting = false;
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
         _collider.enabled = true;

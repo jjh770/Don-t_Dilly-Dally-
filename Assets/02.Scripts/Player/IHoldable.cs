@@ -1,8 +1,7 @@
 ﻿using UnityEngine;
 
-public interface IHoldable
+public interface IHoldable : IInteractable
 {
-    bool IsHeld { get; }
     void Hold(Transform holdPoint);
     void Throw(Vector3 direction, float force);
     void Drop();
