@@ -131,6 +131,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
         if (success && _nextSceneData != null)
         {
             OnSceneLoadComplete?.Invoke(_nextSceneData.SceneName);
+            Debug.LogWarning($"[SceneLoadManager] SceneLoad Success");
         }
 
         _nextSceneData = null;
