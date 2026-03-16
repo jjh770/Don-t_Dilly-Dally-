@@ -22,6 +22,7 @@ namespace DontDillyDally.Data
                 : DisplayName;
 
             GameObject resolvedModelPrefab = ModelPrefab;
+            bool colliderApplied = false;
 
             if (PresentationCatalog != null &&
                 PresentationCatalog.TryGetMixToolPresentation(
@@ -37,34 +38,16 @@ namespace DontDillyDally.Data
                     resolvedModelPrefab = catalogModelPrefab;
 
                 if (boxCollider != null && boxCollider.UseOverride)
+                {
                     ApplyBoxCollider(boxCollider.Center, boxCollider.Size);
+                    colliderApplied = true;
+                }
             }
 
-            if (PresentationCatalog == null || !TryApplyBoxColliderOverride(toolType))
+            if (!colliderApplied)
                 TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
 
             base.Initialize(resolvedDisplayName, resolvedModelPrefab);
-        }
-
-        private bool TryApplyBoxColliderOverride(ToolType toolType)
-        {
-            if (PresentationCatalog == null)
-                return false;
-
-            if (!PresentationCatalog.TryGetMixToolPresentation(
-                    toolType,
-                    out _,
-                    out _,
-                    out BoxColliderPresentation boxCollider))
-            {
-                return false;
-            }
-
-            if (boxCollider == null || !boxCollider.UseOverride)
-                return false;
-
-            ApplyBoxCollider(boxCollider.Center, boxCollider.Size);
-            return true;
         }
     }
 }

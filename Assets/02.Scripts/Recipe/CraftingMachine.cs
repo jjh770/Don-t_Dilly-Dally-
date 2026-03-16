@@ -75,25 +75,23 @@ namespace DontDillyDally.Data
             if (primaryTool == ToolType.None || secondaryTool == ToolType.None || action == ActionType.None)
                 return CreateFailureResult(CraftingFailureReason.InvalidInput);
 
-            CraftedMaterialType resultMaterial = RuleDatabase.FindDualResult(primaryTool, secondaryTool, action);
-            if (resultMaterial == CraftedMaterialType.Unknown)
+            CraftingRuleSO rule = RuleDatabase.FindDualRule(primaryTool, secondaryTool, action);
+            if (rule == null || rule.ResultMaterial == CraftedMaterialType.Unknown)
                 return CreateFailureResult(CraftingFailureReason.RuleNotFound);
 
             CraftedItem craftedItem = CreateCraftedItem(
-                resultMaterial,
+                rule.ResultMaterial,
                 primaryTool,
                 action,
                 secondaryTool,
                 playerId);
 
-            CraftingRuleSO rule = RuleDatabase.FindDualRule(primaryTool, secondaryTool, action);
-
             return new CraftingAttemptResult
             {
                 Success = true,
                 CraftedItem = craftedItem,
-                ResultMaterial = resultMaterial,
-                CraftingDuration = rule != null ? rule.CraftingDuration : 0f,
+                ResultMaterial = rule.ResultMaterial,
+                CraftingDuration = rule.CraftingDuration,
                 FailureReason = CraftingFailureReason.None
             };
         }

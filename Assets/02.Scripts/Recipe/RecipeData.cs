@@ -74,6 +74,17 @@ namespace DontDillyDally.Data
             return sortedRequired.SequenceEqual(sortedInput);
         }
 
+        public bool IsSatisfiedBy(SubmittedTray submittedTray)
+        {
+            if (submittedTray == null)
+                return false;
+
+            if (RequiresSterilizedTray && !submittedTray.IsSterilized)
+                return false;
+
+            return IsMatch(submittedTray.GetContainedMaterialTypes());
+        }
+
         public bool Validate()
         {
             if (string.IsNullOrWhiteSpace(RecipeId))

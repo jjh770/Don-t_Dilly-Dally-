@@ -34,7 +34,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (currentSpawnedItem.transform.parent != GetSpawnParent())
+            if (!currentSpawnedItem.IsStillAt(GetSpawnParent()))
             {
                 currentSpawnedItem = null;
                 EnsureSpawnedItem();
@@ -51,7 +51,7 @@ namespace DontDillyDally.Data
             if (SpawnedItemPrefab == null)
                 return;
 
-            if (forceRespawn && currentSpawnedItem != null && currentSpawnedItem.transform.parent == GetSpawnParent())
+            if (forceRespawn && currentSpawnedItem != null && currentSpawnedItem.IsStillAt(GetSpawnParent()))
             {
                 Destroy(currentSpawnedItem.gameObject);
                 currentSpawnedItem = null;

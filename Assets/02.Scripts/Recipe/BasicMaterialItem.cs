@@ -22,6 +22,7 @@ namespace DontDillyDally.Data
                 : DisplayName;
 
             GameObject resolvedModelPrefab = ModelPrefab;
+            bool colliderApplied = false;
 
             if (PresentationCatalog != null &&
                 PresentationCatalog.TryGetBasicMaterialPresentation(
@@ -37,10 +38,13 @@ namespace DontDillyDally.Data
                     resolvedModelPrefab = catalogModelPrefab;
 
                 if (boxCollider != null && boxCollider.UseOverride)
+                {
                     ApplyBoxCollider(boxCollider.Center, boxCollider.Size);
+                    colliderApplied = true;
+                }
             }
 
-            if (PresentationCatalog == null || !TryApplyBoxColliderOverride(materialType))
+            if (!colliderApplied)
                 TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
 
             base.Initialize(resolvedDisplayName, resolvedModelPrefab);
@@ -49,27 +53,6 @@ namespace DontDillyDally.Data
         public CraftedItem CreatePreparedItem(int playerId = 0)
         {
             return CraftedItem.CreateBasicMaterial(MaterialType, playerId);
-        }
-
-        private bool TryApplyBoxColliderOverride(CraftedMaterialType materialType)
-        {
-            if (PresentationCatalog == null)
-                return false;
-
-            if (!PresentationCatalog.TryGetBasicMaterialPresentation(
-                    materialType,
-                    out _,
-                    out _,
-                    out BoxColliderPresentation boxCollider))
-            {
-                return false;
-            }
-
-            if (boxCollider == null || !boxCollider.UseOverride)
-                return false;
-
-            ApplyBoxCollider(boxCollider.Center, boxCollider.Size);
-            return true;
         }
     }
 }

@@ -43,6 +43,11 @@ namespace DontDillyDally.Data
             targetCollider.size = size;
         }
 
+        public bool IsStillAt(Transform expectedParent)
+        {
+            return transform.parent == expectedParent;
+        }
+
         public bool TryApplyBoxColliderFromModelPrefab(GameObject modelPrefab)
         {
             if (modelPrefab == null)

@@ -68,7 +68,7 @@ namespace DontDillyDally.Data
                     CurrentDisease.GetOverallProgress(completedIds));
             }
 
-            if (!CraftedItem.MatchesRecipe(submittedTray, nextRecipe))
+            if (!nextRecipe.IsSatisfiedBy(submittedTray))
             {
                 return CreateFailureResult(
                     TreatmentFailureReason.RecipeMismatch,

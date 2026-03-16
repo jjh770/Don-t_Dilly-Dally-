@@ -20,17 +20,6 @@ namespace DontDillyDally.Data
             return MaterialType == required;
         }
 
-        public static bool MatchesRecipe(SubmittedTray submittedTray, RecipeData recipe)
-        {
-            if (submittedTray == null || recipe == null)
-                return false;
-
-            if (recipe.RequiresSterilizedTray && !submittedTray.IsSterilized)
-                return false;
-
-            return recipe.IsMatch(submittedTray.GetContainedMaterialTypes());
-        }
-
         // 가공 없이 바로 제출 가능한 기본 재료를 제출 아이템으로 감쌉니다.
         public static CraftedItem CreateBasicMaterial(
             CraftedMaterialType materialType,
@@ -125,7 +114,7 @@ namespace DontDillyDally.Data
                 case CraftedMaterialType.GauzeBox:
                     return "거즈";
                 case CraftedMaterialType.RedMedicine:
-                    return "빨강 약";
+                    return "빨간 약";
                 case CraftedMaterialType.OrganLiver:
                     return "간";
                 case CraftedMaterialType.OrganStomach:

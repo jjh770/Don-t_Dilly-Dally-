@@ -18,28 +18,6 @@ namespace DontDillyDally.Data
         [FormerlySerializedAs("rules")]
         public List<CraftingRuleSO> Rules = new List<CraftingRuleSO>();
 
-        public CraftedMaterialType FindResult(ToolType tool, ActionType action)
-        {
-            foreach (CraftingRuleSO rule in Rules)
-            {
-                if (rule != null && rule.IsMatch(tool, action))
-                    return rule.ResultMaterial;
-            }
-
-            return CraftedMaterialType.Unknown;
-        }
-
-        public CraftedMaterialType FindDualResult(ToolType tool1, ToolType tool2, ActionType action)
-        {
-            foreach (CraftingRuleSO rule in Rules)
-            {
-                if (rule != null && rule.IsMatchDual(tool1, tool2, action))
-                    return rule.ResultMaterial;
-            }
-
-            return CraftedMaterialType.Unknown;
-        }
-
         public CraftingRuleSO FindDualRule(ToolType tool1, ToolType tool2, ActionType action)
         {
             foreach (CraftingRuleSO rule in Rules)
