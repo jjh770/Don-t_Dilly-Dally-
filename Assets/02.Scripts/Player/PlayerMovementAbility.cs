@@ -5,8 +5,10 @@ public class PlayerMovementAbility : MonoBehaviour
 {
     [SerializeField] private float _moveSpeed = 3f;
     [SerializeField] private float _rotationSpeed = 10f;
+    [SerializeField] private float _acceleration = 5f;
 
     private Vector3 _moveDirection;
+    private float _currentSpeed;
     private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
 
@@ -50,7 +52,11 @@ public class PlayerMovementAbility : MonoBehaviour
 
     private void HandleMovement()
     {
-        Vector3 velocity = _moveDirection * _moveSpeed;
+        // 속도 가속/감속
+        float targetSpeed = _moveDirection.sqrMagnitude > MinMoveSqrMagnitude ? _moveSpeed : 0f;
+        _currentSpeed = Mathf.MoveTowards(_currentSpeed, targetSpeed, _acceleration * Time.fixedDeltaTime);
+
+        Vector3 velocity = _moveDirection * _currentSpeed;
         velocity.y = _rigidbody.linearVelocity.y;
         _rigidbody.linearVelocity = velocity;
     }

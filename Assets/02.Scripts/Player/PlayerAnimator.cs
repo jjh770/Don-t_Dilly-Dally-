@@ -4,7 +4,6 @@ public class PlayerAnimator : MonoBehaviour
 {
     private Animator _animator;
 
-    private static readonly int Speed = Animator.StringToHash("Speed");
     private static readonly int IsCarrying = Animator.StringToHash("IsCarrying");
     private static readonly int IsPushing = Animator.StringToHash("IsPushing");
     private static readonly int IsPulling = Animator.StringToHash("IsPulling");
@@ -14,11 +13,6 @@ public class PlayerAnimator : MonoBehaviour
     private void Awake()
     {
         _animator = GetComponent<Animator>();
-    }
-
-    public void PlayMoveAnimation(float speed)
-    {
-        _animator.SetFloat(Speed, Mathf.Clamp01(speed));
     }
 
     public void PlayWalkAnimation(bool isWalking)
