@@ -17,7 +17,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private float _detectionHeight = 1f;
     [SerializeField] private float _detectionHeightOffset = 0.5f;
 
-    [Header("밀고 당기기 설정")]
+    [Header("밀기 설정")]
     [SerializeField] private float _pushSpeedMultiplier = 0.5f;
     [SerializeField] private float _pushRotationMultiplier = 0.2f;
 
@@ -116,17 +116,14 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         _currentInteractable = interactable;
 
-        // 아이템 집기
-        if (interactable is IHoldable holdable)
+        if (interactable is IHoldable)
         {
-            holdable.Hold(_holdPoint);
+            interactable.Interact(_holdPoint);
             _playerAnimator.PlayHoldAnimation(true);
         }
-        // 아이템 밀기
-        else if (interactable is IPushable pushable)
+        else if (interactable is IPushable)
         {
-            pushable.Interact();
-            ((PushableItem)pushable).SetPlayer(transform);
+            interactable.Interact(transform);
             _playerAnimator.PlayGrabAnimation(true);
             _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);
         }
@@ -134,13 +131,11 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void StopInteract()
     {
-        // 아이템 놓기
-        if (_currentInteractable is IHoldable holdable)
+        if (_currentInteractable is IHoldable)
         {
-            holdable.Drop();
+            _currentInteractable.StopInteract();
             _playerAnimator.PlayHoldAnimation(false);
         }
-        // 아이템 손에서 떼기
         else if (_currentInteractable is IPushable)
         {
             _currentInteractable.StopInteract();

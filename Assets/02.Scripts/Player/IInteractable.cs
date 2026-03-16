@@ -4,6 +4,6 @@ public interface IInteractable
 {
     bool IsInteracting { get; }
     Transform Transform { get; }
-    void Interact();
+    void Interact(Transform interactor);
     void StopInteract();
 }

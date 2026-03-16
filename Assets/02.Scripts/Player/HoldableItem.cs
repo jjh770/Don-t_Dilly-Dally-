@@ -12,7 +12,6 @@ public class HoldableItem : MonoBehaviour, IHoldable
 
     private Rigidbody _rigidbody;
     private Collider _collider;
-    private Transform _holdPoint;
 
     private void Awake()
     {
@@ -20,9 +19,15 @@ public class HoldableItem : MonoBehaviour, IHoldable
         _collider = GetComponent<Collider>();
     }
 
-    public void Interact()
+    public void Interact(Transform holdPoint)
     {
-        Hold(_holdPoint);
+        IsInteracting = true;
+        _rigidbody.isKinematic = true;
+        _collider.enabled = false;
+
+        transform.SetParent(holdPoint);
+        transform.localPosition = Vector3.zero;
+        transform.localRotation = Quaternion.identity;
     }
 
     public void StopInteract()
@@ -32,14 +37,7 @@ public class HoldableItem : MonoBehaviour, IHoldable
 
     public void Hold(Transform holdPoint)
     {
-        _holdPoint = holdPoint;
-        IsInteracting = true;
-        _rigidbody.isKinematic = true;
-        _collider.enabled = false;
-
-        transform.SetParent(holdPoint);
-        transform.localPosition = Vector3.zero;
-        transform.localRotation = Quaternion.identity;
+        Interact(holdPoint);
     }
 
     public void Throw(Vector3 direction, float force)

@@ -17,37 +17,28 @@ public class PushableItem : MonoBehaviour, IPushable
         _rigidbody = GetComponent<Rigidbody>();
     }
 
-    private void Update()
+    private void FixedUpdate()
     {
         if (!IsInteracting || _player == null) return;
 
-        // 플레이어 앞에 고정
         Vector3 targetPosition = _player.position + _player.forward * GrabDistance;
         targetPosition.y = transform.position.y;
-        transform.position = targetPosition;
-        transform.rotation = _player.rotation;
+
+        _rigidbody.MovePosition(targetPosition);
+        _rigidbody.MoveRotation(_player.rotation);
     }
 
-    public void Interact()
+    public void Interact(Transform interactor)
     {
+        _player = interactor;
         IsInteracting = true;
         _rigidbody.isKinematic = true;
     }
 
     public void StopInteract()
     {
+        _player = null;
         IsInteracting = false;
         _rigidbody.isKinematic = false;
-        _player = null;
-    }
-
-    public void SetPlayer(Transform player)
-    {
-        _player = player;
-    }
-
-    public void Push(Vector3 direction, float speed)
-    {
-        // Update에서 처리
     }
 }
