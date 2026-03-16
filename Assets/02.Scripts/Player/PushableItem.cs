@@ -7,9 +7,10 @@ public class PushableItem : MonoBehaviour, IPushable
     public bool IsInteracting { get; private set; }
     public Transform Transform => transform;
 
+    private const float GrabDistance = 0.75f;
+
     private Rigidbody _rigidbody;
     private Transform _player;
-    private float _grabDistance;
 
     private void Awake()
     {
@@ -21,7 +22,7 @@ public class PushableItem : MonoBehaviour, IPushable
         if (!IsInteracting || _player == null) return;
 
         // 플레이어 앞에 고정
-        Vector3 targetPosition = _player.position + _player.forward * _grabDistance;
+        Vector3 targetPosition = _player.position + _player.forward * GrabDistance;
         targetPosition.y = transform.position.y;
         transform.position = targetPosition;
         transform.rotation = _player.rotation;
@@ -43,7 +44,6 @@ public class PushableItem : MonoBehaviour, IPushable
     public void SetPlayer(Transform player)
     {
         _player = player;
-        _grabDistance = Vector3.Distance(player.position, transform.position);
     }
 
     public void Push(Vector3 direction, float speed)

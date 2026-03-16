@@ -3,11 +3,23 @@ using UnityEngine;
 
 public class PlayerInteractionAbility : MonoBehaviour
 {
+    private const float HalfAngleMultiplier = 0.5f;
+    private const float MinMoveSqrMagnitude = 0.01f;
+    private const float DefaultSpeedMultiplier = 1f;
+    private const int GizmoSegments = 20;
+    private const int MaxDetectionColliders = 10;
+
+    private readonly Collider[] _detectionColliders = new Collider[MaxDetectionColliders];
+
     [Header("아이템 탐지 설정")]
     [SerializeField] private float _detectionRadius = 2f;
+    [SerializeField] private float _detectionAngle = 60f;
+    [SerializeField] private float _detectionHeight = 1f;
+    [SerializeField] private float _detectionHeightOffset = 0.5f;
 
     [Header("밀고 당기기 설정")]
     [SerializeField] private float _pushSpeedMultiplier = 0.5f;
+    [SerializeField] private float _pushRotationMultiplier = 0.2f;
 
     [Header("던지기 설정")]
     [SerializeField] private float _throwForce = 5f;
@@ -25,12 +37,14 @@ public class PlayerInteractionAbility : MonoBehaviour
     private PlayerMovementAbility _playerMovement;
     private Camera _camera;
     private bool _isThrowing;
+    private float _detectionAngleCos;
 
     private void Awake()
     {
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerMovement = GetComponent<PlayerMovementAbility>();
         _camera = Camera.main;
+        _detectionAngleCos = Mathf.Cos(_detectionAngle * HalfAngleMultiplier * Mathf.Deg2Rad);
     }
 
     private void Update()
@@ -42,19 +56,32 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void FindNearestInteractable()
     {
-        Collider[] colliders = Physics.OverlapSphere(transform.position, _detectionRadius, _interactableLayer);
+        int count = Physics.OverlapSphereNonAlloc(transform.position, _detectionRadius, _detectionColliders, _interactableLayer);
 
         _nearestInteractable = null;
-        float nearestDistance = float.MaxValue;
+        float nearestSqrDistance = float.MaxValue;
 
-        foreach (Collider col in colliders)
+        for (int i = 0; i < count; i++)
         {
+            Collider col = _detectionColliders[i];
             if (col.TryGetComponent(out IInteractable interactable) && !interactable.IsInteracting)
             {
-                float distance = Vector3.Distance(transform.position, col.transform.position);
-                if (distance < nearestDistance)
+                // 높이 체크
+                float detectionCenterY = transform.position.y + _detectionHeightOffset;
+                float heightDiff = Mathf.Abs(col.transform.position.y - detectionCenterY);
+                if (heightDiff > _detectionHeight) continue;
+
+                // 시야각 체크
+                Vector3 directionToItem = col.transform.position - transform.position;
+                directionToItem.y = 0;
+                float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
+
+                if (dot < _detectionAngleCos) continue;
+
+                float sqrDistance = (col.transform.position - transform.position).sqrMagnitude;
+                if (sqrDistance < nearestSqrDistance)
                 {
-                    nearestDistance = distance;
+                    nearestSqrDistance = sqrDistance;
                     _nearestInteractable = interactable;
                 }
             }
@@ -65,12 +92,10 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            // 손에 아이템이 있으면 동작 그만 두기
             if (_currentInteractable != null)
             {
                 StopInteract();
             }
-            // 근처에 아이템이 있으면 동작하기
             else if (_nearestInteractable != null)
             {
                 StartInteract(_nearestInteractable);
@@ -103,7 +128,7 @@ public class PlayerInteractionAbility : MonoBehaviour
             pushable.Interact();
             ((PushableItem)pushable).SetPlayer(transform);
             _playerAnimator.PlayGrabAnimation(true);
-            _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier);
+            _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);
         }
     }
 
@@ -121,7 +146,7 @@ public class PlayerInteractionAbility : MonoBehaviour
             _currentInteractable.StopInteract();
             _playerAnimator.PlayGrabAnimation(false);
             _playerAnimator.PlayPushAnimation(false);
-            _playerMovement.SetSpeedMultiplier(1f);
+            _playerMovement.SetSpeedMultiplier(DefaultSpeedMultiplier, DefaultSpeedMultiplier);
         }
 
         _currentInteractable = null;
@@ -132,7 +157,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (_currentInteractable is not IPushable) return;
 
         Vector3 moveDirection = _playerMovement.MoveDirection;
-        bool isMoving = moveDirection.sqrMagnitude > 0.01f;
+        bool isMoving = moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
         _playerAnimator.PlayPushAnimation(isMoving);
     }
 
@@ -188,6 +213,43 @@ public class PlayerInteractionAbility : MonoBehaviour
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.yellow;
-        Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+
+        float halfAngle = _detectionAngle * HalfAngleMultiplier;
+        Vector3 leftDir = Quaternion.Euler(0, -halfAngle, 0) * transform.forward;
+        Vector3 rightDir = Quaternion.Euler(0, halfAngle, 0) * transform.forward;
+
+        Vector3 centerOffset = Vector3.up * _detectionHeightOffset;
+        Vector3 bottomOffset = centerOffset + Vector3.down * _detectionHeight;
+        Vector3 topOffset = centerOffset + Vector3.up * _detectionHeight;
+
+        // 상단/하단 시야각 경계선
+        DrawFanAtHeight(topOffset, leftDir, rightDir, halfAngle);
+        DrawFanAtHeight(bottomOffset, leftDir, rightDir, halfAngle);
+
+        // 수직 경계선
+        Gizmos.DrawLine(transform.position + topOffset, transform.position + bottomOffset);
+        Gizmos.DrawLine(transform.position + leftDir * _detectionRadius + topOffset, transform.position + leftDir * _detectionRadius + bottomOffset);
+        Gizmos.DrawLine(transform.position + rightDir * _detectionRadius + topOffset, transform.position + rightDir * _detectionRadius + bottomOffset);
+    }
+
+    private void DrawFanAtHeight(Vector3 heightOffset, Vector3 leftDir, Vector3 rightDir, float halfAngle)
+    {
+        Vector3 origin = transform.position + heightOffset;
+
+        Gizmos.DrawLine(origin, origin + leftDir * _detectionRadius);
+        Gizmos.DrawLine(origin, origin + rightDir * _detectionRadius);
+
+        int segments = GizmoSegments;
+        float angleStep = _detectionAngle / segments;
+        Vector3 prevPoint = origin + leftDir * _detectionRadius;
+
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = -halfAngle + angleStep * i;
+            Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
+            Vector3 point = origin + dir * _detectionRadius;
+            Gizmos.DrawLine(prevPoint, point);
+            prevPoint = point;
+        }
     }
 }
