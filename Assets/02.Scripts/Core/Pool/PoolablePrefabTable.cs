@@ -10,22 +10,22 @@ public class PoolablePrefabTable : ScriptableObject
     [Serializable]
     public class Entry
     {
-        public GameObject prefab;
-        [Min(1)] public int initialSize = 5;
-        public string PrefabId => prefab != null ? prefab.name : string.Empty;
+        public GameObject Prefab;
+        [Min(1)] public int InitialSize = 5;
+        public string PrefabId => Prefab != null ? Prefab.name : string.Empty;
     }
 
-    [SerializeField] private List<Entry> entries = new();
+    [SerializeField] private List<Entry> _entries = new();
 
     private Dictionary<string, Entry> _table;
 
     // PunPoolManager.Awake에서 호출
     public void Initialize()
     {
-        _table = new Dictionary<string, Entry>(entries.Count);
-        foreach (var entry in entries)
+        _table = new Dictionary<string, Entry>(_entries.Count);
+        foreach (var entry in _entries)
         {
-            if (entry.prefab == null)
+            if (entry.Prefab == null)
             {
                 Debug.LogWarning("[PrefabTable] 프리팹이 비어있는 항목이 있습니다. Inspector를 확인하세요.");
                 continue;
@@ -48,5 +48,5 @@ public class PoolablePrefabTable : ScriptableObject
         return _table.TryGetValue(prefabId, out entry);
     }
 
-    public IEnumerable<Entry> GetAllEntries() => entries;
+    public IEnumerable<Entry> GetAllEntries() => _entries;
 }

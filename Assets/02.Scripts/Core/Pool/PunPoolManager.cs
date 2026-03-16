@@ -7,7 +7,7 @@ using UnityEngine;
 // 반납: PhotonNetwork.Destroy(gameObject);
 public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefabPool
 {
-    [SerializeField] private PoolablePrefabTable prefabTable;
+    [SerializeField] private PoolablePrefabTable _prefabTable;
 
     private readonly Dictionary<string, Queue<GameObject>> _pools = new();
     private Transform _poolRoot;
@@ -20,7 +20,7 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
         _poolRoot = new GameObject("[PUNPoolRoot]").transform;
         _poolRoot.SetParent(transform);
 
-        prefabTable.Initialize();
+        _prefabTable.Initialize();
         PhotonNetwork.PrefabPool = this;
         WarmUp();
     }
@@ -49,8 +49,7 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
     // IPunPrefabPool — PUN2가 SetActive(false) 처리 후 호출
     public void Destroy(GameObject go)
     {
-        var poolable = go.GetComponent<PoolableObject>();
-        if (poolable == null)
+        if (!go.TryGetComponent<PoolableObject>(out var poolable))
         {
             Object.Destroy(go);
             return;
@@ -65,12 +64,12 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
 
     private void WarmUp()
     {
-        foreach (var entry in prefabTable.GetAllEntries())
+        foreach (var entry in _prefabTable.GetAllEntries())
         {
-            if (entry.prefab == null) continue;
+            if (entry.Prefab == null) continue;
             if (_pools.ContainsKey(entry.PrefabId)) continue;
 
-            for (int i = 0; i < entry.initialSize; i++)
+            for (int i = 0; i < entry.InitialSize; i++)
             {
                 var obj = CreateNew(entry.PrefabId);
                 if (obj != null) ReturnToQueue(entry.PrefabId, obj);
@@ -80,14 +79,13 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
 
     private GameObject CreateNew(string prefabId)
     {
-        if (!prefabTable.TryGetEntry(prefabId, out var entry))
+        if (!_prefabTable.TryGetEntry(prefabId, out var entry))
             return null;
 
-        var obj = Object.Instantiate(entry.prefab, _poolRoot);
+        var obj = Object.Instantiate(entry.Prefab, _poolRoot);
         obj.SetActive(false);
 
-        var poolable = obj.GetComponent<PoolableObject>();
-        if (poolable == null)
+        if (!obj.TryGetComponent<PoolableObject>(out var poolable))
             poolable = obj.AddComponent<PoolableObject>();
 
         poolable.PrefabId = prefabId;
