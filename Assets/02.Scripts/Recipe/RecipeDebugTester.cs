@@ -1,24 +1,25 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 레시피 시스템을 플레이 모드에서 빠르게 확인하기 위한 디버그 테스터입니다.
-    // 키 입력이나 컨텍스트 메뉴로 멸균, 적재, 제출 흐름을 테스트할 수 있습니다.
+    // 레시피 시스템을 플레이 모드에서 빠르게 확인하기 위한 디버그 테스트입니다.
     public class RecipeDebugTester : MonoBehaviour
     {
         [Header("연동 대상")]
         [Tooltip("현재 테스트할 질병 데이터")]
         public DiseaseSO DiseaseSo;
 
-        [Tooltip("트레이를 관리하는 제조대")]
+        [Tooltip("트레이 위에 재료를 올리는 제조대")]
         public TrayWorkbench TrayWorkbench;
 
-        [Tooltip("트레이 멸균을 담당하는 기계")]
+        [Tooltip("실제 제출 데이터를 들고 있는 트레이 아이템")]
+        public TrayItem TrayItem;
+
+        [Tooltip("트레이 멸균에 사용하는 기계")]
         public SterilizationMachine SterilizationMachine;
 
         [Header("테스트 설정")]
-        [Tooltip("제출 시 사용할 환자 체력")]
+        [Tooltip("제출 때 사용할 환자 체력")]
         public float PatientHealth = 100f;
 
         [Tooltip("테스트용 플레이어 ID")]
@@ -33,19 +34,19 @@ namespace DontDillyDally.Data
 
         private void Update()
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
+            if (Input.GetKeyDown(KeyCode.Q))
                 ResetTestState();
 
-            if (Input.GetKeyDown(KeyCode.Alpha2))
+            if (Input.GetKeyDown(KeyCode.W))
                 SterilizeCurrentTray();
 
-            if (Input.GetKeyDown(KeyCode.Alpha3))
+            if (Input.GetKeyDown(KeyCode.E))
                 AddAnestheticRecipe();
 
-            if (Input.GetKeyDown(KeyCode.Alpha4))
+            if (Input.GetKeyDown(KeyCode.R))
                 AddSecondRecipeSamples();
 
-            if (Input.GetKeyDown(KeyCode.Alpha5))
+            if (Input.GetKeyDown(KeyCode.T))
                 SubmitCurrentTray();
         }
 
@@ -60,29 +61,23 @@ namespace DontDillyDally.Data
 
             judgeManager.SetDisease(DiseaseSo.data);
 
-            if (TrayWorkbench != null)
-                TrayWorkbench.CreateNewTray();
+            if (TrayItem != null)
+                TrayItem.ResetTrayData();
 
-            Debug.Log("[RecipeDebugTester] 테스트 상태를 초기화했습니다.");
-            Debug.Log("[RecipeDebugTester] 1: 초기화, 2: 트레이 멸균, 3: 마취약 추가, 4: 2단계 샘플 추가, 5: 제출");
+            BindTrayToWorkbench();
         }
 
         [ContextMenu("현재 트레이 멸균")]
         public void SterilizeCurrentTray()
         {
-            if (TrayWorkbench == null || SterilizationMachine == null)
+            if (TrayItem == null || SterilizationMachine == null)
             {
-                Debug.LogWarning("[RecipeDebugTester] TrayWorkbench 또는 SterilizationMachine이 연결되지 않았습니다.");
+                Debug.LogWarning("[RecipeDebugTester] TrayItem 또는 SterilizationMachine이 연결되지 않았습니다.");
                 return;
             }
 
-            if (TrayWorkbench.CurrentTray == null)
-                TrayWorkbench.CreateNewTray();
-
-            bool success = SterilizationMachine.TrySterilizeTray(TrayWorkbench.CurrentTray);
-            Debug.Log(success
-                ? "[RecipeDebugTester] 현재 트레이를 멸균했습니다."
-                : "[RecipeDebugTester] 트레이 멸균에 실패했습니다. 비어 있는 트레이만 멸균할 수 있습니다.");
+            TrayItem.EnsureTrayData();
+            SterilizationMachine.TrySterilizeTray(TrayItem);
         }
 
         [ContextMenu("마취약 1단계 샘플 추가")]
@@ -104,13 +99,13 @@ namespace DontDillyDally.Data
         [ContextMenu("현재 트레이 제출")]
         public void SubmitCurrentTray()
         {
-            if (TrayWorkbench == null)
+            if (TrayItem == null)
             {
-                Debug.LogWarning("[RecipeDebugTester] TrayWorkbench가 연결되지 않았습니다.");
+                Debug.LogWarning("[RecipeDebugTester] TrayItem이 연결되지 않았습니다.");
                 return;
             }
 
-            SubmittedTray submittedTray = TrayWorkbench.TakeTraySnapshot();
+            SubmittedTray submittedTray = TrayItem.GetTraySnapshot();
             if (submittedTray == null)
             {
                 Debug.LogWarning("[RecipeDebugTester] 제출할 트레이가 없습니다.");
@@ -130,17 +125,14 @@ namespace DontDillyDally.Data
         [ContextMenu("현재 트레이 비우기")]
         public void ClearTrayItemsOnly()
         {
-            if (TrayWorkbench == null)
+            if (TrayItem == null)
             {
-                Debug.LogWarning("[RecipeDebugTester] TrayWorkbench가 연결되지 않았습니다.");
+                Debug.LogWarning("[RecipeDebugTester] TrayItem이 연결되지 않았습니다.");
                 return;
             }
 
-            if (TrayWorkbench.CurrentTray == null)
-                TrayWorkbench.CreateNewTray();
-
-            TrayWorkbench.CurrentTray.ClearItems();
-            Debug.Log("[RecipeDebugTester] 현재 트레이의 재료를 비웠습니다.");
+            TrayItem.EnsureTrayData();
+            TrayItem.ClearItems();
         }
 
         [ContextMenu("현재 질병 검증")]
@@ -158,16 +150,23 @@ namespace DontDillyDally.Data
                 : "[RecipeDebugTester] 현재 질병 데이터 검증에 실패했습니다.");
         }
 
+        private void BindTrayToWorkbench()
+        {
+            if (TrayWorkbench == null || TrayItem == null)
+                return;
+
+            TrayWorkbench.SetCurrentTrayItem(TrayItem);
+        }
+
         private void AddItemToTray(CraftedMaterialType materialType)
         {
-            if (TrayWorkbench == null)
+            if (TrayWorkbench == null || TrayItem == null)
             {
-                Debug.LogWarning("[RecipeDebugTester] TrayWorkbench가 연결되지 않았습니다.");
+                Debug.LogWarning("[RecipeDebugTester] TrayWorkbench 또는 TrayItem이 연결되지 않았습니다.");
                 return;
             }
 
-            if (TrayWorkbench.CurrentTray == null)
-                TrayWorkbench.CreateNewTray();
+            BindTrayToWorkbench();
 
             CraftedItem item = new CraftedItem
             {
@@ -179,10 +178,7 @@ namespace DontDillyDally.Data
                 PreparedByPlayerId = PlayerId
             };
 
-            bool success = TrayWorkbench.TryPlaceItemOnTray(item);
-            Debug.Log(success
-                ? $"[RecipeDebugTester] 트레이에 '{materialType}'를 올렸습니다."
-                : "[RecipeDebugTester] 트레이에 재료를 올리지 못했습니다.");
+            TrayWorkbench.TryPlaceItemOnTray(item);
         }
     }
 }

@@ -2,32 +2,38 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 제작된 결과물을 트레이 위에 올리는 제조대입니다.
-    // 트레이 생성, 적재, 회수, 제출 준비를 담당합니다.
+    // 트레이 위에 준비된 재료를 올리는 제조대입니다.
+    // 실제 트레이 데이터는 TrayItem이 보관하고, 제조대는 적재만 담당합니다.
     public class TrayWorkbench : MonoBehaviour
     {
-        [Header("트레이 상태")]
-        [Tooltip("제조대 위 현재 트레이 상태")]
-        public SubmittedTray CurrentTray = new SubmittedTray();
+        [Header("제조대 상태")]
+        [Tooltip("현재 이 제조대 위에 올라와 있는 트레이 아이템")]
+        public TrayItem CurrentTrayItem;
 
-        public bool HasTray => CurrentTray != null;
+        public bool HasTray => CurrentTrayItem != null;
 
-        public SubmittedTray CreateNewTray(bool isSterilized = false)
+        public SubmittedTray CurrentTray
         {
-            CurrentTray = new SubmittedTray
+            get
             {
-                IsSterilized = isSterilized
-            };
+                return CurrentTrayItem != null ? CurrentTrayItem.TrayData : null;
+            }
+        }
 
-            return CurrentTray;
+        public void SetCurrentTrayItem(TrayItem trayItem)
+        {
+            CurrentTrayItem = trayItem;
+
+            if (CurrentTrayItem != null)
+                CurrentTrayItem.EnsureTrayData();
         }
 
         public bool TryPlaceItemOnTray(CraftedItem item)
         {
-            if (CurrentTray == null)
-                CreateNewTray();
+            if (item == null || CurrentTrayItem == null)
+                return false;
 
-            return CurrentTray.TryAddItem(item);
+            return CurrentTrayItem.TryAddItem(item);
         }
 
         public bool TryPlaceBasicMaterialOnTray(
@@ -43,38 +49,44 @@ namespace DontDillyDally.Data
 
         public CraftedItem TakeLastItemFromTray()
         {
-            if (CurrentTray == null)
+            if (CurrentTrayItem == null)
                 return null;
 
-            return CurrentTray.TakeLastItem();
+            return CurrentTrayItem.TakeLastItem();
         }
 
         public void ClearTray()
         {
-            if (CurrentTray == null)
+            if (CurrentTrayItem == null)
                 return;
 
-            CurrentTray.ClearItems();
-            CurrentTray.MarkContaminated();
+            CurrentTrayItem.ClearItems();
+            CurrentTrayItem.TrayData.MarkContaminated();
         }
 
         public void LoadTray(SubmittedTray tray)
         {
-            CurrentTray = tray ?? new SubmittedTray();
+            if (CurrentTrayItem == null)
+                return;
+
+            CurrentTrayItem.LoadTrayData(tray);
         }
 
         public SubmittedTray TakeTraySnapshot()
         {
-            if (CurrentTray == null)
+            if (CurrentTrayItem == null)
                 return null;
 
-            return CurrentTray.Clone();
+            return CurrentTrayItem.GetTraySnapshot();
         }
 
         public SubmittedTray TakeTrayAndReset()
         {
             SubmittedTray trayToSubmit = TakeTraySnapshot();
-            CreateNewTray();
+
+            if (CurrentTrayItem != null)
+                CurrentTrayItem.ResetTrayData();
+
             return trayToSubmit;
         }
     }

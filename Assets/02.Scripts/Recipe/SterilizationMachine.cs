@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 멸균 기계 전용 래퍼입니다.
+    // 멸균 기계 전용 보조 컴포넌트입니다.
     // 도구 멸균과 빈 트레이 멸균을 분리해서 처리합니다.
     public class SterilizationMachine : MonoBehaviour
     {
@@ -30,6 +30,11 @@ namespace DontDillyDally.Data
             return tray != null && !tray.IsSterilized && !tray.HasAnyItems();
         }
 
+        public bool CanSterilizeTray(TrayItem trayItem)
+        {
+            return trayItem != null && CanSterilizeTray(trayItem.TrayData);
+        }
+
         public bool TrySterilizeTray(SubmittedTray tray)
         {
             if (!CanSterilizeTray(tray))
@@ -37,6 +42,15 @@ namespace DontDillyDally.Data
 
             tray.MarkSterilized();
             return true;
+        }
+
+        public bool TrySterilizeTray(TrayItem trayItem)
+        {
+            if (trayItem == null)
+                return false;
+
+            trayItem.EnsureTrayData();
+            return TrySterilizeTray(trayItem.TrayData);
         }
     }
 }
