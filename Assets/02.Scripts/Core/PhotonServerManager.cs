@@ -53,6 +53,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnJoinedRoom()
     {
         _roomCode = null;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
         Debug.Log($"{PhotonNetwork.LocalPlayer.NickName} Joined room: {PhotonNetwork.CurrentRoom.Name}");
         Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
     }
