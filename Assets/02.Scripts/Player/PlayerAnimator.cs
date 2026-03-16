@@ -8,6 +8,7 @@ public class PlayerAnimator : MonoBehaviour
     private static readonly int IsCarrying = Animator.StringToHash("IsCarrying");
     private static readonly int IsPushing = Animator.StringToHash("IsPushing");
     private static readonly int IsPulling = Animator.StringToHash("IsPulling");
+    private static readonly int IsWalking = Animator.StringToHash("IsWalking");
     private static readonly int Throw = Animator.StringToHash("Throw");
 
     private void Awake()
@@ -18,6 +19,11 @@ public class PlayerAnimator : MonoBehaviour
     public void PlayMoveAnimation(float speed)
     {
         _animator.SetFloat(Speed, Mathf.Clamp01(speed));
+    }
+
+    public void PlayWalkAnimation(bool isWalking)
+    {
+        _animator.SetBool(IsWalking, isWalking);
     }
 
     public void PlayCarryingAnimation(bool isCarrying)

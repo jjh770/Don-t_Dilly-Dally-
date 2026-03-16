@@ -57,7 +57,7 @@ public class PlayerMovementAbility : MonoBehaviour
 
     private void UpdateAnimation()
     {
-        float speed = _moveDirection.magnitude;
-        _playerAnimator.PlayMoveAnimation(speed);
+        bool isWalking = _moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
+        _playerAnimator.PlayWalkAnimation(isWalking);
     }
 }

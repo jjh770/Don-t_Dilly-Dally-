@@ -19,6 +19,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private PlayerAnimator _playerAnimator;
     private Camera _camera;
+    private bool _isThrowing;
 
     private void Awake()
     {
@@ -72,6 +73,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (Input.GetMouseButtonDown(0))
         {
             if (_currentHoldable == null) return;
+            if (_isThrowing == true) return;
 
             StartCoroutine(ThrowItemCoroutine());
         }
@@ -93,6 +95,8 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private IEnumerator ThrowItemCoroutine()
     {
+        _isThrowing = true;
+
         Vector3 throwDirection = GetMouseWorldDirection();
         Quaternion targetRotation = Quaternion.LookRotation(throwDirection);
 
@@ -106,7 +110,11 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         // 던지기
         var item = _currentHoldable;
-        if (item == null) yield break;
+        if (item == null)
+        {
+            _isThrowing = false;
+            yield break;
+        }
 
         _playerAnimator.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
@@ -116,6 +124,8 @@ public class PlayerInteractionAbility : MonoBehaviour
         // 잡는 애니메이션 취소
         _playerAnimator.ResetThrowAnimation();
         _playerAnimator.PlayCarryingAnimation(false);
+
+        _isThrowing = false;
     }
 
     private Vector3 GetMouseWorldDirection()
