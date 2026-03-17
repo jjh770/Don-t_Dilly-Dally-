@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -22,6 +23,9 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     private readonly System.Random _random = new System.Random();
 
     public event Action<string> OnFailedToJoinRoom;
+
+    public event Action<Player, bool> OnReadyStateChanged;
+    public event Action<Player, string> OnNicknameChanged;
 
     private void Start()
     {
@@ -53,8 +57,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnJoinedRoom()
     {
         _roomCode = null;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
         Debug.Log($"{PhotonNetwork.LocalPlayer.NickName} Joined room: {PhotonNetwork.CurrentRoom.Name}");
         Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
+
+        PlayerProperty.EnsureProperties();
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
@@ -71,6 +78,18 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
             default:
                 OnFailedToJoinRoom?.Invoke($"알 수 없는 오류: {message}");
                 break;
+        }
+    }
+
+    public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
+    {
+        if (changedProps.TryGetValue(PlayerProperty.IsReadyKey, out object isReadyValue) && isReadyValue is bool isReady)
+        {
+            OnReadyStateChanged?.Invoke(targetPlayer, isReady);
+        }
+        if (changedProps.TryGetValue(PlayerProperty.NicknameKey, out object nicknameValue) && nicknameValue is string nickname)
+        {
+            OnNicknameChanged?.Invoke(targetPlayer, nickname);
         }
     }
 
@@ -112,5 +131,6 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     {
         _nickName = nickname;
         PhotonNetwork.NickName = _nickName;
+        PlayerProperty.SetNickname(_nickName);
     }
 }
