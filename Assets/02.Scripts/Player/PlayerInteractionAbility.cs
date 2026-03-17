@@ -26,7 +26,6 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private float _throwRotationSpeed = 20f;
     [SerializeField] private float _throwDelay = 0.2f;
     [SerializeField] private float _rotationAngleThreshold = 5f;
-
     [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
 
@@ -38,6 +37,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private Camera _camera;
     private bool _isThrowing;
     private float _detectionAngleCos;
+    private Collider[] _playerColliders;
 
     private void Awake()
     {
@@ -45,6 +45,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         _playerMovement = GetComponent<PlayerMovementAbility>();
         _camera = Camera.main;
         _detectionAngleCos = Mathf.Cos(_detectionAngle * HalfAngleMultiplier * Mathf.Deg2Rad);
+        _playerColliders = GetComponentsInChildren<Collider>();
     }
 
     private void Update()
@@ -180,7 +181,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         _playerAnimator.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
-        holdable.Throw(throwDirection, _throwForce);
+        holdable.Throw(throwDirection, _throwForce, _playerColliders);
         _currentInteractable = null;
 
         // 잡는 애니메이션 취소
