@@ -7,6 +7,8 @@ public class WaitingRoomView : MonoBehaviour
 {
     [SerializeField] private Button _readyButton;
     [SerializeField] private Button _gameStartButton;
+    [SerializeField] private Button _exitButton;
+
     [SerializeField] private TextMeshProUGUI _readyButtonText;
     [SerializeField] private TextMeshProUGUI _errorText;
     [SerializeField] private string _readyText = "Ready";
@@ -26,6 +28,7 @@ public class WaitingRoomView : MonoBehaviour
     {
         _readyButton.onClick.AddListener(OnReadyButtonClicked);
         _gameStartButton.onClick.AddListener(OnGameStartButtonClicked);
+        _exitButton.onClick.AddListener(OnExitRoomButtonClicked);
     }
 
     private void OnReadyButtonClicked()
@@ -36,6 +39,11 @@ public class WaitingRoomView : MonoBehaviour
     private void OnGameStartButtonClicked()
     {
         _presenter.GameStart();
+    }
+
+    private void OnExitRoomButtonClicked()
+    {
+        _presenter.ExitRoom();
     }
 
     public void ButtonSet(bool isReady)

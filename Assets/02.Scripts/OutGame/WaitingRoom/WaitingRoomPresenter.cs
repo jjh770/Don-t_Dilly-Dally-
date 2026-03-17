@@ -37,6 +37,11 @@ public class WaitingRoomPresenter
         }
     }
 
+    public void ExitRoom()
+    {
+        PhotonServerManager.Instance.LeaveRoom();
+    }
+
     public void SelectPlayer(Player targetPlayer, Vector3 position)
     {
         _model.SetSelectedPlayer(targetPlayer);

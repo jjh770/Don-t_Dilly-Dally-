@@ -212,7 +212,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         if (photonEvent.Code == KickEventCode)
         {
-            PhotonNetwork.LeaveRoom();
+            LeaveRoom();
         }
+    }
+
+    public void LeaveRoom()
+    {
+        PhotonNetwork.LeaveRoom();
     }
 }
