@@ -1,6 +1,6 @@
 namespace DontDillyDally.MiniGame
 {
-    public enum MiniGameState
+    public enum EMiniGameState
     {
         Idle,
         Playing,

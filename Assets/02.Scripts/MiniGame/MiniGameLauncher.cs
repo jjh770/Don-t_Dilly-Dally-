@@ -8,8 +8,8 @@ namespace DontDillyDally.MiniGame
     // 외부 시스템은 Launch()만 호출하면 된다.
     //
     // [통합 시 필요한 작업]
-    // 1. Launch() 호출 전에 플레이어 입력 비활성화
-    // 2. onComplete 콜백에서 플레이어 입력 재활성화
+    // 1. Launch() 호출 전에 플레이어 입력 비활성화.
+    // 2. onComplete 콜백에서 플레이어 입력 재활성화.
     public sealed class MiniGameLauncher : MonoBehaviour
     {
         [Header("미니게임별 설정 에셋")]
@@ -26,16 +26,17 @@ namespace DontDillyDally.MiniGame
 
         private IMiniGame _activeMiniGame;
         private IInputProvider _inputProvider;
+        private Coroutine _resultCoroutine;
 
         private void Awake()
         {
             _inputProvider = new UnityInputProvider();
         }
 
-        // 외부에서 미니게임 실행을 요청하는 단일 진입점
+        // 외부에서 미니게임 실행을 요청하는 단일 진입점.
         public void Launch(MiniGameType type, Action<MiniGameResult> onComplete)
         {
-            if (_activeMiniGame != null && _activeMiniGame.CurrentState == MiniGameState.Playing)
+            if (_activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing)
             {
                 Debug.LogWarning("[MiniGameLauncher] 이미 진행 중인 미니게임이 있음");
                 return;
@@ -48,25 +49,35 @@ namespace DontDillyDally.MiniGame
 
             game.OnCompleted += result =>
             {
-                StartCoroutine(DelayedComplete(result, onComplete));
+                _resultCoroutine = StartCoroutine(DelayedComplete(result, onComplete));
             };
 
             _uiController.ShowMiniGameUI(game);
             game.Begin(config);
+
+            // Begin()에서 Config 캐스팅 실패 등으로 Playing 상태가 아니면 정리.
+            if (game.CurrentState != EMiniGameState.Playing)
+            {
+                _uiController.HideMiniGameUI();
+                _activeMiniGame = null;
+            }
         }
 
-        // 진행 중인 미니게임 강제 중단
+        // 진행 중인 미니게임 강제 중단.
         public void AbortCurrent()
         {
+            // 결과 연출 코루틴이 진행 중이면 중복 호출 방지.
+            if (_resultCoroutine != null) return;
+
             _activeMiniGame?.Abort();
         }
 
         public bool IsPlaying =>
-            _activeMiniGame != null && _activeMiniGame.CurrentState == MiniGameState.Playing;
+            _activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing;
 
         private void Update()
         {
-            if (_activeMiniGame?.CurrentState == MiniGameState.Playing)
+            if (_activeMiniGame?.CurrentState == EMiniGameState.Playing)
             {
                 _activeMiniGame.Tick(Time.deltaTime);
             }
@@ -85,12 +96,13 @@ namespace DontDillyDally.MiniGame
 
         private IEnumerator DelayedComplete(MiniGameResult result, Action<MiniGameResult> onComplete)
         {
-            // 결과 연출용 대기 (UI는 그대로 보여줌)
+            // 결과 연출용 대기 (UI는 그대로 보여줌).
             _uiController.ShowResult(result.IsSuccess);
             yield return new WaitForSeconds(_resultDisplayDuration);
 
             _uiController.HideMiniGameUI();
             _activeMiniGame = null;
+            _resultCoroutine = null;
             onComplete?.Invoke(result);
         }
 

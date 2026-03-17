@@ -12,13 +12,8 @@ namespace DontDillyDally.MiniGame
 
         [Header("결과 피드백")]
         [SerializeField] private TextMeshProUGUI _feedbackText;
-
-        [Header("시퀀스 진행 표시")]
-        [SerializeField] private Image[] _sequenceDots;
-        [SerializeField] private Color _successDotColor = Color.green;
-        [SerializeField] private Color _failDotColor = Color.red;
-        [SerializeField] private Color _pendingDotColor = Color.gray;
-        [SerializeField] private Color _currentDotColor = Color.yellow;
+        [SerializeField] private Color _successColor = Color.green;
+        [SerializeField] private Color _failColor = Color.red;
 
         private DirectionQTEMiniGame _game;
         private int _lastPromptIndex = -1;
@@ -45,12 +40,19 @@ namespace DontDillyDally.MiniGame
 
         public void UpdateView()
         {
-            if (_game == null || _game.CurrentState != MiniGameState.Playing) return;
+            if (_game == null || _game.CurrentState != EMiniGameState.Playing) return;
 
             UpdateRadialTimer();
-            UpdateSequenceDots();
             UpdateSequenceHighlight();
             UpdateFeedback();
+        }
+
+        public void ShowResult(bool isSuccess)
+        {
+            if (_feedbackText == null) return;
+
+            _feedbackText.text = isSuccess ? "SUCCESS!" : "FAIL";
+            _feedbackText.color = isSuccess ? _successColor : _failColor;
         }
 
         private void BuildSequenceDisplay()
@@ -64,7 +66,7 @@ namespace DontDillyDally.MiniGame
             for (int i = 0; i < prompts.Length; i++)
             {
                 if (i > 0) sb.Append("  ");
-                sb.Append(DirectionToArrow(prompts[i].Direction));
+                sb.Append(DirectionToArrow(prompts[i].EQteDirection));
             }
             _sequenceText.text = sb.ToString();
         }
@@ -81,20 +83,20 @@ namespace DontDillyDally.MiniGame
             {
                 if (i > 0) sb.Append("  ");
 
-                string arrow = DirectionToArrow(prompts[i].Direction);
+                string arrow = DirectionToArrow(prompts[i].EQteDirection);
                 if (i < _game.CurrentPromptIndex)
                 {
-                    // 클리어한 방향 - 초록색
+                    // 클리어한 방향 - 초록색.
                     sb.Append($"<color=#00FF00>{arrow}</color>");
                 }
                 else if (i == _game.CurrentPromptIndex)
                 {
-                    // 현재 입력해야 할 방향 - 노란색 + 굵게
+                    // 현재 입력해야 할 방향 - 노란색 + 굵게.
                     sb.Append($"<color=#FFFF00><b>{arrow}</b></color>");
                 }
                 else
                 {
-                    // 아직 안 온 방향 - 회색
+                    // 아직 안 온 방향 - 회색.
                     sb.Append($"<color=#888888>{arrow}</color>");
                 }
             }
@@ -105,29 +107,6 @@ namespace DontDillyDally.MiniGame
         {
             if (_radialTimer == null) return;
             _radialTimer.fillAmount = _game.RemainingTimeRatio;
-        }
-
-        private void UpdateSequenceDots()
-        {
-            if (_sequenceDots == null) return;
-
-            for (int i = 0; i < _sequenceDots.Length && i < _game.TotalPrompts; i++)
-            {
-                if (_sequenceDots[i] == null) continue;
-
-                if (i < _game.CurrentPromptIndex)
-                {
-                    _sequenceDots[i].color = _successDotColor;
-                }
-                else if (i == _game.CurrentPromptIndex)
-                {
-                    _sequenceDots[i].color = _currentDotColor;
-                }
-                else
-                {
-                    _sequenceDots[i].color = _pendingDotColor;
-                }
-            }
         }
 
         private void UpdateFeedback()
@@ -143,31 +122,23 @@ namespace DontDillyDally.MiniGame
             if (currentResult == true)
             {
                 _feedbackText.text = "GOOD!";
-                _feedbackText.color = _successDotColor;
+                _feedbackText.color = _successColor;
             }
             else if (currentResult == false)
             {
                 _feedbackText.text = "MISS";
-                _feedbackText.color = _failDotColor;
+                _feedbackText.color = _failColor;
             }
         }
 
-        public void ShowResult(bool isSuccess)
-        {
-            if (_feedbackText == null) return;
-
-            _feedbackText.text = isSuccess ? "SUCCESS!" : "FAIL";
-            _feedbackText.color = isSuccess ? _successDotColor : _failDotColor;
-        }
-
-        private static string DirectionToArrow(Direction dir)
+        private static string DirectionToArrow(EQteDirection dir)
         {
             return dir switch
             {
-                Direction.Up => "\u2191",
-                Direction.Down => "\u2193",
-                Direction.Left => "\u2190",
-                Direction.Right => "\u2192",
+                EQteDirection.Up => "\u2191",
+                EQteDirection.Down => "\u2193",
+                EQteDirection.Left => "\u2190",
+                EQteDirection.Right => "\u2192",
                 _ => ""
             };
         }

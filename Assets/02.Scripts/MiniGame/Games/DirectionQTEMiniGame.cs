@@ -5,22 +5,22 @@ namespace DontDillyDally.MiniGame
     public sealed class DirectionQTEMiniGame : IMiniGame
     {
         public MiniGameType GameType => MiniGameType.DirectionQTE;
-        public MiniGameState CurrentState { get; private set; } = MiniGameState.Idle;
+        public EMiniGameState CurrentState { get; private set; } = EMiniGameState.Idle;
         public event System.Action<MiniGameResult> OnCompleted;
 
         public int CurrentPromptIndex { get; private set; }
         public int TotalPrompts => _prompts?.Length ?? 0;
 
-        /// <summary>전체 시퀀스 (UI에서 한번에 표시용)</summary>
+        // 전체 시퀀스 (UI에서 한번에 표시용).
         public QTEPrompt[] Prompts => _prompts;
 
-        /// <summary>전체 제한 시간 대비 남은 시간 비율 (0~1)</summary>
+        // 전체 제한 시간 대비 남은 시간 비율 (0~1).
         public float RemainingTimeRatio => _timeLimit > 0f ? Mathf.Clamp01(_remainingTime / _timeLimit) : 0f;
 
         public float NormalizedProgress =>
             TotalPrompts > 0 ? (float)CurrentPromptIndex / TotalPrompts : 0f;
 
-        // UI 피드백용. null이면 아직 입력 없음.
+        // UI 피드백용, null이면 아직 입력 없음.
         public bool? LastInputResult { get; private set; }
 
         private readonly IInputProvider _input;
@@ -34,7 +34,8 @@ namespace DontDillyDally.MiniGame
         {
             _input = input;
         }
-
+        
+        // 게임 시작 시 초기화
         public void Begin(MiniGameConfig config)
         {
             _config = config as DirectionQTEConfig;
@@ -51,12 +52,13 @@ namespace DontDillyDally.MiniGame
             _remainingTime = _timeLimit;
             LastInputResult = null;
 
-            CurrentState = MiniGameState.Playing;
+            CurrentState = EMiniGameState.Playing;
         }
-
+        
+        // 매 프레임마다 입력과 시간 체크
         public void Tick(float deltaTime)
         {
-            if (CurrentState != MiniGameState.Playing) return;
+            if (CurrentState != EMiniGameState.Playing) return;
 
             _elapsedTime += deltaTime;
             _remainingTime -= deltaTime;
@@ -64,15 +66,15 @@ namespace DontDillyDally.MiniGame
             // 전체 시간 초과 → 실패
             if (_remainingTime <= 0f)
             {
-                CurrentState = MiniGameState.Failed;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
+                CurrentState = EMiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
                 return;
             }
 
-            Direction? pressedDirection = ReadDirectionInput();
+            EQteDirection? pressedDirection = ReadDirectionInput();
             if (pressedDirection == null) return;
 
-            if (pressedDirection == _prompts[CurrentPromptIndex].Direction)
+            if (pressedDirection == _prompts[CurrentPromptIndex].EQteDirection)
             {
                 // 정답
                 LastInputResult = true;
@@ -81,36 +83,38 @@ namespace DontDillyDally.MiniGame
                 // 전부 맞추면 즉시 성공
                 if (CurrentPromptIndex >= _prompts.Length)
                 {
-                    CurrentState = MiniGameState.Succeeded;
-                    OnCompleted?.Invoke(new MiniGameResult(GameType, true, 1f, _elapsedTime));
+                    CurrentState = EMiniGameState.Succeeded;
+                    OnCompleted?.Invoke(new MiniGameResult(GameType, true, _elapsedTime));
                 }
             }
             else
             {
                 // 오답 → 즉시 실패
                 LastInputResult = false;
-                CurrentState = MiniGameState.Failed;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
+                CurrentState = EMiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
             }
         }
-
+        
+        // 게임 실패 처리
         public void Abort()
         {
-            if (CurrentState != MiniGameState.Playing) return;
-            CurrentState = MiniGameState.Failed;
-            OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
+            if (CurrentState != EMiniGameState.Playing) return;
+            CurrentState = EMiniGameState.Failed;
+            OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
         }
-
+        
+        // 시퀀스 생성: 같은 방향이 3회 이상 연속되지 않도록
         private static QTEPrompt[] GenerateSequence(int length)
         {
             var prompts = new QTEPrompt[length];
-            var values = (Direction[])System.Enum.GetValues(typeof(Direction));
-            Direction? prev = null;
+            var values = (EQteDirection[])System.Enum.GetValues(typeof(EQteDirection));
+            EQteDirection? prev = null;
             int repeatCount = 0;
 
             for (int i = 0; i < length; i++)
             {
-                Direction dir;
+                EQteDirection dir;
                 do
                 {
                     dir = values[Random.Range(0, values.Length)];
@@ -121,17 +125,17 @@ namespace DontDillyDally.MiniGame
                 else repeatCount = 1;
 
                 prev = dir;
-                prompts[i] = new QTEPrompt(dir, 0f); // timeLimit per prompt은 미사용
+                prompts[i] = new QTEPrompt(dir);
             }
             return prompts;
         }
 
-        private Direction? ReadDirectionInput()
+        private EQteDirection? ReadDirectionInput()
         {
-            if (_input.GetKeyDown(KeyCode.UpArrow)) return Direction.Up;
-            if (_input.GetKeyDown(KeyCode.DownArrow)) return Direction.Down;
-            if (_input.GetKeyDown(KeyCode.LeftArrow)) return Direction.Left;
-            if (_input.GetKeyDown(KeyCode.RightArrow)) return Direction.Right;
+            if (_input.GetKeyDown(KeyCode.UpArrow)) return EQteDirection.Up;
+            if (_input.GetKeyDown(KeyCode.DownArrow)) return EQteDirection.Down;
+            if (_input.GetKeyDown(KeyCode.LeftArrow)) return EQteDirection.Left;
+            if (_input.GetKeyDown(KeyCode.RightArrow)) return EQteDirection.Right;
             return null;
         }
     }

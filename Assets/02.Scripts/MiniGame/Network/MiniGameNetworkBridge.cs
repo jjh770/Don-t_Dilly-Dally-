@@ -8,16 +8,14 @@ namespace DontDillyDally.MiniGame
     [RequireComponent(typeof(PhotonView))]
     public sealed class MiniGameNetworkBridge : MonoBehaviourPun
     {
-        [SerializeField] private MiniGameLauncher _launcher;
-
-        // 집도의가 미니게임을 시작했음을 다른 클라이언트에 알림 (이펙트/연출용)
+        // 집도의가 미니게임을 시작했음을 다른 클라이언트에 알림 (이펙트/연출용).
         public void BroadcastMiniGameStarted(MiniGameType type)
         {
             if (!PhotonNetwork.IsConnected) return;
             photonView.RPC(nameof(RPC_NotifyMiniGameStarted), RpcTarget.Others, (int)type);
         }
 
-        // 미니게임 결과를 다른 클라이언트에 전달
+        // 미니게임 결과를 다른 클라이언트에 전달.
         public void BroadcastMiniGameResult(MiniGameResult result)
         {
             if (!PhotonNetwork.IsConnected) return;
@@ -25,8 +23,7 @@ namespace DontDillyDally.MiniGame
                 nameof(RPC_NotifyMiniGameResult),
                 RpcTarget.Others,
                 (int)result.GameType,
-                result.IsSuccess,
-                result.Score
+                result.IsSuccess
             );
         }
 
@@ -41,13 +38,13 @@ namespace DontDillyDally.MiniGame
         }
 
         [PunRPC]
-        private void RPC_NotifyMiniGameResult(int miniGameTypeInt, bool isSuccess, float score)
+        private void RPC_NotifyMiniGameResult(int miniGameTypeInt, bool isSuccess)
         {
             var type = (MiniGameType)miniGameTypeInt;
-            Debug.Log($"[MiniGameNetwork] 미니게임 결과 수신: {type}, 성공={isSuccess}, 점수={score:F2}");
+            Debug.Log($"[MiniGameNetwork] 미니게임 결과 수신: {type}, 성공={isSuccess}");
 
-            // 수술 진행도 업데이트, 환자 상태 반영 등
-            // 통합 시 여기에 콜백 연결
+            // 수술 진행도 업데이트, 환자 상태 반영 등.
+            // 통합 시 여기에 콜백 연결.
         }
     }
 }

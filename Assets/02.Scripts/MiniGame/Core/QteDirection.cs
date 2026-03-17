@@ -1,6 +1,6 @@
 namespace DontDillyDally.MiniGame
 {
-    public enum Direction
+    public enum EQteDirection
     {
         Up,
         Down,

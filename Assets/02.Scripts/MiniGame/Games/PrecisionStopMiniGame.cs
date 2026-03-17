@@ -7,7 +7,7 @@ namespace DontDillyDally.MiniGame
         private const float RoundTransitionDelay = 0.6f;
 
         public MiniGameType GameType => MiniGameType.PrecisionStop;
-        public MiniGameState CurrentState { get; private set; } = MiniGameState.Idle;
+        public EMiniGameState CurrentState { get; private set; } = EMiniGameState.Idle;
         public event System.Action<MiniGameResult> OnCompleted;
 
         public float CursorPosition { get; private set; }
@@ -19,15 +19,15 @@ namespace DontDillyDally.MiniGame
         public float NormalizedProgress =>
             TotalRounds > 0 ? (float)CurrentRound / TotalRounds : 0f;
 
-        /// <summary>UI 표시용 라운드 번호 (1-based). 쿨다운 중에는 완료한 라운드를 표시.</summary>
+        // UI 표시용 라운드 번호 (1-based). 쿨다운 중에는 완료한 라운드를 표시.
         public int DisplayRound => _isRoundActive ? CurrentRound + 1 : CurrentRound;
 
-        /// <summary>전체 제한 시간 대비 남은 시간 비율 (0~1)</summary>
+        // 전체 제한 시간 대비 남은 시간 비율 (0~1).
         public float RemainingTimeRatio => _config != null && _config.timeLimit > 0f
             ? Mathf.Clamp01((_config.timeLimit - _elapsedTime) / _config.timeLimit)
             : 0f;
 
-        // UI 연출용. 라운드 전환 딜레이 동안 이전 결과를 유지.
+        // UI 연출용, 라운드 전환 딜레이 동안 이전 결과를 유지.
         public bool? LastRoundResult { get; private set; }
 
         private readonly IInputProvider _input;
@@ -43,6 +43,7 @@ namespace DontDillyDally.MiniGame
             _input = input;
         }
 
+        // 게임 시작 시 초기화
         public void Begin(MiniGameConfig config)
         {
             _config = config as PrecisionStopConfig;
@@ -59,20 +60,21 @@ namespace DontDillyDally.MiniGame
             _currentSpeed = _config.cursorSpeed;
 
             StartNewRound();
-            CurrentState = MiniGameState.Playing;
+            CurrentState = EMiniGameState.Playing;
         }
 
+        // 매 프레임마다 입력과 시간 체크
         public void Tick(float deltaTime)
         {
-            if (CurrentState != MiniGameState.Playing) return;
+            if (CurrentState != EMiniGameState.Playing) return;
 
             _elapsedTime += deltaTime;
 
             // 전체 시간 초과 → 실패
             if (_config.timeLimit > 0f && _elapsedTime >= _config.timeLimit)
             {
-                CurrentState = MiniGameState.Failed;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
+                CurrentState = EMiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
                 return;
             }
 
@@ -107,11 +109,12 @@ namespace DontDillyDally.MiniGame
             }
         }
 
+        // 게임 실패 처리
         public void Abort()
         {
-            if (CurrentState != MiniGameState.Playing) return;
-            CurrentState = MiniGameState.Failed;
-            OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
+            if (CurrentState != EMiniGameState.Playing) return;
+            CurrentState = EMiniGameState.Failed;
+            OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
         }
 
         private void StartNewRound()
@@ -133,6 +136,7 @@ namespace DontDillyDally.MiniGame
             }
         }
 
+        // 플레이어가 정지 입력을 했을 때 결과 평가
         private void EvaluateStop()
         {
             _isRoundActive = false;
@@ -147,8 +151,8 @@ namespace DontDillyDally.MiniGame
             if (!hit)
             {
                 // 한 번이라도 실패하면 즉시 게임 오버
-                CurrentState = MiniGameState.Failed;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
+                CurrentState = EMiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
                 return;
             }
 
@@ -157,8 +161,8 @@ namespace DontDillyDally.MiniGame
             if (CurrentRound >= _config.roundCount)
             {
                 // 전부 성공
-                CurrentState = MiniGameState.Succeeded;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, true, 1f, _elapsedTime));
+                CurrentState = EMiniGameState.Succeeded;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, true, _elapsedTime));
             }
             else
             {

@@ -3,7 +3,7 @@ namespace DontDillyDally.MiniGame
     public interface IMiniGame
     {
         MiniGameType GameType { get; }
-        MiniGameState CurrentState { get; }
+        EMiniGameState CurrentState { get; }
         float NormalizedProgress { get; }
 
         void Begin(MiniGameConfig config);

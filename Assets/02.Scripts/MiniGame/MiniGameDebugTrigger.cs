@@ -33,7 +33,7 @@ namespace DontDillyDally.MiniGame
             _launcher.Launch(type, result =>
             {
                 string status = result.IsSuccess ? "성공" : "실패";
-                Debug.Log($"[DebugTrigger] {result.GameType} 결과: {status}, 점수={result.Score:F2}, 소요={result.ElapsedTime:F1}초");
+                Debug.Log($"[DebugTrigger] {result.GameType} 결과: {status}, 소요={result.ElapsedTime:F1}초");
             });
         }
 #endif

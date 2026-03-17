@@ -53,7 +53,7 @@ namespace DontDillyDally.MiniGame
 
         public void UpdateView()
         {
-            if (_game == null || _game.CurrentState != MiniGameState.Playing) return;
+            if (_game == null || _game.CurrentState != EMiniGameState.Playing) return;
 
             // 게이지 바 업데이트
             float progress = _game.NormalizedProgress;
@@ -77,10 +77,7 @@ namespace DontDillyDally.MiniGame
             _resultText.color = isSuccess ? _successTextColor : _failTextColor;
         }
 
-        /// <summary>
-        /// 0~1 progress를 빨강 → 주황 → 연두 그라디언트로 변환.
-        /// 0.0 = _colorEmpty(빨강), 0.5 = _colorMid(주황), 1.0 = _colorFull(연두)
-        /// </summary>
+        // 0~1 progress를 빨강 → 주황 → 연두 그라디언트로 변환.
         private Color EvaluateGaugeColor(float t)
         {
             if (t <= 0.5f)

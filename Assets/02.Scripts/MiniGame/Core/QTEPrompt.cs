@@ -2,13 +2,11 @@ namespace DontDillyDally.MiniGame
 {
     public readonly struct QTEPrompt
     {
-        public readonly Direction Direction;
-        public readonly float TimeLimit;
+        public readonly EQteDirection EQteDirection;
 
-        public QTEPrompt(Direction direction, float timeLimit)
+        public QTEPrompt(EQteDirection eQteDirection)
         {
-            Direction = direction;
-            TimeLimit = timeLimit;
+            EQteDirection = eQteDirection;
         }
     }
 }
