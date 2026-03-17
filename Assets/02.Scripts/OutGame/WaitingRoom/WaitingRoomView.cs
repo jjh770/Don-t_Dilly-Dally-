@@ -83,7 +83,7 @@ public class WaitingRoomView : MonoBehaviour
         _errorText.color = color;
     }
 
-    public void OnDestroy()
+    public void OnDisable()
     {
         _errorTween?.Kill();
         _readyButton.onClick.RemoveListener(OnReadyButtonClicked);

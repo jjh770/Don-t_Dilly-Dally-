@@ -35,7 +35,7 @@ public class PlayerPresenter
 
         if (_model.IsReady)
         {
-            if (PhotonNetwork.LocalPlayer == _owner)
+            if (_owner.IsLocal)
             {
                 PlayerProperty.SetReadyState(false);
             }

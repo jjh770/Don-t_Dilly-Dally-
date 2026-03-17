@@ -14,7 +14,7 @@ public class WaitingRoomModel
         IsReady = !IsReady;
     }
 
-    public void SetIsMater(bool isMaster)
+    public void SetIsMaster(bool isMaster)
     {
         IsMaster = isMaster;
     }

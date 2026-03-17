@@ -9,7 +9,7 @@ public class WaitingRoomBootStrapper : MonoBehaviour
 
     private void Start()
     {
-        _model = new WaitingRoomModel(PhotonNetwork.IsMasterClient, PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer));
+        _model = new WaitingRoomModel(PhotonServerManager.Instance.IsMasterClient, PhotonServerManager.Instance.GetLocalPlayerReadyState());
         _presenter = new WaitingRoomPresenter(_view, _model);
         _presenter.Initialize();
         _view.Initialized(_presenter);

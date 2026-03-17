@@ -11,6 +11,12 @@ public class PlayerView : MonoBehaviour
 
     private PlayerPresenter _presenter;
 
+    private Camera _camera;
+
+    public void Start()
+    {
+        _camera = Camera.main;
+    }
     public void Initialize(PlayerPresenter presenter)
     {
         _presenter = presenter;
@@ -19,8 +25,8 @@ public class PlayerView : MonoBehaviour
     private void LateUpdate()
     {
         _nicknameText.transform.rotation = Quaternion.LookRotation(
-            Camera.main.transform.forward,
-            Camera.main.transform.up);
+            _camera.transform.forward,
+            _camera.transform.up);
     }
 
     public void SetNickname(string name)

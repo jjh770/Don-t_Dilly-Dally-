@@ -36,7 +36,7 @@ public class WaitingRoomPresenter
 
     public void SetIsMaster(bool isMaster)
     {
-        _model.SetIsMater(isMaster);
+        _model.SetIsMaster(isMaster);
 
         Initialize();
     }
@@ -44,22 +44,10 @@ public class WaitingRoomPresenter
     public void GameStart()
     {
         Debug.Log("게임 시작");
-
-        Player[] players = PhotonNetwork.PlayerList;
-
-        foreach (Player player in players)
+        if (!PhotonServerManager.Instance.TryStartStage(out string errorMessage))
         {
-            if (player.IsMasterClient) continue;
-            if (PlayerProperty.GetReadyState(player) == false)
-            {
-                _view.ShowErrorMessage("모든 플레이어가 준비해야 합니다.");
-                Debug.Log("모든 플레이어가 준비해야 합니다.");
-                return;
-            }
+            _view.ShowErrorMessage(errorMessage);
         }
-
-        PhotonServerManager.Instance.StartStage();
-        Debug.Log("게임 시작.");
     }
 
     public void Initialize()
