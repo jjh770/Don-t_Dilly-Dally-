@@ -13,7 +13,8 @@ public class PlayerBootStrapper : MonoBehaviour
         Player owner = GetComponent<PhotonView>().Owner;
         _playerModel = new PlayerModel(
             PlayerProperty.GetNickname(owner),
-            PlayerProperty.GetReadyState(owner)
+            PlayerProperty.GetReadyState(owner),
+            owner.IsMasterClient
         );
         _playerView = GetComponentInChildren<PlayerView>();
 

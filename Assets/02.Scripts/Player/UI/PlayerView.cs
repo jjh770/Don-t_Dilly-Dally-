@@ -7,6 +7,7 @@ public class PlayerView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _nicknameText;
     [SerializeField] private Color _readyColor = Color.green;
     [SerializeField] private Color _notReadyColor = Color.red;
+    [SerializeField] private Color _masterColor = Color.black;
 
     private PlayerPresenter _presenter;
 
@@ -28,5 +29,10 @@ public class PlayerView : MonoBehaviour
     public void SetReadyState(bool isReady)
     {
         _nicknameText.color = isReady ? _readyColor : _notReadyColor;
+    }
+
+    public void SetMasterNickname()
+    {
+        _nicknameText.color = _masterColor;
     }
 }

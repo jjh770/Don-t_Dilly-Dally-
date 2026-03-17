@@ -26,6 +26,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     public event Action<Player, bool> OnReadyStateChanged;
     public event Action<Player, string> OnNicknameChanged;
+    public event Action OnMasterClientChanged;
 
     private void Start()
     {
@@ -91,6 +92,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
         {
             OnNicknameChanged?.Invoke(targetPlayer, nickname);
         }
+    }
+
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        OnMasterClientChanged?.Invoke();
     }
 
     public void CreateNewRoom()
