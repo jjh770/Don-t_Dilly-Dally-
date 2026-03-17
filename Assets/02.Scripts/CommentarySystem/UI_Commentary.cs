@@ -28,6 +28,22 @@ public class UI_Commentary : MonoBehaviour
         HideImmediate();
     }
 
+    private void OnEnable()
+    {
+        if (CommentaryManager.Instance != null)
+        {
+            CommentaryManager.Instance.OnNarrationGenerated += ShowNarration;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (CommentaryManager.Instance != null)
+        {
+            CommentaryManager.Instance.OnNarrationGenerated -= ShowNarration;
+        }
+    }
+
     public void ShowNarration(string text)
     {
         if (string.IsNullOrEmpty(text)) return;
@@ -45,7 +61,7 @@ public class UI_Commentary : MonoBehaviour
         _narrationText.text = text;
         _narrationPanel.SetActive(true);
 
-        // Fade In
+        // 페이드 인
         if (_canvasGroup != null)
         {
             _canvasGroup.alpha = 0f;
@@ -61,10 +77,9 @@ public class UI_Commentary : MonoBehaviour
             _canvasGroup.alpha = 1f;
         }
 
-        // Display duration
         yield return new WaitForSeconds(_displayDuration);
 
-        // Fade Out
+        // 페이드 아웃
         if (_canvasGroup != null)
         {
             float elapsed = 0f;

@@ -1,20 +1,18 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(EventManager))]
-[RequireComponent(typeof(NarrationGenerator))]
-[RequireComponent(typeof(TTSManager))]
-[RequireComponent(typeof(CommentaryAudioManager))]
 public class CommentaryManager : MonoBehaviour
 {
     public static CommentaryManager Instance { get; private set; }
+
+    public event Action<string> OnNarrationGenerated;
 
     [Header("참조 설정")]
     [SerializeField] private EventManager _eventManager;                // 게임 이벤트를 받아오는 매니저
     [SerializeField] private NarrationGenerator _narrationGenerator;    // 텍스트 생성기
     [SerializeField] private TTSManager _ttsManager;                    // 텍스트 -> 음성
     [SerializeField] private CommentaryAudioManager _audioManager;      // 음성 재생
-    [SerializeField] private UI_Commentary _narrationUI;
 
     [Header("세팅")]
     [SerializeField] private float _commentaryCooldown = 2f;
@@ -23,7 +21,6 @@ public class CommentaryManager : MonoBehaviour
     private float _lastCommentaryTime;
     private GameEvent _pendingEvent;
     private bool _isProcessing;
-    private bool _isPreGenerating;
 
     private static readonly Dictionary<EventType, string> PreGeneratedTexts = new()
     {
@@ -62,10 +59,9 @@ public class CommentaryManager : MonoBehaviour
 
     private void HandleEvent(GameEvent gameEvent)
     {
-        if (Time.time - _lastCommentaryTime < _commentaryCooldown)
+        // 쿨다운 중이거나 처리 중이면 대기열에 저장
+        if (_isProcessing || Time.time - _lastCommentaryTime < _commentaryCooldown)
         {
-            // 대기 이벤트가 없거나 우선순위가 더 높은 이벤트면
-            // 대기 중인 이벤트 교체
             if (_pendingEvent == null || gameEvent.Priority > _pendingEvent.Priority)
             {
                 _pendingEvent = gameEvent;
@@ -109,7 +105,6 @@ public class CommentaryManager : MonoBehaviour
 
     private async Awaitable PreGenerateVoiceClips()
     {
-        _isPreGenerating = true;
         Debug.Log("[CommentaryManager] 사전 음성 생성 시작...");
 
         foreach (var kvp in PreGeneratedTexts)
@@ -133,7 +128,6 @@ public class CommentaryManager : MonoBehaviour
             }
         }
 
-        _isPreGenerating = false;
         Debug.Log("[CommentaryManager] 사전 음성 생성 완료");
     }
 
@@ -148,7 +142,7 @@ public class CommentaryManager : MonoBehaviour
 
             if (PreGeneratedTexts.TryGetValue(eventType, out string text))
             {
-                _narrationUI?.ShowNarration(text);
+                OnNarrationGenerated?.Invoke(text);
             }
         }
         else
@@ -177,7 +171,7 @@ public class CommentaryManager : MonoBehaviour
         if (clip != null)
         {
             _audioManager.PlayVoice(clip);
-            _narrationUI?.ShowNarration(narrationText);
+            OnNarrationGenerated?.Invoke(narrationText);
         }
     }
 }

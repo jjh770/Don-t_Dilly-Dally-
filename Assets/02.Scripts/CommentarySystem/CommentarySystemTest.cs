@@ -1,9 +1,5 @@
 using UnityEngine;
 
-/// <summary>
-/// CommentarySystem 테스트용 스크립트
-/// 키 입력으로 다양한 이벤트를 발생시켜 시스템을 테스트합니다.
-/// </summary>
 public class CommentarySystemTest : MonoBehaviour
 {
     [SerializeField] private EventManager _eventManager;
