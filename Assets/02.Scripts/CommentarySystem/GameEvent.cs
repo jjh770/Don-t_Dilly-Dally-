@@ -10,14 +10,17 @@ public enum EventPriority
 
 public enum EventType
 {
-    // 긴급 상황 (사전 생성 음성 사용)
+    // 똑같은 상황이 자주 반복되거나
+    // 즉시 나와야 하는 멘트
+    // -> 미리 생성
     GameStart,          // 게임 시작할 때
     GameOver,           // 게임 끝날 때
     SurgerySuccess,     // 수술에 성공했을 때
     SurgeryFail,        // 수술에 실패했을 때
     PatientDeath,       // 환자가 죽었을 때
 
-    // 일반 상황 (AI 실시간 생성)
+    // 주변 상황을 같이 봐야 자연스럽거나
+    // 
     PatientCritical,    // 환자가 응급 상황일 때
     PatientHealthDrop,  // 환자의 체력이 급하게 떨어질 때
     AssistDeliverItem,  // 어시스트가 아이템을 전달했을 때

@@ -27,11 +27,11 @@ public class CommentaryManager : MonoBehaviour
 
     private static readonly Dictionary<EventType, string> PreGeneratedTexts = new()
     {
-        { EventType.GameStart, "수술을 시작합니다!" },
-        { EventType.GameOver, "게임이 종료되었습니다." },
-        { EventType.SurgerySuccess, "수술이 성공적으로 완료되었습니다!" },
-        { EventType.SurgeryFail, "수술에 실패했습니다..." },
-        { EventType.PatientDeath, "환자가 사망했습니다..." }
+        { EventType.GameStart, "좋아, 수술 시작이다. 집중해!" },
+        { EventType.GameOver, "여기까지다. 수고했어." },
+        { EventType.SurgerySuccess, "해냈군. 완벽한 수술이었어." },
+        { EventType.SurgeryFail, "끝났어... 이번엔 실패다." },
+        { EventType.PatientDeath, "환자를 잃었다... 다음엔 놓치지 마." }
     };
 
     private void Awake()
