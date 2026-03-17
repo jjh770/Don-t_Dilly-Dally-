@@ -2,82 +2,18 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 트레이를 무한 공급하는 공급원 오브젝트입니다.
-    // 생성 설정만 들고 있고, 실제 트레이 아이템 생성과 재생성만 담당합니다.
-    public class TraySource : MonoBehaviour
+    // 트레이를 무한히 공급하는 공급원입니다.
+    // 트레이 생성 자체는 공통 공급원 로직을 사용하고, 트레이 전용 초기화만 담당합니다.
+    public class TraySource : ItemSource<TrayItem>
     {
-        [Header("공급 설정")]
-        [Tooltip("실제로 생성할 트레이 아이템 프리팹")]
-        public TrayItem SpawnedItemPrefab;
-
-        [Tooltip("트레이 아이템을 배치할 위치")]
-        public Transform SpawnPoint;
-
-        [Tooltip("트레이를 집어가면 자동으로 다시 채울지 여부")]
-        public bool AutoRespawn = true;
-
-        private TrayItem currentSpawnedItem;
-
-        private void Start()
+        protected override void InitializeSpawnedItem(TrayItem spawnedItem)
         {
-            EnsureSpawnedItem();
-        }
-
-        private void Update()
-        {
-            if (!AutoRespawn)
-                return;
-
-            if (currentSpawnedItem == null)
-            {
-                EnsureSpawnedItem();
-                return;
-            }
-
-            if (!currentSpawnedItem.IsStillAt(GetSpawnParent()))
-            {
-                currentSpawnedItem = null;
-                EnsureSpawnedItem();
-            }
-        }
-
-        public void ForceRespawn()
-        {
-            EnsureSpawnedItem(forceRespawn: true);
-        }
-
-        private void EnsureSpawnedItem(bool forceRespawn = false)
-        {
-            if (SpawnedItemPrefab == null)
-                return;
-
-            if (forceRespawn && currentSpawnedItem != null && currentSpawnedItem.IsStillAt(GetSpawnParent()))
-            {
-                Destroy(currentSpawnedItem.gameObject);
-                currentSpawnedItem = null;
-            }
-
-            if (currentSpawnedItem != null)
-                return;
-
-            Transform parent = GetSpawnParent();
-            TrayItem spawnedItem = Instantiate(
-                SpawnedItemPrefab,
-                parent.position,
-                parent.rotation,
-                parent);
-
             spawnedItem.ResetTrayData(false);
-            spawnedItem.name = string.IsNullOrWhiteSpace(spawnedItem.DisplayName)
-                ? "Tray"
-                : spawnedItem.DisplayName;
-
-            currentSpawnedItem = spawnedItem;
         }
 
-        private Transform GetSpawnParent()
+        protected override string GetDefaultItemName(TrayItem spawnedItem)
         {
-            return SpawnPoint != null ? SpawnPoint : transform;
+            return "Tray";
         }
     }
 }

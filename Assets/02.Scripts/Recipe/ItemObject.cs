@@ -2,12 +2,17 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 월드에 배치되는 실제 아이템 오브젝트의 공통 부모입니다.
-    // 표시 이름, 모델, BoxCollider 값을 공통으로 관리합니다.
+    // 월드에 배치되는 아이템 오브젝트의 공통 베이스 클래스입니다.
+    // 표시 이름, 모델 프리팹, 박스 콜라이더 설정을 공통으로 관리합니다.
     public abstract class ItemObject : MonoBehaviour
     {
+        protected delegate bool PresentationResolver<TItemType>(
+            TItemType itemType,
+            out string displayName,
+            out GameObject modelPrefab);
+
         [Header("아이템 공통 정보")]
-        [Tooltip("인스펙터와 씬에서 사용할 아이템 표시 이름")]
+        [Tooltip("인스펙터와 UI에서 사용할 아이템 표시 이름")]
         public string DisplayName;
 
         [Tooltip("모델을 배치할 루트 Transform")]
@@ -16,7 +21,7 @@ namespace DontDillyDally.Data
         [Tooltip("현재 아이템에 연결된 모델 프리팹")]
         public GameObject ModelPrefab;
 
-        [Tooltip("타입별로 BoxCollider 값을 주입받을 대상 콜라이더")]
+        [Tooltip("모델 프리팹의 BoxCollider 값을 복사해 적용할 대상 콜라이더")]
         public BoxCollider TargetBoxCollider;
 
         protected GameObject CurrentModelInstance;
@@ -31,6 +36,36 @@ namespace DontDillyDally.Data
         {
             ModelPrefab = modelPrefab;
             RefreshModel();
+        }
+
+        protected void InitializeWithPresentation<TItemType>(
+            TItemType itemType,
+            string fallbackDisplayName,
+            PresentationResolver<TItemType> presentationResolver = null)
+        {
+            string resolvedDisplayName = string.IsNullOrWhiteSpace(DisplayName)
+                ? fallbackDisplayName
+                : DisplayName;
+
+            GameObject resolvedModelPrefab = ModelPrefab;
+
+            if (presentationResolver != null &&
+                presentationResolver(
+                    itemType,
+                    out string catalogDisplayName,
+                    out GameObject catalogModelPrefab))
+            {
+                if (!string.IsNullOrWhiteSpace(catalogDisplayName))
+                    resolvedDisplayName = catalogDisplayName;
+
+                if (catalogModelPrefab != null)
+                    resolvedModelPrefab = catalogModelPrefab;
+            }
+
+            TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
+
+            DisplayName = resolvedDisplayName;
+            SetModelPrefab(resolvedModelPrefab);
         }
 
         public void ApplyBoxCollider(Vector3 center, Vector3 size)

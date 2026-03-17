@@ -17,37 +17,15 @@ namespace DontDillyDally.Data
         {
             MaterialType = materialType;
 
-            string resolvedDisplayName = string.IsNullOrWhiteSpace(DisplayName)
-                ? materialType.ToString()
-                : DisplayName;
+            PresentationResolver<CraftedMaterialType> resolver =
+                PresentationCatalog != null
+                    ? PresentationCatalog.TryGetBasicMaterialPresentation
+                    : null;
 
-            GameObject resolvedModelPrefab = ModelPrefab;
-            bool colliderApplied = false;
-
-            if (PresentationCatalog != null &&
-                PresentationCatalog.TryGetBasicMaterialPresentation(
-                    materialType,
-                    out string catalogDisplayName,
-                    out GameObject catalogModelPrefab,
-                    out BoxColliderPresentation boxCollider))
-            {
-                if (!string.IsNullOrWhiteSpace(catalogDisplayName))
-                    resolvedDisplayName = catalogDisplayName;
-
-                if (catalogModelPrefab != null)
-                    resolvedModelPrefab = catalogModelPrefab;
-
-                if (boxCollider != null && boxCollider.UseOverride)
-                {
-                    ApplyBoxCollider(boxCollider.Center, boxCollider.Size);
-                    colliderApplied = true;
-                }
-            }
-
-            if (!colliderApplied)
-                TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
-
-            base.Initialize(resolvedDisplayName, resolvedModelPrefab);
+            InitializeWithPresentation(
+                materialType,
+                materialType.ToString(),
+                resolver);
         }
 
         public CraftedItem CreatePreparedItem(int playerId = 0)

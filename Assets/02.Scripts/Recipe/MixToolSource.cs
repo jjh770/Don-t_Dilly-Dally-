@@ -2,92 +2,39 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 조합 도구를 무한히 꺼내주는 공급원 오브젝트입니다.
-    // 공급원은 타입과 생성 설정만 들고 있고, 실제 아이템 외형은 생성된 아이템이 관리합니다.
-    public class MixToolSource : MonoBehaviour
+    // 조합 도구를 무한히 공급하는 공급원입니다.
+    // 도구 타입만 설정하면 공통 공급원 로직을 통해 아이템을 생성하고 유지합니다.
+    public class MixToolSource : ItemSource<MixToolItem>
     {
-        [Header("공급 도구 정보")]
-        [Tooltip("이 공급원이 꺼내주는 ToolType")]
+        [Header("조합 도구 공급원")]
+        [Tooltip("이 공급원이 생성할 조합 도구 타입")]
         public ToolType ToolType = ToolType.None;
-
-        [Tooltip("실제로 생성할 홀더블 조합 도구 프리팹")]
-        public MixToolItem SpawnedItemPrefab;
-
-        [Tooltip("새 아이템을 배치할 위치")]
-        public Transform SpawnPoint;
-
-        [Tooltip("아이템을 집어가면 자동으로 다시 채울지 여부")]
-        public bool AutoRespawn = true;
-
-        private MixToolItem currentSpawnedItem;
-
-        private void Start()
-        {
-            EnsureSpawnedItem();
-        }
-
-        private void Update()
-        {
-            if (!AutoRespawn)
-                return;
-
-            if (currentSpawnedItem == null)
-            {
-                EnsureSpawnedItem();
-                return;
-            }
-
-            if (!currentSpawnedItem.IsStillAt(GetSpawnParent()))
-            {
-                currentSpawnedItem = null;
-                EnsureSpawnedItem();
-            }
-        }
 
         public void Initialize(ToolType toolType)
         {
             ToolType = toolType;
-            EnsureSpawnedItem(forceRespawn: true);
+            ForceRespawn();
         }
 
         public void SetToolType(ToolType toolType)
         {
             ToolType = toolType;
-            EnsureSpawnedItem(forceRespawn: true);
+            ForceRespawn();
         }
 
-        private void EnsureSpawnedItem(bool forceRespawn = false)
+        protected override bool CanSpawnItem()
         {
-            if (SpawnedItemPrefab == null || ToolType == ToolType.None)
-                return;
+            return base.CanSpawnItem() && ToolType != ToolType.None;
+        }
 
-            if (forceRespawn && currentSpawnedItem != null && currentSpawnedItem.IsStillAt(GetSpawnParent()))
-            {
-                Destroy(currentSpawnedItem.gameObject);
-                currentSpawnedItem = null;
-            }
-
-            if (currentSpawnedItem != null)
-                return;
-
-            Transform parent = GetSpawnParent();
-            MixToolItem spawnedItem = Instantiate(
-                SpawnedItemPrefab,
-                parent.position,
-                parent.rotation,
-                parent);
-
+        protected override void InitializeSpawnedItem(MixToolItem spawnedItem)
+        {
             spawnedItem.Initialize(ToolType);
-            spawnedItem.name = string.IsNullOrWhiteSpace(spawnedItem.DisplayName)
-                ? ToolType.ToString()
-                : spawnedItem.DisplayName;
-
-            currentSpawnedItem = spawnedItem;
         }
 
-        private Transform GetSpawnParent()
+        protected override string GetDefaultItemName(MixToolItem spawnedItem)
         {
-            return SpawnPoint != null ? SpawnPoint : transform;
+            return ToolType.ToString();
         }
     }
 }

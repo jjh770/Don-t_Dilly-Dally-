@@ -2,92 +2,39 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 기본 재료를 무한히 꺼내주는 공급원 오브젝트입니다.
-    // 공급원은 타입과 생성 설정만 들고 있고, 실제 아이템 외형은 생성된 아이템이 관리합니다.
-    public class BasicMaterialSource : MonoBehaviour
+    // 기본 재료를 무한히 공급하는 공급원입니다.
+    // 재료 타입만 설정하면 공통 공급원 로직을 통해 아이템을 생성하고 유지합니다.
+    public class BasicMaterialSource : ItemSource<BasicMaterialItem>
     {
-        [Header("공급 재료 정보")]
-        [Tooltip("이 공급원이 꺼내주는 기본 재료 타입")]
+        [Header("기본 재료 공급원")]
+        [Tooltip("이 공급원이 생성할 기본 재료 타입")]
         public CraftedMaterialType MaterialType = CraftedMaterialType.None;
-
-        [Tooltip("실제로 생성할 홀더블 기본 재료 프리팹")]
-        public BasicMaterialItem SpawnedItemPrefab;
-
-        [Tooltip("새 아이템을 배치할 위치")]
-        public Transform SpawnPoint;
-
-        [Tooltip("아이템을 집어가면 자동으로 다시 채울지 여부")]
-        public bool AutoRespawn = true;
-
-        private BasicMaterialItem currentSpawnedItem;
-
-        private void Start()
-        {
-            EnsureSpawnedItem();
-        }
-
-        private void Update()
-        {
-            if (!AutoRespawn)
-                return;
-
-            if (currentSpawnedItem == null)
-            {
-                EnsureSpawnedItem();
-                return;
-            }
-
-            if (!currentSpawnedItem.IsStillAt(GetSpawnParent()))
-            {
-                currentSpawnedItem = null;
-                EnsureSpawnedItem();
-            }
-        }
 
         public void Initialize(CraftedMaterialType materialType)
         {
             MaterialType = materialType;
-            EnsureSpawnedItem(forceRespawn: true);
+            ForceRespawn();
         }
 
         public void SetMaterialType(CraftedMaterialType materialType)
         {
             MaterialType = materialType;
-            EnsureSpawnedItem(forceRespawn: true);
+            ForceRespawn();
         }
 
-        private void EnsureSpawnedItem(bool forceRespawn = false)
+        protected override bool CanSpawnItem()
         {
-            if (SpawnedItemPrefab == null || MaterialType == CraftedMaterialType.None)
-                return;
+            return base.CanSpawnItem() && MaterialType != CraftedMaterialType.None;
+        }
 
-            if (forceRespawn && currentSpawnedItem != null && currentSpawnedItem.IsStillAt(GetSpawnParent()))
-            {
-                Destroy(currentSpawnedItem.gameObject);
-                currentSpawnedItem = null;
-            }
-
-            if (currentSpawnedItem != null)
-                return;
-
-            Transform parent = GetSpawnParent();
-            BasicMaterialItem spawnedItem = Instantiate(
-                SpawnedItemPrefab,
-                parent.position,
-                parent.rotation,
-                parent);
-
+        protected override void InitializeSpawnedItem(BasicMaterialItem spawnedItem)
+        {
             spawnedItem.Initialize(MaterialType);
-            spawnedItem.name = string.IsNullOrWhiteSpace(spawnedItem.DisplayName)
-                ? MaterialType.ToString()
-                : spawnedItem.DisplayName;
-
-            currentSpawnedItem = spawnedItem;
         }
 
-        private Transform GetSpawnParent()
+        protected override string GetDefaultItemName(BasicMaterialItem spawnedItem)
         {
-            return SpawnPoint != null ? SpawnPoint : transform;
+            return MaterialType.ToString();
         }
     }
 }

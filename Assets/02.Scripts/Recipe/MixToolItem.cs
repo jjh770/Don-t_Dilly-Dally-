@@ -17,37 +17,15 @@ namespace DontDillyDally.Data
         {
             ToolType = toolType;
 
-            string resolvedDisplayName = string.IsNullOrWhiteSpace(DisplayName)
-                ? toolType.ToString()
-                : DisplayName;
+            PresentationResolver<ToolType> resolver =
+                PresentationCatalog != null
+                    ? PresentationCatalog.TryGetMixToolPresentation
+                    : null;
 
-            GameObject resolvedModelPrefab = ModelPrefab;
-            bool colliderApplied = false;
-
-            if (PresentationCatalog != null &&
-                PresentationCatalog.TryGetMixToolPresentation(
-                    toolType,
-                    out string catalogDisplayName,
-                    out GameObject catalogModelPrefab,
-                    out BoxColliderPresentation boxCollider))
-            {
-                if (!string.IsNullOrWhiteSpace(catalogDisplayName))
-                    resolvedDisplayName = catalogDisplayName;
-
-                if (catalogModelPrefab != null)
-                    resolvedModelPrefab = catalogModelPrefab;
-
-                if (boxCollider != null && boxCollider.UseOverride)
-                {
-                    ApplyBoxCollider(boxCollider.Center, boxCollider.Size);
-                    colliderApplied = true;
-                }
-            }
-
-            if (!colliderApplied)
-                TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
-
-            base.Initialize(resolvedDisplayName, resolvedModelPrefab);
+            InitializeWithPresentation(
+                toolType,
+                toolType.ToString(),
+                resolver);
         }
     }
 }
