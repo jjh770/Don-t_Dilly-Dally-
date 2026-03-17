@@ -1,3 +1,4 @@
+using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -25,6 +26,16 @@ namespace DontDillyDally.Data
         public BoxCollider TargetBoxCollider;
 
         protected GameObject CurrentModelInstance;
+        protected PhotonView _photonView;
+
+        public bool HasLeftSource { get; private set; }
+
+        protected virtual void Awake()
+        {
+            if (ModelPrefab != null)
+                RefreshModel();
+            _photonView = GetComponent<PhotonView>();
+        }
 
         public virtual void Initialize(string displayName, GameObject modelPrefab = null)
         {
@@ -112,12 +123,6 @@ namespace DontDillyDally.Data
             DisableModelColliders();
         }
 
-        protected virtual void Awake()
-        {
-            if (ModelPrefab != null)
-                RefreshModel();
-        }
-
         protected void ClearCurrentModel()
         {
             if (CurrentModelInstance != null)
@@ -142,6 +147,36 @@ namespace DontDillyDally.Data
                 return TargetBoxCollider;
 
             return GetComponent<BoxCollider>();
+        }
+
+        public void MarkLeftSource()
+        {
+            HasLeftSource = true;
+        }
+
+        public void ResetSourceState()
+        {
+            HasLeftSource = false;
+        }
+
+        public void NotifyLeftSource()
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                MarkLeftSource();
+                return;
+            }
+
+            if (_photonView == null)
+                return;
+
+            _photonView.RPC(nameof(RPC_MarkLeftSource), RpcTarget.MasterClient);
+        }
+
+        [PunRPC]
+        public void RPC_MarkLeftSource()
+        {
+            MarkLeftSource();
         }
     }
 }

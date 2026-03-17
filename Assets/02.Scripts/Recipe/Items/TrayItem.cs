@@ -1,10 +1,11 @@
+using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
 {
     // 실제 트레이 오브젝트에 붙는 상태 보관 컴포넌트입니다.
     // 멸균 여부와 트레이 위 재료 목록을 함께 관리합니다.
-    public class TrayItem : ItemObject
+    public class TrayItem : ItemObject, IPunInstantiateMagicCallback
     {
         [Header("트레이 상태")]
         [Tooltip("이 트레이가 들고 있는 실제 제출 데이터")]
@@ -67,6 +68,12 @@ namespace DontDillyDally.Data
         {
             EnsureTrayData();
             return TrayData.Clone();
+        }
+
+        public void OnPhotonInstantiate(PhotonMessageInfo info)
+        {
+            ResetSourceState();
+            ResetTrayData(false);
         }
     }
 }

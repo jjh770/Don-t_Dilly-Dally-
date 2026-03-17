@@ -1,3 +1,5 @@
+using DontDillyDally.Data;
+using Photon.Pun;
 using System.Collections;
 using UnityEngine;
 
@@ -28,10 +30,14 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private float _rotationAngleThreshold = 5f;
     [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
+    public Transform HoldPoint => _holdPoint;
 
     private IInteractable _currentInteractable;
+    // 들고있는 아이템 판별
+    private ItemObject _currentHeldItem;
     private IInteractable _nearestInteractable;
 
+    private PlayerController _playerController;
     private PlayerAnimator _playerAnimator;
     private PlayerMovementAbility _playerMovement;
     private Camera _camera;
@@ -39,8 +45,11 @@ public class PlayerInteractionAbility : MonoBehaviour
     private float _detectionAngleCos;
     private Collider[] _playerColliders;
 
+
+
     private void Awake()
     {
+        _playerController = GetComponent<PlayerController>();
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerMovement = GetComponent<PlayerMovementAbility>();
         _camera = Camera.main;
@@ -50,6 +59,9 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void Update()
     {
+        if (_playerController?.PhotonView != null && !_playerController.PhotonView.IsMine)
+            return;
+
         FindNearestInteractable();
         HandleInteractInput();
         HandlePushableMovement();
@@ -115,29 +127,79 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void StartInteract(IInteractable interactable)
     {
-        _currentInteractable = interactable;
-
         if (interactable is IHoldable)
         {
-            interactable.Interact(_holdPoint);
-            _playerAnimator.PlayHoldAnimation(true);
+            TryStartHold(interactable);
+            return;
         }
         else if (interactable is IPushable)
         {
             interactable.Interact(transform);
+            _currentInteractable = interactable;
             _playerAnimator.PlayGrabAnimation(true);
             _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);
         }
     }
 
+    private bool TryStartHold(IInteractable interactable)
+    {
+        if (interactable is not IHoldable holdable)
+            return false;
+
+        if (!TryResolveHeldItem(interactable, out ItemObject itemObject))
+            return false;
+
+        if (!TryAcquireItemOwnership(itemObject))
+            return false;
+
+        holdable.Interact(_holdPoint, PhotonNetwork.LocalPlayer.ActorNumber);
+        itemObject.NotifyLeftSource();
+
+        _currentInteractable = interactable;
+        _currentHeldItem = itemObject;
+
+        _playerAnimator.PlayHoldAnimation(true);
+        return true;
+    }
+
+    private bool TryResolveHeldItem(IInteractable interactable, out ItemObject itemObject)
+    {
+        itemObject = null;
+
+        if (interactable is not Component component)
+            return false;
+
+        itemObject = component.GetComponent<ItemObject>();
+        return itemObject != null;
+    }
+
+    private bool TryAcquireItemOwnership(ItemObject itemObject)
+    {
+        PhotonView photonView = itemObject.GetComponent<PhotonView>();
+        if (photonView == null || PhotonNetwork.LocalPlayer == null)
+            return false;
+
+        if (!photonView.IsMine)
+            photonView.TransferOwnership(PhotonNetwork.LocalPlayer);
+
+        return photonView.Owner != null && photonView.Owner.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber;
+    }
+
     private void StopInteract()
     {
-        if (_currentInteractable is IHoldable)
+        if (_currentInteractable is IHoldable holdable)
         {
-            _currentInteractable.StopInteract();
+            holdable.StopInteract();
+
+            ReleaseHeldItemOwnershipToMaster();
+
             _playerAnimator.PlayHoldAnimation(false);
+            _currentInteractable = null;
+            _currentHeldItem = null;
+            return;
         }
-        else if (_currentInteractable is IPushable)
+
+        if (_currentInteractable is IPushable)
         {
             _currentInteractable.StopInteract();
             _playerAnimator.PlayGrabAnimation(false);
@@ -146,6 +208,21 @@ public class PlayerInteractionAbility : MonoBehaviour
         }
 
         _currentInteractable = null;
+    }
+
+    private void ReleaseHeldItemOwnershipToMaster()
+    {
+        if (_currentHeldItem == null)
+            return;
+
+        PhotonView photonView = _currentHeldItem.GetComponent<PhotonView>();
+        if (photonView == null)
+            return;
+
+        if (PhotonNetwork.MasterClient == null)
+            return;
+
+        photonView.TransferOwnership(PhotonNetwork.MasterClient);
     }
 
     private void HandlePushableMovement()
@@ -182,7 +259,9 @@ public class PlayerInteractionAbility : MonoBehaviour
         _playerAnimator.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
         holdable.Throw(throwDirection, _throwForce, _playerColliders);
+
         _currentInteractable = null;
+        _currentHeldItem = null;
 
         // 잡는 애니메이션 취소
         _playerAnimator.ResetThrowAnimation();
