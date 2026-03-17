@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -21,7 +22,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     private readonly System.Random _random = new System.Random();
 
+    public bool IsMasterClient => PhotonNetwork.IsMasterClient;
+    public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
+
     public event Action<string> OnFailedToJoinRoom;
+    public event Action<Player, bool> OnReadyStateChanged;
+    public event Action<Player, string> OnNicknameChanged;
+    public event Action OnMasterClientChanged;
 
     private void Start()
     {
@@ -53,8 +60,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnJoinedRoom()
     {
         _roomCode = null;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
         Debug.Log($"{PhotonNetwork.LocalPlayer.NickName} Joined room: {PhotonNetwork.CurrentRoom.Name}");
         Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
+
+        PlayerProperty.EnsureProperties();
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
@@ -72,6 +82,23 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
                 OnFailedToJoinRoom?.Invoke($"알 수 없는 오류: {message}");
                 break;
         }
+    }
+
+    public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
+    {
+        if (changedProps.TryGetValue(PlayerProperty.IsReadyKey, out object isReadyValue) && isReadyValue is bool isReady)
+        {
+            OnReadyStateChanged?.Invoke(targetPlayer, isReady);
+        }
+        if (changedProps.TryGetValue(PlayerProperty.NicknameKey, out object nicknameValue) && nicknameValue is string nickname)
+        {
+            OnNicknameChanged?.Invoke(targetPlayer, nickname);
+        }
+    }
+
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        OnMasterClientChanged?.Invoke();
     }
 
     public void CreateNewRoom()
@@ -112,5 +139,31 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     {
         _nickName = nickname;
         PhotonNetwork.NickName = _nickName;
+        PlayerProperty.SetNickname(_nickName);
+    }
+
+    public bool TryStartStage(out string message)
+    {
+        Player[] players = PhotonNetwork.PlayerList;
+
+        foreach (Player player in players)
+        {
+            if (player.IsMasterClient) continue;
+            if (PlayerProperty.GetReadyState(player) == false)
+            {
+                message = "모든 플레이어가 준비해야 합니다.";
+                return false;
+            }
+        }
+        PhotonNetwork.CurrentRoom.IsOpen = false;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Gameplay);
+        message = string.Empty;
+        return true;
+    }
+
+    public void ReturnWaitingRoom()
+    {
+        PhotonNetwork.CurrentRoom.IsOpen = true;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
     }
 }

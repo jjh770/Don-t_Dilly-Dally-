@@ -1,0 +1,90 @@
+using DontDillyDally.Data;
+using UnityEngine;
+
+// 아이템 공급원의 공통 동작을 담당하는 제네릭 베이스 클래스입니다.
+// 생성 위치 관리, 자동 리스폰, 현재 생성 아이템 추적을 공통으로 처리합니다.
+public abstract class ItemSource<TItem> : MonoBehaviour where TItem : ItemObject
+{
+    [Tooltip("이 공급원에서 생성할 아이템 프리팹")]
+    public TItem SpawnedItemPrefab;
+
+    [Tooltip("아이템을 생성할 기준 위치이자 부모 Transform")]
+    public Transform SpawnPoint;
+
+    [Tooltip("생성된 아이템이 공급원을 벗어나면 자동으로 다시 생성할지 여부")]
+    public bool AutoRespawn = true;
+
+    protected TItem CurrentSpawnedItem;
+
+    protected virtual void Start()
+    {
+        EnsureSpawnedItem();
+    }
+
+    protected virtual void Update()
+    {
+        if (!AutoRespawn)
+            return;
+
+        if (CurrentSpawnedItem == null)
+        {
+            EnsureSpawnedItem();
+            return;
+        }
+
+        if (!CurrentSpawnedItem.IsStillAt(GetSpawnParent()))
+        {
+            CurrentSpawnedItem = null;
+            EnsureSpawnedItem();
+        }
+    }
+
+    public void ForceRespawn()
+    {
+        EnsureSpawnedItem(forceRespawn: true);
+    }
+
+    protected virtual bool CanSpawnItem()
+    {
+        return SpawnedItemPrefab != null;
+    }
+
+    protected abstract void InitializeSpawnedItem(TItem spawnedItem);
+
+    protected abstract string GetDefaultItemName(TItem spawnedItem);
+
+    protected Transform GetSpawnParent()
+    {
+        return SpawnPoint != null ? SpawnPoint : transform;
+    }
+
+    private void EnsureSpawnedItem(bool forceRespawn = false)
+    {
+        if (!CanSpawnItem())
+            return;
+
+        Transform parent = GetSpawnParent();
+
+        if (forceRespawn && CurrentSpawnedItem != null && CurrentSpawnedItem.IsStillAt(parent))
+        {
+            Destroy(CurrentSpawnedItem.gameObject);
+            CurrentSpawnedItem = null;
+        }
+
+        if (CurrentSpawnedItem != null)
+            return;
+
+        TItem spawnedItem = Instantiate(
+            SpawnedItemPrefab,
+            parent.position,
+            parent.rotation,
+            parent);
+
+        InitializeSpawnedItem(spawnedItem);
+        spawnedItem.name = string.IsNullOrWhiteSpace(spawnedItem.DisplayName)
+            ? GetDefaultItemName(spawnedItem)
+            : spawnedItem.DisplayName;
+
+        CurrentSpawnedItem = spawnedItem;
+    }
+}
