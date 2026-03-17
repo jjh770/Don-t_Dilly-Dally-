@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -9,6 +10,7 @@ public class HoldableItem : MonoBehaviour, IHoldable
 
     [Header("던지기 설정")]
     [SerializeField] private float _upAngle = 0.5f;
+    [SerializeField] private float _ignoreCollisionDuration = 0.3f;
 
     private Rigidbody _rigidbody;
     private Collider _collider;
@@ -40,15 +42,41 @@ public class HoldableItem : MonoBehaviour, IHoldable
         Interact(holdPoint);
     }
 
-    public void Throw(Vector3 direction, float force)
+    public void Throw(Vector3 direction, float force, Collider[] throwerColliders = null)
     {
         IsInteracting = false;
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
         _collider.enabled = true;
 
+        if (throwerColliders != null)
+        {
+            StartCoroutine(IgnoreCollisionTemporarily(throwerColliders));
+        }
+
         Vector3 throwDirection = (direction + Vector3.up * _upAngle).normalized;
         _rigidbody.AddForce(throwDirection * force, ForceMode.Impulse);
+    }
+
+    private IEnumerator IgnoreCollisionTemporarily(Collider[] colliders)
+    {
+        foreach (Collider col in colliders)
+        {
+            if (col != null)
+            {
+                Physics.IgnoreCollision(_collider, col, true);
+            }
+        }
+
+        yield return new WaitForSeconds(_ignoreCollisionDuration);
+
+        foreach (Collider col in colliders)
+        {
+            if (col != null && _collider != null)
+            {
+                Physics.IgnoreCollision(_collider, col, false);
+            }
+        }
     }
 
     public void Drop()
