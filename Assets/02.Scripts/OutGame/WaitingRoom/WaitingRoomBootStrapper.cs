@@ -1,0 +1,17 @@
+using Photon.Pun;
+using UnityEngine;
+
+public class WaitingRoomBootStrapper : MonoBehaviour
+{
+    [SerializeField] private WaitingRoomView _view;
+    private WaitingRoomModel _model;
+    private WaitingRoomPresenter  _presenter;
+
+    private void Start()
+    {
+        _model = new WaitingRoomModel(PhotonServerManager.Instance.IsMasterClient, PhotonServerManager.Instance.GetLocalPlayerReadyState());
+        _presenter = new WaitingRoomPresenter(_view, _model);
+        _presenter.Initialize();
+        _view.Initialized(_presenter);
+    }
+}
