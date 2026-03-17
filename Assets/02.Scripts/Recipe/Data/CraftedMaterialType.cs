@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace DontDillyDally.Data
 {
     // 조합을 통해 완성되거나 바로 제출 가능한 최종 재료 타입입니다.
@@ -49,5 +51,31 @@ namespace DontDillyDally.Data
 
         // 잘못된 조합 결과
         Unknown
+    }
+
+    // CraftedMaterialType 분류 판별 유틸리티입니다.
+    // 새 재료를 추가할 때 IsBasicMaterial 목록도 함께 갱신하세요.
+    public static class CraftedMaterialTypeExtensions
+    {
+        private static readonly HashSet<CraftedMaterialType> s_basicMaterials = new()
+        {
+            CraftedMaterialType.Bandage,
+            CraftedMaterialType.Disinfectant,
+            CraftedMaterialType.Stethoscope,
+            CraftedMaterialType.AmbuBag,
+            CraftedMaterialType.GauzeBox,
+            CraftedMaterialType.RedMedicine,
+            CraftedMaterialType.OrganLiver,
+            CraftedMaterialType.OrganStomach,
+            CraftedMaterialType.OrganLung,
+            CraftedMaterialType.OrganIntestine,
+            CraftedMaterialType.Defibrillator,
+            CraftedMaterialType.BloodPack,
+        };
+
+        public static bool IsBasicMaterial(this CraftedMaterialType type)
+        {
+            return s_basicMaterials.Contains(type);
+        }
     }
 }

@@ -44,25 +44,7 @@ namespace DontDillyDally.Data
 
         public static bool IsBasicMaterial(CraftedMaterialType materialType)
         {
-            switch (materialType)
-            {
-                case CraftedMaterialType.Bandage:
-                case CraftedMaterialType.Disinfectant:
-                case CraftedMaterialType.Stethoscope:
-                case CraftedMaterialType.AmbuBag:
-                case CraftedMaterialType.GauzeBox:
-                case CraftedMaterialType.RedMedicine:
-                case CraftedMaterialType.OrganLiver:
-                case CraftedMaterialType.OrganStomach:
-                case CraftedMaterialType.OrganLung:
-                case CraftedMaterialType.OrganIntestine:
-                case CraftedMaterialType.Defibrillator:
-                case CraftedMaterialType.BloodPack:
-                    return true;
-
-                default:
-                    return false;
-            }
+            return materialType.IsBasicMaterial();
         }
     }
 }

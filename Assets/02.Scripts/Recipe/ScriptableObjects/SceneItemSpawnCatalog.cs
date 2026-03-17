@@ -35,7 +35,7 @@ namespace DontDillyDally.Data
 
                 case SpawnItemKind.BasicMaterial:
                     return MaterialType != CraftedMaterialType.None &&
-                           CraftedItem.IsBasicMaterial(MaterialType);
+                           MaterialType.IsBasicMaterial();
 
                 default:
                     return false;

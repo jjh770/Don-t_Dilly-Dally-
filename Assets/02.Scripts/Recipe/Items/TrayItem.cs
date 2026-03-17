@@ -14,8 +14,7 @@ namespace DontDillyDally.Data
 
         public override void Initialize(string displayName, GameObject modelPrefab = null)
         {
-            base.Initialize(displayName, modelPrefab);
-            EnsureTrayData();
+            InitializeTray(displayName, modelPrefab, isSterilized: false);
         }
 
         public void InitializeTray(

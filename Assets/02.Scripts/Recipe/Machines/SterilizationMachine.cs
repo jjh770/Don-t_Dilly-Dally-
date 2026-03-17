@@ -8,11 +8,11 @@ namespace DontDillyDally.Data
     {
         [Header("연동 대상")]
         [Tooltip("도구 멸균에 사용할 조합 기계")]
-        public CraftingMachine CraftingMachine;
+        [SerializeField] CraftingMachine _craftingMachine;
 
         public CraftingAttemptResult TrySterilizeTool(ToolType tool, int playerId)
         {
-            if (CraftingMachine == null)
+            if (_craftingMachine == null)
             {
                 return new CraftingAttemptResult
                 {
@@ -22,7 +22,7 @@ namespace DontDillyDally.Data
                 };
             }
 
-            return CraftingMachine.TryCraft(tool, ActionType.Sterilize, playerId);
+            return _craftingMachine.TryCraft(tool, ActionType.Sterilize, playerId);
         }
 
         public bool CanSterilizeTray(SubmittedTray tray)
