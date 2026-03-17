@@ -1,11 +1,12 @@
 using System;
 using Photon.Pun;
 using UnityEngine;
-using static UnityEngine.Timeline.TimelineAsset;
 
 public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 {
     public Transform _spawnPoint;
+
+    [SerializeField] private GameObject _playerPrefab;
 
     private GameObject _player;
 
@@ -45,7 +46,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
         // 리소스 폴더에서 "Player" 이름을 가진 프리팹을 생성하고, 서버에 등록함
         // 리소스 폴더는 좋지 않음 => 다른 방법을 찾아보자
-        _player = PhotonNetwork.Instantiate("Player", spawnPosition, Quaternion.identity);
+        _player = PhotonNetwork.Instantiate(_playerPrefab.name, spawnPosition, Quaternion.identity);
 
         if (_player == null)
         {

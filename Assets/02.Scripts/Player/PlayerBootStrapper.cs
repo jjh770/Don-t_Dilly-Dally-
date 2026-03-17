@@ -1,21 +1,29 @@
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
 
 public class PlayerBootStrapper : MonoBehaviour
 {
+    PlayerModel _playerModel;
+    PlayerView _playerView;
+    PlayerPresenter _playerPresenter;
+
     private void Start()
     {
         Player owner = GetComponent<PhotonView>().Owner;
-        PlayerModel model = new PlayerModel(
+        _playerModel = new PlayerModel(
             PlayerProperty.GetNickname(owner),
             PlayerProperty.GetReadyState(owner)
         );
-        PlayerView _playerView = GetComponentInChildren<PlayerView>();
+        _playerView = GetComponentInChildren<PlayerView>();
 
-        PlayerPresenter presenter = new PlayerPresenter(model, _playerView, owner);
-        _playerView.Initialize(presenter);
-        presenter.Initialize();
+         _playerPresenter = new PlayerPresenter(_playerModel, _playerView, owner);
+        _playerView.Initialize(_playerPresenter);
+        _playerPresenter.Initialize();
+    }
+
+    private void OnDestroy()
+    {
+        _playerPresenter?.OnDestroy();
     }
 }

@@ -83,13 +83,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     public override void OnPlayerPropertiesUpdate(Player targetPlayer, Hashtable changedProps)
     {
-        if (changedProps.ContainsKey(PlayerProperty.IsReadyKey))
+        if (changedProps.TryGetValue(PlayerProperty.IsReadyKey, out object isReadyValue) && isReadyValue is bool isReady)
         {
-            OnReadyStateChanged?.Invoke(targetPlayer, (bool)changedProps[PlayerProperty.IsReadyKey]);
+            OnReadyStateChanged?.Invoke(targetPlayer, isReady);
         }
-        else if (changedProps.ContainsKey(PlayerProperty.NicknameKey))
+        if (changedProps.TryGetValue(PlayerProperty.NicknameKey, out object nicknameValue) && nicknameValue is string nickname)
         {
-            OnNicknameChanged?.Invoke(targetPlayer,(string)changedProps[PlayerProperty.NicknameKey]);
+            OnNicknameChanged?.Invoke(targetPlayer, nickname);
         }
     }
 

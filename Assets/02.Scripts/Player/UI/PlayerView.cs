@@ -29,9 +29,4 @@ public class PlayerView : MonoBehaviour
     {
         _nicknameText.color = isReady ? _readyColor : _notReadyColor;
     }
-
-    public void OnDestroy()
-    {
-        _presenter.OnDestroy();
-    }
 }

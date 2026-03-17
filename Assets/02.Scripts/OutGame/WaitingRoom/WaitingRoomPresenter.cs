@@ -11,23 +11,6 @@ public class WaitingRoomPresenter
 
     public void ReadyStateChange(bool isReady)
     {
-        if (isReady)
-        {
-            SetReady();
-        }
-        else
-        {
-            SetUnready();
-        }
-    }
-
-    public void SetReady()
-    {
-        PlayerProperty.SetReadyState(true);
-    }
-
-    public void SetUnready()
-    {
-        PlayerProperty.SetReadyState(false);
+        PlayerProperty.SetReadyState(isReady);
     }
 }
