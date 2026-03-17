@@ -139,4 +139,16 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
         PhotonNetwork.NickName = _nickName;
         PlayerProperty.SetNickname(_nickName);
     }
+
+    public void StartStage()
+    {
+        PhotonNetwork.CurrentRoom.IsOpen = false;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Gameplay);
+    }
+
+    public void ReturnWaitingRoom()
+    {
+        PhotonNetwork.CurrentRoom.IsOpen = true;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
+    }
 }

@@ -14,12 +14,6 @@ public class WaitingRoomPresenter
         _model = model;
 
         PhotonServerManager.Instance.OnMasterClientChanged += OnMasterClientChange;
-        PhotonServerManager.Instance.OnReadyStateChanged += OnReadyStateChange;
-    }
-
-    private void OnReadyStateChange(Player player, bool isReady)
-    {
-        
     }
 
     private void OnMasterClientChange()
@@ -33,8 +27,6 @@ public class WaitingRoomPresenter
             SetIsMaster(false);
         }
     }
-
-
     public void ReadyStateChange()
     {
         _model.ToggleReady();
@@ -51,6 +43,20 @@ public class WaitingRoomPresenter
     public void GameStart()
     {
         Debug.Log("게임 시작");
+
+        Player[] players = PhotonNetwork.PlayerList;
+
+        foreach (Player player in players)
+        {
+            if (player.IsMasterClient) continue;
+            if (PlayerProperty.GetReadyState(player) == false)
+            {
+                Debug.Log("모든 팀원이 준비되어야 합니다.");
+                return;
+            }  
+        }
+        PhotonServerManager.Instance.StartStage();
+        Debug.Log("게임 시작.");
     }
 
     public void Initialize()
