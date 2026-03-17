@@ -24,12 +24,25 @@ public class PlayerPresenter
     {
         if (_owner.IsMasterClient)
         {
+            _model.SetIsMaster(true);
             _view.SetMasterNickname();
+            return;
+        }
+
+        if (!_model.IsMaster) return;
+
+        _model.SetIsMaster(false);
+
+        if (_model.IsReady)
+        {
+            if (PhotonNetwork.LocalPlayer == _owner)
+            {
+                PlayerProperty.SetReadyState(false);
+            }
         }
         else
         {
-            if (PhotonNetwork.LocalPlayer != _owner) return;
-            PlayerProperty.SetReadyState(false);
+            ReadyStateChange(_owner, _model.IsReady);
         }
     }
 
@@ -67,5 +80,6 @@ public class PlayerPresenter
     {
         PhotonServerManager.Instance.OnNicknameChanged -= SetNickname;
         PhotonServerManager.Instance.OnReadyStateChanged -= ReadyStateChange;
+        PhotonServerManager.Instance.OnMasterClientChanged -= MasterClientChanged;
     }
 }
