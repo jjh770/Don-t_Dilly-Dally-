@@ -1,11 +1,12 @@
 using System;
 using System.Linq;
+using System.Xml.Linq;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
-public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
+public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, IOnEventCallback
 {
  
     [SerializeField]
@@ -13,6 +14,8 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     [SerializeField]
     private int _maxPlayersPerRoom = 4;
+
+    private const byte KickEventCode = 1;
 
     private readonly string _gameVersion = "1.0";
 
@@ -35,11 +38,22 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
         Connect();
     }
 
+    public override void OnEnable()
+    {
+        base.OnEnable();
+        PhotonNetwork.AddCallbackTarget(this);
+    }
+
+    public override void OnDisable()
+    {
+        PhotonNetwork.RemoveCallbackTarget(this);
+    }
     private void Connect()
     {
         PhotonNetwork.GameVersion = _gameVersion;
         PhotonNetwork.NickName = _nickName;
 
+        PhotonNetwork.EnableCloseConnection = true;
         PhotonNetwork.AutomaticallySyncScene = true;
 
         PhotonNetwork.ConnectUsingSettings();
@@ -99,6 +113,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     public override void OnMasterClientSwitched(Player newMasterClient)
     {
         OnMasterClientChanged?.Invoke();
+    }
+
+    public override void OnLeftRoom()
+    {
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
     }
 
     public void CreateNewRoom()
@@ -165,5 +184,35 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
     {
         PhotonNetwork.CurrentRoom.IsOpen = true;
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
+    }
+
+    public void ChangeMaster(Player player)
+    {
+        PhotonNetwork.SetMasterClient(player);
+    }
+
+    public void Kick(Player player)
+    {
+        object[] content = { "kicked" };
+
+        RaiseEventOptions options = new RaiseEventOptions
+        {
+            TargetActors = new[] { player.ActorNumber }
+        };
+
+        SendOptions sendOptions = new SendOptions
+        {
+            Reliability = true
+        };
+
+        PhotonNetwork.RaiseEvent(KickEventCode, content, options, sendOptions);
+    }
+
+    public void OnEvent(EventData photonEvent)
+    {
+        if (photonEvent.Code == KickEventCode)
+        {
+            PhotonNetwork.LeaveRoom();
+        }
     }
 }

@@ -1,65 +1,98 @@
-using System;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
 public class WaitingRoomPresenter
 {
-    private readonly WaitingRoomView _view;
+    private readonly WaitingRoomView _waitingRoomView;
+    private readonly PlayerPopupView _playerPopupView;
     private readonly WaitingRoomModel _model;
 
-    public WaitingRoomPresenter(WaitingRoomView view, WaitingRoomModel model)
+    public WaitingRoomPresenter(WaitingRoomView waitingRoomView, PlayerPopupView playerPopupView, WaitingRoomModel model)
     {
-        _view = view;
+        _waitingRoomView = waitingRoomView;
+        _playerPopupView = playerPopupView;
         _model = model;
 
-        PhotonServerManager.Instance.OnMasterClientChanged += OnMasterClientChange;
-    }
-
-    private void OnMasterClientChange()
-    {
-        if (PhotonNetwork.IsMasterClient)
-        {
-            SetIsMaster(true);
-        }
-        else
-        {
-            SetIsMaster(false);
-        }
-    }
-
-    public void ReadyStateChange()
-    {
-        _model.ToggleReady();
-        PlayerProperty.SetReadyState(_model.IsReady);
-    }
-
-    public void SetIsMaster(bool isMaster)
-    {
-        _model.SetIsMaster(isMaster);
-
-        Initialize();
-    }
-
-    public void GameStart()
-    {
-        Debug.Log("게임 시작");
-        if (!PhotonServerManager.Instance.TryStartStage(out string errorMessage))
-        {
-            _view.ShowErrorMessage(errorMessage);
-        }
+        PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
     }
 
     public void Initialize()
     {
+        RefreshWaitingRoomUI();
+    }
+
+    public void ToggleReadyState()
+    {
+        _model.ToggleReady();
+        PlayerProperty.SetReadyState(_model.IsReady);
+        RefreshWaitingRoomUI();
+    }
+
+    public void GameStart()
+    {
+        if (!PhotonServerManager.Instance.TryStartStage(out string errorMessage))
+        {
+            _waitingRoomView.ShowErrorMessage(errorMessage);
+        }
+    }
+
+    public void SelectPlayer(Player targetPlayer, Vector3 position)
+    {
+        _model.SetSelectedPlayer(targetPlayer);
+        _playerPopupView.Show(position);
+    }
+
+    public void ClearSelectedPlayer()
+    {
+        _model.SetSelectedPlayer(null);
+        _playerPopupView.Hide();
+    }
+
+    public void KickSelectedPlayer()
+    {
+        if (_model.SelectedPlayer == null)
+        {
+            return;
+        }
+
+        PhotonServerManager.Instance.Kick(_model.SelectedPlayer);
+
+        ClearSelectedPlayer();
+    }
+
+    public void GiveMasterToSelectedPlayer()
+    {
+        if (_model.SelectedPlayer == null)
+        {
+            return;
+        }
+
+        PhotonServerManager.Instance.ChangeMaster(_model.SelectedPlayer);
+        
+        ClearSelectedPlayer();
+    }
+
+    private void HandleMasterClientChanged()
+    {
+        UpdateMasterState(PhotonServerManager.Instance.IsMasterClient);
+    }
+
+    private void UpdateMasterState(bool isMaster)
+    {
+        _model.SetIsMaster(isMaster);
+        RefreshWaitingRoomUI();
+    }
+
+    private void RefreshWaitingRoomUI()
+    {
         if (_model.IsMaster)
         {
-            _view.ShowMasterUI();
+            _waitingRoomView.ShowMasterUI();
+            return;
         }
-        else
-        {
-            _view.ShowGuestUI();
-            _view.ButtonSet(_model.IsReady);
-        }
+
+        _waitingRoomView.ShowGuestUI();
+        _waitingRoomView.ButtonSet(_model.IsReady);
     }
 }

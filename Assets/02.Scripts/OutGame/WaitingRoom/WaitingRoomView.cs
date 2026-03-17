@@ -30,7 +30,7 @@ public class WaitingRoomView : MonoBehaviour
 
     private void OnReadyButtonClicked()
     {
-        _presenter.ReadyStateChange();
+        _presenter.ToggleReadyState();
     }
 
     private void OnGameStartButtonClicked()
