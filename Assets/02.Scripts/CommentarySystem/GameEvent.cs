@@ -11,20 +11,20 @@ public enum EventPriority
 public enum EventType
 {
     // 긴급 상황 (사전 생성 음성 사용)
-    GameStart,
-    GameOver,
-    SurgerySuccess,
-    SurgeryFail,
-    PatientDeath,
+    GameStart,          // 게임 시작할 때
+    GameOver,           // 게임 끝날 때
+    SurgerySuccess,     // 수술에 성공했을 때
+    SurgeryFail,        // 수술에 실패했을 때
+    PatientDeath,       // 환자가 죽었을 때
 
     // 일반 상황 (AI 실시간 생성)
-    PatientCritical,
-    PatientHealthDrop,
-    AssistDeliverItem,
-    MachineBroken,
-    ChainAccident,
-    PlayerMistake,
-    TeamCooperation
+    PatientCritical,    // 환자가 응급 상황일 때
+    PatientHealthDrop,  // 환자의 체력이 급하게 떨어질 때
+    AssistDeliverItem,  // 어시스트가 아이템을 전달했을 때
+    MachineBroken,      // 기계가 고장났을 때
+    ChainAccident,      // 사고가 계속 이어질 때
+    PlayerMistake,      // 플레이어가 실수했을 때
+    TeamCooperation     // 팀이 협동할 때
 }
 
 [Serializable]
@@ -73,6 +73,7 @@ public class GameEvent
         };
     }
 
+    // 사전 음성을 써야 하는지?
     private static bool IsPreGeneratedEvent(EventType type)
     {
         return type switch

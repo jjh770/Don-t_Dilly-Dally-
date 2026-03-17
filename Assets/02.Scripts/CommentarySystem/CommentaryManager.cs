@@ -1,24 +1,38 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(EventManager))]
+[RequireComponent(typeof(NarrationGenerator))]
+[RequireComponent(typeof(TTSManager))]
+[RequireComponent(typeof(CommentaryAudioManager))]
 public class CommentaryManager : MonoBehaviour
 {
     public static CommentaryManager Instance { get; private set; }
 
-    [Header("References")]
-    [SerializeField] private EventManager _eventManager;
-    [SerializeField] private NarrationGenerator _narrationGenerator;
-    [SerializeField] private TTSManager _ttsManager;
-    [SerializeField] private CommentaryAudioManager _audioManager;
+    [Header("참조 설정")]
+    [SerializeField] private EventManager _eventManager;                // 게임 이벤트를 받아오는 매니저
+    [SerializeField] private NarrationGenerator _narrationGenerator;    // 텍스트 생성기
+    [SerializeField] private TTSManager _ttsManager;                    // 텍스트 -> 음성
+    [SerializeField] private CommentaryAudioManager _audioManager;      // 음성 재생
     [SerializeField] private UI_Commentary _narrationUI;
 
-    [Header("Settings")]
+    [Header("세팅")]
     [SerializeField] private float _commentaryCooldown = 2f;
     [SerializeField] private int _recentEventCount = 5;
 
     private float _lastCommentaryTime;
     private GameEvent _pendingEvent;
     private bool _isProcessing;
+    private bool _isPreGenerating;
+
+    private static readonly Dictionary<EventType, string> PreGeneratedTexts = new()
+    {
+        { EventType.GameStart, "수술을 시작합니다!" },
+        { EventType.GameOver, "게임이 종료되었습니다." },
+        { EventType.SurgerySuccess, "수술이 성공적으로 완료되었습니다!" },
+        { EventType.SurgeryFail, "수술에 실패했습니다..." },
+        { EventType.PatientDeath, "환자가 사망했습니다..." }
+    };
 
     private void Awake()
     {
@@ -31,28 +45,27 @@ public class CommentaryManager : MonoBehaviour
         Instance = this;
     }
 
+    private async void Start()
+    {
+        await PreGenerateVoiceClips();
+    }
+
     private void OnEnable()
     {
-        if (_eventManager != null)
-        {
-            _eventManager.OnEventPublished += HandleEvent;
-        }
+        _eventManager.OnEventPublished += HandleEvent;
     }
 
     private void OnDisable()
     {
-        if (_eventManager != null)
-        {
-            _eventManager.OnEventPublished -= HandleEvent;
-        }
+        _eventManager.OnEventPublished -= HandleEvent;
     }
 
     private void HandleEvent(GameEvent gameEvent)
     {
-        // 쿨다운 체크
         if (Time.time - _lastCommentaryTime < _commentaryCooldown)
         {
-            // 우선순위가 더 높은 이벤트면 대기 중인 이벤트 교체
+            // 대기 이벤트가 없거나 우선순위가 더 높은 이벤트면
+            // 대기 중인 이벤트 교체
             if (_pendingEvent == null || gameEvent.Priority > _pendingEvent.Priority)
             {
                 _pendingEvent = gameEvent;
@@ -94,19 +107,53 @@ public class CommentaryManager : MonoBehaviour
         _isProcessing = false;
     }
 
+    private async Awaitable PreGenerateVoiceClips()
+    {
+        _isPreGenerating = true;
+        Debug.Log("[CommentaryManager] 사전 음성 생성 시작...");
+
+        foreach (var kvp in PreGeneratedTexts)
+        {
+            string clipName = kvp.Key.ToString();
+
+            if (_audioManager.HasCachedClip(clipName))
+            {
+                continue;
+            }
+
+            AudioClip clip = await _ttsManager.GenerateSpeech(kvp.Value);
+
+            if (clip != null)
+            {
+                _audioManager.CacheClip(clipName, clip);
+            }
+            else
+            {
+                Debug.LogWarning($"[CommentaryManager] 사전 음성 생성 실패: {clipName}");
+            }
+        }
+
+        _isPreGenerating = false;
+        Debug.Log("[CommentaryManager] 사전 음성 생성 완료");
+    }
+
     private void PlayPreGeneratedVoice(EventType eventType)
     {
-        string clipName = GetPreGeneratedClipName(eventType);
-        AudioClip clip = _audioManager.GetPreGeneratedClip(clipName);
+        string clipName = eventType.ToString();
+        AudioClip clip = _audioManager.GetCachedClip(clipName);
 
         if (clip != null)
         {
             _audioManager.PlayVoice(clip);
-            _narrationUI?.ShowNarration(GetPreGeneratedText(eventType));
+
+            if (PreGeneratedTexts.TryGetValue(eventType, out string text))
+            {
+                _narrationUI?.ShowNarration(text);
+            }
         }
         else
         {
-            Debug.LogWarning($"[CommentaryManager] Pre-generated clip not found: {clipName}");
+            Debug.LogWarning($"[CommentaryManager] 캐싱된 클립을 찾을 수 없습니다: {clipName}");
         }
     }
 
@@ -114,48 +161,23 @@ public class CommentaryManager : MonoBehaviour
     {
         List<GameEvent> recentEvents = _eventManager.GetRecentEvents(_recentEventCount);
 
-        // AI 중계 텍스트 생성
+        // 1. 이벤트를 바탕으로 중계 문장 생성하기
         string narrationText = await _narrationGenerator.GenerateNarration(gameEvent, recentEvents);
 
         if (string.IsNullOrEmpty(narrationText))
         {
-            Debug.LogWarning("[CommentaryManager] Failed to generate narration");
+            Debug.LogWarning("[CommentaryManager] 중계 문장을 생성하는 데 실패했습니다.");
             return;
         }
 
-        // TTS 음성 생성
+        // 2. 그 문장을 음성으로 변환하기 (TTS)
         AudioClip clip = await _ttsManager.GenerateSpeech(narrationText);
 
+        // 3. 음성을 실제로 재생하기
         if (clip != null)
         {
             _audioManager.PlayVoice(clip);
             _narrationUI?.ShowNarration(narrationText);
         }
-    }
-
-    private string GetPreGeneratedClipName(EventType eventType)
-    {
-        return eventType switch
-        {
-            EventType.GameStart => "game_start",
-            EventType.GameOver => "game_over",
-            EventType.SurgerySuccess => "surgery_success",
-            EventType.SurgeryFail => "surgery_fail",
-            EventType.PatientDeath => "patient_death",
-            _ => null
-        };
-    }
-
-    private string GetPreGeneratedText(EventType eventType)
-    {
-        return eventType switch
-        {
-            EventType.GameStart => "수술을 시작합니다!",
-            EventType.GameOver => "게임이 종료되었습니다.",
-            EventType.SurgerySuccess => "수술이 성공적으로 완료되었습니다!",
-            EventType.SurgeryFail => "수술에 실패했습니다...",
-            EventType.PatientDeath => "환자가 사망했습니다...",
-            _ => ""
-        };
     }
 }

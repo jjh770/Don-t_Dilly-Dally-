@@ -24,13 +24,13 @@ public class TTSManager : MonoBehaviour
     {
         if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.GoogleCloudApiKey))
         {
-            Debug.LogError("[TTSManager] Google Cloud API Key is not set");
+            Debug.LogError("[TTSManager] Google Cloud API 키가 없습니다.");
             return null;
         }
 
         if (string.IsNullOrEmpty(text))
         {
-            Debug.LogWarning("[TTSManager] Text is empty");
+            Debug.LogWarning("[TTSManager] 텍스트가 비어있습니다.");
             return null;
         }
 
@@ -50,7 +50,7 @@ public class TTSManager : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"[TTSManager] Request failed: {request.error}");
+                Debug.LogError($"[TTSManager] 응답 실패: {request.error}");
                 return null;
             }
 
@@ -59,7 +59,7 @@ public class TTSManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TTSManager] Exception: {e.Message}");
+            Debug.LogError($"[TTSManager] 예외: {e.Message}");
             return null;
         }
     }
@@ -90,7 +90,7 @@ public class TTSManager : MonoBehaviour
             TTSResponse response = JsonUtility.FromJson<TTSResponse>(json);
             if (string.IsNullOrEmpty(response?.audioContent))
             {
-                Debug.LogError("[TTSManager] No audio content in response");
+                Debug.LogError("[TTSManager] 음성 데이터가 없음");
                 return null;
             }
 
@@ -103,7 +103,7 @@ public class TTSManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TTSManager] Failed to parse response: {e.Message}");
+            Debug.LogError($"[TTSManager] 응답 파싱 실패: {e.Message}");
             return null;
         }
     }

@@ -6,12 +6,14 @@ public class NarrationGenerator : MonoBehaviour
 {
     [SerializeField] private LLMService _llmService;
 
-    [Header("Prompt Settings")]
+    [Header("프롬프트 생성")]
     [SerializeField, TextArea(3, 10)] private string _systemPrompt =
         "당신은 긴박한 수술 게임의 NPC 중계자입니다. " +
         "게임 상황을 짧고 긴박하게 중계해주세요. " +
         "한 문장으로 답변하고, 느낌표를 적극적으로 사용하세요.";
 
+    // 현재 이벤트 1개와 최근 이벤트 여러개를 받아서
+    // AI 중계 문장을 반환한다.
     public async Awaitable<string> GenerateNarration(GameEvent currentEvent, List<GameEvent> recentEvents)
     {
         string prompt = BuildPrompt(currentEvent, recentEvents);
@@ -21,6 +23,7 @@ public class NarrationGenerator : MonoBehaviour
         return result;
     }
 
+    // AI에게 보낼 질문을 만든다.
     private string BuildPrompt(GameEvent currentEvent, List<GameEvent> recentEvents)
     {
         StringBuilder sb = new StringBuilder();

@@ -3,45 +3,33 @@ using UnityEngine;
 
 public class CommentaryAudioManager : MonoBehaviour
 {
-    [Header("Audio Source")]
+    [Header("오디오 소스")]
     [SerializeField] private AudioSource _voiceSource;
 
-    [Header("Pre-generated Voice Clips")]
-    [SerializeField] private List<PreGeneratedClip> _preGeneratedClips = new();
+    private readonly Dictionary<string, AudioClip> _clipCache = new();
 
-    private readonly Dictionary<string, AudioClip> _clipDictionary = new();
-
-    private void Awake()
+    public void CacheClip(string clipName, AudioClip clip)
     {
-        InitializeClipDictionary();
-    }
+        if (string.IsNullOrEmpty(clipName) || clip == null) return;
 
-    private void InitializeClipDictionary()
-    {
-        foreach (PreGeneratedClip clip in _preGeneratedClips)
-        {
-            if (clip.clip != null && !string.IsNullOrEmpty(clip.clipName))
-            {
-                _clipDictionary[clip.clipName] = clip.clip;
-            }
-        }
+        _clipCache[clipName] = clip;
+        Debug.Log($"[CommentaryAudioManager] 클립 캐싱 완료: {clipName}");
     }
 
     public void PlayVoice(AudioClip clip)
     {
         if (clip == null)
         {
-            Debug.LogWarning("[CommentaryAudioManager] AudioClip is null");
+            Debug.LogWarning("[CommentaryAudioManager] 오디오 클립이 비었습니다.");
             return;
         }
 
         if (_voiceSource == null)
         {
-            Debug.LogError("[CommentaryAudioManager] AudioSource is not assigned");
+            Debug.LogError("[CommentaryAudioManager] 오디오 소스가 할당되지 않았습니다.");
             return;
         }
 
-        // 현재 재생 중이면 중단
         if (_voiceSource.isPlaying)
         {
             _voiceSource.Stop();
@@ -51,12 +39,17 @@ public class CommentaryAudioManager : MonoBehaviour
         _voiceSource.Play();
     }
 
-    public AudioClip GetPreGeneratedClip(string clipName)
+    public AudioClip GetCachedClip(string clipName)
     {
         if (string.IsNullOrEmpty(clipName)) return null;
 
-        _clipDictionary.TryGetValue(clipName, out AudioClip clip);
+        _clipCache.TryGetValue(clipName, out AudioClip clip);
         return clip;
+    }
+
+    public bool HasCachedClip(string clipName)
+    {
+        return !string.IsNullOrEmpty(clipName) && _clipCache.ContainsKey(clipName);
     }
 
     public void StopVoice()
@@ -68,11 +61,4 @@ public class CommentaryAudioManager : MonoBehaviour
     }
 
     public bool IsPlaying => _voiceSource != null && _voiceSource.isPlaying;
-
-    [System.Serializable]
-    public class PreGeneratedClip
-    {
-        public string clipName;
-        public AudioClip clip;
-    }
 }
