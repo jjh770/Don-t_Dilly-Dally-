@@ -7,30 +7,31 @@ public class LLMService : MonoBehaviour
 {
     [Header("API Settings")]
     [SerializeField] private APIKeyConfig _apiKeyConfig;
-    [SerializeField] private string _apiUrl = "https://api.openai.com/v1/chat/completions";
-    [SerializeField] private string _model = "gpt-4o-mini";
+    [SerializeField] private string _model = "gemini-3.1-flash-lite-preview";
 
     [Header("Request Settings")]
     [SerializeField] private int _maxTokens = 100;
     [SerializeField] private float _temperature = 0.7f;
     [SerializeField] private float _timeout = 10f;
 
+    private const string ApiUrlFormat = "https://generativelanguage.googleapis.com/v1beta/models/{0}:generateContent?key={1}";
+
     public async Awaitable<string> SendRequest(string systemPrompt, string userPrompt)
     {
-        if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.OpenAIApiKey))
+        if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.GeminiApiKey))
         {
             Debug.LogError("[LLMService] API Key Config is not set");
             return null;
         }
 
+        string apiUrl = string.Format(ApiUrlFormat, _model, _apiKeyConfig.GeminiApiKey);
         string requestBody = BuildRequestBody(systemPrompt, userPrompt);
 
-        using UnityWebRequest request = new UnityWebRequest(_apiUrl, "POST");
+        using UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Authorization", $"Bearer {_apiKeyConfig.OpenAIApiKey}");
         request.timeout = (int)_timeout;
 
         try
@@ -56,13 +57,19 @@ public class LLMService : MonoBehaviour
     private string BuildRequestBody(string systemPrompt, string userPrompt)
     {
         return $@"{{
-            ""model"": ""{_model}"",
-            ""messages"": [
-                {{""role"": ""system"", ""content"": ""{EscapeJson(systemPrompt)}""}},
-                {{""role"": ""user"", ""content"": ""{EscapeJson(userPrompt)}""}}
+            ""contents"": [
+                {{
+                    ""role"": ""user"",
+                    ""parts"": [{{""text"": ""{EscapeJson(userPrompt)}""}}]
+                }}
             ],
-            ""max_tokens"": {_maxTokens},
-            ""temperature"": {_temperature.ToString(System.Globalization.CultureInfo.InvariantCulture)}
+            ""systemInstruction"": {{
+                ""parts"": [{{""text"": ""{EscapeJson(systemPrompt)}""}}]
+            }},
+            ""generationConfig"": {{
+                ""temperature"": {_temperature.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                ""maxOutputTokens"": {_maxTokens}
+            }}
         }}";
     }
 
@@ -70,10 +77,14 @@ public class LLMService : MonoBehaviour
     {
         try
         {
-            LLMResponse response = JsonUtility.FromJson<LLMResponse>(json);
-            if (response?.choices != null && response.choices.Length > 0)
+            GeminiResponse response = JsonUtility.FromJson<GeminiResponse>(json);
+            if (response?.candidates != null && response.candidates.Length > 0)
             {
-                return response.choices[0].message.content;
+                var parts = response.candidates[0].content.parts;
+                if (parts != null && parts.Length > 0)
+                {
+                    return parts[0].text;
+                }
             }
         }
         catch (Exception e)
@@ -97,20 +108,26 @@ public class LLMService : MonoBehaviour
     }
 
     [Serializable]
-    private class LLMResponse
+    private class GeminiResponse
     {
-        public Choice[] choices;
+        public Candidate[] candidates;
     }
 
     [Serializable]
-    private class Choice
+    private class Candidate
     {
-        public Message message;
+        public Content content;
     }
 
     [Serializable]
-    private class Message
+    private class Content
     {
-        public string content;
+        public Part[] parts;
+    }
+
+    [Serializable]
+    private class Part
+    {
+        public string text;
     }
 }

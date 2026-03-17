@@ -5,23 +5,26 @@ using UnityEngine.Networking;
 
 public class TTSManager : MonoBehaviour
 {
+    private const string ApiUrl = "https://texttospeech.googleapis.com/v1/text:synthesize";
+    private const int SampleRate = 24000;
+
     [Header("API Settings")]
     [SerializeField] private APIKeyConfig _apiKeyConfig;
-    [SerializeField] private string _apiUrl = "https://api.openai.com/v1/audio/speech";
 
     [Header("Voice Settings")]
-    [SerializeField] private string _model = "tts-1";
-    [SerializeField] private string _voice = "nova";
-    [SerializeField] private float _speed = 1.0f;
+    [SerializeField] private string _languageCode = "ko-KR";
+    [SerializeField] private string _voiceName = "ko-KR-Wavenet-A";
+    [SerializeField] private float _speakingRate = 1.0f;
+    [SerializeField] private float _pitch = 0f;
 
     [Header("Request Settings")]
     [SerializeField] private float _timeout = 15f;
 
     public async Awaitable<AudioClip> GenerateSpeech(string text)
     {
-        if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.OpenAIApiKey))
+        if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.GoogleCloudApiKey))
         {
-            Debug.LogError("[TTSManager] API Key Config is not set");
+            Debug.LogError("[TTSManager] Google Cloud API Key is not set");
             return null;
         }
 
@@ -31,14 +34,14 @@ public class TTSManager : MonoBehaviour
             return null;
         }
 
+        string url = $"{ApiUrl}?key={_apiKeyConfig.GoogleCloudApiKey}";
         string requestBody = BuildRequestBody(text);
 
-        using UnityWebRequest request = new UnityWebRequest(_apiUrl, "POST");
+        using UnityWebRequest request = new UnityWebRequest(url, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-        request.downloadHandler = new DownloadHandlerAudioClip(_apiUrl, AudioType.MPEG);
+        request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("Authorization", $"Bearer {_apiKeyConfig.OpenAIApiKey}");
         request.timeout = (int)_timeout;
 
         try
@@ -51,8 +54,8 @@ public class TTSManager : MonoBehaviour
                 return null;
             }
 
-            AudioClip clip = DownloadHandlerAudioClip.GetContent(request);
-            return clip;
+            string response = request.downloadHandler.text;
+            return ParseResponseToAudioClip(response);
         }
         catch (Exception e)
         {
@@ -64,12 +67,59 @@ public class TTSManager : MonoBehaviour
     private string BuildRequestBody(string text)
     {
         return $@"{{
-            ""model"": ""{_model}"",
-            ""input"": ""{EscapeJson(text)}"",
-            ""voice"": ""{_voice}"",
-            ""speed"": {_speed.ToString(System.Globalization.CultureInfo.InvariantCulture)},
-            ""response_format"": ""mp3""
+            ""input"": {{
+                ""text"": ""{EscapeJson(text)}""
+            }},
+            ""voice"": {{
+                ""languageCode"": ""{_languageCode}"",
+                ""name"": ""{_voiceName}""
+            }},
+            ""audioConfig"": {{
+                ""audioEncoding"": ""LINEAR16"",
+                ""sampleRateHertz"": {SampleRate},
+                ""speakingRate"": {_speakingRate.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                ""pitch"": {_pitch.ToString(System.Globalization.CultureInfo.InvariantCulture)}
+            }}
         }}";
+    }
+
+    private AudioClip ParseResponseToAudioClip(string json)
+    {
+        try
+        {
+            TTSResponse response = JsonUtility.FromJson<TTSResponse>(json);
+            if (string.IsNullOrEmpty(response?.audioContent))
+            {
+                Debug.LogError("[TTSManager] No audio content in response");
+                return null;
+            }
+
+            byte[] audioBytes = Convert.FromBase64String(response.audioContent);
+            float[] samples = ConvertBytesToFloats(audioBytes);
+
+            AudioClip clip = AudioClip.Create("TTS", samples.Length, 1, SampleRate, false);
+            clip.SetData(samples, 0);
+            return clip;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[TTSManager] Failed to parse response: {e.Message}");
+            return null;
+        }
+    }
+
+    private float[] ConvertBytesToFloats(byte[] bytes)
+    {
+        int sampleCount = bytes.Length / 2;
+        float[] samples = new float[sampleCount];
+
+        for (int i = 0; i < sampleCount; i++)
+        {
+            short sample = BitConverter.ToInt16(bytes, i * 2);
+            samples[i] = sample / 32768f;
+        }
+
+        return samples;
     }
 
     private string EscapeJson(string text)
@@ -82,5 +132,11 @@ public class TTSManager : MonoBehaviour
             .Replace("\n", "\\n")
             .Replace("\r", "\\r")
             .Replace("\t", "\\t");
+    }
+
+    [Serializable]
+    private class TTSResponse
+    {
+        public string audioContent;
     }
 }
