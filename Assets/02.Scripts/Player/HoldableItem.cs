@@ -58,23 +58,26 @@ public class HoldableItem : MonoBehaviour, IHoldable
         _rigidbody.AddForce(throwDirection * force, ForceMode.Impulse);
     }
 
+    
     private IEnumerator IgnoreCollisionTemporarily(Collider[] colliders)
     {
+        // 던지자마자 잠깐 플레이어 콜라이더 무시 (충돌 안 하게)
+        SetCollisionWithThrower(colliders, true);
+
+        yield return new WaitForSeconds(_ignoreCollisionDuration);
+
+        SetCollisionWithThrower(colliders, false);
+    }
+
+    private void SetCollisionWithThrower(Collider[] colliders, bool Isignore)
+    {
+        if (_collider == null) return;
+
         foreach (Collider col in colliders)
         {
             if (col != null)
             {
-                Physics.IgnoreCollision(_collider, col, true);
-            }
-        }
-
-        yield return new WaitForSeconds(_ignoreCollisionDuration);
-
-        foreach (Collider col in colliders)
-        {
-            if (col != null && _collider != null)
-            {
-                Physics.IgnoreCollision(_collider, col, false);
+                Physics.IgnoreCollision(_collider, col, Isignore);
             }
         }
     }
