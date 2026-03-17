@@ -6,8 +6,8 @@ namespace DontDillyDally.MiniGame
 {
     public sealed class DirectionQTEUIView : MonoBehaviour, IMiniGameUIView
     {
-        [Header("현재 방향 표시")]
-        [SerializeField] private TextMeshProUGUI _directionText;
+        [Header("전체 시퀀스 표시")]
+        [SerializeField] private TextMeshProUGUI _sequenceText;
         [SerializeField] private Image _radialTimer;
 
         [Header("결과 피드백")]
@@ -19,9 +19,6 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private Color _failDotColor = Color.red;
         [SerializeField] private Color _pendingDotColor = Color.gray;
         [SerializeField] private Color _currentDotColor = Color.yellow;
-
-        [Header("실수 허용 표시")]
-        [SerializeField] private Image[] _mistakeHearts;
 
         private DirectionQTEMiniGame _game;
         private int _lastPromptIndex = -1;
@@ -37,6 +34,8 @@ namespace DontDillyDally.MiniGame
             {
                 _feedbackText.text = "";
             }
+
+            BuildSequenceDisplay();
         }
 
         public void SetVisible(bool visible)
@@ -48,31 +47,64 @@ namespace DontDillyDally.MiniGame
         {
             if (_game == null || _game.CurrentState != MiniGameState.Playing) return;
 
-            UpdateDirectionDisplay();
             UpdateRadialTimer();
             UpdateSequenceDots();
+            UpdateSequenceHighlight();
             UpdateFeedback();
         }
 
-        private void UpdateDirectionDisplay()
+        private void BuildSequenceDisplay()
         {
-            Direction? dir = _game.CurrentDirection;
-            if (dir == null || _directionText == null) return;
+            if (_sequenceText == null || _game == null) return;
 
-            _directionText.text = dir.Value switch
+            var prompts = _game.Prompts;
+            if (prompts == null) return;
+
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < prompts.Length; i++)
             {
-                Direction.Up => "\u2191",
-                Direction.Down => "\u2193",
-                Direction.Left => "\u2190",
-                Direction.Right => "\u2192",
-                _ => ""
-            };
+                if (i > 0) sb.Append("  ");
+                sb.Append(DirectionToArrow(prompts[i].Direction));
+            }
+            _sequenceText.text = sb.ToString();
+        }
+
+        private void UpdateSequenceHighlight()
+        {
+            if (_sequenceText == null || _game == null) return;
+
+            var prompts = _game.Prompts;
+            if (prompts == null) return;
+
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < prompts.Length; i++)
+            {
+                if (i > 0) sb.Append("  ");
+
+                string arrow = DirectionToArrow(prompts[i].Direction);
+                if (i < _game.CurrentPromptIndex)
+                {
+                    // 클리어한 방향 - 초록색
+                    sb.Append($"<color=#00FF00>{arrow}</color>");
+                }
+                else if (i == _game.CurrentPromptIndex)
+                {
+                    // 현재 입력해야 할 방향 - 노란색 + 굵게
+                    sb.Append($"<color=#FFFF00><b>{arrow}</b></color>");
+                }
+                else
+                {
+                    // 아직 안 온 방향 - 회색
+                    sb.Append($"<color=#888888>{arrow}</color>");
+                }
+            }
+            _sequenceText.text = sb.ToString();
         }
 
         private void UpdateRadialTimer()
         {
             if (_radialTimer == null) return;
-            _radialTimer.fillAmount = _game.CurrentPromptRemainingRatio;
+            _radialTimer.fillAmount = _game.RemainingTimeRatio;
         }
 
         private void UpdateSequenceDots()
@@ -85,7 +117,6 @@ namespace DontDillyDally.MiniGame
 
                 if (i < _game.CurrentPromptIndex)
                 {
-                    // 이미 지나간 프롬프트
                     _sequenceDots[i].color = _successDotColor;
                 }
                 else if (i == _game.CurrentPromptIndex)
@@ -119,6 +150,26 @@ namespace DontDillyDally.MiniGame
                 _feedbackText.text = "MISS";
                 _feedbackText.color = _failDotColor;
             }
+        }
+
+        public void ShowResult(bool isSuccess)
+        {
+            if (_feedbackText == null) return;
+
+            _feedbackText.text = isSuccess ? "SUCCESS!" : "FAIL";
+            _feedbackText.color = isSuccess ? _successDotColor : _failDotColor;
+        }
+
+        private static string DirectionToArrow(Direction dir)
+        {
+            return dir switch
+            {
+                Direction.Up => "\u2191",
+                Direction.Down => "\u2193",
+                Direction.Left => "\u2190",
+                Direction.Right => "\u2192",
+                _ => ""
+            };
         }
     }
 }

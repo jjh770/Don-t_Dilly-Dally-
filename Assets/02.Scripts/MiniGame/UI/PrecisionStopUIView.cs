@@ -23,6 +23,10 @@ namespace DontDillyDally.MiniGame
         [Header("라운드 표시")]
         [SerializeField] private TextMeshProUGUI _roundText;
 
+        [Header("타이머 (Radial)")]
+        [Tooltip("Image Type을 Filled, Fill Method를 Radial 360으로 설정하세요")]
+        [SerializeField] private Image _radialTimer;
+
         private PrecisionStopMiniGame _game;
         private float _gaugeWidth;
         private bool? _lastRoundResult;
@@ -46,6 +50,11 @@ namespace DontDillyDally.MiniGame
             {
                 _targetZoneImage.color = _defaultZoneColor;
             }
+
+            if (_radialTimer != null)
+            {
+                _radialTimer.fillAmount = 1f;
+            }
         }
 
         public void SetVisible(bool visible)
@@ -59,6 +68,7 @@ namespace DontDillyDally.MiniGame
 
             UpdateCursorPosition();
             UpdateTargetZone();
+            UpdateRadialTimer();
             UpdateRoundText();
             UpdateFeedback();
         }
@@ -85,10 +95,16 @@ namespace DontDillyDally.MiniGame
             _targetZone.sizeDelta = new Vector2(zonePixelWidth, _targetZone.sizeDelta.y);
         }
 
+        private void UpdateRadialTimer()
+        {
+            if (_radialTimer == null) return;
+            _radialTimer.fillAmount = _game.RemainingTimeRatio;
+        }
+
         private void UpdateRoundText()
         {
             if (_roundText == null) return;
-            _roundText.text = $"{_game.CurrentRound + 1} / {_game.TotalRounds}";
+            _roundText.text = $"{_game.DisplayRound} / {_game.TotalRounds}";
         }
 
         private void UpdateFeedback()
@@ -126,6 +142,14 @@ namespace DontDillyDally.MiniGame
                     _targetZoneImage.color = _defaultZoneColor;
                 }
             }
+        }
+
+        public void ShowResult(bool isSuccess)
+        {
+            if (_feedbackText == null) return;
+
+            _feedbackText.text = isSuccess ? "SUCCESS!" : "FAIL";
+            _feedbackText.color = isSuccess ? _hitColor : _missColor;
         }
     }
 }

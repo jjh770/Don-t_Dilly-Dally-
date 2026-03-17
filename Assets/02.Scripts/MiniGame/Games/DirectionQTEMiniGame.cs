@@ -10,14 +10,15 @@ namespace DontDillyDally.MiniGame
 
         public int CurrentPromptIndex { get; private set; }
         public int TotalPrompts => _prompts?.Length ?? 0;
-        public float CurrentPromptRemainingRatio => _currentTimeLimit > 0f ? _currentTimer / _currentTimeLimit : 0f;
-        public Direction? CurrentDirection =>
-            _prompts != null && CurrentPromptIndex < _prompts.Length
-                ? _prompts[CurrentPromptIndex].Direction
-                : null;
+
+        /// <summary>전체 시퀀스 (UI에서 한번에 표시용)</summary>
+        public QTEPrompt[] Prompts => _prompts;
+
+        /// <summary>전체 제한 시간 대비 남은 시간 비율 (0~1)</summary>
+        public float RemainingTimeRatio => _timeLimit > 0f ? Mathf.Clamp01(_remainingTime / _timeLimit) : 0f;
 
         public float NormalizedProgress =>
-            TotalPrompts > 0 ? (float)_successCount / TotalPrompts : 0f;
+            TotalPrompts > 0 ? (float)CurrentPromptIndex / TotalPrompts : 0f;
 
         // UI 피드백용. null이면 아직 입력 없음.
         public bool? LastInputResult { get; private set; }
@@ -26,11 +27,8 @@ namespace DontDillyDally.MiniGame
         private DirectionQTEConfig _config;
         private QTEPrompt[] _prompts;
         private float _elapsedTime;
-        private float _currentTimer;
-        private float _currentTimeLimit;
-        private int _successCount;
-        private int _mistakeCount;
-        private bool _waitingForInput;
+        private float _timeLimit;
+        private float _remainingTime;
 
         public DirectionQTEMiniGame(IInputProvider input)
         {
@@ -46,15 +44,13 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            _prompts = GenerateSequence(_config.sequenceLength, _config.perInputTimeLimit);
+            _prompts = GenerateSequence(_config.sequenceLength);
             CurrentPromptIndex = 0;
-            _successCount = 0;
-            _mistakeCount = 0;
             _elapsedTime = 0f;
+            _timeLimit = _config.timeLimit;
+            _remainingTime = _timeLimit;
             LastInputResult = null;
-            _waitingForInput = true;
 
-            SetCurrentPromptTimer();
             CurrentState = MiniGameState.Playing;
         }
 
@@ -63,29 +59,38 @@ namespace DontDillyDally.MiniGame
             if (CurrentState != MiniGameState.Playing) return;
 
             _elapsedTime += deltaTime;
-            _currentTimer -= deltaTime;
+            _remainingTime -= deltaTime;
 
-            // 현재 프롬프트 시간 초과
-            if (_currentTimer <= 0f && _waitingForInput)
+            // 전체 시간 초과 → 실패
+            if (_remainingTime <= 0f)
             {
-                RegisterMistake();
+                CurrentState = MiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
                 return;
             }
-
-            if (!_waitingForInput) return;
 
             Direction? pressedDirection = ReadDirectionInput();
             if (pressedDirection == null) return;
 
             if (pressedDirection == _prompts[CurrentPromptIndex].Direction)
             {
-                _successCount++;
+                // 정답
                 LastInputResult = true;
-                AdvanceToNext();
+                CurrentPromptIndex++;
+
+                // 전부 맞추면 즉시 성공
+                if (CurrentPromptIndex >= _prompts.Length)
+                {
+                    CurrentState = MiniGameState.Succeeded;
+                    OnCompleted?.Invoke(new MiniGameResult(GameType, true, 1f, _elapsedTime));
+                }
             }
             else
             {
-                RegisterMistake();
+                // 오답 → 즉시 실패
+                LastInputResult = false;
+                CurrentState = MiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
             }
         }
 
@@ -96,7 +101,7 @@ namespace DontDillyDally.MiniGame
             OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
         }
 
-        private static QTEPrompt[] GenerateSequence(int length, float perInputTime)
+        private static QTEPrompt[] GenerateSequence(int length)
         {
             var prompts = new QTEPrompt[length];
             var values = (Direction[])System.Enum.GetValues(typeof(Direction));
@@ -116,54 +121,9 @@ namespace DontDillyDally.MiniGame
                 else repeatCount = 1;
 
                 prev = dir;
-                prompts[i] = new QTEPrompt(dir, perInputTime);
+                prompts[i] = new QTEPrompt(dir, 0f); // timeLimit per prompt은 미사용
             }
             return prompts;
-        }
-
-        private void SetCurrentPromptTimer()
-        {
-            if (CurrentPromptIndex < _prompts.Length)
-            {
-                _currentTimeLimit = _prompts[CurrentPromptIndex].TimeLimit;
-                _currentTimer = _currentTimeLimit;
-                _waitingForInput = true;
-            }
-        }
-
-        private void AdvanceToNext()
-        {
-            CurrentPromptIndex++;
-            if (CurrentPromptIndex >= _prompts.Length)
-            {
-                CompleteGame();
-                return;
-            }
-            SetCurrentPromptTimer();
-        }
-
-        private void RegisterMistake()
-        {
-            _mistakeCount++;
-            LastInputResult = false;
-            _waitingForInput = false;
-
-            if (_mistakeCount > _config.maxMistakes)
-            {
-                CurrentState = MiniGameState.Failed;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, false, NormalizedProgress, _elapsedTime));
-                return;
-            }
-
-            AdvanceToNext();
-        }
-
-        private void CompleteGame()
-        {
-            float accuracy = (float)_successCount / TotalPrompts;
-            bool success = accuracy >= _config.successThreshold;
-            CurrentState = success ? MiniGameState.Succeeded : MiniGameState.Failed;
-            OnCompleted?.Invoke(new MiniGameResult(GameType, success, accuracy, _elapsedTime));
         }
 
         private Direction? ReadDirectionInput()

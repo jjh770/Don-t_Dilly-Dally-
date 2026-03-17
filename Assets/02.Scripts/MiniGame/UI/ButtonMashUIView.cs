@@ -8,29 +8,41 @@ namespace DontDillyDally.MiniGame
     {
         [Header("게이지")]
         [SerializeField] private Image _gaugeBarFill;
-        [SerializeField] private RectTransform _successLineMarker;
 
-        [Header("색상")]
-        [SerializeField] private Color _belowThresholdColor = new Color(1f, 0.5f, 0f);
-        [SerializeField] private Color _aboveThresholdColor = Color.green;
+        [Header("게이지 그라디언트 색상")]
+        [SerializeField] private Color _colorEmpty = new Color(1f, 0.2f, 0.2f);    // 빨간색 (0%)
+        [SerializeField] private Color _colorMid = new Color(1f, 0.6f, 0f);        // 주황색 (50%)
+        [SerializeField] private Color _colorFull = new Color(0.4f, 1f, 0.2f);     // 연두색 (100%)
 
-        [Header("타이머")]
-        [SerializeField] private TextMeshProUGUI _timerText;
+        [Header("타이머 (Radial)")]
+        [Tooltip("Image Type을 Filled, Fill Method를 Radial 360으로 설정하세요")]
+        [SerializeField] private Image _radialTimer;
 
-        [Header("입력 안내")]
-        [SerializeField] private RectTransform _keyIcon;
+        [Header("결과 피드백")]
+        [SerializeField] private TextMeshProUGUI _resultText;
+        [SerializeField] private Color _successTextColor = new Color(0.2f, 1f, 0.4f);
+        [SerializeField] private Color _failTextColor = new Color(1f, 0.3f, 0.3f);
 
         private ButtonMashMiniGame _game;
-        private ButtonMashConfig _config;
-        private float _keyIconBaseScale;
 
         public void Initialize(IMiniGame game)
         {
             _game = game as ButtonMashMiniGame;
-            _config = null;
-            if (_keyIcon != null)
+
+            if (_gaugeBarFill != null)
             {
-                _keyIconBaseScale = _keyIcon.localScale.x;
+                _gaugeBarFill.fillAmount = 0f;
+                _gaugeBarFill.color = _colorEmpty;
+            }
+
+            if (_radialTimer != null)
+            {
+                _radialTimer.fillAmount = 1f;
+            }
+
+            if (_resultText != null)
+            {
+                _resultText.text = "";
             }
         }
 
@@ -47,39 +59,39 @@ namespace DontDillyDally.MiniGame
             float progress = _game.NormalizedProgress;
             _gaugeBarFill.fillAmount = progress;
 
-            // 게이지 색상
-            if (_config != null)
-            {
-                _gaugeBarFill.color = progress >= _config.successThreshold
-                    ? _aboveThresholdColor
-                    : _belowThresholdColor;
-            }
-            else
-            {
-                _gaugeBarFill.color = progress >= 0.8f
-                    ? _aboveThresholdColor
-                    : _belowThresholdColor;
-            }
+            // 게이지 색상 그라디언트: 빨강(0%) → 주황(50%) → 연두(100%)
+            _gaugeBarFill.color = EvaluateGaugeColor(progress);
 
-            // 타이머
-            if (_timerText != null && _config != null)
+            // Radial 타이머 (Game 로직에서 직접 비율을 가져옴)
+            if (_radialTimer != null)
             {
-                float remaining = Mathf.Max(0f, _config.timeLimit - Time.time);
-                _timerText.text = $"{remaining:F1}";
+                _radialTimer.fillAmount = _game.RemainingTimeRatio;
             }
         }
 
-        public void SetConfig(ButtonMashConfig config)
+        public void ShowResult(bool isSuccess)
         {
-            _config = config;
+            if (_resultText == null) return;
 
-            // 성공 라인 위치 설정
-            if (_successLineMarker != null && _config != null)
+            _resultText.text = isSuccess ? "SUCCESS!" : "FAIL";
+            _resultText.color = isSuccess ? _successTextColor : _failTextColor;
+        }
+
+        /// <summary>
+        /// 0~1 progress를 빨강 → 주황 → 연두 그라디언트로 변환.
+        /// 0.0 = _colorEmpty(빨강), 0.5 = _colorMid(주황), 1.0 = _colorFull(연두)
+        /// </summary>
+        private Color EvaluateGaugeColor(float t)
+        {
+            if (t <= 0.5f)
             {
-                float anchorY = _config.successThreshold;
-                _successLineMarker.anchorMin = new Vector2(0f, anchorY);
-                _successLineMarker.anchorMax = new Vector2(1f, anchorY);
-                _successLineMarker.anchoredPosition = Vector2.zero;
+                // 0~0.5 구간: 빨강 → 주황
+                return Color.Lerp(_colorEmpty, _colorMid, t * 2f);
+            }
+            else
+            {
+                // 0.5~1.0 구간: 주황 → 연두
+                return Color.Lerp(_colorMid, _colorFull, (t - 0.5f) * 2f);
             }
         }
     }

@@ -20,12 +20,12 @@ namespace DontDillyDally.MiniGame
         [Header("UI 참조")]
         [SerializeField] private MiniGameUIController _uiController;
 
-        [Header("카운트다운 설정")]
-        [SerializeField] private float _countdownDuration = 3f;
+        [Header("결과 연출")]
+        [Tooltip("성공/실패 후 UI가 유지되는 시간 (초)")]
+        [SerializeField] private float _resultDisplayDuration = 0.5f;
 
         private IMiniGame _activeMiniGame;
         private IInputProvider _inputProvider;
-        private bool _isCountingDown;
 
         private void Awake()
         {
@@ -41,12 +41,6 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            if (_isCountingDown)
-            {
-                Debug.LogWarning("[MiniGameLauncher] 카운트다운 진행 중");
-                return;
-            }
-
             IMiniGame game = CreateMiniGame(type);
             MiniGameConfig config = GetConfig(type);
 
@@ -54,13 +48,11 @@ namespace DontDillyDally.MiniGame
 
             game.OnCompleted += result =>
             {
-                _uiController.HideMiniGameUI();
-                _activeMiniGame = null;
-                onComplete?.Invoke(result);
+                StartCoroutine(DelayedComplete(result, onComplete));
             };
 
             _uiController.ShowMiniGameUI(game);
-            StartCoroutine(CountdownThenBegin(game, config));
+            game.Begin(config);
         }
 
         // 진행 중인 미니게임 강제 중단
@@ -80,17 +72,6 @@ namespace DontDillyDally.MiniGame
             }
         }
 
-        private IEnumerator CountdownThenBegin(IMiniGame game, MiniGameConfig config)
-        {
-            _isCountingDown = true;
-            _uiController.StartCountdown(_countdownDuration);
-
-            yield return new WaitForSeconds(_countdownDuration);
-
-            _isCountingDown = false;
-            game.Begin(config);
-        }
-
         private IMiniGame CreateMiniGame(MiniGameType type)
         {
             return type switch
@@ -100,6 +81,17 @@ namespace DontDillyDally.MiniGame
                 MiniGameType.PrecisionStop => new PrecisionStopMiniGame(_inputProvider),
                 _ => throw new ArgumentOutOfRangeException(nameof(type))
             };
+        }
+
+        private IEnumerator DelayedComplete(MiniGameResult result, Action<MiniGameResult> onComplete)
+        {
+            // 결과 연출용 대기 (UI는 그대로 보여줌)
+            _uiController.ShowResult(result.IsSuccess);
+            yield return new WaitForSeconds(_resultDisplayDuration);
+
+            _uiController.HideMiniGameUI();
+            _activeMiniGame = null;
+            onComplete?.Invoke(result);
         }
 
         private MiniGameConfig GetConfig(MiniGameType type)

@@ -10,12 +10,6 @@ namespace DontDillyDally.MiniGame
         [Range(4, 12)]
         public int sequenceLength = 6;
 
-        [Tooltip("한 방향당 입력 제한 시간 (초)")]
-        public float perInputTimeLimit = 2.0f;
-
-        [Tooltip("허용되는 최대 실패 횟수")]
-        public int maxMistakes = 2;
-
         // 4방향 고정이므로 static readonly로 선언
         public static readonly KeyCode[] DirectionKeys =
         {

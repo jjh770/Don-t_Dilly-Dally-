@@ -9,6 +9,11 @@ namespace DontDillyDally.MiniGame
         public float NormalizedProgress => _currentGauge;
         public event System.Action<MiniGameResult> OnCompleted;
 
+        /// <summary>전체 제한 시간 대비 남은 시간 비율 (0~1)</summary>
+        public float RemainingTimeRatio => _config != null && _config.timeLimit > 0f
+            ? Mathf.Clamp01(1f - _elapsedTime / _config.timeLimit)
+            : 0f;
+
         private readonly IInputProvider _input;
         private ButtonMashConfig _config;
         private float _currentGauge;
@@ -56,12 +61,19 @@ namespace DontDillyDally.MiniGame
                 _inputCooldown = _minInputInterval;
             }
 
-            // 시간 초과 판정
+            // 게이지 100% 도달 시 즉시 성공
+            if (_currentGauge >= 1f)
+            {
+                CurrentState = MiniGameState.Succeeded;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, true, 1f, _elapsedTime));
+                return;
+            }
+
+            // 시간 초과 시 실패
             if (_elapsedTime >= _config.timeLimit)
             {
-                bool success = _currentGauge >= _config.successThreshold;
-                CurrentState = success ? MiniGameState.Succeeded : MiniGameState.Failed;
-                OnCompleted?.Invoke(new MiniGameResult(GameType, success, _currentGauge, _elapsedTime));
+                CurrentState = MiniGameState.Failed;
+                OnCompleted?.Invoke(new MiniGameResult(GameType, false, _currentGauge, _elapsedTime));
             }
         }
 

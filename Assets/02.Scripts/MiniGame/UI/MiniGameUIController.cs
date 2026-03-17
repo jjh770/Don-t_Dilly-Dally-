@@ -10,7 +10,6 @@ namespace DontDillyDally.MiniGame
 
         [Header("공통 UI")]
         [SerializeField] private GameObject _overlayPanel;
-        [SerializeField] private CountdownView _countdownView;
 
         private IMiniGameUIView _activeView;
 
@@ -30,16 +29,16 @@ namespace DontDillyDally.MiniGame
             _activeView?.SetVisible(true);
         }
 
+        public void ShowResult(bool isSuccess)
+        {
+            _activeView?.ShowResult(isSuccess);
+        }
+
         public void HideMiniGameUI()
         {
             _activeView?.SetVisible(false);
             _activeView = null;
             _overlayPanel.SetActive(false);
-        }
-
-        public void StartCountdown(float duration)
-        {
-            _countdownView.StartCountdown(duration);
         }
 
         private void Update()
