@@ -22,10 +22,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
 
     private readonly System.Random _random = new System.Random();
 
-    public event Action<string> OnFailedToJoinRoom;
+    public bool IsMasterClient => PhotonNetwork.IsMasterClient;
+    public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
 
+    public event Action<string> OnFailedToJoinRoom;
     public event Action<Player, bool> OnReadyStateChanged;
     public event Action<Player, string> OnNicknameChanged;
+    public event Action OnMasterClientChanged;
 
     private void Start()
     {
@@ -93,6 +96,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
         }
     }
 
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        OnMasterClientChanged?.Invoke();
+    }
+
     public void CreateNewRoom()
     {
         string roomName = RandomString(_roomIdLength);
@@ -132,5 +140,30 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>
         _nickName = nickname;
         PhotonNetwork.NickName = _nickName;
         PlayerProperty.SetNickname(_nickName);
+    }
+
+    public bool TryStartStage(out string message)
+    {
+        Player[] players = PhotonNetwork.PlayerList;
+
+        foreach (Player player in players)
+        {
+            if (player.IsMasterClient) continue;
+            if (PlayerProperty.GetReadyState(player) == false)
+            {
+                message = "모든 플레이어가 준비해야 합니다.";
+                return false;
+            }
+        }
+        PhotonNetwork.CurrentRoom.IsOpen = false;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Gameplay);
+        message = string.Empty;
+        return true;
+    }
+
+    public void ReturnWaitingRoom()
+    {
+        PhotonNetwork.CurrentRoom.IsOpen = true;
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
     }
 }
