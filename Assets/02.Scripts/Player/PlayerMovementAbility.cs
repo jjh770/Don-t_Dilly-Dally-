@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class PlayerMovementAbility : MonoBehaviour
+public class PlayerMovementAbility : PlayerAbility
 {
     [SerializeField] private float _moveSpeed = 3f;
     [SerializeField] private float _rotationSpeed = 10f;
@@ -21,14 +21,18 @@ public class PlayerMovementAbility : MonoBehaviour
     private const string VerticalAxis = "Vertical";
     private const float MinMoveSqrMagnitude = 0.01f;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
         _rigidbody = GetComponent<Rigidbody>();
         _playerAnimator = GetComponent<PlayerAnimator>();
     }
 
     private void Update()
     {
+
+        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine) return;
+
         HandleInput();
         HandleRotation();
         UpdateAnimation();
