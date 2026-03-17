@@ -27,6 +27,7 @@ public class WaitingRoomPresenter
             SetIsMaster(false);
         }
     }
+
     public void ReadyStateChange()
     {
         _model.ToggleReady();
@@ -51,10 +52,12 @@ public class WaitingRoomPresenter
             if (player.IsMasterClient) continue;
             if (PlayerProperty.GetReadyState(player) == false)
             {
-                Debug.Log("모든 팀원이 준비되어야 합니다.");
+                _view.ShowErrorMessage("모든 플레이어가 준비해야 합니다.");
+                Debug.Log("모든 플레이어가 준비해야 합니다.");
                 return;
-            }  
+            }
         }
+
         PhotonServerManager.Instance.StartStage();
         Debug.Log("게임 시작.");
     }
@@ -69,6 +72,6 @@ public class WaitingRoomPresenter
         {
             _view.ShowGuestUI();
             _view.ButtonSet(_model.IsReady);
-        }    
+        }
     }
 }

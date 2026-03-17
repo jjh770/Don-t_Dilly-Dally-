@@ -18,7 +18,9 @@ public class PlayerView : MonoBehaviour
 
     private void LateUpdate()
     {
-        _nicknameText.transform.LookAt(Camera.main.transform.position);
+        _nicknameText.transform.rotation = Quaternion.LookRotation(
+            Camera.main.transform.forward,
+            Camera.main.transform.up);
     }
 
     public void SetNickname(string name)
