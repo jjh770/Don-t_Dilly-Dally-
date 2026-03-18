@@ -1,15 +1,21 @@
 
 using System;
-using Unity.VisualScripting;
+using Firebase.Firestore;
 
+[FirestoreData]
 public class RoomData 
 {
-    public int Money {  get; private set; }
-    public int Star { get; private set; }
+    [FirestoreProperty]
+    public int Money {  get; set; }
 
-    public int StageLevel { get; private set; }
+    [FirestoreProperty]
+    public int Star { get; set; }
 
-    public RoomData(int money, int star, int stageLevel)
+    [FirestoreProperty]
+    public int StageLevel { get;  set; }
+
+    public RoomData() { }
+    public RoomData(int money = 0, int star = 0, int stageLevel = 0)
     {
         if (money < 0) { throw new Exception("Money 값은 0보다 작을 수 없습니다."); }
 
@@ -27,13 +33,13 @@ public class RoomData
         switch (type)
         {
             case ERoomCurrencyType.Money:
-                Money =+ amount; 
+                Money += amount; 
                 break;
             case ERoomCurrencyType.Star:
-                Star = + amount;
+                Star += amount;
                 break;
             case ERoomCurrencyType.StageLevel:
-                StageLevel = + amount;
+                StageLevel += amount;
                 break;
         }
     }

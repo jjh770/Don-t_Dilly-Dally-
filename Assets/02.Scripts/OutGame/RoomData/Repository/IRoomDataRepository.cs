@@ -6,4 +6,6 @@ public interface IRoomDataRepository
     public UniTask Save(string roomCode, RoomSaveData saveData);
 
     public UniTask<RoomSaveData> Load(string roomCode);
+
+    public UniTask<bool> IsExist(string roomCode);
 }
