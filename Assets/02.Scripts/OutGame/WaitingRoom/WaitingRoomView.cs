@@ -9,6 +9,7 @@ public class WaitingRoomView : MonoBehaviour
     [SerializeField] private Button _gameStartButton;
     [SerializeField] private Button _exitButton;
 
+    [SerializeField] private TextMeshProUGUI _roomCodeText;
     [SerializeField] private TextMeshProUGUI _readyButtonText;
     [SerializeField] private TextMeshProUGUI _errorText;
     [SerializeField] private string _readyText = "Ready";
@@ -66,6 +67,11 @@ public class WaitingRoomView : MonoBehaviour
     public void Initialized(WaitingRoomPresenter presenter)
     {
         _presenter = presenter;
+    }
+
+    public void SetRoomCode(string roomCode)
+    {
+        _roomCodeText.text = roomCode;
     }
 
     public void ShowErrorMessage(string message)

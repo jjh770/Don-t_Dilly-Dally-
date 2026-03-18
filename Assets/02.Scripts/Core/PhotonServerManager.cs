@@ -27,6 +27,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
+    public string RoomCode => PhotonNetwork.InRoom? PhotonNetwork.CurrentRoom.Name : null;
 
     public event Action<string> OnFailedToJoinRoom;
     public event Action<Player, bool> OnReadyStateChanged;

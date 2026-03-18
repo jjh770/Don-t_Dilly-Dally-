@@ -91,6 +91,8 @@ public class WaitingRoomPresenter
 
     private void RefreshWaitingRoomUI()
     {
+        _waitingRoomView.SetRoomCode(PhotonServerManager.Instance.RoomCode);
+
         if (_model.IsMaster)
         {
             _waitingRoomView.ShowMasterUI();
