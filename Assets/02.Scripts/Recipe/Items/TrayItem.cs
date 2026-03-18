@@ -73,6 +73,7 @@ namespace DontDillyDally.Data
         public void OnPhotonInstantiate(PhotonMessageInfo info)
         {
             ResetSourceState();
+            SetAsSupplyItem();
             ResetTrayData(false);
         }
     }

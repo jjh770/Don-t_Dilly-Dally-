@@ -22,6 +22,7 @@ namespace DontDillyDally.Data
         public void Initialize(CraftedMaterialType materialType)
         {
             ResetSourceState();
+            SetAsSupplyItem();
 
             MaterialType = materialType;
 

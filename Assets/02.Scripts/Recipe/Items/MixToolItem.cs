@@ -17,6 +17,7 @@ namespace DontDillyDally.Data
         public void Initialize(ToolType toolType)
         {
             ResetSourceState();
+            SetAsSupplyItem();
 
             ToolType = toolType;
 

@@ -11,6 +11,7 @@ namespace DontDillyDally.Data
     {
         private PhotonView _photonView;
         private NetworkItemState _itemState;
+        private ItemObject _itemObject;
         private bool _isOwnershipRequestPending;
 
         public event Action<NetworkItemOwnership> OwnershipAcquiredLocally;
@@ -26,6 +27,7 @@ namespace DontDillyDally.Data
         {
             _photonView = GetComponent<PhotonView>();
             _itemState = GetComponent<NetworkItemState>();
+            _itemObject = GetComponent<ItemObject>();
 
             if (_itemState == null)
                 _itemState = gameObject.AddComponent<NetworkItemState>();
@@ -60,6 +62,10 @@ namespace DontDillyDally.Data
         public void BeginHold(int holderActorNumber)
         {
             _itemState?.BeginHold(holderActorNumber);
+            _itemObject?.SetAsInteractableItem();
+
+            if (_photonView != null && PhotonNetwork.InRoom)
+                _photonView.RPC(nameof(RPC_SetAsInteractableItem), RpcTarget.Others);
         }
 
         public void EndHold()
@@ -95,6 +101,12 @@ namespace DontDillyDally.Data
         public void RPC_MarkLeftSource()
         {
             MarkLeftSource();
+        }
+
+        [PunRPC]
+        private void RPC_SetAsInteractableItem()
+        {
+            _itemObject?.SetAsInteractableItem();
         }
 
         public void OnOwnershipRequest(PhotonView targetView, Player requestingPlayer)
