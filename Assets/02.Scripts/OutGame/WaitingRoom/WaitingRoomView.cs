@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -8,6 +9,7 @@ public class WaitingRoomView : MonoBehaviour
     [SerializeField] private Button _readyButton;
     [SerializeField] private Button _gameStartButton;
     [SerializeField] private Button _exitButton;
+    [SerializeField] private Button _roomCodeCopyButton;
 
     [SerializeField] private TextMeshProUGUI _roomCodeText;
     [SerializeField] private TextMeshProUGUI _readyButtonText;
@@ -30,6 +32,12 @@ public class WaitingRoomView : MonoBehaviour
         _readyButton.onClick.AddListener(OnReadyButtonClicked);
         _gameStartButton.onClick.AddListener(OnGameStartButtonClicked);
         _exitButton.onClick.AddListener(OnExitRoomButtonClicked);
+        _roomCodeCopyButton.onClick.AddListener(OnCopyButtonClicked);
+    }
+
+    private void OnCopyButtonClicked()
+    {
+        _presenter.CopyRoomCode();
     }
 
     private void OnReadyButtonClicked()

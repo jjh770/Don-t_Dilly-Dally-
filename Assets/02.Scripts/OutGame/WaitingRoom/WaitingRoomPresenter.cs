@@ -1,4 +1,3 @@
-using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
@@ -35,6 +34,12 @@ public class WaitingRoomPresenter
         {
             _waitingRoomView.ShowErrorMessage(errorMessage);
         }
+    }
+
+    public void CopyRoomCode()
+    {
+        string roomCode = PhotonServerManager.Instance.RoomCode;
+        GUIUtility.systemCopyBuffer = roomCode;
     }
 
     public void ExitRoom()
