@@ -1,0 +1,579 @@
+{
+  "diseases": [
+    {
+      "diseaseId": "FB_001",
+      "diseaseName": "극심한 무좀",
+      "description": "발 피부에 진균 감염이 심하게 진행되어 외과적 처치가 필요합니다.",
+      "patientName": "박발냄",
+      "backstory": "3일 연속 PC방에서 신발을 안 벗었더니 발에서 버섯이 자랐다",
+      "patientQuote": "발가락 사이에서 표고버섯 향이 나요...",
+      "category": "피부과",
+      "difficulty": 1,
+      "timeLimitSec": 120.0,
+      "recommendedPlayers": 2,
+      "successLine": "드디어 슬리퍼를 신을 수 있어요!",
+      "failLine": "이제 양송이도 자라기 시작했어요...",
+      "failHealthPenalty": 10.0,
+      "recipes": [
+        {
+          "recipeId": "FB_001_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_001_step_02",
+          "displayName": "환부 소독 및 도포",
+          "requiredMaterials": ["Disinfectant", "RedMedicine"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_001_step_03",
+          "displayName": "물약 처치 및 거즈 보호",
+          "requiredMaterials": ["FilledPotionCyan", "GauzeBox"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_001_step_04",
+          "displayName": "붕대 마무리",
+          "requiredMaterials": ["Bandage", "FilledPotionYellow"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_002",
+      "diseaseName": "계절 감기 (만년)",
+      "description": "심한 감기 증상으로 호흡기 처치와 투약이 필요합니다.",
+      "patientName": "최콧물",
+      "backstory": "한여름에 이불 안 덮고 에어컨 바로 밑에서 잤다",
+      "patientQuote": "에취! ...아, 또 에취!",
+      "category": "내과",
+      "difficulty": 1,
+      "timeLimitSec": 120.0,
+      "recommendedPlayers": 2,
+      "successLine": "코가 뚫렸어요! 세상이 HD!",
+      "failLine": "재채기로 간호사 날려버렸어요...",
+      "failHealthPenalty": 10.0,
+      "recipes": [
+        {
+          "recipeId": "FB_002_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_002_step_02",
+          "displayName": "청진 및 호흡 보조",
+          "requiredMaterials": ["Stethoscope", "AmbuBag"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_002_step_03",
+          "displayName": "물약 처방",
+          "requiredMaterials": ["FilledPotionMagenta", "MixedPotionGreen"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_002_step_04",
+          "displayName": "거즈 보호 및 약 도포",
+          "requiredMaterials": ["GauzeBox", "RedMedicine"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_003",
+      "diseaseName": "급성 체기",
+      "description": "급성 소화 장애로 위장 처치와 투약이 필요합니다.",
+      "patientName": "김치킨",
+      "backstory": "먹방 유튜버 도전하다가 치킨 3마리를 5분 만에 흡입했다",
+      "patientQuote": "꼴깍...도 안 돼요...",
+      "category": "내과",
+      "difficulty": 2,
+      "timeLimitSec": 150.0,
+      "recommendedPlayers": 2,
+      "successLine": "다음엔 4마리 도전합니다!",
+      "failLine": "치킨이 역류하기 시작했어요...",
+      "failHealthPenalty": 15.0,
+      "recipes": [
+        {
+          "recipeId": "FB_003_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_003_step_02",
+          "displayName": "청진 및 위 확인",
+          "requiredMaterials": ["Stethoscope", "OrganStomach"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_003_step_03",
+          "displayName": "소화제 투여",
+          "requiredMaterials": ["FilledPotionMagenta", "MixedPotionBlue"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_003_step_04",
+          "displayName": "소독 및 마무리",
+          "requiredMaterials": ["Disinfectant", "Bandage"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_004",
+      "diseaseName": "손가락 열상",
+      "description": "깊은 베임 상처로 이물질 제거 및 봉합이 필요합니다.",
+      "patientName": "이보고",
+      "backstory": "상사한테 보고서 56페이지짜리를 넘기다 종이에 쓱 베였다",
+      "patientQuote": "A4가 이렇게 무서운 거였어요...?",
+      "category": "외과",
+      "difficulty": 2,
+      "timeLimitSec": 150.0,
+      "recommendedPlayers": 2,
+      "successLine": "이제 보고서는 PDF로만 받겠습니다!",
+      "failLine": "반대쪽 손도 베였어요!",
+      "failHealthPenalty": 15.0,
+      "recipes": [
+        {
+          "recipeId": "FB_004_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_004_step_02",
+          "displayName": "소독 및 이물질 제거",
+          "requiredMaterials": ["Disinfectant", "SterilizedPincetteCurved"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_004_step_03",
+          "displayName": "절개 부위 처치",
+          "requiredMaterials": ["SterilizedScissorsSmall", "RedMedicine", "GauzeBox"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_004_step_04",
+          "displayName": "붕대 감기",
+          "requiredMaterials": ["Bandage", "MixedPotionGreen"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_005",
+      "diseaseName": "원인불명 복통",
+      "description": "급성 식중독 증상으로 장 관련 처치 및 해독이 필요합니다.",
+      "patientName": "정유통",
+      "backstory": "유통기한 3개월 지난 요거트를 '숙성됐겠지' 하고 먹었다",
+      "patientQuote": "요거트가 아니라 치즈 맛이었어야 했는데...",
+      "category": "내과",
+      "difficulty": 2,
+      "timeLimitSec": 160.0,
+      "recommendedPlayers": 2,
+      "successLine": "다음부턴 유통기한을 읽겠습니다!",
+      "failLine": "배에서 요들송이 들려요...",
+      "failHealthPenalty": 15.0,
+      "recipes": [
+        {
+          "recipeId": "FB_005_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_005_step_02",
+          "displayName": "청진 및 장 확인",
+          "requiredMaterials": ["Stethoscope", "OrganIntestine"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_005_step_03",
+          "displayName": "해독제 혼합 투여",
+          "requiredMaterials": ["MixedPotionGreen", "FilledPotionYellow"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_005_step_04",
+          "displayName": "진정제 투여",
+          "requiredMaterials": ["SedativeSyringe", "GauzeBox"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_005_step_05",
+          "displayName": "소독 및 마무리",
+          "requiredMaterials": ["Disinfectant", "Bandage"],
+          "order": 4,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_006",
+      "diseaseName": "가벼운 골절 (새끼발가락)",
+      "description": "새끼발가락 골절로 정형외과적 처치가 필요합니다.",
+      "patientName": "한침대",
+      "backstory": "밤에 화장실 가다가 침대 모서리에 새끼발가락을 정통으로 박았다",
+      "patientQuote": "욕이 7개 국어로 나왔어요",
+      "category": "정형외과",
+      "difficulty": 3,
+      "timeLimitSec": 180.0,
+      "recommendedPlayers": 3,
+      "successLine": "침대 모서리에 쿠션 달겠습니다!",
+      "failLine": "반대편 발가락도 부었어요...",
+      "failHealthPenalty": 20.0,
+      "recipes": [
+        {
+          "recipeId": "FB_006_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_006_step_02",
+          "displayName": "소독 및 뼈 정렬",
+          "requiredMaterials": ["Disinfectant", "SterilizedPincetteStraight"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_006_step_03",
+          "displayName": "진통 물약 및 약 도포",
+          "requiredMaterials": ["MixedPotionBlue", "RedMedicine"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_006_step_04",
+          "displayName": "붕대 및 거즈 고정",
+          "requiredMaterials": ["Bandage", "GauzeBox", "MixedPotionGreen"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_007",
+      "diseaseName": "가슴 답답증 (과호흡)",
+      "description": "급성 과호흡으로 호흡기 안정화 처치가 필요합니다.",
+      "patientName": "문코인",
+      "backstory": "코인 차트가 -90% 찍히는 걸 실시간으로 봤다",
+      "patientQuote": "내 돈...내 돈이 숨을 안 쉬어요...",
+      "category": "내과",
+      "difficulty": 3,
+      "timeLimitSec": 160.0,
+      "recommendedPlayers": 2,
+      "successLine": "손절은 했지만 숨은 쉴 수 있어요!",
+      "failLine": "차트를 다시 봐버렸어요...",
+      "failHealthPenalty": 20.0,
+      "recipes": [
+        {
+          "recipeId": "FB_007_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_007_step_02",
+          "displayName": "폐 진단 및 호흡 보조",
+          "requiredMaterials": ["Stethoscope", "AmbuBag"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_007_step_03",
+          "displayName": "안정제 및 폐 처치",
+          "requiredMaterials": ["MixedPotionRed", "OrganLung"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_007_step_04",
+          "displayName": "회복 물약 투여",
+          "requiredMaterials": ["FilledPotionCyan", "Bandage"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_008",
+      "diseaseName": "급성 맹장염",
+      "description": "충수돌기에 염증이 발생하여 절제 수술이 필요합니다.",
+      "patientName": "오수박",
+      "backstory": "씨앗 통째로 수박 한 통을 먹었더니 맹장에서 수박이 자라기 시작했다",
+      "patientQuote": "배 안에서 통통 소리가 나요...",
+      "category": "외과",
+      "difficulty": 3,
+      "timeLimitSec": 200.0,
+      "recommendedPlayers": 3,
+      "successLine": "수박은 이제 깍두기로만 먹겠습니다!",
+      "failLine": "참외도 자라기 시작했어요...",
+      "failHealthPenalty": 25.0,
+      "recipes": [
+        {
+          "recipeId": "FB_008_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_008_step_02",
+          "displayName": "절개 준비",
+          "requiredMaterials": ["SterilizedScalpelGreen", "SterilizedPincetteStraight", "GauzeBox"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_008_step_03",
+          "displayName": "맹장 절제",
+          "requiredMaterials": ["SterilizedScissorsSmall", "SterilizedPincetteCurved", "OrganIntestine"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_008_step_04",
+          "displayName": "항생 물약 투여",
+          "requiredMaterials": ["MixedPotionBlue", "MixedPotionGreen"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_008_step_05",
+          "displayName": "봉합 및 마무리",
+          "requiredMaterials": ["Bandage", "Disinfectant", "RedMedicine"],
+          "order": 4,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_009",
+      "diseaseName": "간 과부하 (숙취)",
+      "description": "과음으로 인한 간 기능 저하로 해독 처치가 필요합니다.",
+      "patientName": "강소주",
+      "backstory": "'나 소주 한 잔이면 돼' 라고 했는데 그 한 잔이 양동이였다",
+      "patientQuote": "천장이 왜 세 개예요...?",
+      "category": "내과",
+      "difficulty": 3,
+      "timeLimitSec": 170.0,
+      "recommendedPlayers": 2,
+      "successLine": "술은...내일 또 마실게요",
+      "failLine": "옆 환자한테 술 냄새 전염됐어요...",
+      "failHealthPenalty": 20.0,
+      "recipes": [
+        {
+          "recipeId": "FB_009_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_009_step_02",
+          "displayName": "간 상태 확인",
+          "requiredMaterials": ["Stethoscope", "OrganLiver"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_009_step_03",
+          "displayName": "해독제 투여",
+          "requiredMaterials": ["MixedPotionGreen", "FilledPotionYellow"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_009_step_04",
+          "displayName": "영양제 및 마무리",
+          "requiredMaterials": ["FilledPotionMagenta", "Bandage"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_010",
+      "diseaseName": "폐 과잉 팽창",
+      "description": "폐에 과도한 압력이 가해져 감압 시술이 필요합니다.",
+      "patientName": "배풍선",
+      "backstory": "생일파티에서 풍선 100개를 입으로 불다가 폐가 풍선이 됐다",
+      "patientQuote": "숨 쉴 때마다 삑삑 소리가 나요",
+      "category": "외과",
+      "difficulty": 4,
+      "timeLimitSec": 220.0,
+      "recommendedPlayers": 3,
+      "successLine": "다음 생일엔 전동 펌프 삽니다!",
+      "failLine": "환자가 둥둥 떠오르기 시작했어요...",
+      "failHealthPenalty": 30.0,
+      "recipes": [
+        {
+          "recipeId": "FB_010_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_010_step_02",
+          "displayName": "폐 진단 및 호흡 확보",
+          "requiredMaterials": ["Stethoscope", "AmbuBag"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_010_step_03",
+          "displayName": "감압 시술",
+          "requiredMaterials": ["SterilizedScalpelGray", "SterilizedScissorsLarge", "OrganLung"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_010_step_04",
+          "displayName": "회복 물약 투여",
+          "requiredMaterials": ["MixedPotionBlue", "MixedPotionRed"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_010_step_05",
+          "displayName": "봉합 및 마무리",
+          "requiredMaterials": ["Bandage", "GauzeBox", "Disinfectant"],
+          "order": 4,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_011",
+      "diseaseName": "복합 외상 (자전거 낙상)",
+      "description": "다발성 외상으로 전신 소독, 이물질 제거, 봉합이 필요합니다.",
+      "patientName": "노브레",
+      "backstory": "내리막길에서 '브레이크 없이도 되겠지' 하고 페달을 밟았다",
+      "patientQuote": "자전거는 멀쩡한데 저만 부서졌어요",
+      "category": "외과",
+      "difficulty": 4,
+      "timeLimitSec": 240.0,
+      "recommendedPlayers": 3,
+      "successLine": "헬멧의 소중함을 알았습니다!",
+      "failLine": "미끄러져서 또 넘어졌어요...",
+      "failHealthPenalty": 30.0,
+      "recipes": [
+        {
+          "recipeId": "FB_011_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_011_step_02",
+          "displayName": "전신 소독 및 이물질 제거",
+          "requiredMaterials": ["Disinfectant", "SterilizedPincetteCurved", "SterilizedScissorsClamp"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_011_step_03",
+          "displayName": "열상 봉합",
+          "requiredMaterials": ["SterilizedScalpelGreen", "SterilizedScissorsSmall"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_011_step_04",
+          "displayName": "수혈 및 지혈",
+          "requiredMaterials": ["BloodPack", "MixedPotionRed", "RedMedicine"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_011_step_05",
+          "displayName": "전신 감기 마무리",
+          "requiredMaterials": ["GauzeBox", "Bandage", "MixedPotionGreen"],
+          "order": 4,
+          "requiresSterilizedTray": true
+        }
+      ]
+    },
+    {
+      "diseaseId": "FB_012",
+      "diseaseName": "전신 과로 붕괴",
+      "description": "극심한 과로로 전신 장기 기능이 저하되어 종합 수술이 필요합니다.",
+      "patientName": "서크런",
+      "backstory": "게임 개발 크런치 30일 연속 후 몸이 통째로 리셋됐다",
+      "patientQuote": "제 몸에서 블루스크린이 떴어요...",
+      "category": "외과",
+      "difficulty": 5,
+      "timeLimitSec": 300.0,
+      "recommendedPlayers": 4,
+      "successLine": "퇴근...시켜주세요...",
+      "failLine": "몸이 세이브 포인트로 롤백됐어요...",
+      "failHealthPenalty": 35.0,
+      "recipes": [
+        {
+          "recipeId": "FB_012_step_01",
+          "displayName": "마취 투여",
+          "requiredMaterials": ["AnestheticSyringe"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_012_step_02",
+          "displayName": "전신 진단 및 소독",
+          "requiredMaterials": ["Stethoscope", "Disinfectant"],
+          "order": 1,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_012_step_03",
+          "displayName": "개복 및 흉곽 개방",
+          "requiredMaterials": ["SterilizedScalpelGreen", "SterilizedScalpelGray", "SterilizedBoneSaw"],
+          "order": 2,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_012_step_04",
+          "displayName": "장기 점검 및 교체",
+          "requiredMaterials": ["OrganLiver", "OrganStomach", "OrganLung", "Defibrillator"],
+          "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_012_step_05",
+          "displayName": "전신 회복 및 봉합",
+          "requiredMaterials": ["SterilizedPincetteStraight", "SterilizedScissorsLarge", "Bandage", "MixedPotionGreen"],
+          "order": 4,
+          "requiresSterilizedTray": true
+        }
+      ]
+    }
+  ]
+}
