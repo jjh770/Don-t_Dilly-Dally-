@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: -6095658739283183844}
   - component: {fileID: -1268555427305605875}
   - component: {fileID: -7460300002272020623}
+  - component: {fileID: -4501617081816096011}
   m_Layer: 6
   m_Name: TrayItem
   m_TagString: Untagged
@@ -97,6 +98,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleCheckDelay: 0.1
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!65 &7775463430676200893
@@ -136,9 +141,10 @@ MonoBehaviour:
   Group: 0
   prefixField: -1
   Synchronization: 3
-  OwnershipTransfer: 1
+  OwnershipTransfer: 2
   observableSearch: 2
   ObservedComponents:
+  - {fileID: 8813221832106833755}
   - {fileID: -1268555427305605875}
   sceneViewId: 0
   InstantiationId: 0
@@ -171,6 +177,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 239e5cf9e085fb148bd65853522737ae, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PoolableObject
+--- !u!114 &-4501617081816096011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7472fff372258ee4e9e264f0d2d61ec9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemOwnership
 --- !u!1001 &8908708909710999741
 PrefabInstance:
   m_ObjectHideFlags: 0

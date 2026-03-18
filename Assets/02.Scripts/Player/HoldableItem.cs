@@ -52,6 +52,15 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         UpdateOwnershipReturn();
     }
 
+    private void FixedUpdate()
+    {
+        if (_photonView == null || _photonView.IsMine)
+            return;
+
+        if (!_rigidbody.isKinematic)
+            _rigidbody.isKinematic = true;
+    }
+
     private void UpdateHeldTransform()
     {
         if (!IsInteracting)
@@ -67,7 +76,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         if (targetHoldPoint == null)
             return;
 
-        transform.SetPositionAndRotation(_currentHoldPoint.position, _currentHoldPoint.rotation);
+        transform.SetPositionAndRotation(targetHoldPoint.position, targetHoldPoint.rotation);
     }
 
     private void UpdateOwnershipReturn()
@@ -211,8 +220,11 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         IsInteracting = isHeld;
         _holderActorNumber = holderActorNumber;
 
-        _rigidbody.isKinematic = isHeld;
+        _rigidbody.isKinematic = true;
         _collider.enabled = !isHeld;
+
+        if (!isHeld)
+            _currentHoldPoint = null;
     }
 
     public void Drop()
@@ -234,22 +246,9 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         if (holderActorNumber == InvalidActorNumber)
             return null;
 
-        PlayerController[] players = FindObjectsByType<PlayerController>(
-            FindObjectsInactive.Exclude,
-            FindObjectsSortMode.None);
+        if (!PlayerRegistry.TryGetPlayer(holderActorNumber, out PlayerController player))
+            return null;
 
-        foreach (PlayerController player in players)
-        {
-            if (player.PhotonView == null || player.PhotonView.Owner == null)
-                continue;
-
-            if (player.PhotonView.Owner.ActorNumber != holderActorNumber)
-                continue;
-
-            PlayerInteractionAbility interaction = player.GetComponent<PlayerInteractionAbility>();
-            return interaction != null ? interaction.HoldPoint : null;
-        }
-
-        return null;
+        return player.GetHoldPoint();
     }
 }

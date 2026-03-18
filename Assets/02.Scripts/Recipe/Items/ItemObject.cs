@@ -26,15 +26,19 @@ namespace DontDillyDally.Data
         public BoxCollider TargetBoxCollider;
 
         protected GameObject CurrentModelInstance;
-        protected PhotonView _photonView;
+        private NetworkItemOwnership _networkItemOwnership;
 
-        public bool HasLeftSource { get; private set; }
+        public bool HasLeftSource => _networkItemOwnership != null && _networkItemOwnership.HasLeftSource;
+        public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
 
         protected virtual void Awake()
         {
             if (ModelPrefab != null)
                 RefreshModel();
-            _photonView = GetComponent<PhotonView>();
+            _networkItemOwnership = GetComponent<NetworkItemOwnership>();
+
+            if (_networkItemOwnership == null)
+                _networkItemOwnership = gameObject.AddComponent<NetworkItemOwnership>();
         }
 
         public virtual void Initialize(string displayName, GameObject modelPrefab = null)
@@ -149,34 +153,14 @@ namespace DontDillyDally.Data
             return GetComponent<BoxCollider>();
         }
 
-        public void MarkLeftSource()
-        {
-            HasLeftSource = true;
-        }
-
         public void ResetSourceState()
         {
-            HasLeftSource = false;
+            _networkItemOwnership?.ResetSourceState();
         }
 
         public void NotifyLeftSource()
         {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                MarkLeftSource();
-                return;
-            }
-
-            if (_photonView == null)
-                return;
-
-            _photonView.RPC(nameof(RPC_MarkLeftSource), RpcTarget.MasterClient);
-        }
-
-        [PunRPC]
-        public void RPC_MarkLeftSource()
-        {
-            MarkLeftSource();
+            _networkItemOwnership?.NotifyLeftSource();
         }
     }
 }

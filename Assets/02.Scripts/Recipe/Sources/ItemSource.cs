@@ -98,7 +98,7 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem 
 
         if (forceRespawn && CurrentSpawnedItem != null && CurrentSpawnedItem.IsStillAt(parent))
         {
-            Destroy(CurrentSpawnedItem.gameObject);
+            PhotonNetwork.Destroy(CurrentSpawnedItem.gameObject);
             CurrentSpawnedItem = null;
         }
 

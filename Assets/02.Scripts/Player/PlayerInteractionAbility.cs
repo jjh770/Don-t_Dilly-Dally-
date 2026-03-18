@@ -45,7 +45,9 @@ public class PlayerInteractionAbility : MonoBehaviour
     private float _detectionAngleCos;
     private Collider[] _playerColliders;
 
-
+    private IInteractable _pendingHoldInteractable;
+    private ItemObject _pendingHeldItem;
+    private NetworkItemOwnership _pendingOwnership;
 
     private void Awake()
     {
@@ -62,6 +64,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (_playerController?.PhotonView != null && !_playerController.PhotonView.IsMine)
             return;
 
+        TryCompletePendingHold();
         FindNearestInteractable();
         HandleInteractInput();
         HandlePushableMovement();
@@ -149,17 +152,38 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (!TryResolveHeldItem(interactable, out ItemObject itemObject))
             return false;
 
-        if (!TryAcquireItemOwnership(itemObject))
+        NetworkItemOwnership ownership = itemObject.NetworkOwnership;
+        if (ownership == null)
             return false;
 
+        if (ownership.IsOwnedLocally)
+        {
+            BeginHold(interactable, holdable, itemObject);
+            return true;
+        }
+
+        _pendingHoldInteractable = interactable;
+        _pendingHeldItem = itemObject;
+        _pendingOwnership = ownership;
+
+        ownership.TryAcquireOrRequestOwnership();
+        return false;
+    }
+
+    private void BeginHold(IInteractable interactable, IHoldable holdable, ItemObject itemObject)
+    {
         holdable.Interact(_holdPoint, PhotonNetwork.LocalPlayer.ActorNumber);
+        itemObject.NetworkOwnership?.BeginHold(PhotonNetwork.LocalPlayer.ActorNumber);
         itemObject.NotifyLeftSource();
 
         _currentInteractable = interactable;
         _currentHeldItem = itemObject;
 
+        _pendingHoldInteractable = null;
+        _pendingHeldItem = null;
+        _pendingOwnership = null;
+
         _playerAnimator.PlayHoldAnimation(true);
-        return true;
     }
 
     private bool TryResolveHeldItem(IInteractable interactable, out ItemObject itemObject)
@@ -179,16 +203,32 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (photonView == null || PhotonNetwork.LocalPlayer == null)
             return false;
 
-        if (!photonView.IsMine)
-            photonView.TransferOwnership(PhotonNetwork.LocalPlayer);
+        if (photonView.IsMine)
+            return true;
 
-        return photonView.Owner != null && photonView.Owner.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber;
+        photonView.RequestOwnership();
+        return false;
+    }
+
+    private void TryCompletePendingHold()
+    {
+        if (_pendingHoldInteractable is not IHoldable holdable)
+            return;
+
+        if (_pendingHeldItem == null || _pendingOwnership == null)
+            return;
+
+        if (!_pendingOwnership.IsOwnedLocally)
+            return;
+
+        BeginHold(_pendingHoldInteractable, holdable, _pendingHeldItem);
     }
 
     private void StopInteract()
     {
         if (_currentInteractable is IHoldable holdable)
         {
+            _currentHeldItem?.NetworkOwnership?.EndHold();
             holdable.StopInteract();
 
             ReleaseHeldItemOwnershipToMaster();
@@ -258,6 +298,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         _playerAnimator.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
+        _currentHeldItem?.NetworkOwnership?.EndHold();
         holdable.Throw(throwDirection, _throwForce, _playerColliders);
 
         _currentInteractable = null;
