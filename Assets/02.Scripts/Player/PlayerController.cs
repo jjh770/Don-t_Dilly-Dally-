@@ -5,7 +5,6 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     private PhotonView _photonView;
-
     public PhotonView PhotonView => _photonView;
     private void Awake()
     {
