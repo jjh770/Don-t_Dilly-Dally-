@@ -1,9 +1,12 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
+using Cysharp.Threading.Tasks;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
+using WebSocketSharp;
 
 public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, IOnEventCallback
 {
@@ -149,9 +152,20 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public void TryJoinRoom(string roomCode)
     {
-        // TODO : 데이터에 존재하는 방인지 체크
-        _roomCode = roomCode;
-        PhotonNetwork.JoinOrCreateRoom(_roomCode, GetRoomOptions(), TypedLobby.Default);
+        TryJoinRoomAsync(roomCode).Forget();    
+    }
+
+    public async UniTask TryJoinRoomAsync(string roomCode)
+    {
+        if (await RoomDataManager.Instance.IsRoomDataExist(roomCode))
+        {
+            _roomCode = roomCode;
+            PhotonNetwork.JoinOrCreateRoom(_roomCode, GetRoomOptions(), TypedLobby.Default);
+        }
+        else
+        {
+            Debug.Log("[PhotonServerManager] 존재하지 않는 방입니다.");
+        }
     }
 
     public void SetNickname(string nickname)

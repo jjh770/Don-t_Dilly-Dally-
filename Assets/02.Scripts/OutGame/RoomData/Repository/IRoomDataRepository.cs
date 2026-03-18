@@ -3,7 +3,7 @@ using UnityEngine;
 
 public interface IRoomDataRepository 
 {
-    public UniTask Save(RoomSaveData saveData);
+    public UniTask Save(string roomCode, RoomSaveData saveData);
 
-    public UniTask<RoomSaveData> Load();
+    public UniTask<RoomSaveData> Load(string roomCode);
 }

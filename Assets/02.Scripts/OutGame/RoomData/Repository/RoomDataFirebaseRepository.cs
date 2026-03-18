@@ -3,13 +3,13 @@ using UnityEngine;
 
 public class RoomDataFirebaseRepository : IRoomDataRepository
 {
-    public async UniTask<RoomSaveData> Load()
+    public async UniTask<RoomSaveData> Load(string roomCode)
     {
         await UniTask.Yield();
         return null;
     }
 
-    public async UniTask Save(RoomSaveData saveData)
+    public async UniTask Save(string roomCode, RoomSaveData saveData)
     {
         await UniTask.Yield();
     }
