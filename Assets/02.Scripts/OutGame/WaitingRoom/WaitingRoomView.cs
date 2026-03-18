@@ -110,5 +110,7 @@ public class WaitingRoomView : MonoBehaviour
         _errorTween?.Kill();
         _readyButton.onClick.RemoveListener(OnReadyButtonClicked);
         _gameStartButton.onClick.RemoveListener(OnGameStartButtonClicked);
+        _exitButton.onClick.RemoveListener(OnExitRoomButtonClicked);
+        _roomCodeCopyButton.onClick.RemoveListener(OnCopyButtonClicked);
     }
 }

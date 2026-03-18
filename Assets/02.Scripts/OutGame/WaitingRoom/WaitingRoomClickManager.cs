@@ -11,7 +11,7 @@ public class WaitingRoomClickManager : MonoBehaviour
     {
         if (_presenter == null) return;
 
-        if (!PhotonServerManager.Instance.IsMasterClient) return;
+        if (!_presenter.IsMaster) return;
 
         if (Input.GetMouseButtonDown(1))
         {

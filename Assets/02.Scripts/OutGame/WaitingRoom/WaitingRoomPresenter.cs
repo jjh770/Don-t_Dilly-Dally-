@@ -7,6 +7,7 @@ public class WaitingRoomPresenter
     private readonly ContextMenuView _contextMenuView;
     private readonly WaitingRoomModel _model;
 
+    public bool IsMaster => _model != null? _model.IsMaster : false;
     public WaitingRoomPresenter(WaitingRoomView waitingRoomView, ContextMenuView contextMenuView, WaitingRoomModel model)
     {
         _waitingRoomView = waitingRoomView;
