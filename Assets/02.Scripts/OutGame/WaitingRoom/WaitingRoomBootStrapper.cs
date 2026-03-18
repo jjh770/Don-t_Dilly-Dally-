@@ -6,7 +6,7 @@ public class WaitingRoomBootStrapper : MonoBehaviour
 
     [SerializeField] private WaitingRoomView _defaultView;
 
-    [SerializeField] private PlayerPopupView _popupView;
+    [SerializeField] private ContextMenuView _popupView;
 
     private WaitingRoomModel _model;
     private WaitingRoomPresenter  _presenter;

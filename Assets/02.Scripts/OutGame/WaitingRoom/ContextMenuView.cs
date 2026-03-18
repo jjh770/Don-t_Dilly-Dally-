@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class PlayerPopupView : MonoBehaviour
+public class ContextMenuView : MonoBehaviour
 {
     [SerializeField] private GameObject _playerPopupPanel;
     [SerializeField] private Button _giveMasterButton;

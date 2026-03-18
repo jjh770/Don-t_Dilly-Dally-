@@ -695,6 +695,7 @@ GameObject:
   - component: {fileID: 395956705}
   - component: {fileID: 395956704}
   - component: {fileID: 395956703}
+  - component: {fileID: 395956706}
   m_Layer: 5
   m_Name: Button_GiveMaster
   m_TagString: Untagged
@@ -804,6 +805,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 395956701}
   m_CullTransparentMesh: 1
+--- !u!114 &395956706
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 395956701}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 471f31248ed9e7c46b84d922246c935d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ContextMenuMarker
 --- !u!1 &423399923
 GameObject:
   m_ObjectHideFlags: 0
@@ -1087,7 +1100,7 @@ GameObject:
   - component: {fileID: 496471720}
   - component: {fileID: 496471719}
   m_Layer: 5
-  m_Name: PlayerPopupPanel
+  m_Name: ContextMenuPanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2545,6 +2558,7 @@ GameObject:
   - component: {fileID: 896505985}
   - component: {fileID: 896505984}
   - component: {fileID: 896505983}
+  - component: {fileID: 896505986}
   m_Layer: 5
   m_Name: Button_Kick
   m_TagString: Untagged
@@ -2654,6 +2668,18 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 896505981}
   m_CullTransparentMesh: 1
+--- !u!114 &896505986
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 896505981}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 471f31248ed9e7c46b84d922246c935d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ContextMenuMarker
 --- !u!1 &913675305
 GameObject:
   m_ObjectHideFlags: 0
@@ -3471,7 +3497,7 @@ GameObject:
   - component: {fileID: 1276114203}
   - component: {fileID: 1276114208}
   m_Layer: 5
-  m_Name: PopupView
+  m_Name: ContextMenuView
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3506,7 +3532,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1276114202}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 877f2160b7493d14f98fdbba1a893423, type: 3}
+  m_Script: {fileID: 11500000, guid: c43f153a5e90692469beffe4e5d73b37, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPopupView
   _playerPopupPanel: {fileID: 496471717}

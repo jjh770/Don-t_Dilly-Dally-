@@ -5,13 +5,13 @@ using UnityEngine;
 public class WaitingRoomPresenter
 {
     private readonly WaitingRoomView _waitingRoomView;
-    private readonly PlayerPopupView _playerPopupView;
+    private readonly ContextMenuView _contextMenuView;
     private readonly WaitingRoomModel _model;
 
-    public WaitingRoomPresenter(WaitingRoomView waitingRoomView, PlayerPopupView playerPopupView, WaitingRoomModel model)
+    public WaitingRoomPresenter(WaitingRoomView waitingRoomView, ContextMenuView contextMenuView, WaitingRoomModel model)
     {
         _waitingRoomView = waitingRoomView;
-        _playerPopupView = playerPopupView;
+        _contextMenuView = contextMenuView;
         _model = model;
 
         PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
@@ -45,13 +45,13 @@ public class WaitingRoomPresenter
     public void SelectPlayer(Player targetPlayer, Vector3 position)
     {
         _model.SetSelectedPlayer(targetPlayer);
-        _playerPopupView.Show(position);
+        _contextMenuView.Show(position);
     }
 
     public void ClearSelectedPlayer()
     {
         _model.SetSelectedPlayer(null);
-        _playerPopupView.Hide();
+        _contextMenuView.Hide();
     }
 
     public void KickSelectedPlayer()
