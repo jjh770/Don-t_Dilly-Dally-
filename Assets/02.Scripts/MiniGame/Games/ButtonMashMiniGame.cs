@@ -10,8 +10,8 @@ namespace DontDillyDally.MiniGame
         public event System.Action<MiniGameResult> OnCompleted;
 
         // 전체 제한 시간 대비 남은 시간 비율 (0~1).
-        public float RemainingTimeRatio => _config != null && _config.timeLimit > 0f
-            ? Mathf.Clamp01(1f - _elapsedTime / _config.timeLimit)
+        public float RemainingTimeRatio => _config != null && _config.TimeLimit > 0f
+            ? Mathf.Clamp01(1f - _elapsedTime / _config.TimeLimit)
             : 0f;
 
         private readonly IInputProvider _input;
@@ -39,7 +39,7 @@ namespace DontDillyDally.MiniGame
             _currentGauge = 0f;
             _elapsedTime = 0f;
             _inputCooldown = 0f;
-            _minInputInterval = 1f / _config.maxInputPerSecond;
+            _minInputInterval = 1f / _config.MaxInputPerSecond;
             CurrentState = EMiniGameState.Playing;
         }
 
@@ -51,13 +51,13 @@ namespace DontDillyDally.MiniGame
             _inputCooldown -= deltaTime;
 
             // 자연 감소
-            _currentGauge -= _config.decayPerSecond * deltaTime;
+            _currentGauge -= _config.DecayPerSecond * deltaTime;
             _currentGauge = Mathf.Max(0f, _currentGauge);
 
             // 입력 처리
-            if (_input.GetKeyDown(_config.inputKey) && _inputCooldown <= 0f)
+            if (_input.GetKeyDown(_config.InputKey) && _inputCooldown <= 0f)
             {
-                _currentGauge += _config.gainPerPress;
+                _currentGauge += _config.GainPerPress;
                 _currentGauge = Mathf.Min(1f, _currentGauge);
                 _inputCooldown = _minInputInterval;
             }
@@ -71,7 +71,7 @@ namespace DontDillyDally.MiniGame
             }
 
             // 시간 초과 시 실패
-            if (_elapsedTime >= _config.timeLimit)
+            if (_elapsedTime >= _config.TimeLimit)
             {
                 CurrentState = EMiniGameState.Failed;
                 OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));

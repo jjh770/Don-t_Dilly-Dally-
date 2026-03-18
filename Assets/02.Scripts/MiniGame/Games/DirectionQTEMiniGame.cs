@@ -45,10 +45,10 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            _prompts = GenerateSequence(_config.sequenceLength);
+            _prompts = GenerateSequence(_config.SequenceLength);
             CurrentPromptIndex = 0;
             _elapsedTime = 0f;
-            _timeLimit = _config.timeLimit;
+            _timeLimit = _config.TimeLimit;
             _remainingTime = _timeLimit;
             LastInputResult = null;
 

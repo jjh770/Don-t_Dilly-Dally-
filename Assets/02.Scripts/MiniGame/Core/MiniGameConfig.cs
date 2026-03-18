@@ -6,6 +6,6 @@ namespace DontDillyDally.MiniGame
     {
         [Header("공통 설정")]
         [Tooltip("미니게임 제한 시간 (초)")]
-        public float timeLimit = 10f;
+        public float TimeLimit = 10f;
     }
 }

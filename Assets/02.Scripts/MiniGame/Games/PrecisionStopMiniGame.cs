@@ -12,9 +12,9 @@ namespace DontDillyDally.MiniGame
 
         public float CursorPosition { get; private set; }
         public float TargetZoneCenter { get; private set; }
-        public float TargetZoneWidth => _config?.targetZoneWidth ?? 0f;
+        public float TargetZoneWidth => _config?.TargetZoneWidth ?? 0f;
         public int CurrentRound { get; private set; }
-        public int TotalRounds => _config?.roundCount ?? 0;
+        public int TotalRounds => _config?.RoundCount ?? 0;
         public int SuccessfulRounds { get; private set; }
         public float NormalizedProgress =>
             TotalRounds > 0 ? (float)CurrentRound / TotalRounds : 0f;
@@ -23,8 +23,8 @@ namespace DontDillyDally.MiniGame
         public int DisplayRound => _isRoundActive ? CurrentRound + 1 : CurrentRound;
 
         // 전체 제한 시간 대비 남은 시간 비율 (0~1).
-        public float RemainingTimeRatio => _config != null && _config.timeLimit > 0f
-            ? Mathf.Clamp01((_config.timeLimit - _elapsedTime) / _config.timeLimit)
+        public float RemainingTimeRatio => _config != null && _config.TimeLimit > 0f
+            ? Mathf.Clamp01((_config.TimeLimit - _elapsedTime) / _config.TimeLimit)
             : 0f;
 
         // UI 연출용, 라운드 전환 딜레이 동안 이전 결과를 유지.
@@ -57,7 +57,7 @@ namespace DontDillyDally.MiniGame
             SuccessfulRounds = 0;
             _elapsedTime = 0f;
             LastRoundResult = null;
-            _currentSpeed = _config.cursorSpeed;
+            _currentSpeed = _config.CursorSpeed;
 
             StartNewRound();
             CurrentState = EMiniGameState.Playing;
@@ -71,7 +71,7 @@ namespace DontDillyDally.MiniGame
             _elapsedTime += deltaTime;
 
             // 전체 시간 초과 → 실패
-            if (_config.timeLimit > 0f && _elapsedTime >= _config.timeLimit)
+            if (_config.TimeLimit > 0f && _elapsedTime >= _config.TimeLimit)
             {
                 CurrentState = EMiniGameState.Failed;
                 OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
@@ -103,7 +103,7 @@ namespace DontDillyDally.MiniGame
             }
 
             // 정지 입력
-            if (_input.GetKeyDown(_config.inputKey))
+            if (_input.GetKeyDown(_config.InputKey))
             {
                 EvaluateStop();
             }
@@ -119,8 +119,8 @@ namespace DontDillyDally.MiniGame
 
         private void StartNewRound()
         {
-            float padding = _config.targetZonePadding;
-            float halfWidth = _config.targetZoneWidth * 0.5f;
+            float padding = _config.TargetZonePadding;
+            float halfWidth = _config.TargetZoneWidth * 0.5f;
             float minCenter = padding + halfWidth;
             float maxCenter = 1f - padding - halfWidth;
             TargetZoneCenter = Random.Range(minCenter, maxCenter);
@@ -132,7 +132,7 @@ namespace DontDillyDally.MiniGame
             // 2라운드부터 속도 증가
             if (CurrentRound > 0)
             {
-                _currentSpeed *= _config.speedMultiplierPerRound;
+                _currentSpeed *= _config.SpeedMultiplierPerRound;
             }
         }
 
@@ -140,7 +140,7 @@ namespace DontDillyDally.MiniGame
         private void EvaluateStop()
         {
             _isRoundActive = false;
-            float halfWidth = _config.targetZoneWidth * 0.5f;
+            float halfWidth = _config.TargetZoneWidth * 0.5f;
             float min = TargetZoneCenter - halfWidth;
             float max = TargetZoneCenter + halfWidth;
 
@@ -158,7 +158,7 @@ namespace DontDillyDally.MiniGame
 
             SuccessfulRounds++;
 
-            if (CurrentRound >= _config.roundCount)
+            if (CurrentRound >= _config.RoundCount)
             {
                 // 전부 성공
                 CurrentState = EMiniGameState.Succeeded;

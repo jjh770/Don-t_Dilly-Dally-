@@ -36,7 +36,7 @@ namespace DontDillyDally.MiniGame
         // 외부에서 미니게임 실행을 요청하는 단일 진입점.
         public void Launch(MiniGameType type, Action<MiniGameResult> onComplete)
         {
-            if (_activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing)
+            if (IsPlaying)
             {
                 Debug.LogWarning("[MiniGameLauncher] 이미 진행 중인 미니게임이 있음");
                 return;
@@ -56,7 +56,7 @@ namespace DontDillyDally.MiniGame
             game.Begin(config);
 
             // Begin()에서 Config 캐스팅 실패 등으로 Playing 상태가 아니면 정리.
-            if (game.CurrentState != EMiniGameState.Playing)
+            if (!IsPlaying)
             {
                 _uiController.HideMiniGameUI();
                 _activeMiniGame = null;
@@ -77,7 +77,7 @@ namespace DontDillyDally.MiniGame
 
         private void Update()
         {
-            if (_activeMiniGame?.CurrentState == EMiniGameState.Playing)
+            if (IsPlaying)
             {
                 _activeMiniGame.Tick(Time.deltaTime);
             }
