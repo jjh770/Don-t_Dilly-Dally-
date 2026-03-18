@@ -51,5 +51,6 @@ public class ContextMenuView : MonoBehaviour
     private void OnDisable()
     {
         _giveMasterButton.onClick.RemoveListener(OnGiveMasterButtonClicked);
+        _kickButton.onClick.RemoveListener(OnKickButtonClicked);
     }
 }

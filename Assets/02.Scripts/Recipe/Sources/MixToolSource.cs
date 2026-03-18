@@ -27,14 +27,14 @@ namespace DontDillyDally.Data
             return base.CanSpawnItem() && ToolType != ToolType.None;
         }
 
-        protected override void InitializeSpawnedItem(MixToolItem spawnedItem)
-        {
-            spawnedItem.Initialize(ToolType);
-        }
-
-        protected override string GetDefaultItemName(MixToolItem spawnedItem)
+        protected override string GetDefaultItemName()
         {
             return ToolType.ToString();
+        }
+
+        protected override object[] GetInstantiationData()
+        {
+            return new object[] { (int)ToolType };
         }
     }
 }

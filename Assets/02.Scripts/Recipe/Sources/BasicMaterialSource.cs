@@ -27,12 +27,12 @@ namespace DontDillyDally.Data
             return base.CanSpawnItem() && MaterialType != CraftedMaterialType.None;
         }
 
-        protected override void InitializeSpawnedItem(BasicMaterialItem spawnedItem)
+        protected override object[] GetInstantiationData()
         {
-            spawnedItem.Initialize(MaterialType);
+            return new object[] { (int)MaterialType };
         }
 
-        protected override string GetDefaultItemName(BasicMaterialItem spawnedItem)
+        protected override string GetDefaultItemName()
         {
             return MaterialType.ToString();
         }

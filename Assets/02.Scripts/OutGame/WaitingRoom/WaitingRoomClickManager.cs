@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Photon.Pun;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -7,6 +9,7 @@ public class WaitingRoomClickManager : MonoBehaviour
 {
     private WaitingRoomPresenter _presenter;
 
+    [SerializeField] private string _playerTag = "Player";
     void Update()
     {
         if (_presenter == null) return;
@@ -28,7 +31,7 @@ public class WaitingRoomClickManager : MonoBehaviour
     {
         GameObject clickedUI = GetTopClickedUI();
 
-        //누른 UI가 팝업 UI라면 팝업을 닫는 클릭으로 취급하지 않음
+        //누른 UI가 팝업 UI라면 팝업을 닫는 클릭으로 취급하지 않음.
         if (clickedUI != null && clickedUI.GetComponentInParent<ContextMenuMarker>() != null) return;
 
         _presenter.ClearSelectedPlayer();
@@ -36,24 +39,25 @@ public class WaitingRoomClickManager : MonoBehaviour
 
     private void HandleRightClick()
     {
-        if (TryGetClickedPlayer(out PlayerController target))
+        if (TryGetClickedPlayer(out PhotonView target))
         {
-            if (target.PhotonView.IsMine) return;
-            _presenter.SelectPlayer(target.PhotonView.Owner, Input.mousePosition);
+            if (target.IsMine) return;
+            _presenter.SelectPlayer(target.Owner, Input.mousePosition);
             return;
         }
 
         _presenter.ClearSelectedPlayer();
     }
 
-    private bool TryGetClickedPlayer(out PlayerController target)
+    private bool TryGetClickedPlayer(out PhotonView target)
     {
         target = null;
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         if (!Physics.Raycast(ray, out RaycastHit hit)) return false;
 
-        target = hit.collider.GetComponent<PlayerController>();
+        if (!hit.collider.CompareTag(_playerTag)) return false;
+        target = hit.collider.GetComponent<PhotonView>();
         return target != null;
     }
 
