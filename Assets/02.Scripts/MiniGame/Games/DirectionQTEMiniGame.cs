@@ -23,6 +23,9 @@ namespace DontDillyDally.MiniGame
         // UI 피드백용, null이면 아직 입력 없음.
         public bool? LastInputResult { get; private set; }
 
+        private static readonly EQteDirection[] s_directions =
+            (EQteDirection[])System.Enum.GetValues(typeof(EQteDirection));
+
         private readonly IInputProvider _input;
         private DirectionQTEConfig _config;
         private QTEPrompt[] _prompts;
@@ -108,7 +111,6 @@ namespace DontDillyDally.MiniGame
         private static QTEPrompt[] GenerateSequence(int length)
         {
             var prompts = new QTEPrompt[length];
-            var values = (EQteDirection[])System.Enum.GetValues(typeof(EQteDirection));
             EQteDirection? prev = null;
             int repeatCount = 0;
 
@@ -117,7 +119,7 @@ namespace DontDillyDally.MiniGame
                 EQteDirection dir;
                 do
                 {
-                    dir = values[Random.Range(0, values.Length)];
+                    dir = s_directions[Random.Range(0, s_directions.Length)];
                 }
                 while (dir == prev && repeatCount >= 2);
 
