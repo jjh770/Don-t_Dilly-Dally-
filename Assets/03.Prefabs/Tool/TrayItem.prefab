@@ -13,7 +13,13 @@ GameObject:
   - component: {fileID: 1888296344519209315}
   - component: {fileID: 8813221832106833755}
   - component: {fileID: 7775463430676200893}
-  m_Layer: 6
+  - component: {fileID: -6095658739283183844}
+  - component: {fileID: -1268555427305605875}
+  - component: {fileID: -7460300002272020623}
+  - component: {fileID: -4501617081816096011}
+  - component: {fileID: -1772153683941332363}
+  - component: {fileID: -7736740239746226323}
+  m_Layer: 8
   m_Name: TrayItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49,8 +55,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayItem
   DisplayName: 
-  ModelRoot: {fileID: 0}
+  ModelRoot: {fileID: 158517835468889614}
   ModelPrefab: {fileID: 0}
+  TargetBoxCollider: {fileID: 7775463430676200893}
   TrayData:
     IsSterilized: 0
     ContainedItems: []
@@ -93,7 +100,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleCheckDelay: 0.1
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
+  _ignoreCollisionDuration: 0.3
 --- !u!65 &7775463430676200893
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -115,6 +127,97 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.4, y: 0.05, z: 0.5}
   m_Center: {x: 0, y: 0.015, z: 0}
+--- !u!114 &-6095658739283183844
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 2
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 8813221832106833755}
+  - {fileID: -1268555427305605875}
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &-1268555427305605875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonTransformView
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0
+  m_UseLocal: 1
+--- !u!114 &-7460300002272020623
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 239e5cf9e085fb148bd65853522737ae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoolableObject
+--- !u!114 &-4501617081816096011
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7472fff372258ee4e9e264f0d2d61ec9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemOwnership
+--- !u!114 &-1772153683941332363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f42e8f534bda09142ae50c4ef1c41b85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
+  _hasLeftSource: 0
+  _isHeld: 0
+  _holderActorNumber: -1
+--- !u!114 &-7736740239746226323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
 --- !u!1001 &8908708909710999741
 PrefabInstance:
   m_ObjectHideFlags: 0

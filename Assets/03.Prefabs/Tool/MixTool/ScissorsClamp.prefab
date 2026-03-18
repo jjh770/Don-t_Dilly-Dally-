@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5288401065293058143}
   - component: {fileID: 3286473019762543584}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: ScissorsClamp
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51,7 +51,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 0.1, y: 0.02, z: 0.3}
   m_Center: {x: 0, y: 0, z: 0.05}
@@ -115,7 +115,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Scissors_05
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3381315104390353505, guid: ddf69674ac0edbb46ac7bb806a33f6e8, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -185,7 +186,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 1236013288002730403, guid: 491dbfcfdba9c674ca1ee8bfc91c7e60, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
