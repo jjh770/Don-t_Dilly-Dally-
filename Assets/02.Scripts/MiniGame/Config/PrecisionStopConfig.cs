@@ -26,5 +26,9 @@ namespace DontDillyDally.MiniGame
         [Tooltip("목표 구간 중심 배치 여백")]
         [Range(0.1f, 0.3f)]
         public float TargetZonePadding = 0.15f;
+
+        [Tooltip("라운드 전환 대기 시간 (초)")]
+        [Range(0.2f, 2f)]
+        public float RoundTransitionDelay = 0.6f;
     }
 }

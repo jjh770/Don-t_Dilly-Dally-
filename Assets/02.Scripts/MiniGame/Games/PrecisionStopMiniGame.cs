@@ -4,8 +4,6 @@ namespace DontDillyDally.MiniGame
 {
     public sealed class PrecisionStopMiniGame : IMiniGame
     {
-        private const float RoundTransitionDelay = 0.6f;
-
         public MiniGameType GameType => MiniGameType.PrecisionStop;
         public EMiniGameState CurrentState { get; private set; } = EMiniGameState.Idle;
         public event System.Action<MiniGameResult> OnCompleted;
@@ -166,7 +164,7 @@ namespace DontDillyDally.MiniGame
             }
             else
             {
-                _roundCooldown = RoundTransitionDelay;
+                _roundCooldown = _config.RoundTransitionDelay;
             }
         }
     }
