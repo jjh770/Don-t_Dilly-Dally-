@@ -5,6 +5,6 @@ public class RoomSaveData
 
     public static RoomSaveData Default => new RoomSaveData()
     {
-        RoomData = new RoomData(0, 0)
+        RoomData = new RoomData(0, 0, 0)
     };
 }
