@@ -27,14 +27,21 @@ namespace DontDillyDally.Data
 
         protected GameObject CurrentModelInstance;
         private NetworkItemOwnership _networkItemOwnership;
+        private NetworkItemState _networkItemState;
 
-        public bool HasLeftSource => _networkItemOwnership != null && _networkItemOwnership.HasLeftSource;
+        public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
         public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
+        public NetworkItemState NetworkState => _networkItemState;
 
         protected virtual void Awake()
         {
             if (ModelPrefab != null)
                 RefreshModel();
+            _networkItemState = GetComponent<NetworkItemState>();
+
+            if (_networkItemState == null)
+                _networkItemState = gameObject.AddComponent<NetworkItemState>();
+
             _networkItemOwnership = GetComponent<NetworkItemOwnership>();
 
             if (_networkItemOwnership == null)
@@ -155,7 +162,7 @@ namespace DontDillyDally.Data
 
         public void ResetSourceState()
         {
-            _networkItemOwnership?.ResetSourceState();
+            _networkItemState?.ResetSourceState();
         }
 
         public void NotifyLeftSource()

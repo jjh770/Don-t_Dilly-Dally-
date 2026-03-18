@@ -17,6 +17,8 @@ GameObject:
   - component: {fileID: 7537458080798307818}
   - component: {fileID: 5587489277933949863}
   - component: {fileID: 856348389362602029}
+  - component: {fileID: -3053839934825863675}
+  - component: {fileID: -5006571336115383354}
   m_Layer: 6
   m_Name: MixToolItem
   m_TagString: Untagged
@@ -187,3 +189,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7472fff372258ee4e9e264f0d2d61ec9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemOwnership
+--- !u!114 &-3053839934825863675
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7393820928385347151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f42e8f534bda09142ae50c4ef1c41b85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
+  _hasLeftSource: 0
+  _isHeld: 0
+  _holderActorNumber: -1
+--- !u!114 &-5006571336115383354
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7393820928385347151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync

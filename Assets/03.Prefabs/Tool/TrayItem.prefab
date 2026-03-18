@@ -17,6 +17,8 @@ GameObject:
   - component: {fileID: -1268555427305605875}
   - component: {fileID: -7460300002272020623}
   - component: {fileID: -4501617081816096011}
+  - component: {fileID: -1772153683941332363}
+  - component: {fileID: -7736740239746226323}
   m_Layer: 6
   m_Name: TrayItem
   m_TagString: Untagged
@@ -189,6 +191,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7472fff372258ee4e9e264f0d2d61ec9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemOwnership
+--- !u!114 &-1772153683941332363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f42e8f534bda09142ae50c4ef1c41b85, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
+  _hasLeftSource: 0
+  _isHeld: 0
+  _holderActorNumber: -1
+--- !u!114 &-7736740239746226323
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
 --- !u!1001 &8908708909710999741
 PrefabInstance:
   m_ObjectHideFlags: 0

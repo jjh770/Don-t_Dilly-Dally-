@@ -5,10 +5,9 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(PhotonView))]
+[RequireComponent(typeof(HoldableItemNetworkSync))]
 public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 {
-    private bool _networkIsHeld;
-
     public bool IsInteracting { get; private set; }
     public Transform Transform => transform;
 
@@ -28,13 +27,12 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     private Rigidbody _rigidbody;
     private Collider _collider;
     private PhotonView _photonView;
+    private HoldableItemNetworkSync _networkSync;
     private Transform _currentHoldPoint;
 
     // 누가 들었는가 확인용
     private const int InvalidActorNumber = -1;
-
     private int _holderActorNumber = InvalidActorNumber;
-    private int _networkHolderActorNumber = InvalidActorNumber;
 
     public int HolderActorNumber => _holderActorNumber;
     public bool HasHolder => _holderActorNumber != InvalidActorNumber;
@@ -44,6 +42,10 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _rigidbody = GetComponent<Rigidbody>();
         _collider = GetComponent<Collider>();
         _photonView = GetComponent<PhotonView>();
+        _networkSync = GetComponent<HoldableItemNetworkSync>();
+
+        if (_networkSync == null)
+            _networkSync = gameObject.AddComponent<HoldableItemNetworkSync>();
     }
 
     private void LateUpdate()
@@ -54,11 +56,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 
     private void FixedUpdate()
     {
-        if (_photonView == null || _photonView.IsMine)
-            return;
-
-        if (!_rigidbody.isKinematic)
-            _rigidbody.isKinematic = true;
+        _networkSync?.EnforceRemotePhysicsAuthority();
     }
 
     private void UpdateHeldTransform()
@@ -198,30 +196,16 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
-        if (stream.IsWriting)
-        {
-            stream.SendNext(IsInteracting);
-            stream.SendNext(_holderActorNumber);
-        }
-        else
-        {
-            _networkIsHeld = (bool)stream.ReceiveNext();
-            _networkHolderActorNumber = (int)stream.ReceiveNext();
-
-            ApplyRemoteHeldState(_networkIsHeld, _networkHolderActorNumber);
-        }
+        _networkSync?.Serialize(stream, info);
     }
 
-    private void ApplyRemoteHeldState(bool isHeld, int holderActorNumber)
+    public void ApplyNetworkHoldState(bool isHeld, int holderActorNumber)
     {
         if (_photonView != null && _photonView.IsMine)
             return;
 
         IsInteracting = isHeld;
         _holderActorNumber = holderActorNumber;
-
-        _rigidbody.isKinematic = true;
-        _collider.enabled = !isHeld;
 
         if (!isHeld)
             _currentHoldPoint = null;

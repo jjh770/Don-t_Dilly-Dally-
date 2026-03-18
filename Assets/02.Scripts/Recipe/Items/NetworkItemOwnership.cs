@@ -6,27 +6,29 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(PhotonView))]
+    [RequireComponent(typeof(NetworkItemState))]
     public class NetworkItemOwnership : MonoBehaviour, IPunOwnershipCallbacks
     {
-        private const int InvalidActorNumber = -1;
-
         private PhotonView _photonView;
-        private bool _hasLeftSource;
-        private bool _isHeld;
-        private int _holderActorNumber = InvalidActorNumber;
+        private NetworkItemState _itemState;
         private bool _isOwnershipRequestPending;
 
         public event Action<NetworkItemOwnership> OwnershipAcquiredLocally;
 
-        public bool HasLeftSource => _hasLeftSource;
-        public bool IsHeld => _isHeld;
-        public int HolderActorNumber => _holderActorNumber;
+        public bool HasLeftSource => _itemState != null && _itemState.HasLeftSource;
+        public bool IsHeld => _itemState != null && _itemState.IsHeld;
+        public int HolderActorNumber => _itemState != null ? _itemState.HolderActorNumber : -1;
         public bool IsOwnedLocally => _photonView != null && _photonView.IsMine;
         public PhotonView PhotonView => _photonView;
+        public NetworkItemState State => _itemState;
 
         private void Awake()
         {
             _photonView = GetComponent<PhotonView>();
+            _itemState = GetComponent<NetworkItemState>();
+
+            if (_itemState == null)
+                _itemState = gameObject.AddComponent<NetworkItemState>();
         }
 
         private void OnEnable()
@@ -57,24 +59,22 @@ namespace DontDillyDally.Data
 
         public void BeginHold(int holderActorNumber)
         {
-            _isHeld = true;
-            _holderActorNumber = holderActorNumber;
+            _itemState?.BeginHold(holderActorNumber);
         }
 
         public void EndHold()
         {
-            _isHeld = false;
-            _holderActorNumber = InvalidActorNumber;
+            _itemState?.EndHold();
         }
 
         public void MarkLeftSource()
         {
-            _hasLeftSource = true;
+            _itemState?.MarkLeftSource();
         }
 
         public void ResetSourceState()
         {
-            _hasLeftSource = false;
+            _itemState?.ResetSourceState();
         }
 
         public void NotifyLeftSource()
@@ -105,7 +105,7 @@ namespace DontDillyDally.Data
             if (!_photonView.AmController)
                 return;
 
-            if (_isHeld && requestingPlayer.ActorNumber != _holderActorNumber)
+            if (IsHeld && requestingPlayer.ActorNumber != HolderActorNumber)
                 return;
 
             targetView.TransferOwnership(requestingPlayer);
