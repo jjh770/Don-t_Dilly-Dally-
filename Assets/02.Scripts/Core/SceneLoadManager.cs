@@ -108,13 +108,9 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             yield return asyncLoad;
             yield return Resources.UnloadUnusedAssets();
         }
-        else
+        else if (PhotonNetwork.IsMasterClient)
         {
-            if (PhotonNetwork.IsMasterClient)
-            {
-                PhotonNetwork.LoadLevel(sceneName);
-            }
-
+            PhotonNetwork.LoadLevel(sceneName);
             while (PhotonNetwork.LevelLoadingProgress < 1f)
             {
                 _loadingProgress = PhotonNetwork.LevelLoadingProgress;
@@ -122,6 +118,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             }
 
             _loadingProgress = 1f;
+            
         }
         FinishSceneLoad(true);
     }

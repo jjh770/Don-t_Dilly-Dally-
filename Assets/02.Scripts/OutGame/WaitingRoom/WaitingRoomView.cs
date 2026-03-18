@@ -1,3 +1,4 @@
+using System;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -7,6 +8,10 @@ public class WaitingRoomView : MonoBehaviour
 {
     [SerializeField] private Button _readyButton;
     [SerializeField] private Button _gameStartButton;
+    [SerializeField] private Button _exitButton;
+    [SerializeField] private Button _roomCodeCopyButton;
+
+    [SerializeField] private TextMeshProUGUI _roomCodeText;
     [SerializeField] private TextMeshProUGUI _readyButtonText;
     [SerializeField] private TextMeshProUGUI _errorText;
     [SerializeField] private string _readyText = "Ready";
@@ -26,16 +31,28 @@ public class WaitingRoomView : MonoBehaviour
     {
         _readyButton.onClick.AddListener(OnReadyButtonClicked);
         _gameStartButton.onClick.AddListener(OnGameStartButtonClicked);
+        _exitButton.onClick.AddListener(OnExitRoomButtonClicked);
+        _roomCodeCopyButton.onClick.AddListener(OnCopyButtonClicked);
+    }
+
+    private void OnCopyButtonClicked()
+    {
+        _presenter.CopyRoomCode();
     }
 
     private void OnReadyButtonClicked()
     {
-        _presenter.ReadyStateChange();
+        _presenter.ToggleReadyState();
     }
 
     private void OnGameStartButtonClicked()
     {
         _presenter.GameStart();
+    }
+
+    private void OnExitRoomButtonClicked()
+    {
+        _presenter.ExitRoom();
     }
 
     public void ButtonSet(bool isReady)
@@ -58,6 +75,11 @@ public class WaitingRoomView : MonoBehaviour
     public void Initialized(WaitingRoomPresenter presenter)
     {
         _presenter = presenter;
+    }
+
+    public void SetRoomCode(string roomCode)
+    {
+        _roomCodeText.text = roomCode;
     }
 
     public void ShowErrorMessage(string message)
@@ -88,5 +110,7 @@ public class WaitingRoomView : MonoBehaviour
         _errorTween?.Kill();
         _readyButton.onClick.RemoveListener(OnReadyButtonClicked);
         _gameStartButton.onClick.RemoveListener(OnGameStartButtonClicked);
+        _exitButton.onClick.RemoveListener(OnExitRoomButtonClicked);
+        _roomCodeCopyButton.onClick.RemoveListener(OnCopyButtonClicked);
     }
 }
