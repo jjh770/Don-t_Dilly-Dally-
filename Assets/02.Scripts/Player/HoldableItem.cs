@@ -128,8 +128,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _currentHoldPoint = holdPoint;
         _holderActorNumber = holderActorNumber;
 
-        _rigidbody.linearVelocity = Vector3.zero;
-        _rigidbody.angularVelocity = Vector3.zero;
+        StopDynamicMotion();
         _rigidbody.isKinematic = true;
         _collider.enabled = false;
 
@@ -168,6 +167,34 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _settledTime = 0f;
 
         _holderActorNumber = InvalidActorNumber;
+    }
+
+    public void Place(Transform placePoint)
+    {
+        if (placePoint == null)
+            return;
+
+        _isWaitingForOwnershipReturn = false;
+        _settledTime = 0f;
+
+        IsInteracting = false;
+        _currentHoldPoint = null;
+        _holderActorNumber = InvalidActorNumber;
+
+        transform.SetParent(null);
+        StopDynamicMotion();
+        _rigidbody.isKinematic = true;
+        _collider.enabled = true;
+        transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
+    }
+
+    private void StopDynamicMotion()
+    {
+        if (_rigidbody == null || _rigidbody.isKinematic)
+            return;
+
+        _rigidbody.linearVelocity = Vector3.zero;
+        _rigidbody.angularVelocity = Vector3.zero;
     }
 
 

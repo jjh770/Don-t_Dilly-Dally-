@@ -31,6 +31,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
     public Transform HoldPoint => _holdPoint;
+    public ItemObject CurrentHeldItem => _currentHeldItem;
 
     private IInteractable _currentInteractable;
     // 들고있는 아이템 판별
@@ -108,6 +109,15 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
+            if (_currentInteractable is IHoldable &&
+                _nearestInteractable != null &&
+                _nearestInteractable != _currentInteractable &&
+                _nearestInteractable is not IHoldable)
+            {
+                StartInteract(_nearestInteractable);
+                return;
+            }
+
             if (_currentInteractable != null)
             {
                 StopInteract();
@@ -130,18 +140,25 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private void StartInteract(IInteractable interactable)
     {
+        if (_currentInteractable is IHoldable && interactable is IHoldable)
+            return;
+
         if (interactable is IHoldable)
         {
             TryStartHold(interactable);
             return;
         }
-        else if (interactable is IPushable)
+
+        if (interactable is IPushable)
         {
             interactable.Interact(transform);
             _currentInteractable = interactable;
             _playerAnimator.PlayGrabAnimation(true);
             _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);
+            return;
         }
+
+        interactable.Interact(transform);
     }
 
     private bool TryStartHold(IInteractable interactable)
@@ -263,6 +280,74 @@ public class PlayerInteractionAbility : MonoBehaviour
             return;
 
         photonView.TransferOwnership(PhotonNetwork.MasterClient);
+    }
+
+    public bool TryConsumeHeldItem(ItemObject expectedItem = null)
+    {
+        if (_currentHeldItem == null)
+            return false;
+
+        if (expectedItem != null && _currentHeldItem != expectedItem)
+            return false;
+
+        if (_currentInteractable is not IHoldable holdable)
+            return false;
+
+        ItemObject heldItem = _currentHeldItem;
+        _currentHeldItem?.NetworkOwnership?.EndHold();
+        holdable.StopInteract();
+
+        _playerAnimator.PlayHoldAnimation(false);
+        _currentInteractable = null;
+        _currentHeldItem = null;
+
+        if (PhotonNetwork.InRoom)
+        {
+            PhotonNetwork.Destroy(heldItem.gameObject);
+        }
+        else
+        {
+            Destroy(heldItem.gameObject);
+        }
+
+        return true;
+    }
+
+    public bool TryReleaseHeldItem(ItemObject expectedItem = null, bool returnOwnershipToMaster = true)
+    {
+        if (_currentHeldItem == null)
+            return false;
+
+        if (expectedItem != null && _currentHeldItem != expectedItem)
+            return false;
+
+        if (_currentInteractable is not IHoldable holdable)
+            return false;
+
+        _currentHeldItem?.NetworkOwnership?.EndHold();
+        holdable.StopInteract();
+
+        if (returnOwnershipToMaster)
+            ReleaseHeldItemOwnershipToMaster();
+
+        _playerAnimator.PlayHoldAnimation(false);
+        _currentInteractable = null;
+        _currentHeldItem = null;
+        return true;
+    }
+
+    public bool TryStartHoldFromExternal(IInteractable interactable)
+    {
+        if (interactable == null)
+            return false;
+
+        if (_currentInteractable != null || _currentHeldItem != null)
+            return false;
+
+        if (interactable is not IHoldable)
+            return false;
+
+        return TryStartHold(interactable);
     }
 
     private void HandlePushableMovement()
