@@ -140,14 +140,27 @@ namespace DontDillyDally.Data
         {
             if (string.IsNullOrEmpty(text)) return text;
 
-            return text
-                .Replace("\\", "\\\\")
-                .Replace("\"", "\\\"")
-                .Replace("\n", "\\n")
-                .Replace("\r", "\\r")
-                .Replace("\t", "\\t");
+            // 체인 Replace 대신 StringBuilder로 단일 순회하여 중간 문자열 할당을 방지합니다.
+            var stringBuilder = new StringBuilder(text.Length + 32);
+            for (int i = 0; i < text.Length; i++)
+            {
+                char character = text[i];
+                switch (character)
+                {
+                    case '\\': stringBuilder.Append("\\\\"); break;
+                    case '"': stringBuilder.Append("\\\""); break;
+                    case '\n': stringBuilder.Append("\\n"); break;
+                    case '\r': stringBuilder.Append("\\r"); break;
+                    case '\t': stringBuilder.Append("\\t"); break;
+                    default: stringBuilder.Append(character); break;
+                }
+            }
+
+            return stringBuilder.ToString();
         }
 
+        // [명명 규칙 예외] Gemini API JSON 응답 역직렬화용 DTO입니다.
+        // JsonUtility가 필드명과 JSON 키를 1:1 매칭하므로 camelCase를 사용합니다.
         [Serializable]
         private class GeminiResponse
         {
