@@ -25,15 +25,16 @@ namespace DontDillyDally.Data
         }
 
         [SerializeField] private SterilizationMachine _sterilizationMachine;
+        [SerializeField] private SterilizationMachineDoor _door;
         [SerializeField] private Transform[] _traySlotPoints = new Transform[MaxSlots];
-        [SerializeField] private float _traySterilizationDuration = 5f;
-        [SerializeField] private float _toolSterilizationDuration = 5f;
-        [SerializeField] private WorldActionTimer _traySterilizationTimer;
+        [SerializeField] private float _sterilizationDuration = 5f;
+        [SerializeField] private ActionTimer _actionTimer;
+        [SerializeField] private RunningMotion _runningMotion;
 
         private SterilizationSlot[] _slots;
         private bool _isBatchCompleted;
 
-        public bool IsInteracting => _traySterilizationTimer != null && _traySterilizationTimer.IsRunning;
+        public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
         public Transform Transform => transform;
 
         private void Awake()
@@ -41,8 +42,14 @@ namespace DontDillyDally.Data
             if (_sterilizationMachine == null)
                 _sterilizationMachine = GetComponent<SterilizationMachine>();
 
-            if (_traySterilizationTimer == null)
-                _traySterilizationTimer = GetComponentInChildren<WorldActionTimer>(true);
+            if (_door == null)
+                _door = GetComponentInChildren<SterilizationMachineDoor>(true);
+
+            if (_actionTimer == null)
+                _actionTimer = GetComponentInChildren<ActionTimer>(true);
+
+            if (_runningMotion == null)
+                _runningMotion = GetComponentInChildren<RunningMotion>(true);
 
             _slots = new SterilizationSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
@@ -56,12 +63,18 @@ namespace DontDillyDally.Data
             if (_sterilizationMachine == null || interactor == null)
                 return;
 
-            if (_traySterilizationTimer != null && _traySterilizationTimer.IsRunning)
+            if (_actionTimer != null && _actionTimer.IsRunning)
                 return;
 
             PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
             if (interactionAbility == null)
                 return;
+
+            if (!IsDoorOpen())
+            {
+                HandleClosedDoorInteraction();
+                return;
+            }
 
             if (interactionAbility.CurrentHeldItem == null)
             {
@@ -69,11 +82,6 @@ namespace DontDillyDally.Data
                 {
                     TryTakeCompletedItem(interactionAbility);
                     return;
-                }
-
-                if (HasAnyStoredItems())
-                {
-                    StartSterilizationBatch();
                 }
 
                 return;
@@ -86,65 +94,56 @@ namespace DontDillyDally.Data
             if (availableSlotIndex < 0)
                 return;
 
-            if (interactionAbility.CurrentHeldItem is TrayItem trayItem)
-            {
-                TryInsertTray(interactionAbility, trayItem, availableSlotIndex);
-                return;
-            }
-
-            if (interactionAbility.CurrentHeldItem is MixToolItem mixToolItem)
-            {
-                TryInsertTool(interactionAbility, mixToolItem, availableSlotIndex);
-            }
+            TryInsertItem(interactionAbility, interactionAbility.CurrentHeldItem, availableSlotIndex);
         }
 
         public void StopInteract()
         {
         }
 
-        private void TryInsertTray(
+        private void TryInsertItem(
             PlayerInteractionAbility interactionAbility,
-            TrayItem trayItem,
+            ItemObject itemObject,
             int slotIndex)
         {
-            if (!_sterilizationMachine.CanSterilizeTray(trayItem))
+            if (itemObject == null)
                 return;
 
-            if (!interactionAbility.TryReleaseHeldItem(trayItem, returnOwnershipToMaster: false))
+            CraftedMaterialType pendingResultMaterial = CraftedMaterialType.Unknown;
+
+            if (itemObject is TrayItem trayItem)
+            {
+                if (!_sterilizationMachine.CanSterilizeTray(trayItem))
+                    return;
+            }
+            else if (itemObject is MixToolItem mixToolItem)
+            {
+                int playerId = PhotonNetwork.LocalPlayer != null
+                    ? PhotonNetwork.LocalPlayer.ActorNumber
+                    : 0;
+
+                CraftingAttemptResult result =
+                    _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId);
+
+                if (!result.Success || result.ResultMaterial == CraftedMaterialType.Unknown)
+                    return;
+
+                pendingResultMaterial = result.ResultMaterial;
+            }
+            else
+            {
+                return;
+            }
+
+            if (!interactionAbility.TryReleaseHeldItem(itemObject, returnOwnershipToMaster: false))
                 return;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(trayItem, slotTransform);
-            SetStoredItemInteractionEnabled(trayItem, false);
+            PlaceStoredItem(itemObject, slotTransform);
+            SetStoredItemInteractionEnabled(itemObject, false);
 
-            _slots[slotIndex].Item = trayItem;
-            _slots[slotIndex].PendingResultMaterial = CraftedMaterialType.Unknown;
-        }
-
-        private void TryInsertTool(
-            PlayerInteractionAbility interactionAbility,
-            MixToolItem mixToolItem,
-            int slotIndex)
-        {
-            int playerId = PhotonNetwork.LocalPlayer != null
-                ? PhotonNetwork.LocalPlayer.ActorNumber
-                : 0;
-
-            CraftingAttemptResult result =
-                _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId);
-
-            if (!result.Success || result.ResultMaterial == CraftedMaterialType.Unknown)
-                return;
-
-            if (!interactionAbility.TryReleaseHeldItem(mixToolItem, returnOwnershipToMaster: false))
-                return;
-
-            Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(mixToolItem, slotTransform);
-            SetStoredItemInteractionEnabled(mixToolItem, false);
-
-            _slots[slotIndex].Item = mixToolItem;
-            _slots[slotIndex].PendingResultMaterial = result.ResultMaterial;
+            _slots[slotIndex].Item = itemObject;
+            _slots[slotIndex].PendingResultMaterial = pendingResultMaterial;
         }
 
         private void StartSterilizationBatch()
@@ -152,44 +151,24 @@ namespace DontDillyDally.Data
             if (!HasAnyStoredItems() || _isBatchCompleted)
                 return;
 
-            if (_traySterilizationTimer == null)
+            _door?.LockClosed();
+            _runningMotion?.TryStart();
+
+            if (_actionTimer == null)
             {
                 CompleteSterilizationBatch();
                 return;
             }
 
-            _traySterilizationTimer.TryStart(
-                GetSterilizationDuration(),
+            _actionTimer.TryStart(
+                _sterilizationDuration,
                 CompleteSterilizationBatch);
-        }
-
-        private float GetSterilizationDuration()
-        {
-            bool hasTray = false;
-            bool hasTool = false;
-
-            for (int i = 0; i < _slots.Length; i++)
-            {
-                if (!_slots[i].IsOccupied)
-                    continue;
-
-                if (_slots[i].Item is TrayItem)
-                    hasTray = true;
-                else if (_slots[i].Item is MixToolItem)
-                    hasTool = true;
-            }
-
-            if (hasTray && hasTool)
-                return Mathf.Max(_traySterilizationDuration, _toolSterilizationDuration);
-
-            if (hasTool)
-                return _toolSterilizationDuration;
-
-            return _traySterilizationDuration;
         }
 
         private void CompleteSterilizationBatch()
         {
+            _runningMotion?.StopMotion();
+
             for (int i = 0; i < _slots.Length; i++)
             {
                 SterilizationSlot slot = _slots[i];
@@ -233,6 +212,7 @@ namespace DontDillyDally.Data
             }
 
             _isBatchCompleted = HasAnyStoredItems();
+            _door?.Unlock();
         }
 
         private void TryTakeCompletedItem(PlayerInteractionAbility interactionAbility)
@@ -262,6 +242,25 @@ namespace DontDillyDally.Data
         private bool HasAnyStoredItems()
         {
             return GetFirstOccupiedSlotIndex() >= 0;
+        }
+
+        private void HandleClosedDoorInteraction()
+        {
+            if (_door == null)
+                return;
+
+            if (_isBatchCompleted || !HasAnyStoredItems())
+            {
+                _door.TryOpen();
+                return;
+            }
+
+            StartSterilizationBatch();
+        }
+
+        private bool IsDoorOpen()
+        {
+            return _door == null || _door.IsOpen;
         }
 
         private int GetFirstAvailableSlotIndex()

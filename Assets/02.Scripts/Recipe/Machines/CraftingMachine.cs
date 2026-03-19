@@ -106,9 +106,8 @@ namespace DontDillyDally.Data
             return new CraftedItem
             {
                 MaterialType = resultMaterial,
-                UsedTool = tool,
+                UsedToolsMask = tool | secondaryTool,
                 UsedAction = action,
-                SecondaryTool = secondaryTool,
                 PreparedTime = Time.time,
                 PreparedByPlayerId = playerId
             };

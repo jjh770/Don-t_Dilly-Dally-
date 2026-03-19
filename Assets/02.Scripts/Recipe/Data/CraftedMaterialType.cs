@@ -32,6 +32,7 @@ namespace DontDillyDally.Data
         MixedPotionBlue,             // 파랑 물약
         MixedPotionRed,              // 빨강 물약
         MixedPotionGreen,            // 초록 물약
+        MixedPotionBlack,            // 검정 물약
 
         // 기본 제출 재료
         Bandage,                     // 붕대
