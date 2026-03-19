@@ -32,10 +32,7 @@ public class PlayerInformation
     public MyHospital[] GetMyHospitals => _hospitals.ToArray();
     public void AddHospital(MyHospital hospital)
     {
-        if (_hospitals.Contains(hospital))
-        {
-            RemoveHospital(hospital);
-        }
+        _hospitals.RemoveAll(x => x.Name == hospital.Name);
         _hospitals.Insert(0, hospital);
     }
 

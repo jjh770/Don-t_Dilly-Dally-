@@ -1,3 +1,4 @@
+using System;
 using System.Linq;
 using Firebase.Firestore;
 
@@ -10,11 +11,15 @@ public class PlayerInformationDTO
     [FirestoreProperty]
     public string[] Hospital { get; set; }
 
+    [FirestoreProperty]
+    public DateTime[] Time { get; set; }
+
     // DTO → Domain
     public PlayerInformation ToDomain() => new PlayerInformation
-    ( Name, Hospital
-        .Select(hospital => new MyHospital(hospital))
-        .ToArray() 
+    (   Name,
+        Hospital.Zip(Time, (hospital, time) =>
+            new MyHospital(hospital, time))
+        .ToArray()
     );
         
 
@@ -23,6 +28,8 @@ public class PlayerInformationDTO
     {
         Name = information.Name,
         Hospital = information
-        .GetMyHospitals.Select(hospital => hospital.Name).ToArray()
+        .GetMyHospitals.Select(hospital => hospital.Name).ToArray(),
+        Time = information
+        .GetMyHospitals.Select(hospital => hospital.Time).ToArray()
     };
 }

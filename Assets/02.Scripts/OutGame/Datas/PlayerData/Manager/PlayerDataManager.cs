@@ -1,6 +1,6 @@
+using System;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using Photon.Pun;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<RoomDataManager>
@@ -38,7 +38,10 @@ public class PlayerDataManager : PunPersistentSingleton<RoomDataManager>
 
         Debug.Log("[PlayerDataManager] " +
             "MyName : " + _playerInformation.Name + "\n" +
-            "MyHospitals : " + string.Join(", ", _playerInformation.GetMyHospitals.Select(hospital => hospital.Name).ToList()));
+            "MyHospitals : " +
+                string.Join(", ",
+                _playerInformation.GetMyHospitals
+                .Select(hospital => $"{hospital.Name} ({hospital.Time.ToLocalTime():yyyy-MM-dd HH:mm})")));
     }
 
     private void SaveData()
@@ -50,7 +53,7 @@ public class PlayerDataManager : PunPersistentSingleton<RoomDataManager>
 
     public override void OnJoinedRoom()
     {
-        _playerInformation.AddHospital(new MyHospital(PhotonServerManager.Instance.RoomCode));
+        _playerInformation.AddHospital(new MyHospital(PhotonServerManager.Instance.RoomCode, DateTime.Now));
         SaveData();
     }
 
