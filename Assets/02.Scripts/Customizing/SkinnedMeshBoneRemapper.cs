@@ -20,9 +20,9 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
     [SerializeField]
     private string[] skeletonRootNames = { "Skeleton", "Armature", "Root", "Hips" };
 
-    [Tooltip("자동으로 재매핑 실행 (Awake 시)")]
+    [Tooltip("자동으로 재매핑 실행 (Awake 시) - CustomizingPlayer 사용 시 false 권장")]
     [SerializeField]
-    private bool autoRemapOnAwake = true;
+    private bool autoRemapOnAwake = false;
 
     [Tooltip("재매핑 성공 후 이 컴포넌트 제거")]
     [SerializeField]
