@@ -10,13 +10,14 @@ namespace DontDillyDally.Data
         [Tooltip("현재 이 제조대 위에 올라와 있는 트레이 아이템")]
         public TrayItem CurrentTrayItem;
 
-        public bool HasTray => CurrentTrayItem != null;
+        public bool HasTray => GetResolvedTrayItem() != null;
 
         public SubmittedTray CurrentTray
         {
             get
             {
-                return CurrentTrayItem != null ? CurrentTrayItem.TrayData : null;
+                TrayItem trayItem = GetResolvedTrayItem();
+                return trayItem != null ? trayItem.TrayData : null;
             }
         }
 
@@ -28,12 +29,31 @@ namespace DontDillyDally.Data
                 CurrentTrayItem.EnsureTrayData();
         }
 
-        public bool TryPlaceItemOnTray(CraftedItem item)
+        public bool TrySetCurrentTrayItem(TrayItem trayItem)
         {
-            if (item == null || CurrentTrayItem == null)
+            if (trayItem == null)
                 return false;
 
-            return CurrentTrayItem.TryAddItem(item);
+            if (HasTray)
+                return false;
+
+            SetCurrentTrayItem(trayItem);
+            return true;
+        }
+
+        public void ClearCurrentTrayItem(TrayItem trayItem = null)
+        {
+            if (trayItem == null || CurrentTrayItem == trayItem)
+                CurrentTrayItem = null;
+        }
+
+        public bool TryPlaceItemOnTray(CraftedItem item)
+        {
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (item == null || trayItem == null)
+                return false;
+
+            return trayItem.TryAddItem(item);
         }
 
         public bool TryPlaceBasicMaterialOnTray(
@@ -49,45 +69,65 @@ namespace DontDillyDally.Data
 
         public CraftedItem TakeLastItemFromTray()
         {
-            if (CurrentTrayItem == null)
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (trayItem == null)
                 return null;
 
-            return CurrentTrayItem.TakeLastItem();
+            return trayItem.TakeLastItem();
         }
 
         public void ClearTray()
         {
-            if (CurrentTrayItem == null)
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (trayItem == null)
                 return;
 
-            CurrentTrayItem.ClearItems();
-            CurrentTrayItem.TrayData.MarkContaminated();
+            trayItem.ClearItems();
+            trayItem.SetTrayKindAndSync(TrayKind.Normal);
         }
 
         public void LoadTray(SubmittedTray tray)
         {
-            if (CurrentTrayItem == null)
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (trayItem == null)
                 return;
 
-            CurrentTrayItem.LoadTrayData(tray);
+            trayItem.LoadTrayData(tray);
         }
 
         public SubmittedTray TakeTraySnapshot()
         {
-            if (CurrentTrayItem == null)
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (trayItem == null)
                 return null;
 
-            return CurrentTrayItem.GetTraySnapshot();
+            return trayItem.GetTraySnapshot();
         }
 
         public SubmittedTray TakeTrayAndReset()
         {
             SubmittedTray trayToSubmit = TakeTraySnapshot();
 
-            if (CurrentTrayItem != null)
-                CurrentTrayItem.ResetTrayData();
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (trayItem != null)
+                trayItem.ResetTrayData();
 
             return trayToSubmit;
+        }
+
+        private TrayItem GetResolvedTrayItem()
+        {
+            if (CurrentTrayItem == null)
+                return null;
+
+            NetworkItemOwnership ownership = CurrentTrayItem.NetworkOwnership;
+            if (ownership != null && ownership.IsHeld)
+            {
+                CurrentTrayItem = null;
+                return null;
+            }
+
+            return CurrentTrayItem;
         }
     }
 }
