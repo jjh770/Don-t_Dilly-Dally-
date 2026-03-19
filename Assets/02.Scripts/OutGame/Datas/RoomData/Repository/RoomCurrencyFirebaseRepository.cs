@@ -55,7 +55,7 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[RoomDataRepository] 불러온 데이터가 없습니다.:" + e);
+            Debug.LogWarning("[RoomDataRepository] 불러온 데이터가 없습니다.:" + e);
             return false;
         }
     }

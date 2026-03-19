@@ -7,7 +7,10 @@ public class RoomPresenter
     {
         _view = view;
         PhotonServerManager.Instance.OnFailedToJoinRoom += OnFailedToJoinRoom;
+        PlayerDataManager.Instance.OnDataManagerReady += OnDataManagerSet;
+        SetDropdown();
     }
+
     public void EnterRoom(string code)
     {
         PhotonServerManager.Instance.TryJoinRoom(code);   
@@ -23,9 +26,27 @@ public class RoomPresenter
         PhotonServerManager.Instance.SetNickname(name);
     }
 
+    public void SelectMyHospital(int index)
+    {
+        string code = _view.GetCodeOfDropdown(index);
+        _view.SetCodeInputField(code);
+    }
+
     public void OnFailedToJoinRoom(string message)
     {
         _view?.ShowErrorMessage(message);
+    }
+
+    public void OnDataManagerSet()
+    {
+        SetDropdown();
+    }
+
+    public void SetDropdown()
+    {
+        if (!PlayerDataManager.Instance.IsReady) return;
+        string[] hospitals = PlayerDataManager.Instance.GetHospitalCode();
+        _view.SetDropdown(hospitals);
     }
 
     public void Dispose()

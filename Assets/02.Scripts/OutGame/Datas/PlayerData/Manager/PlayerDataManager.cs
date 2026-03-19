@@ -3,7 +3,7 @@ using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public class PlayerDataManager : PunPersistentSingleton<RoomDataManager>
+public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 {
     private IPlayerInformationRepository _playerRoomRepository;
 
@@ -11,10 +11,23 @@ public class PlayerDataManager : PunPersistentSingleton<RoomDataManager>
 
     private string _currentAccount;
 
+    public PlayerInformation PlayerInformation => _playerInformation;
+
+    public event Action OnDataManagerReady;
+
+    public bool IsReady { get; private set; }
     public void Initialized(IPlayerInformationRepository playerRoomRepository)
     {
         _playerRoomRepository = playerRoomRepository;
-        LoadPlayerInformation("Player").Forget();
+
+        InitializeDataAsync().Forget();
+    }
+
+    private async UniTask InitializeDataAsync()
+    {
+        await LoadPlayerInformation("Player");
+        IsReady = true;
+        OnDataManagerReady?.Invoke();   
     }
 
     //닉넴 변경 이벤트 구현 필요
@@ -49,6 +62,13 @@ public class PlayerDataManager : PunPersistentSingleton<RoomDataManager>
         if (_playerRoomRepository == null) return;
 
         _playerRoomRepository.Save(_currentAccount, _playerInformation);
+    }
+
+    public string[] GetHospitalCode()
+    {
+        string[] hospitals = _playerInformation.GetMyHospitals
+                .Select(hospital => $"{hospital.Name}").ToArray();
+        return hospitals;
     }
 
     public override void OnJoinedRoom()
