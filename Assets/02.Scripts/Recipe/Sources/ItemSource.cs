@@ -7,6 +7,8 @@ using UnityEngine;
 // 생성 위치 관리, 자동 리스폰, 현재 생성 아이템 추적을 공통으로 처리합니다.
 public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem : ItemObject
 {
+    private const float DefaultLeaveSourceDistance = 0.15f;
+
     [Tooltip("이 공급원에서 생성할 아이템 프리팹")]
     public TItem SpawnedItemPrefab;
 
@@ -15,6 +17,8 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem 
 
     [Tooltip("생성된 아이템이 공급원을 벗어나면 자동으로 다시 생성할지 여부")]
     public bool AutoRespawn = true;
+
+    [SerializeField] private float _leaveSourceDistance = DefaultLeaveSourceDistance;
 
     protected TItem CurrentSpawnedItem;
 
@@ -64,7 +68,19 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem 
     {
         if (CurrentSpawnedItem == null)
             return true;
-        return CurrentSpawnedItem.HasLeftSource;
+
+        if (CurrentSpawnedItem.HasLeftSource)
+            return true;
+
+        Transform spawnParent = GetSpawnParent();
+        if (spawnParent == null)
+            return false;
+
+        float leaveSourceDistance = Mathf.Max(0.01f, _leaveSourceDistance);
+        float sqrDistance =
+            (CurrentSpawnedItem.transform.position - spawnParent.position).sqrMagnitude;
+
+        return sqrDistance > leaveSourceDistance * leaveSourceDistance;
     }
 
     protected abstract object[] GetInstantiationData();

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Photon.Pun;
 using UnityEngine;
 
@@ -8,20 +7,31 @@ namespace DontDillyDally.Data
     public class SterilizationMachineInteractable : MonoBehaviour, IInteractable
     {
         private const string SterilizedResultPrefabName = "BasicMaterialItem";
-        private const float StoredItemSlotTolerance = 0.05f;
-        private const int MaxTraySlots = 4;
+        private const int MaxSlots = 4;
+
+        private sealed class SterilizationSlot
+        {
+            public ItemObject Item;
+            public CraftedMaterialType PendingResultMaterial = CraftedMaterialType.Unknown;
+
+            public bool IsOccupied => Item != null;
+            public bool HasPendingToolResult => PendingResultMaterial != CraftedMaterialType.Unknown;
+
+            public void Clear()
+            {
+                Item = null;
+                PendingResultMaterial = CraftedMaterialType.Unknown;
+            }
+        }
 
         [SerializeField] private SterilizationMachine _sterilizationMachine;
-        [SerializeField] private Transform[] _traySlotPoints = new Transform[MaxTraySlots];
+        [SerializeField] private Transform[] _traySlotPoints = new Transform[MaxSlots];
         [SerializeField] private float _traySterilizationDuration = 5f;
-        [SerializeField] private Transform _toolSlotPoint;
         [SerializeField] private float _toolSterilizationDuration = 5f;
         [SerializeField] private WorldActionTimer _traySterilizationTimer;
 
-        private ItemObject _storedOutputItem;
-        private readonly List<TrayItem> _loadedTrayItems = new();
-        private bool _areLoadedTraysSterilized;
-        private CraftedMaterialType _processingToolResultMaterial = CraftedMaterialType.Unknown;
+        private SterilizationSlot[] _slots;
+        private bool _isBatchCompleted;
 
         public bool IsInteracting => _traySterilizationTimer != null && _traySterilizationTimer.IsRunning;
         public Transform Transform => transform;
@@ -33,6 +43,12 @@ namespace DontDillyDally.Data
 
             if (_traySterilizationTimer == null)
                 _traySterilizationTimer = GetComponentInChildren<WorldActionTimer>(true);
+
+            _slots = new SterilizationSlot[MaxSlots];
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                _slots[i] = new SterilizationSlot();
+            }
         }
 
         public void Interact(Transform interactor)
@@ -49,41 +65,36 @@ namespace DontDillyDally.Data
 
             if (interactionAbility.CurrentHeldItem == null)
             {
-                if (_areLoadedTraysSterilized)
+                if (_isBatchCompleted)
                 {
-                    TryTakeCompletedTray(interactionAbility);
+                    TryTakeCompletedItem(interactionAbility);
                     return;
                 }
 
-                if (_loadedTrayItems.Count > 0)
+                if (HasAnyStoredItems())
                 {
-                    StartTraySterilizationBatch();
-                    return;
+                    StartSterilizationBatch();
                 }
 
-                TryTakeCompletedItem(interactionAbility);
                 return;
             }
 
-            if (_areLoadedTraysSterilized)
+            if (_isBatchCompleted)
                 return;
 
-            ItemObject heldItem = interactionAbility.CurrentHeldItem;
-            if (GetStoredOutputItem() != null)
+            int availableSlotIndex = GetFirstAvailableSlotIndex();
+            if (availableSlotIndex < 0)
                 return;
 
-            if (heldItem is TrayItem trayItem)
+            if (interactionAbility.CurrentHeldItem is TrayItem trayItem)
             {
-                TryInsertTray(interactionAbility, trayItem);
+                TryInsertTray(interactionAbility, trayItem, availableSlotIndex);
                 return;
             }
 
-            if (_loadedTrayItems.Count > 0)
-                return;
-
-            if (heldItem is MixToolItem mixToolItem)
+            if (interactionAbility.CurrentHeldItem is MixToolItem mixToolItem)
             {
-                TrySterilizeToolItem(interactionAbility, mixToolItem);
+                TryInsertTool(interactionAbility, mixToolItem, availableSlotIndex);
             }
         }
 
@@ -91,69 +102,29 @@ namespace DontDillyDally.Data
         {
         }
 
-        private ItemObject GetStoredOutputItem()
-        {
-            if (_storedOutputItem == null)
-                return null;
-
-            if (_storedOutputItem.NetworkOwnership != null && _storedOutputItem.NetworkOwnership.IsHeld)
-            {
-                _storedOutputItem = null;
-                return null;
-            }
-
-            Transform slotTransform = _toolSlotPoint != null ? _toolSlotPoint : GetSlotTransform();
-            if (slotTransform != null)
-            {
-                float sqrDistance =
-                    (_storedOutputItem.transform.position - slotTransform.position).sqrMagnitude;
-
-                if (sqrDistance > StoredItemSlotTolerance * StoredItemSlotTolerance)
-                {
-                    _storedOutputItem = null;
-                    return null;
-                }
-            }
-
-            return _storedOutputItem;
-        }
-
-        private void TryTakeCompletedItem(PlayerInteractionAbility interactionAbility)
-        {
-            ItemObject storedOutputItem = GetStoredOutputItem();
-            if (storedOutputItem == null)
-                return;
-
-            if (!storedOutputItem.TryGetComponent(out IInteractable interactable))
-                return;
-
-            if (interactionAbility.TryStartHoldFromExternal(interactable))
-            {
-                _storedOutputItem = null;
-            }
-        }
-
         private void TryInsertTray(
             PlayerInteractionAbility interactionAbility,
-            TrayItem trayItem)
+            TrayItem trayItem,
+            int slotIndex)
         {
-            if (_loadedTrayItems.Count >= MaxTraySlots)
-                return;
-
             if (!_sterilizationMachine.CanSterilizeTray(trayItem))
                 return;
 
             if (!interactionAbility.TryReleaseHeldItem(trayItem, returnOwnershipToMaster: false))
                 return;
 
-            PlaceStoredTray(trayItem, _loadedTrayItems.Count);
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(trayItem, slotTransform);
             SetStoredItemInteractionEnabled(trayItem, false);
-            _loadedTrayItems.Add(trayItem);
+
+            _slots[slotIndex].Item = trayItem;
+            _slots[slotIndex].PendingResultMaterial = CraftedMaterialType.Unknown;
         }
 
-        private void TrySterilizeToolItem(
+        private void TryInsertTool(
             PlayerInteractionAbility interactionAbility,
-            MixToolItem mixToolItem)
+            MixToolItem mixToolItem,
+            int slotIndex)
         {
             int playerId = PhotonNetwork.LocalPlayer != null
                 ? PhotonNetwork.LocalPlayer.ActorNumber
@@ -168,26 +139,151 @@ namespace DontDillyDally.Data
             if (!interactionAbility.TryReleaseHeldItem(mixToolItem, returnOwnershipToMaster: false))
                 return;
 
-            if (PhotonNetwork.InRoom)
-            {
-                PhotonNetwork.Destroy(mixToolItem.gameObject);
-            }
-            else
-            {
-                Destroy(mixToolItem.gameObject);
-            }
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(mixToolItem, slotTransform);
+            SetStoredItemInteractionEnabled(mixToolItem, false);
 
-            _processingToolResultMaterial = result.ResultMaterial;
+            _slots[slotIndex].Item = mixToolItem;
+            _slots[slotIndex].PendingResultMaterial = result.ResultMaterial;
+        }
+
+        private void StartSterilizationBatch()
+        {
+            if (!HasAnyStoredItems() || _isBatchCompleted)
+                return;
 
             if (_traySterilizationTimer == null)
             {
-                CompleteToolSterilization();
+                CompleteSterilizationBatch();
                 return;
             }
 
             _traySterilizationTimer.TryStart(
-                _toolSterilizationDuration,
-                CompleteToolSterilization);
+                GetSterilizationDuration(),
+                CompleteSterilizationBatch);
+        }
+
+        private float GetSterilizationDuration()
+        {
+            bool hasTray = false;
+            bool hasTool = false;
+
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (!_slots[i].IsOccupied)
+                    continue;
+
+                if (_slots[i].Item is TrayItem)
+                    hasTray = true;
+                else if (_slots[i].Item is MixToolItem)
+                    hasTool = true;
+            }
+
+            if (hasTray && hasTool)
+                return Mathf.Max(_traySterilizationDuration, _toolSterilizationDuration);
+
+            if (hasTool)
+                return _toolSterilizationDuration;
+
+            return _traySterilizationDuration;
+        }
+
+        private void CompleteSterilizationBatch()
+        {
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                SterilizationSlot slot = _slots[i];
+                if (!slot.IsOccupied)
+                    continue;
+
+                if (slot.Item is TrayItem trayItem)
+                {
+                    _sterilizationMachine.TrySterilizeTray(trayItem);
+                    continue;
+                }
+
+                if (slot.Item is MixToolItem mixToolItem && slot.HasPendingToolResult)
+                {
+                    CraftedMaterialType resultMaterial = slot.PendingResultMaterial;
+                    Transform slotTransform = GetSlotTransform(i);
+
+                    if (PhotonNetwork.InRoom)
+                    {
+                        PhotonNetwork.Destroy(mixToolItem.gameObject);
+                    }
+                    else
+                    {
+                        Destroy(mixToolItem.gameObject);
+                    }
+
+                    slot.Clear();
+
+                    GameObject resultObject = SpawnSterilizedResult(
+                        resultMaterial,
+                        slotTransform.position,
+                        slotTransform.rotation);
+
+                    if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
+                        continue;
+
+                    PlaceStoredItem(resultItem, slotTransform);
+                    SetStoredItemInteractionEnabled(resultItem, false);
+                    slot.Item = resultItem;
+                }
+            }
+
+            _isBatchCompleted = HasAnyStoredItems();
+        }
+
+        private void TryTakeCompletedItem(PlayerInteractionAbility interactionAbility)
+        {
+            int slotIndex = GetFirstOccupiedSlotIndex();
+            if (slotIndex < 0)
+            {
+                _isBatchCompleted = false;
+                return;
+            }
+
+            ItemObject storedItem = _slots[slotIndex].Item;
+            if (storedItem == null)
+                return;
+
+            if (!storedItem.TryGetComponent(out IInteractable interactable))
+                return;
+
+            if (!interactionAbility.TryStartHoldFromExternal(interactable))
+                return;
+
+            _slots[slotIndex].Clear();
+            if (!HasAnyStoredItems())
+                _isBatchCompleted = false;
+        }
+
+        private bool HasAnyStoredItems()
+        {
+            return GetFirstOccupiedSlotIndex() >= 0;
+        }
+
+        private int GetFirstAvailableSlotIndex()
+        {
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (!_slots[i].IsOccupied)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private int GetFirstOccupiedSlotIndex()
+        {
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (_slots[i].IsOccupied)
+                    return i;
+            }
+
+            return -1;
         }
 
         private Transform GetSlotTransform()
@@ -195,7 +291,7 @@ namespace DontDillyDally.Data
             return transform;
         }
 
-        private Transform GetTraySlotTransform(int slotIndex)
+        private Transform GetSlotTransform(int slotIndex)
         {
             if (_traySlotPoints != null &&
                 slotIndex >= 0 &&
@@ -208,35 +304,10 @@ namespace DontDillyDally.Data
             return GetSlotTransform();
         }
 
-        private void PlaceStoredTray(TrayItem trayItem, int slotIndex)
-        {
-            if (trayItem == null)
-                return;
-
-            Transform slotTransform = GetTraySlotTransform(slotIndex);
-
-            if (trayItem.TryGetComponent(out HoldableItem holdableItem))
-            {
-                holdableItem.Place(slotTransform);
-            }
-            else
-            {
-                trayItem.transform.SetPositionAndRotation(slotTransform.position, slotTransform.rotation);
-            }
-
-            PhotonView photonView = trayItem.GetComponent<PhotonView>();
-            if (photonView != null && PhotonNetwork.MasterClient != null)
-            {
-                photonView.TransferOwnership(PhotonNetwork.MasterClient);
-            }
-        }
-
-        private void PlaceStoredItem(ItemObject itemObject)
+        private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
         {
             if (itemObject == null)
                 return;
-
-            Transform slotTransform = _toolSlotPoint != null ? _toolSlotPoint : GetSlotTransform();
 
             if (itemObject.TryGetComponent(out HoldableItem holdableItem))
             {
@@ -252,91 +323,6 @@ namespace DontDillyDally.Data
             {
                 photonView.TransferOwnership(PhotonNetwork.MasterClient);
             }
-        }
-
-        private void StartTraySterilizationBatch()
-        {
-            if (_loadedTrayItems.Count == 0 || _areLoadedTraysSterilized)
-                return;
-
-            if (_traySterilizationTimer == null)
-            {
-                CompleteTraySterilizationBatch();
-                return;
-            }
-
-            _traySterilizationTimer.TryStart(
-                _traySterilizationDuration,
-                CompleteTraySterilizationBatch);
-        }
-
-        private void CompleteTraySterilizationBatch()
-        {
-            for (int i = 0; i < _loadedTrayItems.Count; i++)
-            {
-                TrayItem trayItem = _loadedTrayItems[i];
-                if (trayItem == null)
-                    continue;
-
-                _sterilizationMachine.TrySterilizeTray(trayItem);
-            }
-
-            _areLoadedTraysSterilized = _loadedTrayItems.Count > 0;
-        }
-
-        private void CompleteToolSterilization()
-        {
-            if (_processingToolResultMaterial == CraftedMaterialType.Unknown)
-                return;
-
-            Transform slotTransform = _toolSlotPoint != null ? _toolSlotPoint : GetSlotTransform();
-            GameObject resultObject = SpawnSterilizedResult(
-                _processingToolResultMaterial,
-                slotTransform.position,
-                slotTransform.rotation);
-
-            _processingToolResultMaterial = CraftedMaterialType.Unknown;
-
-            if (resultObject == null)
-                return;
-
-            if (!resultObject.TryGetComponent(out ItemObject resultItem))
-                return;
-
-            PlaceStoredItem(resultItem);
-            SetStoredItemInteractionEnabled(resultItem, false);
-            _storedOutputItem = resultItem;
-        }
-
-        private void TryTakeCompletedTray(PlayerInteractionAbility interactionAbility)
-        {
-            TrayItem trayItem = GetNextCompletedTray();
-            if (trayItem == null)
-            {
-                _areLoadedTraysSterilized = false;
-                return;
-            }
-
-            if (!interactionAbility.TryStartHoldFromExternal(trayItem.GetComponent<IInteractable>()))
-                return;
-
-            _loadedTrayItems.Remove(trayItem);
-            if (_loadedTrayItems.Count == 0)
-                _areLoadedTraysSterilized = false;
-        }
-
-        private TrayItem GetNextCompletedTray()
-        {
-            for (int i = 0; i < _loadedTrayItems.Count; i++)
-            {
-                TrayItem trayItem = _loadedTrayItems[i];
-                if (trayItem == null)
-                    continue;
-
-                return trayItem;
-            }
-
-            return null;
         }
 
         private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)
