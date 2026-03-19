@@ -1,9 +1,11 @@
 using DontDillyDally.Data;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
 // 아이템 공급원의 공통 동작을 담당하는 제네릭 베이스 클래스입니다.
 // 생성 위치 관리, 자동 리스폰, 현재 생성 아이템 추적을 공통으로 처리합니다.
-public abstract class ItemSource<TItem> : MonoBehaviour where TItem : ItemObject
+public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem : ItemObject
 {
     [Tooltip("이 공급원에서 생성할 아이템 프리팹")]
     public TItem SpawnedItemPrefab;
@@ -18,21 +20,28 @@ public abstract class ItemSource<TItem> : MonoBehaviour where TItem : ItemObject
 
     protected virtual void Start()
     {
-        EnsureSpawnedItem();
+        TryEnsureSpawnedItem();
+    }
+
+    public override void OnJoinedRoom()
+    {
+        TryEnsureSpawnedItem();
+    }
+
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        TryEnsureSpawnedItem();
     }
 
     protected virtual void Update()
     {
+        if (!PhotonNetwork.IsMasterClient)
+            return;
+
         if (!AutoRespawn)
             return;
 
-        if (CurrentSpawnedItem == null)
-        {
-            EnsureSpawnedItem();
-            return;
-        }
-
-        if (!CurrentSpawnedItem.IsStillAt(GetSpawnParent()))
+        if (ShouldRespawn())
         {
             CurrentSpawnedItem = null;
             EnsureSpawnedItem();
@@ -41,6 +50,8 @@ public abstract class ItemSource<TItem> : MonoBehaviour where TItem : ItemObject
 
     public void ForceRespawn()
     {
+        if (!CanUsePhotonSpawn())
+            return;
         EnsureSpawnedItem(forceRespawn: true);
     }
 
@@ -49,13 +60,33 @@ public abstract class ItemSource<TItem> : MonoBehaviour where TItem : ItemObject
         return SpawnedItemPrefab != null;
     }
 
-    protected abstract void InitializeSpawnedItem(TItem spawnedItem);
+    protected virtual bool ShouldRespawn()
+    {
+        if (CurrentSpawnedItem == null)
+            return true;
+        return CurrentSpawnedItem.HasLeftSource;
+    }
 
-    protected abstract string GetDefaultItemName(TItem spawnedItem);
+    protected abstract object[] GetInstantiationData();
+
+    protected abstract string GetDefaultItemName();
 
     protected Transform GetSpawnParent()
     {
         return SpawnPoint != null ? SpawnPoint : transform;
+    }
+
+    private void TryEnsureSpawnedItem()
+    {
+        if (!CanUsePhotonSpawn())
+            return;
+
+        EnsureSpawnedItem();
+    }
+
+    private static bool CanUsePhotonSpawn()
+    {
+        return PhotonNetwork.IsConnected && PhotonNetwork.InRoom && PhotonNetwork.IsMasterClient;
     }
 
     private void EnsureSpawnedItem(bool forceRespawn = false)
@@ -67,24 +98,22 @@ public abstract class ItemSource<TItem> : MonoBehaviour where TItem : ItemObject
 
         if (forceRespawn && CurrentSpawnedItem != null && CurrentSpawnedItem.IsStillAt(parent))
         {
-            Destroy(CurrentSpawnedItem.gameObject);
+            PhotonNetwork.Destroy(CurrentSpawnedItem.gameObject);
             CurrentSpawnedItem = null;
         }
 
         if (CurrentSpawnedItem != null)
             return;
 
-        TItem spawnedItem = Instantiate(
-            SpawnedItemPrefab,
+        GameObject spawnedObject = PhotonNetwork.InstantiateRoomObject(
+            SpawnedItemPrefab.name,
             parent.position,
             parent.rotation,
-            parent);
+            0,
+            GetInstantiationData());
 
-        InitializeSpawnedItem(spawnedItem);
-        spawnedItem.name = string.IsNullOrWhiteSpace(spawnedItem.DisplayName)
-            ? GetDefaultItemName(spawnedItem)
-            : spawnedItem.DisplayName;
-
+        TItem spawnedItem = spawnedObject.GetComponent<TItem>();
+        spawnedItem.name = GetDefaultItemName();
         CurrentSpawnedItem = spawnedItem;
     }
 }

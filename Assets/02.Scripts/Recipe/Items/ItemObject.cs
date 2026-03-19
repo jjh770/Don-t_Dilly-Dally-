@@ -1,3 +1,4 @@
+using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -6,6 +7,10 @@ namespace DontDillyDally.Data
     // 표시 이름, 모델 프리팹, 박스 콜라이더 설정을 공통으로 관리합니다.
     public abstract class ItemObject : MonoBehaviour
     {
+        private const int InvalidLayer = -1;
+        private const string SupplyItemLayerName = "SupplyItem";
+        private const string InteractableItemLayerName = "InteractableItem";
+
         protected delegate bool PresentationResolver<TItemType>(
             TItemType itemType,
             out string displayName,
@@ -25,6 +30,28 @@ namespace DontDillyDally.Data
         public BoxCollider TargetBoxCollider;
 
         protected GameObject CurrentModelInstance;
+        private NetworkItemOwnership _networkItemOwnership;
+        private NetworkItemState _networkItemState;
+        private int _currentAssignedLayer = InvalidLayer;
+
+        public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
+        public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
+        public NetworkItemState NetworkState => _networkItemState;
+
+        protected virtual void Awake()
+        {
+            if (ModelPrefab != null)
+                RefreshModel();
+            _networkItemState = GetComponent<NetworkItemState>();
+
+            if (_networkItemState == null)
+                _networkItemState = gameObject.AddComponent<NetworkItemState>();
+
+            _networkItemOwnership = GetComponent<NetworkItemOwnership>();
+
+            if (_networkItemOwnership == null)
+                _networkItemOwnership = gameObject.AddComponent<NetworkItemOwnership>();
+        }
 
         public virtual void Initialize(string displayName, GameObject modelPrefab = null)
         {
@@ -110,12 +137,9 @@ namespace DontDillyDally.Data
             CurrentModelInstance.transform.localRotation = Quaternion.identity;
             CurrentModelInstance.transform.localScale = Vector3.one;
             DisableModelColliders();
-        }
 
-        protected virtual void Awake()
-        {
-            if (ModelPrefab != null)
-                RefreshModel();
+            if (_currentAssignedLayer != InvalidLayer)
+                ApplyLayerRecursively(_currentAssignedLayer);
         }
 
         protected void ClearCurrentModel()
@@ -142,6 +166,50 @@ namespace DontDillyDally.Data
                 return TargetBoxCollider;
 
             return GetComponent<BoxCollider>();
+        }
+
+        public void ResetSourceState()
+        {
+            _networkItemState?.ResetSourceState();
+        }
+
+        public void SetAsSupplyItem()
+        {
+            SetItemLayer(LayerMask.NameToLayer(SupplyItemLayerName));
+        }
+
+        public void NotifyLeftSource()
+        {
+            _networkItemOwnership?.NotifyLeftSource();
+        }
+
+        public void SetAsInteractableItem()
+        {
+            SetItemLayer(LayerMask.NameToLayer(InteractableItemLayerName));
+        }
+
+        public void SetItemLayer(int layer)
+        {
+            if (layer == InvalidLayer)
+                return;
+
+            _currentAssignedLayer = layer;
+            ApplyLayerRecursively(layer);
+        }
+
+        private void ApplyLayerRecursively(int layer)
+        {
+            ApplyLayerRecursively(transform, layer);
+        }
+
+        private static void ApplyLayerRecursively(Transform root, int layer)
+        {
+            root.gameObject.layer = layer;
+
+            for (int i = 0; i < root.childCount; i++)
+            {
+                ApplyLayerRecursively(root.GetChild(i), layer);
+            }
         }
     }
 }
