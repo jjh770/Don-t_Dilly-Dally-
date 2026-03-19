@@ -5,9 +5,9 @@ using UnityEngine;
 
 public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 {
-    private IRoomDataRepository _roomDataRepository;
+    private IRoomCurrencyRepository _roomDataRepository;
 
-    private RoomData _roomData;
+    private RoomWallet _roomWallet;
 
     private string _currentRoomCode;
 
@@ -17,7 +17,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
         // Repository 생성
         Debug.Log("Data 조회 가능");
-        IRoomDataRepository roomDataRepository = new RoomDataFirebaseRepository();
+        IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository();
         Initialized(roomDataRepository);
     }
 
@@ -31,7 +31,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         }
     }
 
-    public void Initialized(IRoomDataRepository roomDataRepository)
+    public void Initialized(IRoomCurrencyRepository roomDataRepository)
     {
         _roomDataRepository = roomDataRepository;
     }
@@ -41,18 +41,18 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         if (_roomDataRepository == null) return;
         _currentRoomCode = roomCode;
 
-        RoomSaveData data = await _roomDataRepository.Load(roomCode);
+        RoomWallet wallet = await _roomDataRepository.Load(roomCode);
 
-        if (data == null)
+        if (wallet == null)
         {
             Debug.Log("[RoomDataManager] 새로운 데이터를 생성합니다.");
-            _roomData = new RoomData();
+            _roomWallet = RoomWallet.Default;
             
             SaveData();
             return;  
-        } 
+        }
 
-        _roomData = data.RoomData;
+        _roomWallet = wallet;
 
     }
 
@@ -60,10 +60,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     {
         if (_roomDataRepository == null) return;
 
-        RoomSaveData data = new RoomSaveData();
-        data.RoomData = _roomData;
-
-        _roomDataRepository.Save(_currentRoomCode, data);
+        _roomDataRepository.Save(_currentRoomCode, _roomWallet);
     }
 
     public async UniTask<bool> IsRoomDataExist(string roomCode)
