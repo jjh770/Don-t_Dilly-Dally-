@@ -86,6 +86,7 @@ namespace DontDillyDally.Data
             AddRule(assetPath, "파랑 물약", ToolType.PotionCyan, ActionType.MixPotion, ToolType.PotionMagenta, CraftedMaterialType.MixedPotionBlue);
             AddRule(assetPath, "빨강 물약", ToolType.PotionMagenta, ActionType.MixPotion, ToolType.PotionYellow, CraftedMaterialType.MixedPotionRed);
             AddRule(assetPath, "초록 물약", ToolType.PotionCyan, ActionType.MixPotion, ToolType.PotionYellow, CraftedMaterialType.MixedPotionGreen);
+            AddRule(assetPath, "검정 물약", ToolType.PotionCyan, ActionType.MixPotion, ToolType.PotionYellow, CraftedMaterialType.MixedPotionBlack); // 3색 혼합: Cyan+Magenta+Yellow
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
