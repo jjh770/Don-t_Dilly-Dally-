@@ -525,43 +525,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &623805425 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 5137728731150871724, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
-  m_PrefabInstance: {fileID: 1624134968}
-  m_PrefabAsset: {fileID: 0}
 --- !u!4 &623805429 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5478402052132484630, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
   m_PrefabInstance: {fileID: 1624134968}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &623805430
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 623805425}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6bc338a286657ec42a63e376b09166d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbenchInteractable
-  _trayWorkbench: {fileID: 623805431}
-  _traySlotPoint: {fileID: 1546215249}
---- !u!114 &623805431
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 623805425}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71a7a0c9c8bde8645b52bc10eca10c8b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbench
-  CurrentTrayItem: {fileID: 0}
 --- !u!1 &678587124
 GameObject:
   m_ObjectHideFlags: 0
@@ -1200,7 +1168,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5137728731150871724, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
       propertyPath: m_Layer
-      value: 6
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5478402052132484630, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
       propertyPath: m_LocalScale.x
@@ -1254,19 +1222,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -4136984244474958046, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 5478402052132484630, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1546215249}
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 5137728731150871724, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 623805431}
-    - targetCorrespondingSourceObject: {fileID: 5137728731150871724, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 623805430}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5023887077e4479498fe3865c7b908ee, type: 3}
 --- !u!4 &1766584580 stripped
 Transform:
@@ -1282,7 +1245,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1939235416}
-  m_Layer: 0
+  - component: {fileID: 1939235419}
+  - component: {fileID: 1939235418}
+  - component: {fileID: 1939235417}
+  m_Layer: 6
   m_Name: TrayWorkbench
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1305,6 +1271,54 @@ Transform:
   - {fileID: 623805429}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1939235417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1939235415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc338a286657ec42a63e376b09166d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbenchInteractable
+  _trayWorkbench: {fileID: 1939235419}
+  _traySlotPoint: {fileID: 1546215249}
+--- !u!65 &1939235418
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1939235415}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.6846655, y: 0.3542852, z: 0.7497546}
+  m_Center: {x: -0.000006109476, y: 0.17714249, z: -0.0000005364418}
+--- !u!114 &1939235419
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1939235415}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71a7a0c9c8bde8645b52bc10eca10c8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbench
+  CurrentTrayItem: {fileID: 0}
 --- !u!4 &1214203577422511667 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5227657041754624410, guid: 6bfa94f289782594897b8e4731a470d7, type: 3}
@@ -1366,6 +1380,10 @@ PrefabInstance:
       propertyPath: _doorVisual
       value: 
       objectReference: {fileID: 1214203577422511667}
+    - target: {fileID: 6343537734064404030, guid: 6bfa94f289782594897b8e4731a470d7, type: 3}
+      propertyPath: _resultPrefab
+      value: 
+      objectReference: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
     - target: {fileID: 6578923504061536258, guid: 6bfa94f289782594897b8e4731a470d7, type: 3}
       propertyPath: m_Name
       value: SterilizationMachine
@@ -1477,10 +1495,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: PotionMixingMachine
       objectReference: {fileID: 0}
-    - target: {fileID: 1971056364543249418, guid: fbc02a1b226e9254fa0e42a72cefd769, type: 3}
-      propertyPath: m_Center.y
-      value: 0.5
-      objectReference: {fileID: 0}
+    - target: {fileID: 2716684030857432952, guid: fbc02a1b226e9254fa0e42a72cefd769, type: 3}
+      propertyPath: _resultPrefab
+      value: 
+      objectReference: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
     - target: {fileID: 2738302498175911971, guid: fbc02a1b226e9254fa0e42a72cefd769, type: 3}
       propertyPath: m_LocalPosition.x
       value: -1.1
@@ -1520,10 +1538,6 @@ PrefabInstance:
     - target: {fileID: 2738302498175911971, guid: fbc02a1b226e9254fa0e42a72cefd769, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7499537993024190805, guid: fbc02a1b226e9254fa0e42a72cefd769, type: 3}
-      propertyPath: _openLocalEulerAngles.x
-      value: -150
       objectReference: {fileID: 0}
     - target: {fileID: 8983042431280950680, guid: fbc02a1b226e9254fa0e42a72cefd769, type: 3}
       propertyPath: _craftingMachine
