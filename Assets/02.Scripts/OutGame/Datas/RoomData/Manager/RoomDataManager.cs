@@ -11,26 +11,6 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     private string _currentRoomCode;
 
-    private async void Start()
-    {
-        await WaitForFirebaseAsync();
-
-        // Repository 생성
-        Debug.Log("Data 조회 가능");
-        IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository();
-        Initialized(roomDataRepository);
-    }
-
-    private async UniTask WaitForFirebaseAsync()
-    {
-        // FirebaseManager가 준비될 때까지 대기
-        while (FirebaseInitializer.Instance == null ||
-               !FirebaseInitializer.Instance.IsInitialized)
-        {
-            await UniTask.Yield();
-        }
-    }
-
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
     {
         _roomDataRepository = roomDataRepository;

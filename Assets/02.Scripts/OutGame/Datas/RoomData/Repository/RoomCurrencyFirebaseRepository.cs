@@ -66,7 +66,7 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
         {
             var dto = RoomWalletDTO.FromDomain(wallet);
             await _db.Collection(COLLECTION_NAME).Document(roomCode).SetAsync(dto);
-            Debug.Log("[RoomDataRepository] 저장 성공: ");
+            Debug.Log("[RoomDataRepository] 저장 성공");
         }
         catch (System.Exception e)
         {
