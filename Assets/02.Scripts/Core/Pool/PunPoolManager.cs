@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using Photon.Pun;
+using System.Collections.Generic;
 using UnityEngine;
 
 // [사용법]
@@ -28,22 +28,25 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
     // IPunPrefabPool — 반드시 비활성화 상태로 반환 (PUN2가 활성화 처리)
     public GameObject Instantiate(string prefabId, Vector3 position, Quaternion rotation)
     {
-        GameObject obj = GetFromQueue(prefabId);
-
-        if (obj == null)
+        if (_prefabTable.TryGetEntry(prefabId, out _))
         {
-            obj = CreateNew(prefabId);
+            GameObject pooled = GetFromQueue(prefabId) ?? CreateNew(prefabId);
+            if (pooled == null)
+                return null;
+
+            pooled.transform.SetParent(null);
+            pooled.transform.SetPositionAndRotation(position, rotation);
+            return pooled;
         }
 
-        if (obj == null)
+        GameObject prefab = Resources.Load<GameObject>(prefabId);
+        if (prefab == null)
         {
-            Debug.LogError($"[PunPoolManager] '{prefabId}'를 찾을 수 없습니다. PrefabTable을 확인하세요.");
+            Debug.LogError($"[PunPoolManager] '{prefabId}'를 찾을 수 없습니다.");
             return null;
         }
 
-        obj.transform.SetParent(null);
-        obj.transform.SetPositionAndRotation(position, rotation);
-        return obj;
+        return Object.Instantiate(prefab, position, rotation);
     }
 
     // IPunPrefabPool — PUN2가 SetActive(false) 처리 후 호출
@@ -54,7 +57,7 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
             Object.Destroy(go);
             return;
         }
-        
+
         // 오브젝트 초기화 후 풀로 반환
         go.transform.SetParent(_poolRoot);
         go.transform.localPosition = Vector3.zero;

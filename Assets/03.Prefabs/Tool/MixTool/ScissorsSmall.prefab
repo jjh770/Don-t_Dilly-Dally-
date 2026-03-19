@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4723646786207531839}
   - component: {fileID: 2890813546475746000}
-  m_Layer: 6
+  m_Layer: 0
   m_Name: ScissorsSmall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -51,7 +51,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 0.1, y: 0.02, z: 0.3}
   m_Center: {x: 0, y: 0, z: 0.05}
@@ -115,7 +115,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: -1492285996620440945, guid: a23bb9d5957b99543846016e757fb765, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -185,7 +186,8 @@ PrefabInstance:
       propertyPath: m_Name
       value: Scissors_01_Part_01
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 3309679518382099925, guid: 369037d5f8aaa6240bb3170c86fbff3e, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
