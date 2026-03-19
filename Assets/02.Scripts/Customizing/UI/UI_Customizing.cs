@@ -35,6 +35,10 @@ public class UI_Customizing : MonoBehaviour
     [Tooltip("선택된 아이템 이름 표시")]
     [SerializeField] private TextMeshProUGUI _selectedItemNameText;
 
+    [Header("탭 색상")]
+    [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f); // #729CF1
+    [SerializeField] private Color _tabNormalColor = Color.white;
+
     // 현재 선택된 카테고리
     private CustomizingType _currentCategory = CustomizingType.SkinColor;
 
@@ -114,7 +118,14 @@ public class UI_Customizing : MonoBehaviour
             bool isSelected = tab.type == _currentCategory;
 
             if (tab.button != null)
-                tab.button.interactable = !isSelected;
+            {
+                // 버튼 색상 변경
+                var image = tab.button.GetComponent<Image>();
+                if (image != null)
+                {
+                    image.color = isSelected ? _tabSelectedColor : _tabNormalColor;
+                }
+            }
 
             // 선택된 탭이면 인디케이터 이동
             if (isSelected && _tabSelectionIndicator != null && tab.button != null)
