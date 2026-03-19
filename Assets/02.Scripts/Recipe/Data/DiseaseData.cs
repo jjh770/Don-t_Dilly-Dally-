@@ -37,6 +37,48 @@ namespace DontDillyDally.Data
         [FormerlySerializedAs("failHealthPenalty")]
         public float FailHealthPenalty;
 
+        [Header("환자 정보")]
+        [Tooltip("환자 이름")]
+        [FormerlySerializedAs("patientName")]
+        public string PatientName;
+
+        [Tooltip("환자 배경 이야기")]
+        [FormerlySerializedAs("backstory")]
+        [TextArea(2, 4)]
+        public string Backstory;
+
+        [Tooltip("환자 대사")]
+        [FormerlySerializedAs("patientQuote")]
+        public string PatientQuote;
+
+        [Header("게임 설정")]
+        [Tooltip("질병 카테고리 (외과, 내과, 피부과, 정형외과 등)")]
+        [FormerlySerializedAs("category")]
+        public string Category;
+
+        [Tooltip("난이도 (1~5)")]
+        [FormerlySerializedAs("difficulty")]
+        [Range(1, 5)]
+        public int Difficulty = 1;
+
+        [Tooltip("제한 시간 (초). 0이면 제한 없음")]
+        [FormerlySerializedAs("timeLimitSec")]
+        public float TimeLimitSec;
+
+        [Tooltip("권장 플레이어 수 (2~4)")]
+        [FormerlySerializedAs("recommendedPlayers")]
+        [Range(2, 4)]
+        public int RecommendedPlayers = 2;
+
+        [Header("결과 대사")]
+        [Tooltip("치료 성공 시 표시할 문구")]
+        [FormerlySerializedAs("successLine")]
+        public string SuccessLine;
+
+        [Tooltip("치료 실패 시 표시할 문구")]
+        [FormerlySerializedAs("failLine")]
+        public string FailLine;
+
         [Header("메타 정보")]
         [FormerlySerializedAs("source")]
         public RecipeSource Source;
