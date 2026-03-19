@@ -53,7 +53,7 @@ public class SkinnedMeshBoneInfo : MonoBehaviour
                 else
                 {
                     boneNames[i] = "";
-                    Debug.LogWarning($"[BoneInfo] Null bone at index {i} in {sourceRenderer.name}");
+                    Debug.LogWarning($"[BoneInfo] {sourceRenderer.name}의 인덱스 {i}에 본이 없음");
                 }
             }
         }
@@ -74,8 +74,8 @@ public class SkinnedMeshBoneInfo : MonoBehaviour
     public void PrintBoneInfo()
     {
         Debug.Log($"[BoneInfo] {gameObject.name}");
-        Debug.Log($"  Root Bone: {rootBoneName}");
-        Debug.Log($"  Bone Count: {boneNames?.Length ?? 0}");
+        Debug.Log($"  루트 본: {rootBoneName}");
+        Debug.Log($"  본 개수: {boneNames?.Length ?? 0}");
 
         if (boneNames != null)
         {
@@ -85,7 +85,7 @@ public class SkinnedMeshBoneInfo : MonoBehaviour
             }
             if (boneNames.Length > 10)
             {
-                Debug.Log($"    ... and {boneNames.Length - 10} more");
+                Debug.Log($"    ... 외 {boneNames.Length - 10}개");
             }
         }
     }

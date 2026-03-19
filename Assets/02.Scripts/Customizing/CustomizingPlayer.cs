@@ -99,7 +99,7 @@ public class CustomizingPlayer : MonoBehaviour
             if (found != null)
             {
                 skeletonRoot = found;
-                Debug.Log($"[CustomizingPlayer] Auto-found skeleton root: {name}");
+                Debug.Log($"[CustomizingPlayer] 스켈레톤 루트 자동 탐색: {name}");
                 return;
             }
         }
@@ -133,7 +133,7 @@ public class CustomizingPlayer : MonoBehaviour
     {
         if (item.PartPrefab == null)
         {
-            Debug.LogWarning($"[CustomizingPlayer] No prefab for item: {item.ItemId}");
+            Debug.LogWarning($"[CustomizingPlayer] 아이템에 프리팹 없음: {item.ItemId}");
             ClearSlot(type);
             return;
         }

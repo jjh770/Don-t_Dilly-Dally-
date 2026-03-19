@@ -165,7 +165,7 @@ public class BoneNameMapping : ScriptableObject
     public void RebuildMappingDictionary()
     {
         BuildMappingDictionary();
-        Debug.Log($"[BoneMapping] Rebuilt dictionary with {mappingDict.Count} entries");
+        Debug.Log($"[BoneMapping] 딕셔너리 재구축 완료: {mappingDict.Count}개 항목");
     }
 
 #if UNITY_EDITOR

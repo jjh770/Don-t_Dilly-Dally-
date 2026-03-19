@@ -6,83 +6,83 @@ using TMPro;
 
 public class UI_Customizing : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private CustomizingManager manager;
+    [Header("참조")]
+    [SerializeField] private CustomizingManager _manager;
 
-    [Header("Category Tabs")]
+    [Header("카테고리 탭")]
     [Tooltip("종류별 탭 버튼들")]
-    [SerializeField] private List<CategoryTab> categoryTabs = new List<CategoryTab>();
+    [SerializeField] private List<CategoryTab> _categoryTabs = new List<CategoryTab>();
 
-    [Tooltip("탭 선택 표시 오브젝트 (선택된 탭 아래로 이동)")]
-    [SerializeField] private RectTransform tabSelectionIndicator;
+    [Tooltip("탭 선택 표시 오브젝트")]
+    [SerializeField] private RectTransform _tabSelectionIndicator;
 
-    [Header("Item List")]
+    [Header("아이템 리스트")]
     [Tooltip("아이템 버튼 프리팹")]
-    [SerializeField] private UI_CustomizingItem itemPrefab;
+    [SerializeField] private UI_CustomizingItem _itemPrefab;
 
     [Tooltip("아이템 목록이 생성될 부모")]
-    [SerializeField] private Transform itemListParent;
+    [SerializeField] private Transform _itemListParent;
 
-    [Tooltip("스크롤 뷰 (선택 시 스크롤 초기화용)")]
-    [SerializeField] private ScrollRect scrollRect;
+    [Tooltip("스크롤 뷰")]
+    [SerializeField] private ScrollRect _scrollRect;
 
-    [Header("Buttons")]
-    [SerializeField] private Button saveButton;
-    [SerializeField] private Button resetButton;
-    [SerializeField] private Button closeButton;
+    [Header("버튼")]
+    [SerializeField] private Button _saveButton;
+    [SerializeField] private Button _resetButton;
+    [SerializeField] private Button _closeButton;
 
-    [Header("Info Display")]
+    [Header("정보 표시")]
     [Tooltip("선택된 아이템 이름 표시")]
-    [SerializeField] private TextMeshProUGUI selectedItemNameText;
+    [SerializeField] private TextMeshProUGUI _selectedItemNameText;
 
     // 현재 선택된 카테고리
-    private CustomizingType currentCategory = CustomizingType.SkinColor;
+    private CustomizingType _currentCategory = CustomizingType.SkinColor;
 
     // 생성된 아이템 버튼들
-    private List<UI_CustomizingItem> itemButtons = new List<UI_CustomizingItem>();
+    private List<UI_CustomizingItem> _itemButtons = new List<UI_CustomizingItem>();
 
     // 현재 카테고리의 아이템 목록
-    private List<CustomizingItemSO> currentItems = new List<CustomizingItemSO>();
+    private List<CustomizingItemSO> _currentItems = new List<CustomizingItemSO>();
 
     private void Start()
     {
         SetupButtons();
         SetupCategoryTabs();
 
-        if (manager != null)
+        if (_manager != null)
         {
-            manager.OnItemChanged += HandleItemChanged;
-            manager.OnLoaded += RefreshUI;
+            _manager.OnItemChanged += HandleItemChanged;
+            _manager.OnLoaded += RefreshUI;
         }
 
         // 초기 카테고리 표시
-        SelectCategory(currentCategory);
+        SelectCategory(_currentCategory);
     }
 
     private void OnDestroy()
     {
-        if (manager != null)
+        if (_manager != null)
         {
-            manager.OnItemChanged -= HandleItemChanged;
-            manager.OnLoaded -= RefreshUI;
+            _manager.OnItemChanged -= HandleItemChanged;
+            _manager.OnLoaded -= RefreshUI;
         }
     }
 
     private void SetupButtons()
     {
-        if (saveButton != null)
-            saveButton.onClick.AddListener(OnSaveClicked);
+        if (_saveButton != null)
+            _saveButton.onClick.AddListener(OnSaveClicked);
 
-        if (resetButton != null)
-            resetButton.onClick.AddListener(OnResetClicked);
+        if (_resetButton != null)
+            _resetButton.onClick.AddListener(OnResetClicked);
 
-        if (closeButton != null)
-            closeButton.onClick.AddListener(OnCloseClicked);
+        if (_closeButton != null)
+            _closeButton.onClick.AddListener(OnCloseClicked);
     }
 
     private void SetupCategoryTabs()
     {
-        foreach (var tab in categoryTabs)
+        foreach (var tab in _categoryTabs)
         {
             if (tab.button != null)
             {
@@ -94,7 +94,7 @@ public class UI_Customizing : MonoBehaviour
 
     public void SelectCategory(CustomizingType type)
     {
-        currentCategory = type;
+        _currentCategory = type;
 
         // 탭 시각 상태 업데이트
         UpdateTabVisuals();
@@ -103,21 +103,21 @@ public class UI_Customizing : MonoBehaviour
         RefreshItemList();
 
         // 스크롤 초기화
-        if (scrollRect != null)
-            scrollRect.verticalNormalizedPosition = 1f;
+        if (_scrollRect != null)
+            _scrollRect.verticalNormalizedPosition = 1f;
     }
 
     private void UpdateTabVisuals()
     {
-        foreach (var tab in categoryTabs)
+        foreach (var tab in _categoryTabs)
         {
-            bool isSelected = tab.type == currentCategory;
+            bool isSelected = tab.type == _currentCategory;
 
             if (tab.button != null)
                 tab.button.interactable = !isSelected;
 
             // 선택된 탭이면 인디케이터 이동
-            if (isSelected && tabSelectionIndicator != null && tab.button != null)
+            if (isSelected && _tabSelectionIndicator != null && tab.button != null)
             {
                 MoveTabSelectionIndicator(tab.button.transform);
             }
@@ -126,11 +126,12 @@ public class UI_Customizing : MonoBehaviour
 
     private void MoveTabSelectionIndicator(Transform tabButton)
     {
-        if (tabSelectionIndicator == null || tabButton == null) return;
+        if (_tabSelectionIndicator == null || tabButton == null) return;
 
-        tabSelectionIndicator.position = tabButton.position;
+        _tabSelectionIndicator.SetParent(tabButton);
+        _tabSelectionIndicator.anchoredPosition = new Vector2(0f, -55f);
 
-        tabSelectionIndicator.gameObject.SetActive(true);
+        _tabSelectionIndicator.gameObject.SetActive(true);
     }
 
     private void RefreshItemList()
@@ -138,32 +139,32 @@ public class UI_Customizing : MonoBehaviour
         // 기존 버튼 제거
         ClearItemButtons();
 
-        if (manager == null) return;
+        if (_manager == null) return;
 
         // 현재 카테고리의 아이템 가져오기
-        currentItems = manager.GetUnlockedItemsByType(currentCategory);
+        _currentItems = _manager.GetUnlockedItemsByType(_currentCategory);
 
         // 현재 장착된 아이템
-        var equippedItem = manager.GetEquipped(currentCategory);
+        var equippedItem = _manager.GetEquipped(_currentCategory);
 
         // 아이템 버튼 생성
-        foreach (var item in currentItems)
+        foreach (var item in _currentItems)
         {
             var button = CreateItemButton(item);
             button.SetSelected(item == equippedItem);
-            itemButtons.Add(button);
+            _itemButtons.Add(button);
         }
     }
 
     private UI_CustomizingItem CreateItemButton(CustomizingItemSO item)
     {
-        if (itemPrefab == null || itemListParent == null)
+        if (_itemPrefab == null || _itemListParent == null)
         {
-            Debug.LogError("[UI_Customizing] Item prefab or parent not assigned");
+            Debug.LogError("[UI_Customizing] 아이템 프리팹 또는 부모가 할당되지 않음");
             return null;
         }
 
-        var buttonObj = Instantiate(itemPrefab.gameObject, itemListParent);
+        var buttonObj = Instantiate(_itemPrefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
 
         button.Setup(item, () => OnItemClicked(item));
@@ -173,29 +174,29 @@ public class UI_Customizing : MonoBehaviour
 
     private void ClearItemButtons()
     {
-        foreach (var button in itemButtons)
+        foreach (var button in _itemButtons)
         {
             if (button != null)
                 Destroy(button.gameObject);
         }
-        itemButtons.Clear();
+        _itemButtons.Clear();
     }
 
     private void OnItemClicked(CustomizingItemSO item)
     {
-        if (manager == null) return;
+        if (_manager == null) return;
 
-        manager.SelectItem(item);
+        _manager.SelectItem(item);
     }
     private void OnSaveClicked()
     {
-        manager?.Save();
-        Debug.Log("[UI_Customizing] Save clicked");
+        _manager?.Save();
+        Debug.Log("[UI_Customizing] 저장 클릭");
     }
     private void OnResetClicked()
     {
-        manager?.ResetAll();
-        Debug.Log("[UI_Customizing] Reset clicked");
+        _manager?.ResetAll();
+        Debug.Log("[UI_Customizing] 초기화 클릭");
     }
 
     private void OnCloseClicked()
@@ -207,27 +208,27 @@ public class UI_Customizing : MonoBehaviour
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
     {
         // 현재 카테고리와 같으면 선택 상태 갱신
-        if (type == currentCategory)
+        if (type == _currentCategory)
         {
             UpdateItemSelections();
         }
 
         // 선택된 아이템 이름 표시
-        if (selectedItemNameText != null && item != null)
+        if (_selectedItemNameText != null && item != null)
         {
-            selectedItemNameText.text = item.DisplayName;
+            _selectedItemNameText.text = item.DisplayName;
         }
     }
 
     private void UpdateItemSelections()
     {
-        if (manager == null) return;
+        if (_manager == null) return;
 
-        var equippedItem = manager.GetEquipped(currentCategory);
+        var equippedItem = _manager.GetEquipped(_currentCategory);
 
-        for (int i = 0; i < itemButtons.Count && i < currentItems.Count; i++)
+        for (int i = 0; i < _itemButtons.Count && i < _currentItems.Count; i++)
         {
-            itemButtons[i].SetSelected(currentItems[i] == equippedItem);
+            _itemButtons[i].SetSelected(_currentItems[i] == equippedItem);
         }
     }
 

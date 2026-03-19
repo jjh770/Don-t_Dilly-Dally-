@@ -2,12 +2,6 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
 
-/// <summary>
-/// 모든 커스터마이징 아이템을 관리하는 카탈로그 ScriptableObject
-/// 카테고리별로 분리하여 관리
-///
-/// 생성: Assets > Create > Customizing > Catalog
-/// </summary>
 [CreateAssetMenu(fileName = "CustomizingCatalog", menuName = "Customizing/Catalog")]
 public class CustomizingCatalogSO : ScriptableObject
 {
@@ -39,9 +33,6 @@ public class CustomizingCatalogSO : ScriptableObject
     private Dictionary<string, CustomizingItemSO> itemsById;
     private Dictionary<CustomizingType, CustomizingItemSO> defaultItems;
 
-    /// <summary>
-    /// 캐시 초기화
-    /// </summary>
     public void Initialize()
     {
         BuildCache();
@@ -75,9 +66,6 @@ public class CustomizingCatalogSO : ScriptableObject
         }
     }
 
-    /// <summary>
-    /// 타입에 해당하는 리스트 반환
-    /// </summary>
     private List<CustomizingItemSO> GetListByType(CustomizingType type)
     {
         switch (type)
@@ -94,18 +82,14 @@ public class CustomizingCatalogSO : ScriptableObject
         }
     }
 
-    /// <summary>
-    /// 특정 종류의 아이템 목록 반환
-    /// </summary>
+    // 특정 종류의 아이템 목록 반환
     public List<CustomizingItemSO> GetItemsByType(CustomizingType type)
     {
         var items = GetListByType(type);
         return items.Where(i => i != null).OrderBy(i => i.SortOrder).ToList();
     }
 
-    /// <summary>
-    /// ID로 아이템 찾기
-    /// </summary>
+    // ID로 아이템 찾기
     public CustomizingItemSO GetItemById(string itemId)
     {
         if (itemsById == null) BuildCache();
@@ -116,9 +100,7 @@ public class CustomizingCatalogSO : ScriptableObject
         return item;
     }
 
-    /// <summary>
-    /// 특정 종류의 기본 아이템 반환
-    /// </summary>
+    // 특정 종류의 기본 아이템 반환
     public CustomizingItemSO GetDefaultItem(CustomizingType type)
     {
         if (defaultItems == null) BuildCache();
@@ -127,31 +109,15 @@ public class CustomizingCatalogSO : ScriptableObject
         return item;
     }
 
-    /// <summary>
-    /// 잠금 해제된 아이템만 반환
-    /// </summary>
+    // 잠금 해제된 아이템만 반환
     public List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type)
     {
         return GetItemsByType(type).Where(item => !item.IsLocked).ToList();
     }
 
-    /// <summary>
-    /// 모든 아이템 목록 (전체)
-    /// </summary>
-    public List<CustomizingItemSO> GetAllItems()
-    {
-        var all = new List<CustomizingItemSO>();
-        foreach (CustomizingType type in System.Enum.GetValues(typeof(CustomizingType)))
-        {
-            all.AddRange(GetListByType(type).Where(i => i != null));
-        }
-        return all;
-    }
-
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        // 에디터에서 변경 시 캐시 재구축
         itemsById = null;
         defaultItems = null;
     }

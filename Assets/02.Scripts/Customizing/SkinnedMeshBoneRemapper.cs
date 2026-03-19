@@ -58,12 +58,12 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         Transform skeletonRoot = FindSkeletonRoot();
         if (skeletonRoot == null)
         {
-            Debug.LogError($"[BoneRemapper] Cannot find skeleton root in parent hierarchy of {gameObject.name}");
+            Debug.LogError($"[BoneRemapper] {gameObject.name}의 부모 계층에서 스켈레톤 루트를 찾을 수 없음");
             return;
         }
 
         if (showDebugLogs)
-            Debug.Log($"[BoneRemapper] Found skeleton root: {skeletonRoot.name}");
+            Debug.Log($"[BoneRemapper] 스켈레톤 루트 발견: {skeletonRoot.name}");
 
         // 본 캐시 구축
         BuildBoneCache(skeletonRoot);
@@ -81,7 +81,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         }
 
         if (showDebugLogs)
-            Debug.Log($"[BoneRemapper] Remapped {successCount}/{renderers.Length} renderers on {gameObject.name}");
+            Debug.Log($"[BoneRemapper] {gameObject.name}에서 {successCount}/{renderers.Length}개 렌더러 재매핑 완료");
 
         // 완료 후 컴포넌트 제거
         if (destroyAfterRemap && successCount == renderers.Length)
@@ -155,7 +155,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         CacheBoneRecursive(root);
 
         if (showDebugLogs)
-            Debug.Log($"[BoneRemapper] Cached {boneCache.Count} bones");
+            Debug.Log($"[BoneRemapper] {boneCache.Count}개 본 캐시됨");
     }
 
     private void CacheBoneRecursive(Transform bone)
@@ -169,7 +169,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
             }
             else if (showDebugLogs)
             {
-                Debug.LogWarning($"[BoneRemapper] Duplicate bone name: {child.name}");
+                Debug.LogWarning($"[BoneRemapper] 중복된 본 이름: {child.name}");
             }
 
             CacheBoneRecursive(child);
@@ -186,7 +186,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 
         if (boneInfo == null || !boneInfo.IsValid())
         {
-            Debug.LogWarning($"[BoneRemapper] No valid BoneInfo on {renderer.name}, skipping");
+            Debug.LogWarning($"[BoneRemapper] {renderer.name}에 유효한 BoneInfo 없음, 건너뜀");
             return false;
         }
 
@@ -207,7 +207,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"[BoneRemapper] Root bone not found: {rootBoneName}");
+            Debug.LogWarning($"[BoneRemapper] 루트 본을 찾을 수 없음: {rootBoneName}");
             return false;
         }
 
@@ -235,7 +235,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
                 missingCount++;
 
                 if (showDebugLogs)
-                    Debug.LogWarning($"[BoneRemapper] Bone not found: {boneName} (index {i})");
+                    Debug.LogWarning($"[BoneRemapper] 본을 찾을 수 없음: {boneName} (인덱스 {i})");
             }
         }
 
@@ -243,11 +243,11 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 
         if (missingCount > 0)
         {
-            Debug.LogWarning($"[BoneRemapper] {renderer.name}: {missingCount}/{boneNames.Length} bones not found");
+            Debug.LogWarning($"[BoneRemapper] {renderer.name}: {missingCount}/{boneNames.Length}개 본을 찾을 수 없음");
         }
 
         if (showDebugLogs)
-            Debug.Log($"[BoneRemapper] Successfully remapped {renderer.name}");
+            Debug.Log($"[BoneRemapper] {renderer.name} 재매핑 성공");
 
         return missingCount == 0;
     }
@@ -259,7 +259,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
     {
         if (skeletonRoot == null)
         {
-            Debug.LogError("[BoneRemapper] skeletonRoot is null");
+            Debug.LogError("[BoneRemapper] skeletonRoot가 null입니다");
             return;
         }
 
