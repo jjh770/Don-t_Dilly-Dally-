@@ -25,7 +25,7 @@ namespace DontDillyDally.Data
         }
 
         [SerializeField] private SterilizationMachine _sterilizationMachine;
-        [SerializeField] private SterilizationMachineDoor _door;
+        [SerializeField] private MachineDoor _door;
         [SerializeField] private Transform[] _traySlotPoints = new Transform[MaxSlots];
         [SerializeField] private float _sterilizationDuration = 5f;
         [SerializeField] private ActionTimer _actionTimer;
@@ -40,16 +40,24 @@ namespace DontDillyDally.Data
         private void Awake()
         {
             if (_sterilizationMachine == null)
+            {
                 _sterilizationMachine = GetComponent<SterilizationMachine>();
+            }
 
             if (_door == null)
-                _door = GetComponentInChildren<SterilizationMachineDoor>(true);
+            {
+                _door = GetComponentInChildren<MachineDoor>(true);
+            }
 
             if (_actionTimer == null)
+            {
                 _actionTimer = GetComponentInChildren<ActionTimer>(true);
+            }
 
             if (_runningMotion == null)
+            {
                 _runningMotion = GetComponentInChildren<RunningMotion>(true);
+            }
 
             _slots = new SterilizationSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
@@ -61,14 +69,20 @@ namespace DontDillyDally.Data
         public void Interact(Transform interactor)
         {
             if (_sterilizationMachine == null || interactor == null)
+            {
                 return;
+            }
 
             if (_actionTimer != null && _actionTimer.IsRunning)
+            {
                 return;
+            }
 
             PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
             if (interactionAbility == null)
+            {
                 return;
+            }
 
             if (!IsDoorOpen())
             {
@@ -88,11 +102,15 @@ namespace DontDillyDally.Data
             }
 
             if (_isBatchCompleted)
+            {
                 return;
+            }
 
             int availableSlotIndex = GetFirstAvailableSlotIndex();
             if (availableSlotIndex < 0)
+            {
                 return;
+            }
 
             TryInsertItem(interactionAbility, interactionAbility.CurrentHeldItem, availableSlotIndex);
         }
@@ -101,32 +119,31 @@ namespace DontDillyDally.Data
         {
         }
 
-        private void TryInsertItem(
-            PlayerInteractionAbility interactionAbility,
-            ItemObject itemObject,
-            int slotIndex)
+        private void TryInsertItem(PlayerInteractionAbility interactionAbility, ItemObject itemObject, int slotIndex)
         {
             if (itemObject == null)
+            {
                 return;
+            }
 
             CraftedMaterialType pendingResultMaterial = CraftedMaterialType.Unknown;
 
             if (itemObject is TrayItem trayItem)
             {
                 if (!_sterilizationMachine.CanSterilizeTray(trayItem))
+                {
                     return;
+                }
             }
             else if (itemObject is MixToolItem mixToolItem)
             {
-                int playerId = PhotonNetwork.LocalPlayer != null
-                    ? PhotonNetwork.LocalPlayer.ActorNumber
-                    : 0;
-
-                CraftingAttemptResult result =
-                    _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId);
+                int playerId = PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
+                CraftingAttemptResult result = _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId);
 
                 if (!result.Success || result.ResultMaterial == CraftedMaterialType.Unknown)
+                {
                     return;
+                }
 
                 pendingResultMaterial = result.ResultMaterial;
             }
@@ -136,7 +153,9 @@ namespace DontDillyDally.Data
             }
 
             if (!interactionAbility.TryReleaseHeldItem(itemObject, returnOwnershipToMaster: false))
+            {
                 return;
+            }
 
             Transform slotTransform = GetSlotTransform(slotIndex);
             PlaceStoredItem(itemObject, slotTransform);
@@ -149,7 +168,9 @@ namespace DontDillyDally.Data
         private void StartSterilizationBatch()
         {
             if (!HasAnyStoredItems() || _isBatchCompleted)
+            {
                 return;
+            }
 
             _door?.LockClosed();
             _runningMotion?.TryStart();
@@ -160,9 +181,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            _actionTimer.TryStart(
-                _sterilizationDuration,
-                CompleteSterilizationBatch);
+            _actionTimer.TryStart(_sterilizationDuration, CompleteSterilizationBatch);
         }
 
         private void CompleteSterilizationBatch()
@@ -173,7 +192,9 @@ namespace DontDillyDally.Data
             {
                 SterilizationSlot slot = _slots[i];
                 if (!slot.IsOccupied)
+                {
                     continue;
+                }
 
                 if (slot.Item is TrayItem trayItem)
                 {
@@ -197,13 +218,11 @@ namespace DontDillyDally.Data
 
                     slot.Clear();
 
-                    GameObject resultObject = SpawnSterilizedResult(
-                        resultMaterial,
-                        slotTransform.position,
-                        slotTransform.rotation);
-
+                    GameObject resultObject = SpawnSterilizedResult(resultMaterial, slotTransform.position, slotTransform.rotation);
                     if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
+                    {
                         continue;
+                    }
 
                     PlaceStoredItem(resultItem, slotTransform);
                     SetStoredItemInteractionEnabled(resultItem, false);
@@ -226,17 +245,25 @@ namespace DontDillyDally.Data
 
             ItemObject storedItem = _slots[slotIndex].Item;
             if (storedItem == null)
+            {
                 return;
+            }
 
             if (!storedItem.TryGetComponent(out IInteractable interactable))
+            {
                 return;
+            }
 
             if (!interactionAbility.TryStartHoldFromExternal(interactable))
+            {
                 return;
+            }
 
             _slots[slotIndex].Clear();
             if (!HasAnyStoredItems())
+            {
                 _isBatchCompleted = false;
+            }
         }
 
         private bool HasAnyStoredItems()
@@ -247,7 +274,9 @@ namespace DontDillyDally.Data
         private void HandleClosedDoorInteraction()
         {
             if (_door == null)
+            {
                 return;
+            }
 
             if (_isBatchCompleted || !HasAnyStoredItems())
             {
@@ -268,7 +297,9 @@ namespace DontDillyDally.Data
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_slots[i].IsOccupied)
+                {
                     return i;
+                }
             }
 
             return -1;
@@ -279,13 +310,15 @@ namespace DontDillyDally.Data
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)
+                {
                     return i;
+                }
             }
 
             return -1;
         }
 
-        private Transform GetSlotTransform()
+        private Transform GetDefaultSlotTransform()
         {
             return transform;
         }
@@ -300,13 +333,15 @@ namespace DontDillyDally.Data
                 return _traySlotPoints[slotIndex];
             }
 
-            return GetSlotTransform();
+            return GetDefaultSlotTransform();
         }
 
         private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
         {
             if (itemObject == null)
+            {
                 return;
+            }
 
             if (itemObject.TryGetComponent(out HoldableItem holdableItem))
             {
@@ -316,6 +351,8 @@ namespace DontDillyDally.Data
             {
                 itemObject.transform.SetPositionAndRotation(slotTransform.position, slotTransform.rotation);
             }
+
+            itemObject.transform.SetParent(slotTransform, true);
 
             PhotonView photonView = itemObject.GetComponent<PhotonView>();
             if (photonView != null && PhotonNetwork.MasterClient != null)
@@ -327,7 +364,9 @@ namespace DontDillyDally.Data
         private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)
         {
             if (itemObject == null)
+            {
                 return;
+            }
 
             Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
             foreach (Collider col in colliders)
@@ -336,10 +375,7 @@ namespace DontDillyDally.Data
             }
         }
 
-        private static GameObject SpawnSterilizedResult(
-            CraftedMaterialType resultMaterial,
-            Vector3 position,
-            Quaternion rotation)
+        private static GameObject SpawnSterilizedResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
         {
             if (PhotonNetwork.InRoom)
             {
@@ -353,7 +389,9 @@ namespace DontDillyDally.Data
 
             GameObject prefab = Resources.Load<GameObject>(SterilizedResultPrefabName);
             if (prefab == null)
+            {
                 return null;
+            }
 
             GameObject spawnedObject = Instantiate(prefab, position, rotation);
             if (spawnedObject.TryGetComponent(out BasicMaterialItem basicMaterialItem))

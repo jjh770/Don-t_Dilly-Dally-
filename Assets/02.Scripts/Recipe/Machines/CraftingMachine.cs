@@ -31,27 +31,26 @@ namespace DontDillyDally.Data
         [Tooltip("이 기계가 사용하는 조합 규칙 데이터베이스")]
         public CraftingRuleDatabase RuleDatabase;
 
-        public CraftingAttemptResult TryCraft(
-            ToolType tool,
-            ActionType action,
-            int playerId)
+        public CraftingAttemptResult TryCraft(ToolType usedToolsMask, ActionType action, int playerId)
         {
             if (RuleDatabase == null)
+            {
                 return CreateFailureResult(CraftingFailureReason.MissingDatabase);
+            }
 
-            if (tool == ToolType.None || action == ActionType.None)
+            if (usedToolsMask == ToolType.None || action == ActionType.None)
+            {
                 return CreateFailureResult(CraftingFailureReason.InvalidInput);
+            }
 
-            CraftingRuleSO rule = RuleDatabase.FindRule(tool, action);
+            CraftingRuleSO rule = RuleDatabase.FindRule(usedToolsMask, action);
+
             if (rule == null || rule.ResultMaterial == CraftedMaterialType.Unknown)
+            {
                 return CreateFailureResult(CraftingFailureReason.RuleNotFound);
+            }
 
-            CraftedItem craftedItem = CreateCraftedItem(
-                rule.ResultMaterial,
-                tool,
-                action,
-                ToolType.None,
-                playerId);
+            CraftedItem craftedItem = CreateCraftedItem(rule.ResultMaterial, usedToolsMask, action, playerId);
 
             return new CraftingAttemptResult
             {
@@ -63,50 +62,12 @@ namespace DontDillyDally.Data
             };
         }
 
-        public CraftingAttemptResult TryCraft(
-            ToolType primaryTool,
-            ToolType secondaryTool,
-            ActionType action,
-            int playerId)
-        {
-            if (RuleDatabase == null)
-                return CreateFailureResult(CraftingFailureReason.MissingDatabase);
-
-            if (primaryTool == ToolType.None || secondaryTool == ToolType.None || action == ActionType.None)
-                return CreateFailureResult(CraftingFailureReason.InvalidInput);
-
-            CraftingRuleSO rule = RuleDatabase.FindDualRule(primaryTool, secondaryTool, action);
-            if (rule == null || rule.ResultMaterial == CraftedMaterialType.Unknown)
-                return CreateFailureResult(CraftingFailureReason.RuleNotFound);
-
-            CraftedItem craftedItem = CreateCraftedItem(
-                rule.ResultMaterial,
-                primaryTool,
-                action,
-                secondaryTool,
-                playerId);
-
-            return new CraftingAttemptResult
-            {
-                Success = true,
-                CraftedItem = craftedItem,
-                ResultMaterial = rule.ResultMaterial,
-                CraftingDuration = rule.CraftingDuration,
-                FailureReason = CraftingFailureReason.None
-            };
-        }
-
-        private static CraftedItem CreateCraftedItem(
-            CraftedMaterialType resultMaterial,
-            ToolType tool,
-            ActionType action,
-            ToolType secondaryTool,
-            int playerId)
+        private static CraftedItem CreateCraftedItem(CraftedMaterialType resultMaterial, ToolType usedToolsMask, ActionType action, int playerId)
         {
             return new CraftedItem
             {
                 MaterialType = resultMaterial,
-                UsedToolsMask = tool | secondaryTool,
+                UsedToolsMask = usedToolsMask,
                 UsedAction = action,
                 PreparedTime = Time.time,
                 PreparedByPlayerId = playerId

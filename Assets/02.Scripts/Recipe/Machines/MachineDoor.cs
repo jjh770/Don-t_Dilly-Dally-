@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class SterilizationMachineDoor : MonoBehaviour, IInteractable
+    public class MachineDoor : MonoBehaviour, IInteractable
     {
         [SerializeField] private Transform _doorVisual;
         [SerializeField] private Vector3 _closedLocalEulerAngles;
@@ -25,26 +25,34 @@ namespace DontDillyDally.Data
         private void Awake()
         {
             if (_doorVisual == null)
+            {
                 _doorVisual = transform;
+            }
 
             _interactionCollider = GetComponent<Collider>();
             IsOpen = _startOpen;
             ApplyImmediateState();
         }
 
+        private void OnDestroy()
+        {
+            KillDoorTween();
+        }
+
         public void Interact(Transform interactor)
         {
             if (IsLocked || _isTransitioning)
+            {
                 return;
+            }
 
             if (IsOpen)
             {
                 TryClose();
+                return;
             }
-            else
-            {
-                TryOpen();
-            }
+
+            TryOpen();
         }
 
         public void StopInteract()
@@ -54,7 +62,9 @@ namespace DontDillyDally.Data
         public bool TryOpen()
         {
             if (IsLocked || _isTransitioning || IsOpen)
+            {
                 return false;
+            }
 
             PlayDoorTransition(true);
             return true;
@@ -63,7 +73,9 @@ namespace DontDillyDally.Data
         public bool TryClose()
         {
             if (IsLocked || _isTransitioning || !IsOpen)
+            {
                 return false;
+            }
 
             PlayDoorTransition(false);
             return true;
@@ -84,19 +96,11 @@ namespace DontDillyDally.Data
             ApplyInteractionState();
         }
 
-        private void OnDestroy()
-        {
-            KillDoorTween();
-        }
-
         private void ApplyImmediateState()
         {
             if (_doorVisual != null)
             {
-                Vector3 targetEulerAngles = IsOpen
-                    ? _openLocalEulerAngles
-                    : _closedLocalEulerAngles;
-
+                Vector3 targetEulerAngles = IsOpen ? _openLocalEulerAngles : _closedLocalEulerAngles;
                 _doorVisual.localRotation = Quaternion.Euler(targetEulerAngles);
             }
 
@@ -114,11 +118,13 @@ namespace DontDillyDally.Data
 
             KillDoorTween();
             _isTransitioning = true;
-            _interactionCollider.enabled = false;
 
-            Vector3 targetEulerAngles = targetOpenState
-                ? _openLocalEulerAngles
-                : _closedLocalEulerAngles;
+            if (_interactionCollider != null)
+            {
+                _interactionCollider.enabled = false;
+            }
+
+            Vector3 targetEulerAngles = targetOpenState ? _openLocalEulerAngles : _closedLocalEulerAngles;
 
             _doorTween = _doorVisual
                 .DOLocalRotate(targetEulerAngles, _transitionDuration, RotateMode.Fast)
@@ -135,7 +141,9 @@ namespace DontDillyDally.Data
         private void ApplyInteractionState()
         {
             if (_interactionCollider == null)
+            {
                 return;
+            }
 
             _interactionCollider.enabled = IsOpen && !IsLocked;
         }
@@ -143,7 +151,9 @@ namespace DontDillyDally.Data
         private void KillDoorTween()
         {
             if (_doorTween == null)
+            {
                 return;
+            }
 
             _doorTween.Kill();
             _doorTween = null;

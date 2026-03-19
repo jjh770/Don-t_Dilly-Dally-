@@ -7,6 +7,7 @@ namespace DontDillyDally.Data
     {
         [SerializeField] private Transform _motionTarget;
         [SerializeField] private float _motionCycleDuration = 0.35f;
+        [SerializeField] private float _stopBlendDuration = 0.25f;
         [SerializeField] private Vector3 _positionPunch = new(0.03f, 0f, 0f);
         [SerializeField] private Vector3 _rotationPunch = new(0f, 0f, 4f);
         [SerializeField] private int _motionVibrato = 8;
@@ -21,10 +22,14 @@ namespace DontDillyDally.Data
         private void Awake()
         {
             if (_motionTarget == null)
+            {
                 _motionTarget = transform;
+            }
 
             if (_motionTarget == null)
+            {
                 return;
+            }
 
             _initialLocalPosition = _motionTarget.localPosition;
             _initialLocalRotation = _motionTarget.localRotation;
@@ -32,15 +37,17 @@ namespace DontDillyDally.Data
 
         private void OnDestroy()
         {
-            StopMotion();
+            StopMotionImmediate();
         }
 
         public bool TryStart()
         {
             if (_motionTarget == null || IsRunning)
+            {
                 return false;
+            }
 
-            StopMotion();
+            StopMotionImmediate();
 
             _motionTarget.localPosition = _initialLocalPosition;
             _motionTarget.localRotation = _initialLocalRotation;
@@ -71,7 +78,27 @@ namespace DontDillyDally.Data
             }
 
             if (_motionTarget == null)
+            {
                 return;
+            }
+
+            _motionTarget.DOKill();
+            _motionTarget.DOLocalMove(_initialLocalPosition, _stopBlendDuration).SetEase(Ease.OutCubic);
+            _motionTarget.DOLocalRotateQuaternion(_initialLocalRotation, _stopBlendDuration).SetEase(Ease.OutCubic);
+        }
+
+        private void StopMotionImmediate()
+        {
+            if (_runningMotionSequence != null)
+            {
+                _runningMotionSequence.Kill();
+                _runningMotionSequence = null;
+            }
+
+            if (_motionTarget == null)
+            {
+                return;
+            }
 
             _motionTarget.DOKill();
             _motionTarget.localPosition = _initialLocalPosition;
