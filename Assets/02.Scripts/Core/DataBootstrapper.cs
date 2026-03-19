@@ -3,8 +3,9 @@ using UnityEngine;
 
 public class DataBootstrapper : MonoBehaviour
 {
-    [SerializeField] private RoomDataManager roomDataManager;
-    
+    [SerializeField] private RoomDataManager _roomDataManager;
+    [SerializeField] private PlayerDataManager _playerDataManager;
+
     private async void Start()
     {
         await WaitForFirebaseAsync();
@@ -12,7 +13,10 @@ public class DataBootstrapper : MonoBehaviour
         // Repository 생성
         Debug.Log("Data 조회 가능");
         IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository();
-        roomDataManager.Initialized(roomDataRepository);
+        IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository();
+
+        _roomDataManager.Initialized(roomDataRepository);
+        _playerDataManager.Initialized(playerRepository);
     }
 
     private async UniTask WaitForFirebaseAsync()
