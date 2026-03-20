@@ -3,15 +3,25 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 실제 트레이 오브젝트에 붙는 상태 보관 컴포넌트입니다.
-    // 멸균 여부와 트레이 위 재료 목록을 함께 관리합니다.
+    public enum TrayKind
+    {
+        Normal = 0,
+        Sterilized = 1
+    }
+
+    // 트레이 월드 오브젝트가 보관하는 상태 컴포넌트입니다.
+    // 트레이 내부 데이터와 트레이 종류를 함께 관리합니다.
     public class TrayItem : ItemObject, IPunInstantiateMagicCallback
     {
         [Header("트레이 상태")]
-        [Tooltip("이 트레이가 들고 있는 실제 제출 데이터")]
+        [Tooltip("이 트레이가 담고 있는 실제 제출 데이터")]
         public SubmittedTray TrayData = new SubmittedTray();
 
+        [SerializeField] private TrayKind _trayKind = TrayKind.Normal;
+
         public bool HasTrayData => TrayData != null;
+        public TrayKind Kind => _trayKind;
+        public bool IsSterilizedTray => _trayKind == TrayKind.Sterilized;
 
         public override void Initialize(string displayName, GameObject modelPrefab = null)
         {
@@ -39,11 +49,51 @@ namespace DontDillyDally.Data
             {
                 IsSterilized = isSterilized
             };
+
+            _trayKind = isSterilized ? TrayKind.Sterilized : TrayKind.Normal;
         }
 
         public void LoadTrayData(SubmittedTray trayData)
         {
             TrayData = trayData ?? new SubmittedTray();
+            _trayKind = TrayData.IsSterilized ? TrayKind.Sterilized : TrayKind.Normal;
+        }
+
+        public void SetTrayKind(TrayKind trayKind)
+        {
+            _trayKind = trayKind;
+            EnsureTrayData();
+            TrayData.IsSterilized = trayKind == TrayKind.Sterilized;
+        }
+
+        public void SetTrayKindAndSync(TrayKind trayKind)
+        {
+            SetTrayKind(trayKind);
+
+            PhotonView photonView = GetComponent<PhotonView>();
+            if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
+                return;
+
+            photonView.RPC(nameof(RPC_SetTrayKind), RpcTarget.Others, (int)trayKind);
+        }
+
+        public void MarkSterilized()
+        {
+            SetTrayKind(TrayKind.Sterilized);
+        }
+
+        public void MarkContaminated()
+        {
+            SetTrayKind(TrayKind.Normal);
+        }
+
+        [PunRPC]
+        private void RPC_SetTrayKind(int trayKindValue)
+        {
+            if (!System.Enum.IsDefined(typeof(TrayKind), trayKindValue))
+                return;
+
+            SetTrayKind((TrayKind)trayKindValue);
         }
 
         public bool TryAddItem(CraftedItem item)

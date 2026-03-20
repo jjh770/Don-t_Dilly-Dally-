@@ -32,7 +32,7 @@ namespace DontDillyDally.Data
 
         public bool CanSterilizeTray(TrayItem trayItem)
         {
-            return trayItem != null && CanSterilizeTray(trayItem.TrayData);
+            return trayItem != null && !trayItem.IsSterilizedTray && CanSterilizeTray(trayItem.TrayData);
         }
 
         public bool TrySterilizeTray(SubmittedTray tray)
@@ -50,7 +50,11 @@ namespace DontDillyDally.Data
                 return false;
 
             trayItem.EnsureTrayData();
-            return TrySterilizeTray(trayItem.TrayData);
+            if (!TrySterilizeTray(trayItem.TrayData))
+                return false;
+
+            trayItem.SetTrayKindAndSync(TrayKind.Sterilized);
+            return true;
         }
     }
 }
