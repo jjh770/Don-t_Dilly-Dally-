@@ -50,10 +50,7 @@ public class RoomPresenter
         if (!PlayerDataManager.Instance.IsReady) return;
         MyHospital[] hospitals = PlayerDataManager.Instance.GetHospital();
 
-        string[] codes = hospitals.Select(hospital => $"{hospital.Name}").ToArray();
-        string[] Dates = hospitals.Select(hospital => $"최근 접속 : {hospital.Time.ToLocalTime():yy.MM.dd HH:mm}").ToArray();
-
-        _view.SetDropdown(codes, Dates);
+        _view.SetDropdown(hospitals);
     }
 
     public void OnMyHospitalDeleted(string code)

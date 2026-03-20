@@ -8,4 +8,5 @@ public interface IRoomCurrencyRepository
     public UniTask<RoomWallet> Load(string roomCode);
 
     public UniTask<bool> IsExist(string roomCode);
+
 }

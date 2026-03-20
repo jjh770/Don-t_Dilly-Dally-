@@ -9,9 +9,9 @@ public class PlayerInformationFirebaseRepository : IPlayerInformationRepository
 
     private string COLLECTION_NAME = "PlayerInformation";
 
-    public PlayerInformationFirebaseRepository()
+    public PlayerInformationFirebaseRepository(FirebaseFirestore db)
     {
-        _db = FirebaseInitializer.Instance.Database;
+        _db = db;
     }
 
     public async UniTask<PlayerInformation> Load(string account)
@@ -51,4 +51,5 @@ public class PlayerInformationFirebaseRepository : IPlayerInformationRepository
             Debug.LogError("[PlayerInformationFirebaseRepository] 저장 실패: " + e);
         }
     }  
+
 }

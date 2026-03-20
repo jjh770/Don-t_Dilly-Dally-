@@ -9,6 +9,8 @@ public class PlayerInformation
 
     private readonly List<MyHospital> _hospitals;
 
+    private const int DefaultMaxHospitalCount = 5;
+
     private int _maxHospitals;
     public string Name => _name;
 
@@ -16,14 +18,14 @@ public class PlayerInformation
     {
         _hospitals = new List<MyHospital>();
         _name = "Player";
-        _maxHospitals = 5;
+        _maxHospitals = DefaultMaxHospitalCount;
     }
 
     public PlayerInformation(string name,IEnumerable<MyHospital> hospitals)
     {
         _name = name;
         _hospitals = hospitals.ToList<MyHospital>();
-        _maxHospitals = 5;
+        _maxHospitals = DefaultMaxHospitalCount;
     }
 
     public static PlayerInformation Default => new PlayerInformation();

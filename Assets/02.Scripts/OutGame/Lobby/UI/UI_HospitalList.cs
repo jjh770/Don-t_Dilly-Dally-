@@ -55,13 +55,14 @@ public class UI_HospitalList : MonoBehaviour
         _isOpened = false;
     }
 
-    public void SetOptions(IEnumerable<string> names, IEnumerable<string> dates)
+    public void SetOptions(IEnumerable<MyHospital> hospitals)
     {
-        string[] labels = names.ToArray();
-        string[] explain = dates.ToArray();
-        for (int i = 0; i < labels.Length; i++)
+        RemoveAll();
+
+        foreach (var hospital in hospitals)
         {
-            AddItem(labels[i], explain[i]);
+            string dateString = $"최근 접속 : {hospital.Time.ToLocalTime():yy.MM.dd HH:mm}";
+            AddItem(hospital.Name, dateString);
         }
     }
 

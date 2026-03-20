@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -97,9 +98,9 @@ public class RoomView : MonoBehaviour
     {
         _roomCodeInputField.text = code;
     }
-    public void SetDropdown(string[] codes, string[] date)
+    public void SetDropdown(IEnumerable<MyHospital> hospitals)
     {
-        _myHospitalList.SetOptions(codes, date);
+        _myHospitalList.SetOptions(hospitals);
     }
 
     private void OnDisable()

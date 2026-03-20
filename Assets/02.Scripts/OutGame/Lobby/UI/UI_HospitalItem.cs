@@ -42,4 +42,5 @@ public class UI_HospitalItem : MonoBehaviour
         _selectButton.onClick.RemoveListener(OnItemClick);
         _deleteButton.onClick.RemoveListener(OnDeleteButtonClick);
     }
+
 }

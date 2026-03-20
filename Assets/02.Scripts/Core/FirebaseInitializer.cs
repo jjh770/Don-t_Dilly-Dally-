@@ -15,7 +15,7 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
     protected override void Awake()
     {
         base.Awake();
-        FirebaseInit().Forget();
+        FirebaseInit().Forget(e => UnityEngine.Debug.LogException(e));
     }
 
     private async UniTask FirebaseInit()
@@ -38,5 +38,4 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
             Debug.LogError($"Could not resolve all Firebase dependencies: {status}");
         }
     }
-
 }

@@ -10,8 +10,8 @@ public readonly struct MyHospital
 
     public MyHospital(string name, DateTime time)
     {
-        if (name == null) { throw new Exception("병원 이름은 Null일 수 없습니다."); }
-        ;
+        if (name == null) throw new ArgumentNullException(nameof(name), "병원 이름은 Null일 수 없습니다.");
+        
         Name = name;
         Time = time;
     }

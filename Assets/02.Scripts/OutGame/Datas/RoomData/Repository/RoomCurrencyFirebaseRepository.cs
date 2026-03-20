@@ -6,9 +6,9 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
 {
     FirebaseFirestore _db;
 
-    public RoomCurrencyFirebaseRepository()
+    public RoomCurrencyFirebaseRepository(FirebaseFirestore db)
     {
-        _db = FirebaseInitializer.Instance.Database;
+        _db = db;
     }
 
     private string COLLECTION_NAME = "RoomCurrency";
@@ -69,4 +69,5 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
             Debug.LogError("[RoomDataRepository] 저장 실패: " + e);
         }
     }
+
 }

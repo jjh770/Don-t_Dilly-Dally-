@@ -22,4 +22,5 @@ public class RoomWalletDTO
         Money = wallet.Get(ERoomCurrencyType.Money).Value,
         Star = wallet.Get(ERoomCurrencyType.Star).Value,
     };
+
 }

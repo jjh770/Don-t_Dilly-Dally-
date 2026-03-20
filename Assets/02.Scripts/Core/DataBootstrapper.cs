@@ -6,13 +6,16 @@ public class DataBootstrapper : MonoBehaviour
     [SerializeField] private RoomDataManager _roomDataManager;
     [SerializeField] private PlayerDataManager _playerDataManager;
 
-    private async void Start()
+    private void Awake()
     {
-        await WaitForFirebaseAsync();
+        FirebaseInitializer.OnFirebaseInitialized += OnFirebaseSetComplete;
+    }
 
+    private void OnFirebaseSetComplete()
+    {
         // Repository 생성
-        IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository();
-        IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository();
+        IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository(FirebaseInitializer.Instance.Database);
+        IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository(FirebaseInitializer.Instance.Database);
 
         _roomDataManager.Initialized(roomDataRepository);
         _playerDataManager.Initialized(playerRepository);
@@ -20,13 +23,8 @@ public class DataBootstrapper : MonoBehaviour
         Debug.Log("[DataBootstrapper] Data 조회 가능");
     }
 
-    private async UniTask WaitForFirebaseAsync()
+    private void OnDestroy()
     {
-        // FirebaseManager가 준비될 때까지 대기
-        while (FirebaseInitializer.Instance == null ||
-               !FirebaseInitializer.Instance.IsInitialized)
-        {
-            await UniTask.Yield();
-        }
+        FirebaseInitializer.OnFirebaseInitialized -= OnFirebaseSetComplete;
     }
 }
