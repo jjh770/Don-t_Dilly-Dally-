@@ -18,17 +18,17 @@ public class SkinnedMeshExtractorWindow : EditorWindow
     private const string DEFAULT_SOURCE_PATH = "Assets/Characters/Meshes";
     private const string DEFAULT_TARGET_PATH = "Assets/03.Prefabs/Customizing/Items";
 
-    private string __sourcePath = DEFAULT_SOURCE_PATH;
-    private string __targetPath = DEFAULT_TARGET_PATH;
+    private string _sourcePath = DEFAULT_SOURCE_PATH;
+    private string _targetPath = DEFAULT_TARGET_PATH;
 
-    private Vector2 __scrollPosition;
-    private List<string> __logMessages = new List<string>();
+    private Vector2 _scrollPosition;
+    private List<string> _logMessages = new List<string>();
 
     // 통계
-    private int __processedCount = 0;
-    private int __successCount = 0;
-    private int __skipCount = 0;
-    private int __errorCount = 0;
+    private int _processedCount = 0;
+    private int _successCount = 0;
+    private int _skipCount = 0;
+    private int _errorCount = 0;
 
     [MenuItem("Tools/Customizing/Skinned Mesh Extractor")]
     public static void ShowWindow()

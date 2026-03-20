@@ -8,8 +8,8 @@ using UnityEditor;
 [CustomEditor(typeof(CustomizingManager))]
 public class CustomizingManagerEditor : Editor
 {
-    private CustomizingType __testType = CustomizingType.SkinColor;
-    private string __testItemId = "";
+    private CustomizingType _testType = CustomizingType.SkinColor;
+    private string _testItemId = "";
 
     public override void OnInspectorGUI()
     {

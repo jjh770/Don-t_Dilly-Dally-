@@ -8,7 +8,7 @@ using UnityEditor;
 [CustomEditor(typeof(SkinnedMeshBoneRemapper))]
 public class SkinnedMeshBoneRemapperEditor : Editor
 {
-    private Transform __customSkeletonRoot;
+    private Transform _customSkeletonRoot;
 
     public override void OnInspectorGUI()
     {

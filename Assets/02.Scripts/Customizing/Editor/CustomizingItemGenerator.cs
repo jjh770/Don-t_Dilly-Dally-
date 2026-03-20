@@ -29,8 +29,8 @@ public class CustomizingItemGenerator : EditorWindow
         { "Costumes", CustomizingType.Costumes },
     };
 
-    private Vector2 __scrollPosition;
-    private List<string> __logMessages = new List<string>();
+    private Vector2 _scrollPosition;
+    private List<string> _logMessages = new List<string>();
 
     [MenuItem("Tools/Customizing/Generate Item SOs")]
     public static void ShowWindow()

@@ -14,7 +14,6 @@ public class Customizing
         _state = new CustomizingState();
     }
 
-    // 기본 아이템으로 초기화
     public void InitializeWithDefaults()
     {
         _state.Clear();
@@ -29,7 +28,6 @@ public class Customizing
         }
     }
 
-    // SaveData에서 복원
     public void RestoreFromSaveData(CustomizingSaveData saveData)
     {
         if (saveData == null)
@@ -60,7 +58,6 @@ public class Customizing
         }
     }
 
-    // SaveData로 변환
     public CustomizingSaveData ToSaveData()
     {
         return _state.ToSaveData();
@@ -134,12 +131,5 @@ public class Customizing
     {
         var itemId = _state.GetEquippedId(category);
         return !string.IsNullOrEmpty(itemId) ? _catalog.GetItemById(itemId) : null;
-    }
-
-    // 장착 여부 확인
-    public bool IsEquipped(ICustomizingItemSpec item)
-    {
-        if (item == null) return false;
-        return _state.IsEquippedItem(item.Category, item.ItemId);
     }
 }
