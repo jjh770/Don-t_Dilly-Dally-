@@ -165,14 +165,12 @@ namespace DontDillyDally.Data
             itemObject.transform.localPosition = Vector3.zero;
             itemObject.transform.localRotation = Quaternion.identity;
 
-            Collider placementCollider = itemObject.TargetBoxCollider != null
-                ? itemObject.TargetBoxCollider
-                : itemObject.GetComponent<Collider>();
+            BoxCollider placementCollider = itemObject.TargetBoxCollider != null ? itemObject.TargetBoxCollider : itemObject.GetComponent<BoxCollider>();
 
             if (placementCollider != null)
             {
-                float halfHeight = placementCollider.bounds.extents.y * 0.5f;
-                slotTransform.position += Vector3.up * halfHeight;
+                float bottomOffset = placementCollider.center.y - placementCollider.size.y * 0.5f;
+                slotTransform.position += Vector3.up * -bottomOffset;
             }
         }
     }
