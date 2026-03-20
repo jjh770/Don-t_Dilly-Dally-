@@ -34,6 +34,7 @@ namespace DontDillyDally.Data
         [SerializeField] private RunningMotion _runningMotion;
 
         private PotionSlot[] _slots;
+        private readonly List<ToolType> _loadedPotionsBuffer = new List<ToolType>(MaxSlots);
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
 
@@ -299,16 +300,16 @@ namespace DontDillyDally.Data
 
         private List<ToolType> GetLoadedPotionToolTypes()
         {
-            List<ToolType> loadedPotions = new List<ToolType>();
+            _loadedPotionsBuffer.Clear();
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)
                 {
-                    loadedPotions.Add(_slots[i].PotionToolType);
+                    _loadedPotionsBuffer.Add(_slots[i].PotionToolType);
                 }
             }
 
-            return loadedPotions;
+            return _loadedPotionsBuffer;
         }
 
         private bool HasAnyStoredPotions()
