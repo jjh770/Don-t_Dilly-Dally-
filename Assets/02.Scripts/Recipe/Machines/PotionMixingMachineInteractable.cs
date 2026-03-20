@@ -13,14 +13,14 @@ namespace DontDillyDally.Data
         private sealed class PotionSlot
         {
             public ItemObject Item;
-            public CraftedMaterialType PotionType = CraftedMaterialType.None;
+            public ToolType PotionToolType = ToolType.None;
 
             public bool IsOccupied => Item != null;
 
             public void Clear()
             {
                 Item = null;
-                PotionType = CraftedMaterialType.None;
+                PotionToolType = ToolType.None;
             }
         }
 
@@ -125,10 +125,10 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            List<CraftedMaterialType> loadedPotionTypes = GetLoadedPotionTypes();
-            if (loadedPotionTypes.Count >= 2 && _potionMixingMachine.CanMix(loadedPotionTypes))
+            List<ToolType> loadedPotions = GetLoadedPotionToolTypes();
+            if (loadedPotions.Count >= 2 && _potionMixingMachine.CanMix(loadedPotions))
             {
-                StartMixingProcess(loadedPotionTypes);
+                StartMixingProcess(loadedPotions);
                 return;
             }
 
@@ -148,8 +148,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            List<CraftedMaterialType> loadedPotionTypes = GetLoadedPotionTypes();
-            bool canMix = loadedPotionTypes.Count >= 2 && _potionMixingMachine.CanMix(loadedPotionTypes);
+            List<ToolType> loadedPotions = GetLoadedPotionToolTypes();
+            bool canMix = loadedPotions.Count >= 2 && _potionMixingMachine.CanMix(loadedPotions);
             bool isFull = GetFirstAvailableSlotIndex() < 0;
 
             if (canMix || isFull)
@@ -163,12 +163,12 @@ namespace DontDillyDally.Data
 
         private void TryInsertPotion(PlayerInteractionAbility interactionAbility, ItemObject itemObject, int slotIndex)
         {
-            if (!_potionMixingMachine.TryResolvePotionInput(itemObject, out CraftedMaterialType potionType, out _))
+            if (!_potionMixingMachine.TryResolvePotionInput(itemObject, out ToolType potionToolType))
             {
                 return;
             }
 
-            if (!_potionMixingMachine.CanInsertPotion(GetLoadedPotionTypes(), potionType))
+            if (!_potionMixingMachine.CanInsertPotion(GetLoadedPotionToolTypes(), potionToolType))
             {
                 return;
             }
@@ -183,13 +183,13 @@ namespace DontDillyDally.Data
             SetStoredItemInteractionEnabled(itemObject, false);
 
             _slots[slotIndex].Item = itemObject;
-            _slots[slotIndex].PotionType = potionType;
+            _slots[slotIndex].PotionToolType = potionToolType;
         }
 
-        private void StartMixingProcess(IReadOnlyList<CraftedMaterialType> loadedPotionTypes)
+        private void StartMixingProcess(IReadOnlyList<ToolType> loadedPotions)
         {
             int playerId = PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
-            CraftingAttemptResult result = _potionMixingMachine.TryMixPotions(loadedPotionTypes, playerId);
+            CraftingAttemptResult result = _potionMixingMachine.TryMixPotions(loadedPotions, playerId);
 
             if (!result.Success || result.ResultMaterial == CraftedMaterialType.Unknown)
             {
@@ -297,18 +297,18 @@ namespace DontDillyDally.Data
             }
         }
 
-        private List<CraftedMaterialType> GetLoadedPotionTypes()
+        private List<ToolType> GetLoadedPotionToolTypes()
         {
-            List<CraftedMaterialType> loadedPotionTypes = new List<CraftedMaterialType>();
+            List<ToolType> loadedPotions = new List<ToolType>();
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)
                 {
-                    loadedPotionTypes.Add(_slots[i].PotionType);
+                    loadedPotions.Add(_slots[i].PotionToolType);
                 }
             }
 
-            return loadedPotionTypes;
+            return loadedPotions;
         }
 
         private bool HasAnyStoredPotions()
