@@ -24,9 +24,9 @@ public class UI_HospitalItem : MonoBehaviour
         OnSelected?.Invoke(this);
     }
 
-    public void Init(string name, string time)
+    public void Init(string label, string explain)
     {
-        _nameText.text = name;
-        _dateTimeText.text = time;
+        _nameText.text = label;
+        _dateTimeText.text = explain;
     }
 }

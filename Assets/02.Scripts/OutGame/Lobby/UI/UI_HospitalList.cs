@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using DG.Tweening;
 using UnityEngine;
 
@@ -41,6 +42,7 @@ public class UI_HospitalList : MonoBehaviour
     {
         _canvasGroup.DOKill();
         _canvasGroup.DOFade(1, _alphaFadeTime);
+        _canvasGroup.blocksRaycasts = true;
         _isOpened = true;
     }
 
@@ -48,14 +50,17 @@ public class UI_HospitalList : MonoBehaviour
     {
         _canvasGroup.DOKill();
         _canvasGroup.DOFade(0, _alphaFadeTime);
+        _canvasGroup.blocksRaycasts = false;
         _isOpened = false;
     }
 
-    public void SetOptions(IEnumerable<string> names)
+    public void SetOptions(IEnumerable<string> names, IEnumerable<string> dates)
     {
-        foreach (string name in names)
+        string[] labels = names.ToArray();
+        string[] explain = dates.ToArray();
+        for (int i = 0; i < labels.Length; i++)
         {
-            AddItem(name);
+            AddItem(labels[i], explain[i]);
         }
     }
 
@@ -64,13 +69,13 @@ public class UI_HospitalList : MonoBehaviour
         OnSelected?.Invoke(item.Name);
     }
 
-    public void AddItem(string name)
+    public void AddItem(string labels, string explain)
     {
         UI_HospitalItem item = (UI_HospitalItem)Instantiate(_listTemplate, this.transform);
-        item.gameObject.name = $"Item_{name}";
+        item.gameObject.name = $"Item_{labels}";
         item.gameObject.SetActive(true);
         item.OnSelected += OnItemClicked;
-        item.Init(name, "date");
+        item.Init(labels, explain);
         _items.Add(item);
     }
     public void RemoveItem(UI_HospitalItem item)

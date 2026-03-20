@@ -1,4 +1,8 @@
 
+using System.Collections.Generic;
+using System.Linq;
+using Mono.Cecil.Cil;
+
 public class RoomPresenter
 {
     private RoomView _view;
@@ -44,8 +48,12 @@ public class RoomPresenter
     public void SetDropdown()
     {
         if (!PlayerDataManager.Instance.IsReady) return;
-        string[] hospitals = PlayerDataManager.Instance.GetHospitalCode();
-        _view.SetDropdown(hospitals);
+        MyHospital[] hospitals = PlayerDataManager.Instance.GetHospital();
+
+        string[] codes = hospitals.Select(hospital => $"{hospital.Name}").ToArray();
+        string[] Dates = hospitals.Select(hospital => $"최근 접속 : {hospital.Time.ToLocalTime():yy.MM.dd HH:mm}").ToArray();
+
+        _view.SetDropdown(codes, Dates);
     }
 
     public void Dispose()

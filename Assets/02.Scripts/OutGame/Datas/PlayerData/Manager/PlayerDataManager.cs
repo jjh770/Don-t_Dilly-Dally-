@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -53,7 +55,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
             "MyName : " + _playerInformation.Name + "\n" +
             "MyHospitals : " +
                 string.Join(", ",
-                _playerInformation.GetMyHospitals
+                _playerInformation.MyHospitals
                 .Select(hospital => $"{hospital.Name} ({hospital.Time.ToLocalTime():yyyy-MM-dd HH:mm})")));
     }
 
@@ -64,11 +66,9 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         _playerRoomRepository.Save(_currentAccount, _playerInformation);
     }
 
-    public string[] GetHospitalCode()
+    public MyHospital[] GetHospital()
     {
-        string[] hospitals = _playerInformation.GetMyHospitals
-                .Select(hospital => $"{hospital.Name}").ToArray();
-        return hospitals;
+        return _playerInformation.MyHospitals;
     }
 
     public override void OnJoinedRoom()

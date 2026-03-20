@@ -29,7 +29,7 @@ public class PlayerInformation
     {
         _name = name;
     }
-    public MyHospital[] GetMyHospitals => _hospitals.ToArray();
+    public MyHospital[] MyHospitals => _hospitals.ToArray();
     public void AddHospital(MyHospital hospital)
     {
         _hospitals.RemoveAll(x => x.Name == hospital.Name);

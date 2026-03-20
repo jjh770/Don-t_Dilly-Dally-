@@ -28,8 +28,8 @@ public class PlayerInformationDTO
     {
         Name = information.Name,
         Hospital = information
-        .GetMyHospitals.Select(hospital => hospital.Name).ToArray(),
+        .MyHospitals.Select(hospital => hospital.Name).ToArray(),
         Time = information
-        .GetMyHospitals.Select(hospital => hospital.Time).ToArray()
+        .MyHospitals.Select(hospital => hospital.Time).ToArray()
     };
 }

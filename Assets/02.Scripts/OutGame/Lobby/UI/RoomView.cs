@@ -61,9 +61,9 @@ public class RoomView : MonoBehaviour
     {
         _roomCodeInputField.text = code;
     }
-    public void SetDropdown(string[] hospitals)
+    public void SetDropdown(string[] codes, string[] date)
     {
-        _myHospitalList.SetOptions(hospitals);
+        _myHospitalList.SetOptions(codes, date);
     }
 
     private void OnDisable()
