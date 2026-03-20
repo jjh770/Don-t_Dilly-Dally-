@@ -189,7 +189,7 @@ namespace DontDillyDally.Data
         private void StartMixingProcess(IReadOnlyList<ToolType> loadedPotions)
         {
             int playerId = PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
-            CraftingAttemptResult result = _potionMixingMachine.TryMixPotions(loadedPotions, playerId);
+            CraftingResult result = _potionMixingMachine.TryMixPotions(loadedPotions, playerId);
 
             if (!result.Success || result.ResultMaterial == CraftedMaterialType.Unknown)
             {

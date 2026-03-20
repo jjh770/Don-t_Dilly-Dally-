@@ -139,7 +139,7 @@ namespace DontDillyDally.Data
             else if (itemObject is MixToolItem mixToolItem)
             {
                 int playerId = PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
-                CraftingAttemptResult result = _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId);
+                CraftingResult result = _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId);
 
                 if (!result.Success || result.ResultMaterial == CraftedMaterialType.Unknown)
                 {

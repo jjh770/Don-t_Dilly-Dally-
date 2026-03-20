@@ -7,7 +7,7 @@ namespace DontDillyDally.Data
     {
         private const ToolType SupportedPotionMask = ToolType.PotionCyan | ToolType.PotionMagenta | ToolType.PotionYellow;
 
-        [SerializeField] private CraftingMachine _craftingMachine;
+        [SerializeField] private CraftingRuleDatabase _ruleDatabase;
 
         public bool TryResolvePotionInput(ItemObject itemObject, out ToolType potionToolType)
         {
@@ -47,7 +47,7 @@ namespace DontDillyDally.Data
 
         public bool CanMix(IReadOnlyList<ToolType> loadedPotions)
         {
-            if (_craftingMachine == null)
+            if (_ruleDatabase == null)
             {
                 return false;
             }
@@ -57,22 +57,29 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            return _craftingMachine.TryCraft(usedToolsMask, ActionType.MixPotion, 0).Success;
+            CraftingRuleSO rule = _ruleDatabase.FindRule(usedToolsMask, ActionType.MixPotion);
+            return rule != null && rule.ResultMaterial != CraftedMaterialType.Unknown;
         }
 
-        public CraftingAttemptResult TryMixPotions(IReadOnlyList<ToolType> loadedPotions, int playerId)
+        public CraftingResult TryMixPotions(IReadOnlyList<ToolType> loadedPotions, int playerId)
         {
-            if (_craftingMachine == null)
+            if (_ruleDatabase == null)
             {
-                return CreateFailureResult(CraftingFailureReason.MissingDatabase);
+                return CraftingResult.Failure(CraftingFailureReason.MissingDatabase);
             }
 
             if (!TryBuildMixMask(loadedPotions, out ToolType usedToolsMask))
             {
-                return CreateFailureResult(CraftingFailureReason.InvalidInput);
+                return CraftingResult.Failure(CraftingFailureReason.InvalidInput);
             }
 
-            return _craftingMachine.TryCraft(usedToolsMask, ActionType.MixPotion, playerId);
+            CraftingRuleSO rule = _ruleDatabase.FindRule(usedToolsMask, ActionType.MixPotion);
+            if (rule == null || rule.ResultMaterial == CraftedMaterialType.Unknown)
+            {
+                return CraftingResult.Failure(CraftingFailureReason.RuleNotFound);
+            }
+
+            return CraftingResult.Succeed(rule, usedToolsMask, ActionType.MixPotion, playerId);
         }
 
         private static bool TryBuildMixMask(IReadOnlyList<ToolType> loadedPotions, out ToolType usedToolsMask)
@@ -107,18 +114,6 @@ namespace DontDillyDally.Data
         private static bool IsSupportedPotion(ToolType toolType)
         {
             return toolType != ToolType.None && (toolType & SupportedPotionMask) == toolType;
-        }
-
-        private static CraftingAttemptResult CreateFailureResult(CraftingFailureReason reason)
-        {
-            return new CraftingAttemptResult
-            {
-                Success = false,
-                CraftedItem = null,
-                ResultMaterial = CraftedMaterialType.Unknown,
-                CraftingDuration = 0f,
-                FailureReason = reason
-            };
         }
     }
 }

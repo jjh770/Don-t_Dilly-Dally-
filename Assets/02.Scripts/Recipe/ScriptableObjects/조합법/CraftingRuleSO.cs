@@ -42,13 +42,5 @@ namespace DontDillyDally.Data
             return tool == RequiredTool && action == RequiredAction;
         }
 
-        public bool IsMatchDual(ToolType tool1, ToolType tool2, ActionType action)
-        {
-            ToolType requiredMask = tool1 | tool2;
-            if (requiredMask == ToolType.None)
-                return false;
-
-            return RequiredTool == requiredMask && action == RequiredAction;
-        }
     }
 }
