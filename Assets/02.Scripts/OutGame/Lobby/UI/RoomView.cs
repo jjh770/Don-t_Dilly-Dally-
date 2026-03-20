@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,8 +6,9 @@ public class RoomView : MonoBehaviour
 {
     [SerializeField] private Button _enterHospitalButton;
     [SerializeField] private Button _createHospitalButton;
-    [SerializeField] private TMP_Dropdown _myHospitalDropdown;
-    private ScrollRect _myHospitalDropdownScrollRect;
+    [SerializeField] private Button _listOpenButton;
+
+    [SerializeField] private UI_HospitalList _myHospitalList;
 
     [SerializeField] private TMP_InputField _roomCodeInputField;
     [SerializeField] private TMP_InputField _nickNameInputField;
@@ -22,13 +21,14 @@ public class RoomView : MonoBehaviour
         _enterHospitalButton.onClick.AddListener(OnEnterButtonClick);
         _createHospitalButton.onClick.AddListener(OnCreateButtonClick);
         _nickNameInputField.onDeselect.AddListener(OnNickNameInputDeselect);
+        _listOpenButton.onClick.AddListener(_myHospitalList.OpenToggle);
 
-        _myHospitalDropdown.onValueChanged.AddListener(OnMyHospitalSelected);
+        _myHospitalList.OnSelected += OnMyHospitalSelected;
     }
 
-    private void OnMyHospitalSelected(int index)
+    private void OnMyHospitalSelected(string name)
     {
-        _presenter.SelectMyHospital(index);
+        _presenter.SelectMyHospital(name);
     }
 
     private void OnNickNameInputDeselect(string name)
@@ -57,32 +57,23 @@ public class RoomView : MonoBehaviour
             _errorMessageText.text = message;
     }
 
-    public string GetCodeOfDropdown(int index)
-    {
-        return _myHospitalDropdown.options[index].text;
-    }
-
     public void SetCodeInputField(string code)
     {
         _roomCodeInputField.text = code;
     }
     public void SetDropdown(string[] hospitals)
     {
-        List<string> options = new List<string>();
-        options.Add("선택하세요");
-        options.AddRange(hospitals);
-
-        _myHospitalDropdown.ClearOptions();
-        _myHospitalDropdown.AddOptions(options);
-        _myHospitalDropdown.value = 0;
-        _myHospitalDropdown.RefreshShownValue();
+        _myHospitalList.SetOptions(hospitals);
     }
 
     private void OnDisable()
     {
         _enterHospitalButton.onClick.RemoveListener(OnEnterButtonClick);
         _createHospitalButton.onClick.RemoveListener(OnCreateButtonClick);
+        _listOpenButton.onClick.RemoveListener(_myHospitalList.OpenToggle);
         _nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
-        _presenter.Dispose();
+        _myHospitalList.OnSelected -= OnMyHospitalSelected;
+
+        _presenter.Dispose(); 
     }
 }

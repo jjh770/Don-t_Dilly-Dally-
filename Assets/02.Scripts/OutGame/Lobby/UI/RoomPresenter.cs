@@ -26,9 +26,8 @@ public class RoomPresenter
         PhotonServerManager.Instance.SetNickname(name);
     }
 
-    public void SelectMyHospital(int index)
+    public void SelectMyHospital(string code)
     {
-        string code = _view.GetCodeOfDropdown(index);
         _view.SetCodeInputField(code);
     }
 
