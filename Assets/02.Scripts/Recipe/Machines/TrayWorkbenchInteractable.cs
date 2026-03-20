@@ -78,6 +78,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            _trayWorkbench.SetCurrentTrayItem(trayItem);
+
             HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
             if (holdable != null)
             {
@@ -86,11 +88,6 @@ namespace DontDillyDally.Data
             else
             {
                 trayItem.transform.SetPositionAndRotation(_traySlotPoint.position, _traySlotPoint.rotation);
-            }
-
-            if (!_trayWorkbench.TrySetCurrentTrayItem(trayItem))
-            {
-                return;
             }
 
             PhotonView photonView = trayItem.GetComponent<PhotonView>();
@@ -108,32 +105,29 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            if (!_trayWorkbench.CanPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType))
+            {
+                return;
+            }
+
             int availableSlotIndex = trayItem.Slots.GetFirstAvailableSlotIndex();
             if (availableSlotIndex < 0)
             {
                 return;
             }
 
+            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem, returnOwnershipToMaster: false))
+            {
+                return;
+            }
+
+            trayItem.Slots.TryStoreItem(basicMaterialItem, availableSlotIndex);
+
             int playerId = PhotonNetwork.LocalPlayer != null
                 ? PhotonNetwork.LocalPlayer.ActorNumber
                 : 0;
 
-            bool placed = _trayWorkbench.TryPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType, playerId);
-            if (!placed)
-            {
-                return;
-            }
-
-            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem, returnOwnershipToMaster: false))
-            {
-                _trayWorkbench.TakeLastItemFromTray();
-                return;
-            }
-
-            if (!trayItem.Slots.TryStoreItem(basicMaterialItem, availableSlotIndex))
-            {
-                _trayWorkbench.TakeLastItemFromTray();
-            }
+            _trayWorkbench.TryPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType, playerId);
         }
 
         private void TryTakeTray(PlayerInteractionAbility interactionAbility)

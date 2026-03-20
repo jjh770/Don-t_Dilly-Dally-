@@ -98,16 +98,17 @@ namespace DontDillyDally.Data
             }
 
             itemObject.transform.SetParent(slotTransform, false);
-            itemObject.transform.localPosition = Vector3.zero;
             itemObject.transform.localRotation = Quaternion.identity;
 
             BoxCollider placementCollider = itemObject.TargetBoxCollider != null ? itemObject.TargetBoxCollider : itemObject.GetComponent<BoxCollider>();
 
+            Vector3 localPosition = Vector3.zero;
             if (placementCollider != null)
             {
                 float bottomOffset = placementCollider.center.y - placementCollider.size.y * 0.5f;
-                slotTransform.position += Vector3.up * -bottomOffset;
+                localPosition.y = -bottomOffset;
             }
+            itemObject.transform.localPosition = localPosition;
         }
     }
 }
