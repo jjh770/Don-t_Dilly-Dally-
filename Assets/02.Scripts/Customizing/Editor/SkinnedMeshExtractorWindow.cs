@@ -18,17 +18,17 @@ public class SkinnedMeshExtractorWindow : EditorWindow
     private const string DEFAULT_SOURCE_PATH = "Assets/Characters/Meshes";
     private const string DEFAULT_TARGET_PATH = "Assets/03.Prefabs/Customizing/Items";
 
-    private string sourcePath = DEFAULT_SOURCE_PATH;
-    private string targetPath = DEFAULT_TARGET_PATH;
+    private string __sourcePath = DEFAULT_SOURCE_PATH;
+    private string __targetPath = DEFAULT_TARGET_PATH;
 
-    private Vector2 scrollPosition;
-    private List<string> logMessages = new List<string>();
+    private Vector2 __scrollPosition;
+    private List<string> __logMessages = new List<string>();
 
     // 통계
-    private int processedCount = 0;
-    private int successCount = 0;
-    private int skipCount = 0;
-    private int errorCount = 0;
+    private int __processedCount = 0;
+    private int __successCount = 0;
+    private int __skipCount = 0;
+    private int __errorCount = 0;
 
     [MenuItem("Tools/Customizing/Skinned Mesh Extractor")]
     public static void ShowWindow()
@@ -53,25 +53,25 @@ public class SkinnedMeshExtractorWindow : EditorWindow
         EditorGUILayout.LabelField("Path Settings", EditorStyles.boldLabel);
 
         EditorGUILayout.BeginHorizontal();
-        sourcePath = EditorGUILayout.TextField("Source Path", sourcePath);
+        _sourcePath = EditorGUILayout.TextField("Source Path", _sourcePath);
         if (GUILayout.Button("Browse", GUILayout.Width(60)))
         {
             string selected = EditorUtility.OpenFolderPanel("Select Source Folder", "Assets", "");
             if (!string.IsNullOrEmpty(selected))
             {
-                sourcePath = "Assets" + selected.Replace(Application.dataPath, "");
+                _sourcePath = "Assets" + selected.Replace(Application.dataPath, "");
             }
         }
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        targetPath = EditorGUILayout.TextField("Target Path", targetPath);
+        _targetPath = EditorGUILayout.TextField("Target Path", _targetPath);
         if (GUILayout.Button("Browse", GUILayout.Width(60)))
         {
             string selected = EditorUtility.OpenFolderPanel("Select Target Folder", "Assets", "");
             if (!string.IsNullOrEmpty(selected))
             {
-                targetPath = "Assets" + selected.Replace(Application.dataPath, "");
+                _targetPath = "Assets" + selected.Replace(Application.dataPath, "");
             }
         }
         EditorGUILayout.EndHorizontal();
@@ -95,8 +95,8 @@ public class SkinnedMeshExtractorWindow : EditorWindow
 
         if (GUILayout.Button("Clear Log", GUILayout.Height(30)))
         {
-            logMessages.Clear();
-            processedCount = successCount = skipCount = errorCount = 0;
+            _logMessages.Clear();
+            _processedCount = _successCount = _skipCount = _errorCount = 0;
         }
 
         EditorGUILayout.EndHorizontal();
@@ -104,16 +104,16 @@ public class SkinnedMeshExtractorWindow : EditorWindow
         EditorGUILayout.Space(10);
 
         // 통계
-        if (processedCount > 0)
+        if (_processedCount > 0)
         {
-            EditorGUILayout.LabelField($"Processed: {processedCount} | Success: {successCount} | Skipped: {skipCount} | Errors: {errorCount}");
+            EditorGUILayout.LabelField($"Processed: {_processedCount} | Success: {_successCount} | Skipped: {_skipCount} | Errors: {_errorCount}");
         }
 
         // 로그 출력
         EditorGUILayout.LabelField("Log", EditorStyles.boldLabel);
-        scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.ExpandHeight(true));
+        _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.ExpandHeight(true));
 
-        foreach (var msg in logMessages)
+        foreach (var msg in _logMessages)
         {
             if (msg.StartsWith("[ERROR]"))
                 EditorGUILayout.HelpBox(msg, MessageType.Error);
@@ -133,21 +133,21 @@ public class SkinnedMeshExtractorWindow : EditorWindow
     /// </summary>
     private void ExtractAllMeshes()
     {
-        logMessages.Clear();
-        processedCount = successCount = skipCount = errorCount = 0;
+        _logMessages.Clear();
+        _processedCount = _successCount = _skipCount = _errorCount = 0;
 
-        if (!AssetDatabase.IsValidFolder(sourcePath))
+        if (!AssetDatabase.IsValidFolder(_sourcePath))
         {
-            Log("[ERROR] Source path does not exist: " + sourcePath);
+            Log("[ERROR] Source path does not exist: " + _sourcePath);
             return;
         }
 
         // 타겟 폴더 생성
-        EnsureFolderExists(targetPath);
+        EnsureFolderExists(_targetPath);
 
         // 모든 프리팹 검색
-        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { sourcePath });
-        Log($"Found {prefabGuids.Length} prefabs in {sourcePath}");
+        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { _sourcePath });
+        Log($"Found {prefabGuids.Length} prefabs in {_sourcePath}");
 
         try
         {
@@ -161,7 +161,7 @@ public class SkinnedMeshExtractorWindow : EditorWindow
                     (float)i / prefabGuids.Length);
 
                 ProcessPrefab(prefabPath, false);
-                processedCount++;
+                _processedCount++;
             }
         }
         finally
@@ -171,7 +171,7 @@ public class SkinnedMeshExtractorWindow : EditorWindow
         }
 
         Log($"\n===== Extraction Complete =====");
-        Log($"Total: {processedCount} | Success: {successCount} | Skipped: {skipCount} | Errors: {errorCount}");
+        Log($"Total: {_processedCount} | Success: {_successCount} | Skipped: {_skipCount} | Errors: {_errorCount}");
     }
 
     /// <summary>
@@ -179,27 +179,27 @@ public class SkinnedMeshExtractorWindow : EditorWindow
     /// </summary>
     private void PreviewExtraction()
     {
-        logMessages.Clear();
-        processedCount = successCount = skipCount = errorCount = 0;
+        _logMessages.Clear();
+        _processedCount = _successCount = _skipCount = _errorCount = 0;
 
-        if (!AssetDatabase.IsValidFolder(sourcePath))
+        if (!AssetDatabase.IsValidFolder(_sourcePath))
         {
-            Log("[ERROR] Source path does not exist: " + sourcePath);
+            Log("[ERROR] Source path does not exist: " + _sourcePath);
             return;
         }
 
-        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { sourcePath });
+        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { _sourcePath });
         Log($"[Preview Mode] Found {prefabGuids.Length} prefabs");
 
         foreach (string guid in prefabGuids)
         {
             string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
             ProcessPrefab(prefabPath, true);
-            processedCount++;
+            _processedCount++;
         }
 
         Log($"\n===== Preview Complete =====");
-        Log($"Would process: {processedCount} | Would create: {successCount} | Would skip: {skipCount}");
+        Log($"Would process: {_processedCount} | Would create: {_successCount} | Would skip: {_skipCount}");
     }
 
     /// <summary>
@@ -211,7 +211,7 @@ public class SkinnedMeshExtractorWindow : EditorWindow
         if (prefab == null)
         {
             Log($"[ERROR] Failed to load prefab: {prefabPath}");
-            errorCount++;
+            _errorCount++;
             return;
         }
 
@@ -221,13 +221,13 @@ public class SkinnedMeshExtractorWindow : EditorWindow
         if (renderers.Length == 0)
         {
             Log($"[SKIP] No SkinnedMeshRenderer found: {prefabPath}");
-            skipCount++;
+            _skipCount++;
             return;
         }
 
         // 상대 경로 계산 (폴더 구조 유지)
-        string relativePath = prefabPath.Replace(sourcePath, "").TrimStart('/');
-        string targetPrefabPath = Path.Combine(targetPath, relativePath);
+        string relativePath = prefabPath.Replace(_sourcePath, "").TrimStart('/');
+        string targetPrefabPath = Path.Combine(_targetPath, relativePath);
         string targetFolder = Path.GetDirectoryName(targetPrefabPath);
 
         if (dryRun)
@@ -238,7 +238,7 @@ public class SkinnedMeshExtractorWindow : EditorWindow
             {
                 Log($"    - {r.name} (bones: {r.bones?.Length ?? 0})");
             }
-            successCount++;
+            _successCount++;
             return;
         }
 
@@ -250,12 +250,12 @@ public class SkinnedMeshExtractorWindow : EditorWindow
         {
             CreateExtractedPrefab(prefab, renderers, targetPrefabPath);
             Log($"[SUCCESS] Created: {targetPrefabPath}");
-            successCount++;
+            _successCount++;
         }
         catch (System.Exception e)
         {
             Log($"[ERROR] Failed to create prefab: {targetPrefabPath}\n  {e.Message}");
-            errorCount++;
+            _errorCount++;
         }
     }
 
@@ -337,7 +337,7 @@ public class SkinnedMeshExtractorWindow : EditorWindow
 
     private void Log(string message)
     {
-        logMessages.Add(message);
+        _logMessages.Add(message);
         Debug.Log("[MeshExtractor] " + message);
     }
 }

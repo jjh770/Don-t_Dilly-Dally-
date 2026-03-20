@@ -36,7 +36,7 @@ public class UI_Customizing : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _selectedItemNameText;
 
     [Header("탭 색상")]
-    [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f); // #729CF1
+    [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
     [SerializeField] private Color _tabNormalColor = Color.white;
 
     private CustomizingType _currentCategory = CustomizingType.SkinColor;           // 현재 선택된 카테고리
@@ -82,10 +82,10 @@ public class UI_Customizing : MonoBehaviour
     {
         foreach (var tab in _categoryTabs)
         {
-            if (tab.button != null)
+            if (tab.Button != null)
             {
-                CustomizingType type = tab.type;
-                tab.button.onClick.AddListener(() => SelectCategory(type));
+                CustomizingType type = tab.Type;
+                tab.Button.onClick.AddListener(() => SelectCategory(type));
             }
         }
     }
@@ -105,20 +105,20 @@ public class UI_Customizing : MonoBehaviour
     {
         foreach (var tab in _categoryTabs)
         {
-            bool isSelected = tab.type == _currentCategory;
+            bool isSelected = tab.Type == _currentCategory;
 
-            if (tab.button != null)
+            if (tab.Button != null)
             {
-                var image = tab.button.GetComponent<Image>();
+                var image = tab.Button.GetComponent<Image>();
                 if (image != null)
                 {
                     image.color = isSelected ? _tabSelectedColor : _tabNormalColor;
                 }
             }
 
-            if (isSelected && _tabSelectionIndicator != null && tab.button != null)
+            if (isSelected && _tabSelectionIndicator != null && tab.Button != null)
             {
-                MoveTabSelectionIndicator(tab.button.transform);
+                MoveTabSelectionIndicator(tab.Button.transform);
             }
         }
     }
@@ -205,7 +205,6 @@ public class UI_Customizing : MonoBehaviour
 
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
     {
-        // 현재 탭의 아이템 목록에 변경된 아이템이 있으면 업데이트
         UpdateItemSelections();
 
         if (_selectedItemNameText != null && item != null)
@@ -235,7 +234,7 @@ public class UI_Customizing : MonoBehaviour
     [Serializable]
     public class CategoryTab
     {
-        public CustomizingType type;
-        public Button button;
+        public CustomizingType Type;
+        public Button Button;
     }
 }

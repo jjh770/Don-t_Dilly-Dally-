@@ -29,10 +29,10 @@ public class Customizing
         }
     }
 
-    // DTO에서 복원
-    public void RestoreFromDTO(CustomizingDTO dto)
+    // SaveData에서 복원
+    public void RestoreFromSaveData(CustomizingSaveData saveData)
     {
-        if (dto == null)
+        if (saveData == null)
         {
             InitializeWithDefaults();
             return;
@@ -42,7 +42,7 @@ public class Customizing
 
         foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
-            string itemId = dto.GetSelectedItemId(type);
+            string itemId = saveData.GetSelectedItemId(type);
             var item = !string.IsNullOrEmpty(itemId) ? _catalog.GetItemById(itemId) : null;
 
             if (item != null)
@@ -60,10 +60,10 @@ public class Customizing
         }
     }
 
-    // DTO로 변환
-    public CustomizingDTO ToDTO()
+    // SaveData로 변환
+    public CustomizingSaveData ToSaveData()
     {
-        return _state.ToDTO();
+        return _state.ToSaveData();
     }
 
     // 장착 가능 여부 검사

@@ -5,31 +5,26 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 {
     [Header("Settings")]
     [Tooltip("부모에서 Skeleton/Armature를 찾을 때 사용할 이름들")]
-    [SerializeField]
-    private string[] skeletonRootNames = { "Skeleton", "Armature", "Root", "Hips" };
+    [SerializeField] private string[] _skeletonRootNames = { "Skeleton", "Armature", "Root", "Hips" };
 
     [Tooltip("자동으로 재매핑 실행 (Awake 시) - CustomizingPlayer 사용 시 false 권장")]
-    [SerializeField]
-    private bool autoRemapOnAwake = false;
+    [SerializeField] private bool _autoRemapOnAwake = false;
 
     [Tooltip("재매핑 성공 후 이 컴포넌트 제거")]
-    [SerializeField]
-    private bool destroyAfterRemap = false;
+    [SerializeField] private bool _destroyAfterRemap = false;
 
     [Header("Bone Name Mapping (Optional)")]
     [Tooltip("본 이름이 다른 경우 사용할 매핑 테이블")]
-    [SerializeField]
-    private BoneNameMapping boneNameMapping;
+    [SerializeField] private BoneNameMapping _boneNameMapping;
 
     [Header("Debug")]
-    [SerializeField]
-    private bool showDebugLogs = false;
+    [SerializeField] private bool _showDebugLogs = false;
 
-    private Dictionary<string, Transform> boneCache;
+    private Dictionary<string, Transform> _boneCache;
 
     private void Awake()
     {
-        if (autoRemapOnAwake)
+        if (_autoRemapOnAwake)
         {
             RemapBones();
         }
@@ -38,7 +33,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
     [ContextMenu("Remap Bones")]
     public void RemapBones()
     {
-        // 부모에서 Skeleton 찾기
         Transform skeletonRoot = FindSkeletonRoot();
         if (skeletonRoot == null)
         {
@@ -46,13 +40,11 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
             return;
         }
 
-        if (showDebugLogs)
+        if (_showDebugLogs)
             Debug.Log($"[BoneRemapper] 스켈레톤 루트 발견: {skeletonRoot.name}");
 
-        // 본 캐시 구축
         BuildBoneCache(skeletonRoot);
 
-        // 모든 SkinnedMeshRenderer 처리
         SkinnedMeshRenderer[] renderers = GetComponentsInChildren<SkinnedMeshRenderer>(true);
         int successCount = 0;
 
@@ -64,11 +56,10 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
             }
         }
 
-        if (showDebugLogs)
+        if (_showDebugLogs)
             Debug.Log($"[BoneRemapper] {gameObject.name}에서 {successCount}/{renderers.Length}개 렌더러 재매핑 완료");
 
-        // 완료 후 컴포넌트 제거
-        if (destroyAfterRemap && successCount == renderers.Length)
+        if (_destroyAfterRemap && successCount == renderers.Length)
         {
             if (Application.isPlaying)
                 Destroy(this);
@@ -83,16 +74,14 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 
         while (current != null)
         {
-            // 현재 오브젝트의 자식에서 Skeleton 찾기
-            foreach (string name in skeletonRootNames)
+            foreach (string name in _skeletonRootNames)
             {
                 Transform skeleton = current.Find(name);
                 if (skeleton != null)
                     return skeleton;
             }
 
-            // 재귀적으로 모든 자식 검색
-            foreach (string name in skeletonRootNames)
+            foreach (string name in _skeletonRootNames)
             {
                 Transform skeleton = FindChildRecursive(current, name);
                 if (skeleton != null)
@@ -121,28 +110,23 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 
     private void BuildBoneCache(Transform root)
     {
-        boneCache = new Dictionary<string, Transform>();
-
-        // 루트 자체도 캐시에 추가
-        boneCache[root.name] = root;
-
-        // 모든 자식 본 캐싱
+        _boneCache = new Dictionary<string, Transform>();
+        _boneCache[root.name] = root;
         CacheBoneRecursive(root);
 
-        if (showDebugLogs)
-            Debug.Log($"[BoneRemapper] {boneCache.Count}개 본 캐시됨");
+        if (_showDebugLogs)
+            Debug.Log($"[BoneRemapper] {_boneCache.Count}개 본 캐시됨");
     }
 
     private void CacheBoneRecursive(Transform bone)
     {
         foreach (Transform child in bone)
         {
-            // 중복 이름 처리: 먼저 발견된 것 우선
-            if (!boneCache.ContainsKey(child.name))
+            if (!_boneCache.ContainsKey(child.name))
             {
-                boneCache[child.name] = child;
+                _boneCache[child.name] = child;
             }
-            else if (showDebugLogs)
+            else if (_showDebugLogs)
             {
                 Debug.LogWarning($"[BoneRemapper] 중복된 본 이름: {child.name}");
             }
@@ -153,7 +137,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 
     private bool RemapRendererBones(SkinnedMeshRenderer renderer)
     {
-        // BoneInfo 컴포넌트에서 원본 본 이름 가져오기
         SkinnedMeshBoneInfo boneInfo = renderer.GetComponent<SkinnedMeshBoneInfo>();
 
         if (boneInfo == null || !boneInfo.IsValid())
@@ -165,15 +148,13 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         string[] boneNames = boneInfo.BoneNames;
         string rootBoneName = boneInfo.RootBoneName;
 
-        // 본 이름 매핑 적용 (옵션)
-        if (boneNameMapping != null)
+        if (_boneNameMapping != null)
         {
-            rootBoneName = boneNameMapping.MapBoneName(rootBoneName);
-            boneNames = boneNameMapping.MapBoneNames(boneNames);
+            rootBoneName = _boneNameMapping.MapBoneName(rootBoneName);
+            boneNames = _boneNameMapping.MapBoneNames(boneNames);
         }
 
-        // rootBone 재매핑
-        if (boneCache.TryGetValue(rootBoneName, out Transform newRootBone))
+        if (_boneCache.TryGetValue(rootBoneName, out Transform newRootBone))
         {
             renderer.rootBone = newRootBone;
         }
@@ -183,7 +164,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
             return false;
         }
 
-        // bones[] 재매핑
         Transform[] newBones = new Transform[boneNames.Length];
         int missingCount = 0;
 
@@ -197,7 +177,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
                 continue;
             }
 
-            if (boneCache.TryGetValue(boneName, out Transform newBone))
+            if (_boneCache.TryGetValue(boneName, out Transform newBone))
             {
                 newBones[i] = newBone;
             }
@@ -206,7 +186,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
                 newBones[i] = null;
                 missingCount++;
 
-                if (showDebugLogs)
+                if (_showDebugLogs)
                     Debug.LogWarning($"[BoneRemapper] 본을 찾을 수 없음: {boneName} (인덱스 {i})");
             }
         }
@@ -218,7 +198,7 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
             Debug.LogWarning($"[BoneRemapper] {renderer.name}: {missingCount}/{boneNames.Length}개 본을 찾을 수 없음");
         }
 
-        if (showDebugLogs)
+        if (_showDebugLogs)
             Debug.Log($"[BoneRemapper] {renderer.name} 재매핑 성공");
 
         return missingCount == 0;
@@ -243,12 +223,12 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
 
     public void RemapBonesTo(Transform skeletonRoot, BoneNameMapping mapping)
     {
-        boneNameMapping = mapping;
+        _boneNameMapping = mapping;
         RemapBonesTo(skeletonRoot);
     }
 
     public void SetBoneNameMapping(BoneNameMapping mapping)
     {
-        boneNameMapping = mapping;
+        _boneNameMapping = mapping;
     }
 }

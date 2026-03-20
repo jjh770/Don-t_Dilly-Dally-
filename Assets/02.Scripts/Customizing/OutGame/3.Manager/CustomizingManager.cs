@@ -1,6 +1,7 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 
 public class CustomizingManager : MonoBehaviour
 {
@@ -11,18 +12,17 @@ public class CustomizingManager : MonoBehaviour
     [SerializeField] private BaseEquipmentCatalogSO _baseEquipmentCatalog;
 
     [Header("세팅")]
-    [SerializeField] private bool usePlayerPrefs = false;
-    [SerializeField] private bool autoLoadOnStart = true;
+    [SerializeField] private string _userId = "local_user";
+    [SerializeField] private bool _autoLoadOnStart = true;
 
     private Customizing _domain;
-    private CustomizingRepository _repository;
+    private ICustomizingRepository _repository;
 
     // 이벤트
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
     public event Action OnSaved;
     public event Action OnLoaded;
-    
 
     public Customizing Domain => _domain;
     public CustomizingCatalogSO Catalog => _catalog;
@@ -43,7 +43,7 @@ public class CustomizingManager : MonoBehaviour
     {
         Initialize();
 
-        if (autoLoadOnStart)
+        if (_autoLoadOnStart)
             Load();
     }
 
@@ -58,7 +58,7 @@ public class CustomizingManager : MonoBehaviour
         _catalog.Initialize();
         _baseEquipmentCatalog?.Initialize();
 
-        _repository = new CustomizingRepository(usePlayerPrefs);
+        _repository = new LocalCustomizingRepository(_userId);
         _domain = new Customizing(_catalog);
 
         OnInitialized?.Invoke();
@@ -66,16 +66,21 @@ public class CustomizingManager : MonoBehaviour
 
     public void Load()
     {
+        LoadAsync().Forget();
+    }
+
+    public async UniTask LoadAsync()
+    {
         if (_domain == null)
         {
             Debug.LogError("[CustomizingManager] 초기화되지 않음");
             return;
         }
 
-        var dto = _repository.Load();
+        var saveData = await _repository.Load();
 
-        if (dto != null)
-            _domain.RestoreFromDTO(dto);
+        if (saveData != null && saveData.SelectedItems.Count > 0)
+            _domain.RestoreFromSaveData(saveData);
         else
             _domain.InitializeWithDefaults();
 
@@ -91,14 +96,12 @@ public class CustomizingManager : MonoBehaviour
             return;
         }
 
-        var dto = _domain.ToDTO();
-        bool success = _repository.Save(dto);
+        var saveData = _domain.ToSaveData();
+        saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
+        _repository.Save(saveData).Forget();
 
-        if (success)
-        {
-            Debug.Log("[CustomizingManager] 저장 완료");
-            OnSaved?.Invoke();
-        }
+        Debug.Log("[CustomizingManager] 저장 완료");
+        OnSaved?.Invoke();
     }
 
     // 아이템 선택
@@ -136,7 +139,6 @@ public class CustomizingManager : MonoBehaviour
         return result;
     }
 
-    // ID 기반 선택
     public EEquipResult SelectItemById(string itemId)
     {
         var item = _catalog.GetItemById(itemId);
@@ -146,7 +148,7 @@ public class CustomizingManager : MonoBehaviour
     public void ResetAll()
     {
         _domain?.ResetToDefaults();
-        OnLoaded?.Invoke(); // 전체 상태 변경 알림
+        OnLoaded?.Invoke();
     }
 
     // 현재 장착 아이템
@@ -154,18 +156,6 @@ public class CustomizingManager : MonoBehaviour
     {
         var spec = _domain?.GetEquipped(type);
         return spec as CustomizingItemSO;
-    }
-
-    // 장착 여부 확인
-    public bool IsEquipped(CustomizingItemSO item)
-    {
-        return _domain?.IsEquipped(item) ?? false;
-    }
-
-    // 카테고리별 아이템 목록
-    public List<CustomizingItemSO> GetItemsByType(CustomizingType type)
-    {
-        return _catalog?.GetItemsByType(type) ?? new List<CustomizingItemSO>();
     }
 
     // 카테고리별 해금 아이템 목록

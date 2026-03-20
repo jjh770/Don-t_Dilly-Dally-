@@ -29,8 +29,8 @@ public class CustomizingItemGenerator : EditorWindow
         { "Costumes", CustomizingType.Costumes },
     };
 
-    private Vector2 scrollPosition;
-    private List<string> logMessages = new List<string>();
+    private Vector2 __scrollPosition;
+    private List<string> __logMessages = new List<string>();
 
     [MenuItem("Tools/Customizing/Generate Item SOs")]
     public static void ShowWindow()
@@ -76,16 +76,16 @@ public class CustomizingItemGenerator : EditorWindow
 
         if (GUILayout.Button("Clear Log"))
         {
-            logMessages.Clear();
+            _logMessages.Clear();
         }
 
         EditorGUILayout.Space(10);
 
         // 로그 출력
         EditorGUILayout.LabelField("Log", EditorStyles.boldLabel);
-        scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.ExpandHeight(true));
+        _scrollPosition = EditorGUILayout.BeginScrollView(_scrollPosition, GUILayout.ExpandHeight(true));
 
-        foreach (var msg in logMessages)
+        foreach (var msg in _logMessages)
         {
             if (msg.StartsWith("[ERROR]"))
                 EditorGUILayout.HelpBox(msg, MessageType.Error);
@@ -103,7 +103,7 @@ public class CustomizingItemGenerator : EditorWindow
     /// </summary>
     private void GenerateSkinColorPrefabs()
     {
-        logMessages.Clear();
+        _logMessages.Clear();
         Log("=== Generating SkinColor Prefabs ===");
 
         string bodyPath = Path.Combine(ITEMS_PATH, "Body");
@@ -246,7 +246,7 @@ public class CustomizingItemGenerator : EditorWindow
     /// </summary>
     private void GenerateAllItemSOs()
     {
-        logMessages.Clear();
+        _logMessages.Clear();
         Log("=== Generating Item SOs ===");
 
         EnsureFolderExists(CATALOG_PATH);
@@ -315,12 +315,12 @@ public class CustomizingItemGenerator : EditorWindow
             var itemSO = ScriptableObject.CreateInstance<CustomizingItemSO>();
 
             // 리플렉션으로 private 필드 설정
-            SetPrivateField(itemSO, "itemId", $"{type}_{prefabName}");
-            SetPrivateField(itemSO, "displayName", prefabName);
-            SetPrivateField(itemSO, "customizingType", type);
-            SetPrivateField(itemSO, "partPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath));
-            SetPrivateField(itemSO, "isDefault", prefabName.EndsWith("_01"));
-            SetPrivateField(itemSO, "sortOrder", ExtractSortOrder(prefabName));
+            SetPrivateField(itemSO, "_itemId", $"{type}_{prefabName}");
+            SetPrivateField(itemSO, "_displayName", prefabName);
+            SetPrivateField(itemSO, "_customizingType", type);
+            SetPrivateField(itemSO, "_partPrefab", AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath));
+            SetPrivateField(itemSO, "_isDefault", prefabName.EndsWith("_01"));
+            SetPrivateField(itemSO, "_sortOrder", ExtractSortOrder(prefabName));
 
             AssetDatabase.CreateAsset(itemSO, soPath);
             Log($"[SUCCESS] Created: {prefabName} ({type})");
@@ -377,7 +377,7 @@ public class CustomizingItemGenerator : EditorWindow
 
     private void Log(string message)
     {
-        logMessages.Add(message);
+        _logMessages.Add(message);
         Debug.Log("[ItemGenerator] " + message);
     }
 }

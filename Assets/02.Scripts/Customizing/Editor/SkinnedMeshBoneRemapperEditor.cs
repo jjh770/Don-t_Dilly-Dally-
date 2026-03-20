@@ -8,7 +8,7 @@ using UnityEditor;
 [CustomEditor(typeof(SkinnedMeshBoneRemapper))]
 public class SkinnedMeshBoneRemapperEditor : Editor
 {
-    private Transform customSkeletonRoot;
+    private Transform __customSkeletonRoot;
 
     public override void OnInspectorGUI()
     {
@@ -30,17 +30,17 @@ public class SkinnedMeshBoneRemapperEditor : Editor
         EditorGUILayout.Space(10);
 
         // 수동 Skeleton 지정
-        customSkeletonRoot = (Transform)EditorGUILayout.ObjectField(
+        _customSkeletonRoot = (Transform)EditorGUILayout.ObjectField(
             "Custom Skeleton Root",
-            customSkeletonRoot,
+            _customSkeletonRoot,
             typeof(Transform),
             true);
 
-        GUI.enabled = customSkeletonRoot != null;
+        GUI.enabled = _customSkeletonRoot != null;
         if (GUILayout.Button("Remap to Custom Skeleton"))
         {
             Undo.RecordObject(remapper, "Remap Bones to Custom");
-            remapper.RemapBonesTo(customSkeletonRoot);
+            remapper.RemapBonesTo(_customSkeletonRoot);
             EditorUtility.SetDirty(remapper);
         }
         GUI.enabled = true;

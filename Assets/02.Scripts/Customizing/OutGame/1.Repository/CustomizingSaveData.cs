@@ -2,16 +2,16 @@ using System;
 using System.Collections.Generic;
 
 [Serializable]
-public class CustomizingDTO
+public class CustomizingSaveData : ISaveData
 {
-    public Dictionary<int, string> SelectedItems = new Dictionary<int, string>();   // 카테고리 별로 어느 아이템이 선택되었는지
-    public long SavedTimestamp;                                                     // 저장 시간
+    public Dictionary<int, string> SelectedItems = new Dictionary<int, string>();
+    public string LastSavedAt { get; set; }
 
-    public CustomizingDTO()
+    public static CustomizingSaveData Default => new CustomizingSaveData
     {
-        SelectedItems = new Dictionary<int, string>();
-        SavedTimestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-    }
+        SelectedItems = new Dictionary<int, string>(),
+        LastSavedAt = null
+    };
 
     public string GetSelectedItemId(CustomizingType type)
     {

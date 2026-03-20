@@ -6,32 +6,32 @@ using System.Linq;
 public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
 {
     [Header("SkinColor - 피부색 (Body + Ears)")]
-    [SerializeField] private List<CustomizingItemSO> skinColorItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _skinColorItems = new List<CustomizingItemSO>();
 
     [Header("Hat - 모자")]
-    [SerializeField] private List<CustomizingItemSO> hatItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _hatItems = new List<CustomizingItemSO>();
 
     [Header("HairStyle - 머리스타일")]
-    [SerializeField] private List<CustomizingItemSO> hairStyleItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _hairStyleItems = new List<CustomizingItemSO>();
 
     [Header("Faces - 표정")]
-    [SerializeField] private List<CustomizingItemSO> facesItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _facesItems = new List<CustomizingItemSO>();
 
     [Header("FaceAccessory - 얼굴장식")]
-    [SerializeField] private List<CustomizingItemSO> faceAccessoryItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _faceAccessoryItems = new List<CustomizingItemSO>();
 
     [Header("Glasses - 안경")]
-    [SerializeField] private List<CustomizingItemSO> glassesItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _glassesItems = new List<CustomizingItemSO>();
 
     [Header("Shoes - 신발")]
-    [SerializeField] private List<CustomizingItemSO> shoesItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _shoesItems = new List<CustomizingItemSO>();
 
     [Header("Costumes - 코스튬")]
-    [SerializeField] private List<CustomizingItemSO> costumesItems = new List<CustomizingItemSO>();
+    [SerializeField] private List<CustomizingItemSO> _costumesItems = new List<CustomizingItemSO>();
 
     // 캐시
-    private Dictionary<string, CustomizingItemSO> itemsById;
-    private Dictionary<CustomizingType, CustomizingItemSO> defaultItems;
+    private Dictionary<string, CustomizingItemSO> _itemsById;
+    private Dictionary<CustomizingType, CustomizingItemSO> _defaultItems;
 
     public void Initialize()
     {
@@ -40,8 +40,8 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
 
     private void BuildCache()
     {
-        itemsById = new Dictionary<string, CustomizingItemSO>();
-        defaultItems = new Dictionary<CustomizingType, CustomizingItemSO>();
+        _itemsById = new Dictionary<string, CustomizingItemSO>();
+        _defaultItems = new Dictionary<CustomizingType, CustomizingItemSO>();
 
         // 모든 카테고리 순회
         foreach (CustomizingType type in System.Enum.GetValues(typeof(CustomizingType)))
@@ -54,13 +54,13 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
                 // ID별 캐시
                 if (!string.IsNullOrEmpty(item.ItemId))
                 {
-                    itemsById[item.ItemId] = item;
+                    _itemsById[item.ItemId] = item;
                 }
 
                 // 기본 아이템 캐시
-                if (item.IsDefault && !defaultItems.ContainsKey(type))
+                if (item.IsDefault && !_defaultItems.ContainsKey(type))
                 {
-                    defaultItems[type] = item;
+                    _defaultItems[type] = item;
                 }
             }
         }
@@ -70,14 +70,14 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
     {
         switch (type)
         {
-            case CustomizingType.SkinColor: return skinColorItems;
-            case CustomizingType.Hat: return hatItems;
-            case CustomizingType.HairStyle: return hairStyleItems;
-            case CustomizingType.Faces: return facesItems;
-            case CustomizingType.FaceAccessory: return faceAccessoryItems;
-            case CustomizingType.Glasses: return glassesItems;
-            case CustomizingType.Shoes: return shoesItems;
-            case CustomizingType.Costumes: return costumesItems;
+            case CustomizingType.SkinColor: return _skinColorItems;
+            case CustomizingType.Hat: return _hatItems;
+            case CustomizingType.HairStyle: return _hairStyleItems;
+            case CustomizingType.Faces: return _facesItems;
+            case CustomizingType.FaceAccessory: return _faceAccessoryItems;
+            case CustomizingType.Glasses: return _glassesItems;
+            case CustomizingType.Shoes: return _shoesItems;
+            case CustomizingType.Costumes: return _costumesItems;
             default: return new List<CustomizingItemSO>();
         }
     }
@@ -92,20 +92,20 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
     // ID로 아이템 찾기
     public CustomizingItemSO GetItemById(string itemId)
     {
-        if (itemsById == null) BuildCache();
+        if (_itemsById == null) BuildCache();
 
         if (string.IsNullOrEmpty(itemId)) return null;
 
-        itemsById.TryGetValue(itemId, out var item);
+        _itemsById.TryGetValue(itemId, out var item);
         return item;
     }
 
     // 특정 종류의 기본 아이템 반환
     public CustomizingItemSO GetDefaultItem(CustomizingType type)
     {
-        if (defaultItems == null) BuildCache();
+        if (_defaultItems == null) BuildCache();
 
-        defaultItems.TryGetValue(type, out var item);
+        _defaultItems.TryGetValue(type, out var item);
         return item;
     }
 
@@ -132,8 +132,8 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
 #if UNITY_EDITOR
     private void OnValidate()
     {
-        itemsById = null;
-        defaultItems = null;
+        _itemsById = null;
+        _defaultItems = null;
     }
 #endif
 }

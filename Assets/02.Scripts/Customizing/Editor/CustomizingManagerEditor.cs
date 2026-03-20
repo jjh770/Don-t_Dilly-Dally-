@@ -8,8 +8,8 @@ using UnityEditor;
 [CustomEditor(typeof(CustomizingManager))]
 public class CustomizingManagerEditor : Editor
 {
-    private CustomizingType testType = CustomizingType.SkinColor;
-    private string testItemId = "";
+    private CustomizingType __testType = CustomizingType.SkinColor;
+    private string __testItemId = "";
 
     public override void OnInspectorGUI()
     {
@@ -56,12 +56,12 @@ public class CustomizingManagerEditor : Editor
         // 아이템 선택 테스트
         EditorGUILayout.LabelField("Item Selection Test", EditorStyles.boldLabel);
 
-        testType = (CustomizingType)EditorGUILayout.EnumPopup("Type", testType);
-        testItemId = EditorGUILayout.TextField("Item ID", testItemId);
+        _testType = (CustomizingType)EditorGUILayout.EnumPopup("Type", _testType);
+        _testItemId = EditorGUILayout.TextField("Item ID", _testItemId);
 
         if (GUILayout.Button("Select Item By ID"))
         {
-            manager.SelectItemById(testItemId);
+            manager.SelectItemById(_testItemId);
         }
 
         EditorGUILayout.Space(10);

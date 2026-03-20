@@ -1,91 +1,65 @@
 using UnityEngine;
-using System.Collections.Generic;
 
-/// <summary>
-/// SkinnedMeshRenderer의 원본 본 이름을 저장하는 컴포넌트
-/// 추출된 프리팹에 자동으로 추가되어, 나중에 본 재매핑 시 사용됨
-/// </summary>
 public class SkinnedMeshBoneInfo : MonoBehaviour
 {
     [Tooltip("원본 SkinnedMeshRenderer가 참조하던 본들의 이름 목록")]
-    [SerializeField]
-    private string[] boneNames;
+    [SerializeField] private string[] _boneNames;
 
     [Tooltip("원본 rootBone의 이름")]
-    [SerializeField]
-    private string rootBoneName;
+    [SerializeField] private string _rootBoneName;
 
-    /// <summary>
-    /// 본 이름 배열 반환
-    /// </summary>
-    public string[] BoneNames => boneNames;
+    public string[] BoneNames => _boneNames;
+    public string RootBoneName => _rootBoneName;
 
-    /// <summary>
-    /// 루트 본 이름 반환
-    /// </summary>
-    public string RootBoneName => rootBoneName;
-
-    /// <summary>
-    /// SkinnedMeshRenderer에서 본 이름을 추출하여 저장
-    /// (에디터에서 프리팹 생성 시 호출)
-    /// </summary>
     public void SaveBoneNames(SkinnedMeshRenderer sourceRenderer)
     {
         if (sourceRenderer == null) return;
 
-        // rootBone 이름 저장
         if (sourceRenderer.rootBone != null)
         {
-            rootBoneName = sourceRenderer.rootBone.name;
+            _rootBoneName = sourceRenderer.rootBone.name;
         }
 
-        // bones[] 이름 저장
         Transform[] sourceBones = sourceRenderer.bones;
         if (sourceBones != null && sourceBones.Length > 0)
         {
-            boneNames = new string[sourceBones.Length];
+            _boneNames = new string[sourceBones.Length];
             for (int i = 0; i < sourceBones.Length; i++)
             {
                 if (sourceBones[i] != null)
                 {
-                    boneNames[i] = sourceBones[i].name;
+                    _boneNames[i] = sourceBones[i].name;
                 }
                 else
                 {
-                    boneNames[i] = "";
+                    _boneNames[i] = "";
                     Debug.LogWarning($"[BoneInfo] {sourceRenderer.name}의 인덱스 {i}에 본이 없음");
                 }
             }
         }
     }
 
-    /// <summary>
-    /// 본 이름 목록이 유효한지 확인
-    /// </summary>
     public bool IsValid()
     {
-        return boneNames != null && boneNames.Length > 0 && !string.IsNullOrEmpty(rootBoneName);
+        return _boneNames != null && _boneNames.Length > 0 && !string.IsNullOrEmpty(_rootBoneName);
     }
 
-    /// <summary>
-    /// 디버그용: 저장된 본 정보 출력
-    /// </summary>
     [ContextMenu("Print Bone Info")]
     public void PrintBoneInfo()
     {
         Debug.Log($"[BoneInfo] {gameObject.name}");
-        Debug.Log($"  루트 본: {rootBoneName}");
-        Debug.Log($"  본 개수: {boneNames?.Length ?? 0}");
+        Debug.Log($"  루트 본: {_rootBoneName}");
+        Debug.Log($"  본 개수: {_boneNames?.Length ?? 0}");
 
-        if (boneNames != null)
+        if (_boneNames != null)
         {
-            for (int i = 0; i < Mathf.Min(boneNames.Length, 10); i++)
+            for (int i = 0; i < Mathf.Min(_boneNames.Length, 10); i++)
             {
-                Debug.Log($"    [{i}] {boneNames[i]}");
+                Debug.Log($"    [{i}] {_boneNames[i]}");
             }
-            if (boneNames.Length > 10)
+            if (_boneNames.Length > 10)
             {
-                Debug.Log($"    ... 외 {boneNames.Length - 10}개");
+                Debug.Log($"    ... 외 {_boneNames.Length - 10}개");
             }
         }
     }

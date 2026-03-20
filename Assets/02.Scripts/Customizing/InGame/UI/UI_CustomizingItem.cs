@@ -14,8 +14,6 @@ public class UI_CustomizingItem : MonoBehaviour
     [SerializeField] private Color _normalColor = Color.white;
     [SerializeField] private Color _selectedColor = new Color(0.8f, 0.9f, 1f);
 
-    public CustomizingItemSO ItemData => _itemData;
-    private CustomizingItemSO _itemData;
     private Action _onClick;
 
     private void Awake()
@@ -29,7 +27,6 @@ public class UI_CustomizingItem : MonoBehaviour
 
     public void Setup(CustomizingItemSO item, Action onClickCallback)
     {
-        _itemData = item;
         _onClick = onClickCallback;
 
         if (_iconImage != null && item.PreviewIcon != null)

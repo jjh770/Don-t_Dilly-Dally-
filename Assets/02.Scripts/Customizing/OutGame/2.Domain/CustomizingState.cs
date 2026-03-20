@@ -61,26 +61,26 @@ public class CustomizingState
         _equippedItemIds.Clear();
     }
 
-    // DTO로 변환
-    public CustomizingDTO ToDTO()
+    // SaveData로 변환
+    public CustomizingSaveData ToSaveData()
     {
-        var dto = new CustomizingDTO();
+        var saveData = new CustomizingSaveData();
         foreach (var kvp in _equippedItemIds)
         {
-            dto.SetSelectedItemId(kvp.Key, kvp.Value);
+            saveData.SetSelectedItemId(kvp.Key, kvp.Value);
         }
-        return dto;
+        return saveData;
     }
 
-    // DTO에서 복원
-    public void RestoreFromDTO(CustomizingDTO dto)
+    // SaveData에서 복원
+    public void RestoreFromSaveData(CustomizingSaveData saveData)
     {
         Clear();
-        if (dto == null) return;
+        if (saveData == null) return;
 
         foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
-            string itemId = dto.GetSelectedItemId(type);
+            string itemId = saveData.GetSelectedItemId(type);
             if (!string.IsNullOrEmpty(itemId))
             {
                 _equippedItemIds[type] = itemId;

@@ -15,24 +15,24 @@ public class CustomizingItemSOEditor : Editor
 
         // Basic Info
         EditorGUILayout.LabelField("Basic Info", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("itemId"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("displayName"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("customizingType"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_itemId"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_displayName"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_customizingType"));
 
         EditorGUILayout.Space(10);
 
         // Visual
         EditorGUILayout.LabelField("Visual", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("previewIcon"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("partPrefab"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_previewIcon"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_partPrefab"));
 
         EditorGUILayout.Space(10);
 
         // Settings
         EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("isDefault"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("isLocked"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("sortOrder"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_isDefault"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_isLocked"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_sortOrder"));
 
         serializedObject.ApplyModifiedProperties();
 

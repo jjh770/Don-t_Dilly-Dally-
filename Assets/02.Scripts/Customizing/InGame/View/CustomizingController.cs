@@ -22,7 +22,7 @@ public class CustomizingController : MonoBehaviour
 
     [Header("세팅")]
     [Tooltip("파츠 적용 시 자동으로 본 재매핑")]
-    [SerializeField] private bool autoRemapBones = true;
+    [SerializeField] private bool _autoRemapBones = true;
 
     // 현재 장착된 커스터마이징 파츠 인스턴스
     private Dictionary<CustomizingType, GameObject> _equippedInstances = new Dictionary<CustomizingType, GameObject>();
@@ -115,7 +115,7 @@ public class CustomizingController : MonoBehaviour
 
         SetLayerRecursive(instance, 7);
 
-        if (autoRemapBones)
+        if (_autoRemapBones)
         {
             RemapBones(instance);
         }
@@ -248,7 +248,7 @@ public class CustomizingController : MonoBehaviour
 
         SetLayerRecursive(instance, 7);
 
-        if (autoRemapBones)
+        if (_autoRemapBones)
         {
             RemapBones(instance);
         }

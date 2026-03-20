@@ -2,44 +2,27 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 
-/// <summary>
-/// 본 이름 매핑 엔트리
-/// </summary>
 [Serializable]
 public class BoneNameMappingEntry
 {
     [Tooltip("원본 에셋의 본 이름")]
-    public string sourceName;
+    public string SourceName;
 
     [Tooltip("대상 Skeleton의 본 이름")]
-    public string targetName;
+    public string TargetName;
 }
 
-/// <summary>
-/// 본 이름이 다른 에셋 간의 매핑 테이블
-/// ScriptableObject로 생성하여 재사용 가능
-///
-/// 사용 사례:
-/// - 서로 다른 에셋 팩을 섞어 쓸 때
-/// - 본 이름 규칙이 다른 경우 (예: Hips vs pelvis, Spine vs spine1)
-///
-/// 생성 방법:
-/// Assets > Create > Customizing > Bone Name Mapping
-/// </summary>
 [CreateAssetMenu(fileName = "BoneNameMapping", menuName = "Customizing/Bone Name Mapping")]
 public class BoneNameMapping : ScriptableObject
 {
     [Header("Mapping Table")]
-    [SerializeField]
-    private List<BoneNameMappingEntry> mappings = new List<BoneNameMappingEntry>();
+    [SerializeField] private List<BoneNameMappingEntry> _mappings = new List<BoneNameMappingEntry>();
 
     [Header("Common Mappings")]
     [Tooltip("일반적인 본 이름 변환 자동 적용")]
-    [SerializeField]
-    private bool useCommonMappings = true;
+    [SerializeField] private bool _useCommonMappings = true;
 
-    // 캐시된 딕셔너리
-    private Dictionary<string, string> mappingDict;
+    private Dictionary<string, string> _mappingDict;
 
     private void OnEnable()
     {
@@ -48,31 +31,24 @@ public class BoneNameMapping : ScriptableObject
 
     private void BuildMappingDictionary()
     {
-        mappingDict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        _mappingDict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-        // 일반적인 매핑 추가
-        if (useCommonMappings)
+        if (_useCommonMappings)
         {
             AddCommonMappings();
         }
 
-        // 사용자 정의 매핑 추가 (우선순위 높음)
-        foreach (var entry in mappings)
+        foreach (var entry in _mappings)
         {
-            if (!string.IsNullOrEmpty(entry.sourceName) && !string.IsNullOrEmpty(entry.targetName))
+            if (!string.IsNullOrEmpty(entry.SourceName) && !string.IsNullOrEmpty(entry.TargetName))
             {
-                mappingDict[entry.sourceName] = entry.targetName;
+                _mappingDict[entry.SourceName] = entry.TargetName;
             }
         }
     }
 
-    /// <summary>
-    /// 일반적으로 다른 이름으로 사용되는 본들의 매핑
-    /// </summary>
     private void AddCommonMappings()
     {
-        // Humanoid 본 이름 변환 (예시)
-        // Mixamo -> Unity Humanoid
         AddMapping("mixamorig:Hips", "Hips");
         AddMapping("mixamorig:Spine", "Spine");
         AddMapping("mixamorig:Spine1", "Spine1");
@@ -96,7 +72,6 @@ public class BoneNameMapping : ScriptableObject
         AddMapping("mixamorig:RightFoot", "RightFoot");
         AddMapping("mixamorig:RightToeBase", "RightToes");
 
-        // 소문자/대문자 변환
         AddMapping("hips", "Hips");
         AddMapping("spine", "Spine");
         AddMapping("pelvis", "Hips");
@@ -104,26 +79,21 @@ public class BoneNameMapping : ScriptableObject
 
     private void AddMapping(string source, string target)
     {
-        if (!mappingDict.ContainsKey(source))
+        if (!_mappingDict.ContainsKey(source))
         {
-            mappingDict[source] = target;
+            _mappingDict[source] = target;
         }
     }
 
-    /// <summary>
-    /// 본 이름 변환
-    /// </summary>
-    /// <param name="sourceName">원본 본 이름</param>
-    /// <returns>변환된 본 이름 (매핑이 없으면 원본 반환)</returns>
     public string MapBoneName(string sourceName)
     {
         if (string.IsNullOrEmpty(sourceName))
             return sourceName;
 
-        if (mappingDict == null)
+        if (_mappingDict == null)
             BuildMappingDictionary();
 
-        if (mappingDict.TryGetValue(sourceName, out string targetName))
+        if (_mappingDict.TryGetValue(sourceName, out string targetName))
         {
             return targetName;
         }
@@ -131,9 +101,6 @@ public class BoneNameMapping : ScriptableObject
         return sourceName;
     }
 
-    /// <summary>
-    /// 여러 본 이름 일괄 변환
-    /// </summary>
     public string[] MapBoneNames(string[] sourceNames)
     {
         if (sourceNames == null)
@@ -147,25 +114,19 @@ public class BoneNameMapping : ScriptableObject
         return result;
     }
 
-    /// <summary>
-    /// 매핑 추가 (런타임)
-    /// </summary>
     public void AddRuntimeMapping(string source, string target)
     {
-        if (mappingDict == null)
+        if (_mappingDict == null)
             BuildMappingDictionary();
 
-        mappingDict[source] = target;
+        _mappingDict[source] = target;
     }
 
-    /// <summary>
-    /// 매핑 테이블 초기화
-    /// </summary>
     [ContextMenu("Rebuild Mapping Dictionary")]
     public void RebuildMappingDictionary()
     {
         BuildMappingDictionary();
-        Debug.Log($"[BoneMapping] 딕셔너리 재구축 완료: {mappingDict.Count}개 항목");
+        Debug.Log($"[BoneMapping] 딕셔너리 재구축 완료: {_mappingDict.Count}개 항목");
     }
 
 #if UNITY_EDITOR
