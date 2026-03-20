@@ -58,11 +58,15 @@ namespace DontDillyDally.Data
 
         private void TryPlaceTray(PlayerInteractionAbility interactionAbility, TrayItem trayItem)
         {
-            if (_trayWorkbench.HasTray)
+            if (!_trayWorkbench.CanPlaceTrayItem(trayItem))
+            {
                 return;
+            }
 
             if (!interactionAbility.TryReleaseHeldItem(trayItem, returnOwnershipToMaster: false))
+            {
                 return;
+            }
 
             HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
             if (holdable != null)
@@ -75,11 +79,15 @@ namespace DontDillyDally.Data
             }
 
             if (!_trayWorkbench.TrySetCurrentTrayItem(trayItem))
+            {
                 return;
+            }
 
             PhotonView photonView = trayItem.GetComponent<PhotonView>();
             if (photonView != null && PhotonNetwork.MasterClient != null)
+            {
                 photonView.TransferOwnership(PhotonNetwork.MasterClient);
+            }
         }
 
         private void TryPlaceBasicMaterial(
@@ -95,7 +103,9 @@ namespace DontDillyDally.Data
                 playerId);
 
             if (!placed)
+            {
                 return;
+            }
 
             interactionAbility.TryConsumeHeldItem(basicMaterialItem);
         }
@@ -104,14 +114,20 @@ namespace DontDillyDally.Data
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem == null)
+            {
                 return;
+            }
 
             HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
             if (holdable == null)
+            {
                 return;
+            }
 
             if (!interactionAbility.TryStartHoldFromExternal(holdable))
+            {
                 return;
+            }
 
             _trayWorkbench.ClearCurrentTrayItem(trayItem);
         }

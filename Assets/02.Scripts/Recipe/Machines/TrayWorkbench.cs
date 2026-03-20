@@ -26,16 +26,37 @@ namespace DontDillyDally.Data
             CurrentTrayItem = trayItem;
 
             if (CurrentTrayItem != null)
+            {
                 CurrentTrayItem.EnsureTrayData();
+            }
+        }
+
+        public bool CanPlaceTrayItem(TrayItem trayItem)
+        {
+            if (trayItem == null)
+            {
+                return false;
+            }
+
+            if (!trayItem.IsSterilizedTray)
+            {
+                return false;
+            }
+
+            if (HasTray)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         public bool TrySetCurrentTrayItem(TrayItem trayItem)
         {
-            if (trayItem == null)
+            if (!CanPlaceTrayItem(trayItem))
+            {
                 return false;
-
-            if (HasTray)
-                return false;
+            }
 
             SetCurrentTrayItem(trayItem);
             return true;
@@ -44,14 +65,18 @@ namespace DontDillyDally.Data
         public void ClearCurrentTrayItem(TrayItem trayItem = null)
         {
             if (trayItem == null || CurrentTrayItem == trayItem)
+            {
                 CurrentTrayItem = null;
+            }
         }
 
         public bool TryPlaceItemOnTray(CraftedItem item)
         {
             TrayItem trayItem = GetResolvedTrayItem();
             if (item == null || trayItem == null)
+            {
                 return false;
+            }
 
             return trayItem.TryAddItem(item);
         }
@@ -62,7 +87,9 @@ namespace DontDillyDally.Data
         {
             CraftedItem item = CraftedItem.CreateBasicMaterial(materialType, playerId);
             if (item == null)
+            {
                 return false;
+            }
 
             return TryPlaceItemOnTray(item);
         }
@@ -71,7 +98,9 @@ namespace DontDillyDally.Data
         {
             TrayItem trayItem = GetResolvedTrayItem();
             if (trayItem == null)
+            {
                 return null;
+            }
 
             return trayItem.TakeLastItem();
         }
@@ -80,7 +109,9 @@ namespace DontDillyDally.Data
         {
             TrayItem trayItem = GetResolvedTrayItem();
             if (trayItem == null)
+            {
                 return;
+            }
 
             trayItem.ClearItems();
             trayItem.SetTrayKindAndSync(TrayKind.Normal);
@@ -90,7 +121,9 @@ namespace DontDillyDally.Data
         {
             TrayItem trayItem = GetResolvedTrayItem();
             if (trayItem == null)
+            {
                 return;
+            }
 
             trayItem.LoadTrayData(tray);
         }
@@ -99,7 +132,9 @@ namespace DontDillyDally.Data
         {
             TrayItem trayItem = GetResolvedTrayItem();
             if (trayItem == null)
+            {
                 return null;
+            }
 
             return trayItem.GetTraySnapshot();
         }
@@ -110,7 +145,9 @@ namespace DontDillyDally.Data
 
             TrayItem trayItem = GetResolvedTrayItem();
             if (trayItem != null)
+            {
                 trayItem.ResetTrayData();
+            }
 
             return trayToSubmit;
         }
@@ -118,7 +155,9 @@ namespace DontDillyDally.Data
         private TrayItem GetResolvedTrayItem()
         {
             if (CurrentTrayItem == null)
+            {
                 return null;
+            }
 
             NetworkItemOwnership ownership = CurrentTrayItem.NetworkOwnership;
             if (ownership != null && ownership.IsHeld)

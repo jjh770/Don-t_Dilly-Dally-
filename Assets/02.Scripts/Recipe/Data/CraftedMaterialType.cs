@@ -72,6 +72,22 @@ namespace DontDillyDally.Data
             CraftedMaterialType.OrganIntestine,
             CraftedMaterialType.Defibrillator,
             CraftedMaterialType.BloodPack,
+            CraftedMaterialType.SterilizedBoneSaw,
+            CraftedMaterialType.SterilizedPincetteCurved,
+            CraftedMaterialType.SterilizedPincetteStraight,
+            CraftedMaterialType.SterilizedScalpelGray,
+            CraftedMaterialType.SterilizedScalpelGreen,
+            CraftedMaterialType.SterilizedScissorsClamp,
+            CraftedMaterialType.SterilizedScissorsLarge,
+            CraftedMaterialType.SterilizedScissorsSmall,
+            CraftedMaterialType.AnestheticSyringe,
+            CraftedMaterialType.FilledPotionCyan,
+            CraftedMaterialType.FilledPotionMagenta,
+            CraftedMaterialType.FilledPotionYellow,
+            CraftedMaterialType.MixedPotionBlack,
+            CraftedMaterialType.MixedPotionBlue,
+            CraftedMaterialType.MixedPotionGreen,
+            CraftedMaterialType.MixedPotionRed,
         };
 
         public static bool IsBasicMaterial(this CraftedMaterialType type)
