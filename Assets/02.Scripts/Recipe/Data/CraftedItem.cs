@@ -9,9 +9,8 @@ namespace DontDillyDally.Data
     public class CraftedItem
     {
         public CraftedMaterialType MaterialType;
-        public ToolType UsedTool;
+        public ToolType UsedToolsMask;
         public ActionType UsedAction;
-        public ToolType SecondaryTool;
         public float PreparedTime;
         public int PreparedByPlayerId;
 
@@ -34,9 +33,8 @@ namespace DontDillyDally.Data
             return new CraftedItem
             {
                 MaterialType = materialType,
-                UsedTool = ToolType.None,
+                UsedToolsMask = ToolType.None,
                 UsedAction = ActionType.None,
-                SecondaryTool = ToolType.None,
                 PreparedTime = Time.time,
                 PreparedByPlayerId = playerId
             };

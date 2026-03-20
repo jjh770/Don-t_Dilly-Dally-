@@ -29,10 +29,10 @@ namespace DontDillyDally.Data
         FilledPotionYellow,          // 노랑 물약
 
         // 혼합 물약
-        MixedPotionBlue,             // 파랑 물약 (Cyan + Magenta)
-        MixedPotionRed,              // 빨강 물약 (Magenta + Yellow)
-        MixedPotionGreen,            // 초록 물약 (Cyan + Yellow)
-        MixedPotionBlack,            // 검정 물약 (Cyan + Magenta + Yellow)
+        MixedPotionBlue,             // 파랑 물약
+        MixedPotionRed,              // 빨강 물약
+        MixedPotionGreen,            // 초록 물약
+        MixedPotionBlack,            // 검정 물약
 
         // 기본 제출 재료
         Bandage,                     // 붕대

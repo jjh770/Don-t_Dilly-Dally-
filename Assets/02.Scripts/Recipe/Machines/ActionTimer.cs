@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DontDillyDally.Data
 {
-    public class WorldActionTimer : MonoBehaviour
+    public class ActionTimer : MonoBehaviour
     {
         [SerializeField] private Canvas _worldCanvas;
         [SerializeField] private Image _radialFillImage;
