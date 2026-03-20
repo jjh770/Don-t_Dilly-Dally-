@@ -6,23 +6,27 @@ namespace DontDillyDally.Data
     // 도구 멸균과 빈 트레이 멸균을 분리해서 처리합니다.
     public class SterilizationMachine : MonoBehaviour
     {
-        [Header("연동 대상")]
-        [Tooltip("도구 멸균에 사용할 조합 기계")]
-        [SerializeField] CraftingMachine _craftingMachine;
+        [SerializeField] private CraftingRuleDatabase _ruleDatabase;
 
-        public CraftingAttemptResult TrySterilizeTool(ToolType tool, int playerId)
+        public CraftingResult TrySterilizeTool(ToolType tool, int playerId)
         {
-            if (_craftingMachine == null)
+            if (_ruleDatabase == null)
             {
-                return new CraftingAttemptResult
-                {
-                    Success = false,
-                    FailureReason = CraftingFailureReason.MissingDatabase,
-                    ResultMaterial = CraftedMaterialType.Unknown
-                };
+                return CraftingResult.Failure(CraftingFailureReason.MissingDatabase);
             }
 
-            return _craftingMachine.TryCraft(tool, ActionType.Sterilize, playerId);
+            if (tool == ToolType.None)
+            {
+                return CraftingResult.Failure(CraftingFailureReason.InvalidInput);
+            }
+
+            CraftingRuleSO rule = _ruleDatabase.FindRule(tool, ActionType.Sterilize);
+            if (rule == null || rule.ResultMaterial == CraftedMaterialType.Unknown)
+            {
+                return CraftingResult.Failure(CraftingFailureReason.RuleNotFound);
+            }
+
+            return CraftingResult.Succeed(rule, tool, ActionType.Sterilize, playerId);
         }
 
         public bool CanSterilizeTray(SubmittedTray tray)
@@ -32,7 +36,7 @@ namespace DontDillyDally.Data
 
         public bool CanSterilizeTray(TrayItem trayItem)
         {
-            return trayItem != null && CanSterilizeTray(trayItem.TrayData);
+            return trayItem != null && !trayItem.IsSterilizedTray && CanSterilizeTray(trayItem.TrayData);
         }
 
         public bool TrySterilizeTray(SubmittedTray tray)
@@ -50,7 +54,11 @@ namespace DontDillyDally.Data
                 return false;
 
             trayItem.EnsureTrayData();
-            return TrySterilizeTray(trayItem.TrayData);
+            if (!TrySterilizeTray(trayItem.TrayData))
+                return false;
+
+            trayItem.SetTrayKindAndSync(TrayKind.Sterilized);
+            return true;
         }
     }
 }
