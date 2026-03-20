@@ -4,17 +4,18 @@ using System.Linq;
 
 namespace DontDillyDally.Data
 {
-    // 환자에게 제출하는 트레이 데이터입니다.
-    // 멸균 여부와 트레이 위 결과물 목록을 함께 관리합니다.
+    // 환자에게 제출되는 트레이 데이터입니다.
+    // 트레이 종류와 결과물 목록을 함께 관리합니다.
     [Serializable]
     public class SubmittedTray
     {
         public const int MaxContainedItems = 4;
 
-        public bool IsSterilized;
+        public TrayKind Kind = TrayKind.Normal;
         public List<CraftedItem> ContainedItems = new List<CraftedItem>();
 
         public int ContainedItemCount => ContainedItems?.Count ?? 0;
+        public bool IsSterilizedTray => Kind == TrayKind.Sterilized;
 
         public bool CanAddItem()
         {
@@ -24,7 +25,9 @@ namespace DontDillyDally.Data
         public bool TryAddItem(CraftedItem item)
         {
             if (item == null || !CanAddItem())
+            {
                 return false;
+            }
 
             ContainedItems.Add(item);
             return true;
@@ -33,7 +36,9 @@ namespace DontDillyDally.Data
         public CraftedItem TakeLastItem()
         {
             if (ContainedItems == null || ContainedItems.Count == 0)
+            {
                 return null;
+            }
 
             int lastIndex = ContainedItems.Count - 1;
             CraftedItem item = ContainedItems[lastIndex];
@@ -44,7 +49,9 @@ namespace DontDillyDally.Data
         public bool RemoveItem(CraftedItem item)
         {
             if (ContainedItems == null || item == null)
+            {
                 return false;
+            }
 
             return ContainedItems.Remove(item);
         }
@@ -54,14 +61,19 @@ namespace DontDillyDally.Data
             ContainedItems?.Clear();
         }
 
+        public void SetTrayKind(TrayKind trayKind)
+        {
+            Kind = trayKind;
+        }
+
         public void MarkSterilized()
         {
-            IsSterilized = true;
+            Kind = TrayKind.Sterilized;
         }
 
         public void MarkContaminated()
         {
-            IsSterilized = false;
+            Kind = TrayKind.Normal;
         }
 
         public bool HasAnyItems()
@@ -80,7 +92,7 @@ namespace DontDillyDally.Data
         {
             return new SubmittedTray
             {
-                IsSterilized = IsSterilized,
+                Kind = Kind,
                 ContainedItems = ContainedItems != null
                     ? new List<CraftedItem>(ContainedItems)
                     : new List<CraftedItem>()

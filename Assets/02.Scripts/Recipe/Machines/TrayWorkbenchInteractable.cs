@@ -15,20 +15,28 @@ namespace DontDillyDally.Data
         private void Awake()
         {
             if (_trayWorkbench == null)
+            {
                 _trayWorkbench = GetComponent<TrayWorkbench>();
+            }
 
             if (_traySlotPoint == null)
+            {
                 _traySlotPoint = transform;
+            }
         }
 
         public void Interact(Transform interactor)
         {
             if (_trayWorkbench == null || interactor == null)
+            {
                 return;
+            }
 
             PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
             if (interactionAbility == null)
+            {
                 return;
+            }
 
             ItemObject heldItem = interactionAbility.CurrentHeldItem;
             if (heldItem == null)
@@ -44,7 +52,9 @@ namespace DontDillyDally.Data
             }
 
             if (!_trayWorkbench.HasTray)
+            {
                 return;
+            }
 
             if (heldItem is BasicMaterialItem basicMaterialItem)
             {
@@ -90,24 +100,40 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void TryPlaceBasicMaterial(
-            PlayerInteractionAbility interactionAbility,
-            BasicMaterialItem basicMaterialItem)
+        private void TryPlaceBasicMaterial(PlayerInteractionAbility interactionAbility, BasicMaterialItem basicMaterialItem)
         {
+            TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
+            if (trayItem == null || trayItem.Slots == null)
+            {
+                return;
+            }
+
+            int availableSlotIndex = trayItem.Slots.GetFirstAvailableSlotIndex();
+            if (availableSlotIndex < 0)
+            {
+                return;
+            }
+
             int playerId = PhotonNetwork.LocalPlayer != null
                 ? PhotonNetwork.LocalPlayer.ActorNumber
                 : 0;
 
-            bool placed = _trayWorkbench.TryPlaceBasicMaterialOnTray(
-                basicMaterialItem.MaterialType,
-                playerId);
-
+            bool placed = _trayWorkbench.TryPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType, playerId);
             if (!placed)
             {
                 return;
             }
 
-            interactionAbility.TryConsumeHeldItem(basicMaterialItem);
+            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem, returnOwnershipToMaster: false))
+            {
+                _trayWorkbench.TakeLastItemFromTray();
+                return;
+            }
+
+            if (!trayItem.Slots.TryStoreItem(basicMaterialItem, availableSlotIndex))
+            {
+                _trayWorkbench.TakeLastItemFromTray();
+            }
         }
 
         private void TryTakeTray(PlayerInteractionAbility interactionAbility)
