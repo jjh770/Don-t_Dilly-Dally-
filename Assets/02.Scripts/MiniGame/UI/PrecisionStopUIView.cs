@@ -17,8 +17,11 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private Color _hitColor = Color.green;
         [SerializeField] private Color _missColor = Color.red;
 
-        [Header("결과 피드백")]
+        [Header("라운드 중간 피드백")]
         [SerializeField] private TextMeshProUGUI _feedbackText;
+
+        [Header("공통 결과 연출")]
+        [SerializeField] private MiniGameResultEffect _resultEffect;
 
         [Header("라운드 표시")]
         [SerializeField] private TextMeshProUGUI _roundText;
@@ -146,10 +149,12 @@ namespace DontDillyDally.MiniGame
 
         public void ShowResult(bool isSuccess)
         {
-            if (_feedbackText == null) return;
+            if (_resultEffect == null) return;
 
-            _feedbackText.text = isSuccess ? "SUCCESS!" : "FAIL";
-            _feedbackText.color = isSuccess ? _hitColor : _missColor;
+            if (isSuccess)
+                _resultEffect.PlaySuccess();
+            else
+                _resultEffect.PlayFail();
         }
     }
 }

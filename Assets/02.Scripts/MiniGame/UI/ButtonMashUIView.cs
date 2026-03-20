@@ -1,4 +1,3 @@
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,10 +17,8 @@ namespace DontDillyDally.MiniGame
         [Tooltip("Image Type을 Filled, Fill Method를 Radial 360으로 설정하세요")]
         [SerializeField] private Image _radialTimer;
 
-        [Header("결과 피드백")]
-        [SerializeField] private TextMeshProUGUI _resultText;
-        [SerializeField] private Color _successTextColor = new Color(0.2f, 1f, 0.4f);
-        [SerializeField] private Color _failTextColor = new Color(1f, 0.3f, 0.3f);
+        [Header("공통 결과 연출")]
+        [SerializeField] private MiniGameResultEffect _resultEffect;
 
         private ButtonMashMiniGame _game;
 
@@ -40,9 +37,9 @@ namespace DontDillyDally.MiniGame
                 _radialTimer.fillAmount = 1f;
             }
 
-            if (_resultText != null)
+            if (_resultEffect != null)
             {
-                _resultText.text = "";
+                _resultEffect.Reset();
             }
         }
 
@@ -71,10 +68,12 @@ namespace DontDillyDally.MiniGame
 
         public void ShowResult(bool isSuccess)
         {
-            if (_resultText == null) return;
+            if (_resultEffect == null) return;
 
-            _resultText.text = isSuccess ? "SUCCESS!" : "FAIL";
-            _resultText.color = isSuccess ? _successTextColor : _failTextColor;
+            if (isSuccess)
+                _resultEffect.PlaySuccess();
+            else
+                _resultEffect.PlayFail();
         }
 
         // 0~1 progress를 빨강 → 주황 → 연두 그라디언트로 변환.
