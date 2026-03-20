@@ -112,12 +112,6 @@ namespace DontDillyDally.Data
             return TrayData.TakeLastItem();
         }
 
-        public void ClearItems()
-        {
-            EnsureTrayData();
-            TrayData.ClearItems();
-        }
-
         public SubmittedTray GetTraySnapshot()
         {
             EnsureTrayData();

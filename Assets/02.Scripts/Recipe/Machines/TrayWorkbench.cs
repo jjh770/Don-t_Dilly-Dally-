@@ -143,18 +143,6 @@ namespace DontDillyDally.Data
             return trayItem.TakeLastItem();
         }
 
-        public void ClearTray()
-        {
-            TrayItem trayItem = GetResolvedTrayItem();
-            if (trayItem == null)
-            {
-                return;
-            }
-
-            trayItem.ClearItems();
-            trayItem.SetTrayKindAndSync(TrayKind.Normal);
-        }
-
         public void LoadTray(SubmittedTray tray)
         {
             TrayItem trayItem = GetResolvedTrayItem();

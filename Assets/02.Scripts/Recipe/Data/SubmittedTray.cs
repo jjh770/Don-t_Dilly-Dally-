@@ -46,21 +46,6 @@ namespace DontDillyDally.Data
             return item;
         }
 
-        public bool RemoveItem(CraftedItem item)
-        {
-            if (ContainedItems == null || item == null)
-            {
-                return false;
-            }
-
-            return ContainedItems.Remove(item);
-        }
-
-        public void ClearItems()
-        {
-            ContainedItems?.Clear();
-        }
-
         public void SetTrayKind(TrayKind trayKind)
         {
             Kind = trayKind;

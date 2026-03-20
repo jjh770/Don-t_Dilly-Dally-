@@ -11,18 +11,14 @@ namespace DontDillyDally.Data
         [SerializeField] private Transform[] _itemSlotPoints = new Transform[MaxItemSlots];
 
         private ItemObject[] _storedSlotItems;
-        private Vector3[] _defaultSlotLocalPositions;
 
         private void Awake()
         {
-            EnsureStoredSlotItems();
-            CacheDefaultSlotLocalPositions();
+            _storedSlotItems = new ItemObject[MaxItemSlots];
         }
 
         public int GetFirstAvailableSlotIndex()
         {
-            EnsureStoredSlotItems();
-
             for (int i = 0; i < _storedSlotItems.Length; i++)
             {
                 if (_storedSlotItems[i] == null)
@@ -34,22 +30,8 @@ namespace DontDillyDally.Data
             return -1;
         }
 
-        public Transform GetSlotTransform(int slotIndex)
-        {
-            if (_itemSlotPoints != null &&
-                slotIndex >= 0 &&
-                slotIndex < _itemSlotPoints.Length &&
-                _itemSlotPoints[slotIndex] != null)
-            {
-                return _itemSlotPoints[slotIndex];
-            }
-
-            return transform;
-        }
-
         public bool TryStoreItem(ItemObject itemObject, int slotIndex)
         {
-            EnsureStoredSlotItems();
             if (itemObject == null)
             {
                 return false;
@@ -66,72 +48,26 @@ namespace DontDillyDally.Data
             }
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            ResetSlotPosition(slotIndex);
             PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            DisableItemInteraction(itemObject);
             _storedSlotItems[slotIndex] = itemObject;
             return true;
         }
 
-        public void ClearStoredItems()
+        private Transform GetSlotTransform(int slotIndex)
         {
-            EnsureStoredSlotItems();
-
-            for (int i = 0; i < _storedSlotItems.Length; i++)
+            if (_itemSlotPoints != null &&
+                slotIndex >= 0 &&
+                slotIndex < _itemSlotPoints.Length &&
+                _itemSlotPoints[slotIndex] != null)
             {
-                ItemObject storedItem = _storedSlotItems[i];
-                if (storedItem == null)
-                {
-                    continue;
-                }
-
-                if (PhotonNetwork.InRoom)
-                {
-                    PhotonNetwork.Destroy(storedItem.gameObject);
-                }
-                else
-                {
-                    Destroy(storedItem.gameObject);
-                }
-
-                _storedSlotItems[i] = null;
-                ResetSlotPosition(i);
-            }
-        }
-
-        private void EnsureStoredSlotItems()
-        {
-            if (_storedSlotItems == null || _storedSlotItems.Length != MaxItemSlots)
-            {
-                _storedSlotItems = new ItemObject[MaxItemSlots];
-            }
-        }
-
-        private void CacheDefaultSlotLocalPositions()
-        {
-            _defaultSlotLocalPositions = new Vector3[MaxItemSlots];
-
-            for (int i = 0; i < MaxItemSlots; i++)
-            {
-                Transform slotTransform = GetSlotTransform(i);
-                _defaultSlotLocalPositions[i] = slotTransform.localPosition;
-            }
-        }
-
-        private void ResetSlotPosition(int slotIndex)
-        {
-            if (_defaultSlotLocalPositions == null ||
-                slotIndex < 0 ||
-                slotIndex >= _defaultSlotLocalPositions.Length)
-            {
-                return;
+                return _itemSlotPoints[slotIndex];
             }
 
-            Transform slotTransform = GetSlotTransform(slotIndex);
-            slotTransform.localPosition = _defaultSlotLocalPositions[slotIndex];
+            return transform;
         }
 
-        private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)
+        private static void DisableItemInteraction(ItemObject itemObject)
         {
             if (itemObject == null)
             {
@@ -141,7 +77,7 @@ namespace DontDillyDally.Data
             Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
             foreach (Collider col in colliders)
             {
-                col.enabled = isEnabled;
+                col.enabled = false;
             }
         }
 
