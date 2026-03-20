@@ -49,6 +49,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private IInteractable _pendingHoldInteractable;
     private ItemObject _pendingHeldItem;
     private NetworkItemOwnership _pendingOwnership;
+    private bool _isExternalInteractionLocked;
 
     private void Awake()
     {
@@ -63,9 +64,17 @@ public class PlayerInteractionAbility : MonoBehaviour
     private void Update()
     {
         if (_playerController?.PhotonView != null && !_playerController.PhotonView.IsMine)
+        {
             return;
+        }
 
         TryCompletePendingHold();
+
+        if (_isExternalInteractionLocked)
+        {
+            return;
+        }
+
         FindNearestInteractable();
         HandleInteractInput();
         HandlePushableMovement();
@@ -81,19 +90,26 @@ public class PlayerInteractionAbility : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             Collider col = _detectionColliders[i];
-            if (col.TryGetComponent(out IInteractable interactable) && !interactable.IsInteracting)
+            IInteractable interactable = TryResolvePriorityInteractable(col);
+            if (interactable != null && !interactable.IsInteracting)
             {
                 // 높이 체크
                 float detectionCenterY = transform.position.y + _detectionHeightOffset;
                 float heightDiff = Mathf.Abs(col.transform.position.y - detectionCenterY);
-                if (heightDiff > _detectionHeight) continue;
+                if (heightDiff > _detectionHeight)
+                {
+                    continue;
+                }
 
                 // 시야각 체크
                 Vector3 directionToItem = col.transform.position - transform.position;
                 directionToItem.y = 0;
                 float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
 
-                if (dot < _detectionAngleCos) continue;
+                if (dot < _detectionAngleCos)
+                {
+                    continue;
+                }
 
                 float sqrDistance = (col.transform.position - transform.position).sqrMagnitude;
                 if (sqrDistance < nearestSqrDistance)
@@ -103,6 +119,28 @@ public class PlayerInteractionAbility : MonoBehaviour
                 }
             }
         }
+    }
+
+    private IInteractable TryResolvePriorityInteractable(Collider col)
+    {
+        if (col == null)
+        {
+            return null;
+        }
+
+        if (_currentHeldItem != null &&
+            col.TryGetComponent(out SyringeFillTarget syringeFillTarget) &&
+            syringeFillTarget.CanInteractWith(_currentHeldItem))
+        {
+            return syringeFillTarget;
+        }
+
+        if (col.TryGetComponent(out IInteractable interactable))
+        {
+            return interactable;
+        }
+
+        return null;
     }
 
     private void HandleInteractInput()
@@ -339,15 +377,49 @@ public class PlayerInteractionAbility : MonoBehaviour
     public bool TryStartHoldFromExternal(IInteractable interactable)
     {
         if (interactable == null)
+        {
             return false;
+        }
 
         if (_currentInteractable != null || _currentHeldItem != null)
+        {
             return false;
+        }
 
         if (interactable is not IHoldable)
+        {
             return false;
+        }
 
         return TryStartHold(interactable);
+    }
+
+    public bool TryBeginExternalInteractionLock(ItemObject expectedHeldItem)
+    {
+        if (_isExternalInteractionLocked)
+        {
+            return false;
+        }
+
+        if (_currentHeldItem == null || _currentHeldItem != expectedHeldItem)
+        {
+            return false;
+        }
+
+        if (_currentInteractable is not IHoldable)
+        {
+            return false;
+        }
+
+        _isExternalInteractionLocked = true;
+        _playerMovement.SetMovementLocked(true);
+        return true;
+    }
+
+    public void EndExternalInteractionLock()
+    {
+        _isExternalInteractionLocked = false;
+        _playerMovement.SetMovementLocked(false);
     }
 
     private void HandlePushableMovement()

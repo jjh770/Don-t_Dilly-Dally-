@@ -11,6 +11,7 @@ public class PlayerMovementAbility : PlayerAbility
     private float _currentSpeed;
     private float _moveSpeedMultiplier = 1f;
     private float _rotationSpeedMultiplier = 1f;
+    private bool _isMovementLocked;
     private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
 
@@ -30,8 +31,17 @@ public class PlayerMovementAbility : PlayerAbility
 
     private void Update()
     {
+        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
+        {
+            return;
+        }
 
-        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine) return;
+        if (_isMovementLocked)
+        {
+            _moveDirection = Vector3.zero;
+            UpdateAnimation();
+            return;
+        }
 
         HandleInput();
         HandleRotation();
@@ -40,6 +50,16 @@ public class PlayerMovementAbility : PlayerAbility
 
     private void FixedUpdate()
     {
+        if (_isMovementLocked)
+        {
+            _currentSpeed = 0f;
+            Vector3 velocity = _rigidbody.linearVelocity;
+            velocity.x = 0f;
+            velocity.z = 0f;
+            _rigidbody.linearVelocity = velocity;
+            return;
+        }
+
         HandleMovement();
     }
 
@@ -74,6 +94,17 @@ public class PlayerMovementAbility : PlayerAbility
     {
         _moveSpeedMultiplier = moveSpeedMultiplier;
         _rotationSpeedMultiplier = rotationSpeedMultiplier;
+    }
+
+    public void SetMovementLocked(bool isLocked)
+    {
+        _isMovementLocked = isLocked;
+
+        if (_isMovementLocked)
+        {
+            _moveDirection = Vector3.zero;
+            _currentSpeed = 0f;
+        }
     }
 
     private void UpdateAnimation()

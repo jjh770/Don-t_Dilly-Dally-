@@ -270,9 +270,10 @@ namespace DontDillyDally.Data
 
         private void SpawnMixTool(SceneItemSpawnEntry entry, Transform spawnPoint)
         {
+            MixToolSource prefab = entry.SourcePrefabOverride != null ? entry.SourcePrefabOverride : MixToolPrefab;
             Transform parent = SpawnedItemParent != null ? SpawnedItemParent : null;
             MixToolSource spawnedToolSource = Instantiate(
-                MixToolPrefab,
+                prefab,
                 spawnPoint.position,
                 spawnPoint.rotation,
                 parent);
