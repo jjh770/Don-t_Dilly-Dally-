@@ -1,6 +1,4 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -71,10 +69,22 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         return _playerInformation.MyHospitals;
     }
 
+    public bool CanAddHospital(string RoomCode)
+    {
+        return _playerInformation.CanAdd(RoomCode);
+    }
+
     public override void OnJoinedRoom()
     {
-        _playerInformation.AddHospital(new MyHospital(PhotonServerManager.Instance.RoomCode, DateTime.Now));
-        SaveData();
+        try
+        {
+            _playerInformation.TryAddHospital(new MyHospital(PhotonServerManager.Instance.RoomCode, DateTime.Now));
+            SaveData();
+        } 
+        catch (Exception ex)
+        {
+            Debug.LogWarning($"[PlayerDataManager] {ex}");
+        }
     }
 
     public override void OnLeftRoom()

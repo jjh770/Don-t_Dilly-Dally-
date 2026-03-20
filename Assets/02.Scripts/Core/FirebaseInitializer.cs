@@ -30,7 +30,7 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
 
             Database = FirebaseFirestore.DefaultInstance; // Firestore 모듈 가져오기.
 
-            Debug.Log("Firebase 초기화 성공");
+            Debug.Log("[FirebaseInitializer] Firebase 초기화 성공");
             OnFirebaseInitialized?.Invoke();
         }
         else

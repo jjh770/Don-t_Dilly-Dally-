@@ -1,12 +1,11 @@
 using System;
 using System.Linq;
-using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
-using WebSocketSharp;
+
 
 public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, IOnEventCallback
 {
@@ -64,28 +63,28 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public override void OnConnectedToMaster()
     {
-        Debug.Log("Connected to Master!");
+        Debug.Log("[PhotonServerManager] Connected to Master!");
 
         PhotonNetwork.JoinLobby();
     }
 
     public override void OnJoinedLobby()
     {
-        Debug.Log("Joined Lobby!");
+        Debug.Log("[PhotonServerManager] Joined Lobby!");
     }
 
     public override void OnJoinedRoom()
     {
         _roomCode = null;
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
-        Debug.Log($"{PhotonNetwork.LocalPlayer.NickName} Joined room: {PhotonNetwork.CurrentRoom.Name}");
-        Debug.Log($"Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
+        Debug.Log($"[PhotonServerManager] {PhotonNetwork.LocalPlayer.NickName} Joined room: {PhotonNetwork.CurrentRoom.Name}");
+        Debug.Log($"[PhotonServerManager] Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
 
         PlayerProperty.EnsureProperties();
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        Debug.LogError($"Failed to join room: {message}");
+        Debug.LogError($"[PhotonServerManager] Failed to join room: {message}");
 
         switch (returnCode)
         {
@@ -131,6 +130,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public void OpenRoom(string roomName)
     {
+        if (!PlayerDataManager.Instance.CanAddHospital(roomName))
+        {
+            string errorMessege = "병원을 더이상 추가할 수 없습니다.";
+            OnFailedToJoinRoom?.Invoke(errorMessege);
+            Debug.Log("[PhotonServerManager] 병원을 더이상 추가할 수 없습니다.");
+            return;
+        }
         PhotonNetwork.CreateRoom(roomName, GetRoomOptions());
     }
 
@@ -160,6 +166,15 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         if (await RoomDataManager.Instance.IsRoomDataExist(roomCode))
         {
             _roomCode = roomCode;
+
+            if (!PlayerDataManager.Instance.CanAddHospital(roomCode))
+            {
+                string errorMessage = "병원을 더이상 추가할 수 없습니다.";
+                OnFailedToJoinRoom?.Invoke(errorMessage);
+                Debug.Log("[PhotonServerManager] 병원을 더이상 추가할 수 없습니다.");
+                return;
+            }
+
             PhotonNetwork.JoinOrCreateRoom(_roomCode, GetRoomOptions(), TypedLobby.Default);
         }
         else

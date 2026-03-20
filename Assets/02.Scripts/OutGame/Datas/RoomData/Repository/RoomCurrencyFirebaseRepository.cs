@@ -19,7 +19,7 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
             var result = await _db.Collection(COLLECTION_NAME).Document(roomCode).GetSnapshotAsync();
 
             RoomWalletDTO dto = result.ConvertTo<RoomWalletDTO >();
-            Debug.LogFormat("불러오기 성공");
+            Debug.LogFormat("[RoomDataRepository] 불러오기 성공");
             if (dto == null)
             {
                 Debug.LogWarning("[RoomDataRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
@@ -43,15 +43,11 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
             var result = await _db.Collection(COLLECTION_NAME).Document(roomCode).GetSnapshotAsync();
 
             RoomWalletDTO  dto = result.ConvertTo<RoomWalletDTO >();
-            Debug.LogFormat("불러오기 성공");
             if (dto == null)
             {
-                Debug.LogWarning("[RoomDataRepository] 존재하지 않는 방입니다.");
                 return false;
             }
-            {
-                return true;
-            }
+            return true;
         }
         catch (System.Exception e)
         {

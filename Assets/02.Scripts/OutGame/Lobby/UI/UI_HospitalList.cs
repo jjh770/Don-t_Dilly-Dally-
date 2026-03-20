@@ -23,6 +23,7 @@ public class UI_HospitalList : MonoBehaviour
         _canvasGroup = GetComponent<CanvasGroup>();
 
         _canvasGroup.alpha = 0;
+        _canvasGroup.blocksRaycasts = false;
         _isOpened = false;
     }
 

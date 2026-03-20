@@ -11,12 +11,13 @@ public class DataBootstrapper : MonoBehaviour
         await WaitForFirebaseAsync();
 
         // Repository 생성
-        Debug.Log("Data 조회 가능");
         IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository();
         IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository();
 
         _roomDataManager.Initialized(roomDataRepository);
         _playerDataManager.Initialized(playerRepository);
+
+        Debug.Log("[DataBootstrapper] Data 조회 가능");
     }
 
     private async UniTask WaitForFirebaseAsync()
