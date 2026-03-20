@@ -13,9 +13,43 @@ MonoBehaviour:
   m_Name: DiseaseSO
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.DiseaseSO
   data:
-    DiseaseId: 
-    DiseaseName: 
-    Description: 
-    Recipes: []
-    FailHealthPenalty: 0
+    DiseaseId: sample_appendicitis
+    DiseaseName: "\uAE09\uC131 \uCDA9\uC218\uC5FC"
+    Description: "\uD658\uC790\uB2F9 4\uB2E8\uACC4 \uB808\uC2DC\uD53C \uD750\uB984\uC744
+      \uD655\uC778\uD558\uAE30 \uC704\uD55C \uC0D8\uD50C \uC9C8\uBCD1\uC785\uB2C8\uB2E4."
+    Recipes:
+    - RecipeId: appendicitis_step_01
+      DisplayName: "\uB9C8\uCDE8 \uD22C\uC5EC"
+      RequiredMaterials: 0a000000
+      Order: 0
+      Source: 0
+      RequiresSterilizedTray: 1
+    - RecipeId: appendicitis_step_02
+      DisplayName: "\uC808\uAC1C \uC900\uBE44"
+      RequiredMaterials: 020000000500000017000000
+      Order: 1
+      Source: 0
+      RequiresSterilizedTray: 1
+    - RecipeId: appendicitis_step_03
+      DisplayName: "\uC5FC\uC99D \uBD80\uC704 \uC808\uC81C"
+      RequiredMaterials: 060000000400000018000000
+      Order: 2
+      Source: 0
+      RequiresSterilizedTray: 1
+    - RecipeId: appendicitis_step_04
+      DisplayName: "\uBD09\uD569 \uBC0F \uB9C8\uBB34\uB9AC"
+      RequiredMaterials: 130000001400000011000000
+      Order: 3
+      Source: 0
+      RequiresSterilizedTray: 1
+    FailHealthPenalty: 20
+    PatientName: 
+    Backstory: 
+    PatientQuote: 
+    Category: 
+    Difficulty: 1
+    TimeLimitSec: 0
+    RecommendedPlayers: 2
+    SuccessLine: 
+    FailLine: 
     Source: 0

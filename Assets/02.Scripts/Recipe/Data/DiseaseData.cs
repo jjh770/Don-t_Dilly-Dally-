@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -98,11 +97,6 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            List<RecipeData> orderedRecipes = Recipes.OrderBy(recipe => recipe.Order).ToList();
-
-            if (!orderedRecipes[0].ValidateAsFirstRecipe())
-                return false;
-
             if (!HasUniqueRecipeIds())
             {
                 Debug.LogWarning($"[DiseaseData] '{DiseaseName}'에 중복된 레시피 ID가 있습니다.");
@@ -115,9 +109,16 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            foreach (RecipeData recipe in orderedRecipes.Skip(1))
+            // 첫 번째 레시피 찾기 (Order가 가장 낮은 것)
+            RecipeData firstRecipe = FindRecipeByMinOrder();
+            if (firstRecipe == null || !firstRecipe.ValidateAsFirstRecipe())
+                return false;
+
+            // 나머지 레시피 검증
+            int firstOrder = firstRecipe.Order;
+            for (int i = 0; i < Recipes.Count; i++)
             {
-                if (!recipe.ValidateAsTreatmentRecipe())
+                if (Recipes[i].Order != firstOrder && !Recipes[i].ValidateAsTreatmentRecipe())
                     return false;
             }
 
@@ -129,15 +130,44 @@ namespace DontDillyDally.Data
             if (Recipes == null || Recipes.Count == 0 || completedRecipeIds == null)
                 return 0f;
 
-            int completed = Recipes.Count(recipe => completedRecipeIds.Contains(recipe.RecipeId));
-            return (float)completed / Recipes.Count;
+            int completedCount = 0;
+            for (int i = 0; i < Recipes.Count; i++)
+            {
+                for (int j = 0; j < completedRecipeIds.Count; j++)
+                {
+                    if (Recipes[i].RecipeId == completedRecipeIds[j])
+                    {
+                        completedCount++;
+                        break;
+                    }
+                }
+            }
+
+            return (float)completedCount / Recipes.Count;
         }
 
         public bool IsAllRecipesCompleted(List<string> completedRecipeIds)
         {
-            return Recipes != null &&
-                   completedRecipeIds != null &&
-                   Recipes.All(recipe => completedRecipeIds.Contains(recipe.RecipeId));
+            if (Recipes == null || completedRecipeIds == null)
+                return false;
+
+            for (int i = 0; i < Recipes.Count; i++)
+            {
+                bool found = false;
+                for (int j = 0; j < completedRecipeIds.Count; j++)
+                {
+                    if (Recipes[i].RecipeId == completedRecipeIds[j])
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found)
+                    return false;
+            }
+
+            return true;
         }
 
         public bool ShouldGrantReward(List<string> completedRecipeIds)
@@ -147,28 +177,75 @@ namespace DontDillyDally.Data
 
         public RecipeData GetNextRecipe(List<string> completedRecipeIds)
         {
-            List<string> completed = completedRecipeIds ?? new List<string>();
+            RecipeData nextRecipe = null;
+            int minOrder = int.MaxValue;
 
-            return Recipes?
-                .OrderBy(recipe => recipe.Order)
-                .FirstOrDefault(recipe => !completed.Contains(recipe.RecipeId));
+            for (int i = 0; i < Recipes.Count; i++)
+            {
+                RecipeData recipe = Recipes[i];
+                if (recipe.Order >= minOrder)
+                    continue;
+
+                bool isCompleted = false;
+                if (completedRecipeIds != null)
+                {
+                    for (int j = 0; j < completedRecipeIds.Count; j++)
+                    {
+                        if (recipe.RecipeId == completedRecipeIds[j])
+                        {
+                            isCompleted = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isCompleted)
+                {
+                    minOrder = recipe.Order;
+                    nextRecipe = recipe;
+                }
+            }
+
+            return nextRecipe;
+        }
+
+        private RecipeData FindRecipeByMinOrder()
+        {
+            if (Recipes == null || Recipes.Count == 0)
+                return null;
+
+            RecipeData minRecipe = Recipes[0];
+            for (int i = 1; i < Recipes.Count; i++)
+            {
+                if (Recipes[i].Order < minRecipe.Order)
+                    minRecipe = Recipes[i];
+            }
+
+            return minRecipe;
         }
 
         private bool HasUniqueRecipeIds()
         {
-            return Recipes
-                .Where(recipe => !string.IsNullOrWhiteSpace(recipe.RecipeId))
-                .Select(recipe => recipe.RecipeId)
-                .Distinct()
-                .Count() == Recipes.Count;
+            var idSet = new HashSet<string>(Recipes.Count);
+            for (int i = 0; i < Recipes.Count; i++)
+            {
+                if (!string.IsNullOrWhiteSpace(Recipes[i].RecipeId) && !idSet.Add(Recipes[i].RecipeId))
+                    return false;
+            }
+
+            return idSet.Count == Recipes.Count;
         }
 
         private bool HasUniqueRecipeOrder()
         {
-            return Recipes
-                .Select(recipe => recipe.Order)
-                .Distinct()
-                .Count() == Recipes.Count;
+            var orderSet = new HashSet<int>(Recipes.Count);
+            for (int i = 0; i < Recipes.Count; i++)
+            {
+                if (!orderSet.Add(Recipes[i].Order))
+                    return false;
+            }
+
+            return true;
         }
     }
 }
