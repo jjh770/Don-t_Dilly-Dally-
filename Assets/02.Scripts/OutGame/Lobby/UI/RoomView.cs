@@ -1,3 +1,4 @@
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +15,19 @@ public class RoomView : MonoBehaviour
     [SerializeField] private TMP_InputField _nickNameInputField;
     [SerializeField] private TextMeshProUGUI _errorMessageText;
 
+    [SerializeField] private float _errorFadeDuration = 0.25f;
+
+    [SerializeField] private float _errorVisibleDuration = 1.5f;
+
+
+    private Tween _errorTween;
+
     private RoomPresenter _presenter;
+
+    private void Start()
+    {
+        SetErrorAlpha(0f);
+    }
 
     private void OnEnable ()
     {
@@ -24,6 +37,7 @@ public class RoomView : MonoBehaviour
         _listOpenButton.onClick.AddListener(_myHospitalList.OpenToggle);
 
         _myHospitalList.OnSelected += OnMyHospitalSelected;
+        _myHospitalList.OnDeleteOption += OnMyHospitalDeleted;
     }
 
     private void OnMyHospitalSelected(string name)
@@ -51,10 +65,32 @@ public class RoomView : MonoBehaviour
         _presenter.CreateRoom();
     }
 
+    public void OnMyHospitalDeleted(string code)
+    {
+        _presenter.OnMyHospitalDeleted(code);
+    }
+
     public void ShowErrorMessage(string message)
     {
-        if (_errorMessageText != null)
-            _errorMessageText.text = message;
+        if (_errorMessageText == null) return;
+
+        _errorTween?.Kill();
+        _errorMessageText.text = message;
+        SetErrorAlpha(0f);
+
+        _errorTween = DOTween.Sequence()
+            .Append(_errorMessageText.DOFade(1f, _errorFadeDuration))
+            .AppendInterval(_errorVisibleDuration)
+            .Append(_errorMessageText.DOFade(0f, _errorFadeDuration));
+    }
+
+    private void SetErrorAlpha(float alpha)
+    {
+        if (_errorMessageText == null) return;
+
+        Color color = _errorMessageText.color;
+        color.a = alpha;
+        _errorMessageText.color = color;
     }
 
     public void SetCodeInputField(string code)
@@ -73,6 +109,7 @@ public class RoomView : MonoBehaviour
         _listOpenButton.onClick.RemoveListener(_myHospitalList.OpenToggle);
         _nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
         _myHospitalList.OnSelected -= OnMyHospitalSelected;
+        _myHospitalList.OnDeleteOption -= OnMyHospitalDeleted;
 
         _presenter.Dispose(); 
     }

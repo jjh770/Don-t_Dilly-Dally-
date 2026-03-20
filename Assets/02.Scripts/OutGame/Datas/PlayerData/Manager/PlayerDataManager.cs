@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using UnityEditor.Rendering;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
@@ -69,9 +70,21 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         return _playerInformation.MyHospitals;
     }
 
-    public bool CanAddHospital(string RoomCode)
+    public bool CanAddHospital(string roomCode)
     {
-        return _playerInformation.CanAdd(RoomCode);
+        return _playerInformation.CanAdd(roomCode);
+    }
+
+    public void DeleteHospital(string roomCode)
+    {
+        try
+        {
+            _playerInformation.TryRemoveHospital(roomCode);
+        }
+        catch(Exception e) 
+        { 
+            Debug.Log(e);
+        }
     }
 
     public override void OnJoinedRoom()

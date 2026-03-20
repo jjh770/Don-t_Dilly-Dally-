@@ -32,7 +32,7 @@ public class PlayerInformation
 
     public bool CanAdd(string name)
     {
-        return _hospitals.Any(x => x.Name == name) && (_hospitals.Count <= _maxHospitals);
+        return _hospitals.Any(x => x.Name == name) || (_hospitals.Count < _maxHospitals);
     }
     public void SetName(string name)
     {
@@ -49,8 +49,15 @@ public class PlayerInformation
         _hospitals.Insert(0, hospital);
     }
 
-    public void RemoveHospital(MyHospital hospital)
+    public void TryRemoveHospital(string code)
     {
-        _hospitals.Remove(hospital);
+        foreach (MyHospital hospital in _hospitals)
+        {
+            if (hospital.Name != code) continue;
+            _hospitals.Remove(hospital);
+            return;
+        }
+
+        throw new Exception($"{code} : 병원이 존재하지 않습니다.");
     }
 }

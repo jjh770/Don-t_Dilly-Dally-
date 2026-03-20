@@ -132,8 +132,8 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         if (!PlayerDataManager.Instance.CanAddHospital(roomName))
         {
-            string errorMessege = "병원을 더이상 추가할 수 없습니다.";
-            OnFailedToJoinRoom?.Invoke(errorMessege);
+            string errorMessage = "병원을 더이상 추가할 수 없습니다.";
+            OnFailedToJoinRoom?.Invoke(errorMessage);
             Debug.Log("[PhotonServerManager] 병원을 더이상 추가할 수 없습니다.");
             return;
         }
@@ -179,6 +179,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         }
         else
         {
+            OnFailedToJoinRoom?.Invoke("존재하지 않는 방입니다.");
             Debug.Log("[PhotonServerManager] 존재하지 않는 방입니다.");
         }
     }

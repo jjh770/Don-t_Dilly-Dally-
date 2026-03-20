@@ -70,12 +70,19 @@ public class UI_HospitalList : MonoBehaviour
         OnSelected?.Invoke(item.Name);
     }
 
+    public void OnItemDeleted(UI_HospitalItem item)
+    {
+        RemoveItem(item);
+        OnDeleteOption?.Invoke(item.Name);    
+    }
+
     public void AddItem(string labels, string explain)
     {
         UI_HospitalItem item = (UI_HospitalItem)Instantiate(_listTemplate, this.transform);
         item.gameObject.name = $"Item_{labels}";
         item.gameObject.SetActive(true);
         item.OnSelected += OnItemClicked;
+        item.OnDeleted += OnItemDeleted;
         item.Init(labels, explain);
         _items.Add(item);
     }
@@ -91,6 +98,7 @@ public class UI_HospitalList : MonoBehaviour
         foreach (UI_HospitalItem item in _items)
         {
             item.OnSelected -= OnItemClicked;
+            item.OnDeleted -= OnItemDeleted;
             Destroy(item.gameObject);
         }
 

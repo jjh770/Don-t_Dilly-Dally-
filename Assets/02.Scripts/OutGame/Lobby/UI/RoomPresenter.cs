@@ -56,6 +56,11 @@ public class RoomPresenter
         _view.SetDropdown(codes, Dates);
     }
 
+    public void OnMyHospitalDeleted(string code)
+    {
+        PlayerDataManager.Instance.DeleteHospital(code);
+    }
+
     public void Dispose()
     {
         PhotonServerManager.Instance.OnFailedToJoinRoom -= OnFailedToJoinRoom;
