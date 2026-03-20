@@ -15,7 +15,7 @@ public class UI_CustomizingItem : MonoBehaviour
     [SerializeField] private Color _selectedColor = new Color(0.8f, 0.9f, 1f);
 
     public CustomizingItemSO ItemData => _itemData;
-    private CustomizingItemSO _itemData; // 연결된 아이템 데이터
+    private CustomizingItemSO _itemData;
     private Action _onClick;
 
     private void Awake()

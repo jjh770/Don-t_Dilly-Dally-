@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 [CreateAssetMenu(fileName = "CustomizingCatalog", menuName = "Customizing/Catalog")]
-public class CustomizingCatalogSO : ScriptableObject
+public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
 {
     [Header("SkinColor - 피부색 (Body + Ears)")]
     [SerializeField] private List<CustomizingItemSO> skinColorItems = new List<CustomizingItemSO>();
@@ -113,6 +113,20 @@ public class CustomizingCatalogSO : ScriptableObject
     public List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type)
     {
         return GetItemsByType(type).Where(item => !item.IsLocked).ToList();
+    }
+
+    // ICustomizingCatalog 구현
+    ICustomizingItemSpec ICustomizingCatalog.GetItemById(string itemId) => GetItemById(itemId);
+    ICustomizingItemSpec ICustomizingCatalog.GetDefaultItem(CustomizingType category) => GetDefaultItem(category);
+
+    IReadOnlyList<ICustomizingItemSpec> ICustomizingCatalog.GetItemsByCategory(CustomizingType category)
+    {
+        return GetItemsByType(category).Cast<ICustomizingItemSpec>().ToList();
+    }
+
+    IReadOnlyList<ICustomizingItemSpec> ICustomizingCatalog.GetUnlockedItemsByCategory(CustomizingType category)
+    {
+        return GetUnlockedItemsByType(category).Cast<ICustomizingItemSpec>().ToList();
     }
 
 #if UNITY_EDITOR

@@ -1,18 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-/// <summary>
-/// 파츠 프리팹의 SkinnedMeshRenderer 본을 부모(CustomizingPlayer)의 Skeleton에 재매핑하는 컴포넌트
-///
-/// 사용법:
-/// 1. 추출된 파츠 프리팹을 CustomizingPlayer 하위에 배치
-/// 2. 런타임에 자동으로 본이 재매핑됨
-/// 3. 또는 에디터에서 [Remap Bones] 버튼 클릭
-///
-/// 주의:
-/// - 본 이름이 정확히 일치해야 함
-/// - 부모 계층에 Skeleton(Armature) 오브젝트가 있어야 함
-/// </summary>
 public class SkinnedMeshBoneRemapper : MonoBehaviour
 {
     [Header("Settings")]
@@ -37,7 +25,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
     [SerializeField]
     private bool showDebugLogs = false;
 
-    // 캐시된 본 딕셔너리
     private Dictionary<string, Transform> boneCache;
 
     private void Awake()
@@ -48,9 +35,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 모든 하위 SkinnedMeshRenderer의 본을 재매핑
-    /// </summary>
     [ContextMenu("Remap Bones")]
     public void RemapBones()
     {
@@ -93,9 +77,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 부모 계층에서 Skeleton 루트 찾기
-    /// </summary>
     private Transform FindSkeletonRoot()
     {
         Transform current = transform.parent;
@@ -124,9 +105,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// 재귀적으로 자식에서 이름으로 찾기
-    /// </summary>
     private Transform FindChildRecursive(Transform parent, string name)
     {
         foreach (Transform child in parent)
@@ -141,9 +119,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Skeleton의 모든 본을 딕셔너리에 캐싱
-    /// </summary>
     private void BuildBoneCache(Transform root)
     {
         boneCache = new Dictionary<string, Transform>();
@@ -176,9 +151,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 단일 SkinnedMeshRenderer의 본 재매핑
-    /// </summary>
     private bool RemapRendererBones(SkinnedMeshRenderer renderer)
     {
         // BoneInfo 컴포넌트에서 원본 본 이름 가져오기
@@ -252,9 +224,6 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         return missingCount == 0;
     }
 
-    /// <summary>
-    /// 수동으로 특정 Skeleton Transform을 지정하여 재매핑
-    /// </summary>
     public void RemapBonesTo(Transform skeletonRoot)
     {
         if (skeletonRoot == null)
@@ -272,18 +241,12 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 수동으로 Skeleton과 BoneNameMapping을 지정하여 재매핑
-    /// </summary>
     public void RemapBonesTo(Transform skeletonRoot, BoneNameMapping mapping)
     {
         boneNameMapping = mapping;
         RemapBonesTo(skeletonRoot);
     }
 
-    /// <summary>
-    /// BoneNameMapping 설정 (런타임)
-    /// </summary>
     public void SetBoneNameMapping(BoneNameMapping mapping)
     {
         boneNameMapping = mapping;

@@ -39,14 +39,9 @@ public class UI_Customizing : MonoBehaviour
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f); // #729CF1
     [SerializeField] private Color _tabNormalColor = Color.white;
 
-    // 현재 선택된 카테고리
-    private CustomizingType _currentCategory = CustomizingType.SkinColor;
-
-    // 생성된 아이템 버튼들
-    private List<UI_CustomizingItem> _itemButtons = new List<UI_CustomizingItem>();
-
-    // 현재 카테고리의 아이템 목록
-    private List<CustomizingItemSO> _currentItems = new List<CustomizingItemSO>();
+    private CustomizingType _currentCategory = CustomizingType.SkinColor;           // 현재 선택된 카테고리
+    private List<UI_CustomizingItem> _itemButtons = new List<UI_CustomizingItem>(); // 생성된 아이템 버튼들
+    private List<CustomizingItemSO> _currentItems = new List<CustomizingItemSO>();  // 현재 카테고리의 아이템 목록
 
     private void Start()
     {
@@ -59,7 +54,6 @@ public class UI_Customizing : MonoBehaviour
             _manager.OnLoaded += RefreshUI;
         }
 
-        // 초기 카테고리 표시
         SelectCategory(_currentCategory);
     }
 
@@ -100,13 +94,9 @@ public class UI_Customizing : MonoBehaviour
     {
         _currentCategory = type;
 
-        // 탭 시각 상태 업데이트
         UpdateTabVisuals();
-
-        // 아이템 목록 갱신
         RefreshItemList();
 
-        // 스크롤 초기화
         if (_scrollRect != null)
             _scrollRect.verticalNormalizedPosition = 1f;
     }
@@ -119,7 +109,6 @@ public class UI_Customizing : MonoBehaviour
 
             if (tab.button != null)
             {
-                // 버튼 색상 변경
                 var image = tab.button.GetComponent<Image>();
                 if (image != null)
                 {
@@ -127,7 +116,6 @@ public class UI_Customizing : MonoBehaviour
                 }
             }
 
-            // 선택된 탭이면 인디케이터 이동
             if (isSelected && _tabSelectionIndicator != null && tab.button != null)
             {
                 MoveTabSelectionIndicator(tab.button.transform);
@@ -147,18 +135,14 @@ public class UI_Customizing : MonoBehaviour
 
     private void RefreshItemList()
     {
-        // 기존 버튼 제거
         ClearItemButtons();
 
         if (_manager == null) return;
 
-        // 현재 카테고리의 아이템 가져오기
         _currentItems = _manager.GetUnlockedItemsByType(_currentCategory);
 
-        // 현재 장착된 아이템
         var equippedItem = _manager.GetEquipped(_currentCategory);
 
-        // 아이템 버튼 생성
         foreach (var item in _currentItems)
         {
             var button = CreateItemButton(item);
@@ -197,7 +181,11 @@ public class UI_Customizing : MonoBehaviour
     {
         if (_manager == null) return;
 
-        _manager.SelectItem(item);
+        var result = _manager.ToggleItem(item);
+        if (result == EEquipResult.Locked)
+        {
+            Debug.Log($"[UI_Customizing] 아이템 잠김: {item.DisplayName}");
+        }
     }
     private void OnSaveClicked()
     {
@@ -212,19 +200,14 @@ public class UI_Customizing : MonoBehaviour
 
     private void OnCloseClicked()
     {
-        // 저장 후 닫기 또는 그냥 닫기
         gameObject.SetActive(false);
     }
 
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
     {
-        // 현재 카테고리와 같으면 선택 상태 갱신
-        if (type == _currentCategory)
-        {
-            UpdateItemSelections();
-        }
+        // 현재 탭의 아이템 목록에 변경된 아이템이 있으면 업데이트
+        UpdateItemSelections();
 
-        // 선택된 아이템 이름 표시
         if (_selectedItemNameText != null && item != null)
         {
             _selectedItemNameText.text = item.DisplayName;
