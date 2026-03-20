@@ -77,10 +77,14 @@ namespace DontDillyDally.Data
         public bool IsSatisfiedBy(SubmittedTray submittedTray)
         {
             if (submittedTray == null)
+            {
                 return false;
+            }
 
-            if (RequiresSterilizedTray && !submittedTray.IsSterilized)
+            if (RequiresSterilizedTray && !submittedTray.IsSterilizedTray)
+            {
                 return false;
+            }
 
             return IsMatch(submittedTray.GetContainedMaterialTypes());
         }
