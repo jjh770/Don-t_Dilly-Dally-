@@ -28,24 +28,31 @@ public class UI_Commentary : MonoBehaviour
         HideImmediate();
     }
 
-    private void OnEnable()
+    private void Start()
     {
-        if (CommentaryManager.Instance != null)
+        if (CommentaryOrchestrator.Instance != null)
         {
-            CommentaryManager.Instance.OnNarrationGenerated += ShowNarration;
+            CommentaryOrchestrator.Instance.OnNarrationGenerated += ShowNarration;
+            Debug.Log("[UI_Commentary] 구독 성공");
+        }
+        else
+        {
+            Debug.LogError("[UI_Commentary] CommentaryOrchestrator.Instance가 null입니다!");
         }
     }
 
-    private void OnDisable()
+    private void OnDestroy()
     {
-        if (CommentaryManager.Instance != null)
+        if (CommentaryOrchestrator.Instance != null)
         {
-            CommentaryManager.Instance.OnNarrationGenerated -= ShowNarration;
+            CommentaryOrchestrator.Instance.OnNarrationGenerated -= ShowNarration;
         }
     }
 
     public void ShowNarration(string text)
     {
+        Debug.Log($"[UI_Commentary] ShowNarration 호출됨: {text}");
+
         if (string.IsNullOrEmpty(text)) return;
 
         if (_displayCoroutine != null)
