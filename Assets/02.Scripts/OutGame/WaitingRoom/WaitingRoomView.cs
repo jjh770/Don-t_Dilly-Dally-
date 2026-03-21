@@ -13,7 +13,7 @@ public class WaitingRoomView : MonoBehaviour
 
     [SerializeField] private TextMeshProUGUI _roomCodeText;
     [SerializeField] private TextMeshProUGUI _readyButtonText;
-    [SerializeField] private TextMeshProUGUI _errorText;
+    [SerializeField] private TextMeshProUGUI _errorMessageText;
     [SerializeField] private string _readyText = "Ready";
     [SerializeField] private string _unreadyText = "Unready";
     [SerializeField] private float _errorFadeDuration = 0.25f;
@@ -84,25 +84,25 @@ public class WaitingRoomView : MonoBehaviour
 
     public void ShowErrorMessage(string message)
     {
-        if (_errorText == null) return;
+        if (_errorMessageText == null) return;
 
         _errorTween?.Kill();
-        _errorText.text = message;
+        _errorMessageText.text = message;
         SetErrorAlpha(0f);
 
         _errorTween = DOTween.Sequence()
-            .Append(_errorText.DOFade(1f, _errorFadeDuration))
+            .Append(_errorMessageText.DOFade(1f, _errorFadeDuration))
             .AppendInterval(_errorVisibleDuration)
-            .Append(_errorText.DOFade(0f, _errorFadeDuration));
+            .Append(_errorMessageText.DOFade(0f, _errorFadeDuration));
     }
 
     private void SetErrorAlpha(float alpha)
     {
-        if (_errorText == null) return;
+        if (_errorMessageText == null) return;
 
-        Color color = _errorText.color;
+        Color color = _errorMessageText.color;
         color.a = alpha;
-        _errorText.color = color;
+        _errorMessageText.color = color;
     }
 
     public void OnDisable()
