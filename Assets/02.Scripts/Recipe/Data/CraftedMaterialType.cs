@@ -81,6 +81,7 @@ namespace DontDillyDally.Data
             CraftedMaterialType.SterilizedScissorsLarge,
             CraftedMaterialType.SterilizedScissorsSmall,
             CraftedMaterialType.AnestheticSyringe,
+            CraftedMaterialType.SedativeSyringe,
             CraftedMaterialType.FilledPotionCyan,
             CraftedMaterialType.FilledPotionMagenta,
             CraftedMaterialType.FilledPotionYellow,

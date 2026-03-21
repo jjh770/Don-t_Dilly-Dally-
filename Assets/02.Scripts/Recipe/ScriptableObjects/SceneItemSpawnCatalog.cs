@@ -26,6 +26,9 @@ namespace DontDillyDally.Data
         [Tooltip("기본 재료 공급원일 때 사용할 CraftedMaterialType입니다.")]
         public CraftedMaterialType MaterialType = CraftedMaterialType.None;
 
+        [Tooltip("기본 공급원 프리팹 대신 사용할 전용 프리팹입니다. 비어 있으면 SceneItemSpawner의 기본 프리팹을 사용합니다.")]
+        public MixToolSource SourcePrefabOverride;
+
         public bool IsValid()
         {
             switch (Kind)

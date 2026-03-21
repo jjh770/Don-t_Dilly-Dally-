@@ -29,7 +29,7 @@ namespace DontDillyDally.Data
         [SerializeField] private Transform[] _slotPoints = new Transform[MaxSlots];
         [SerializeField] private Transform _resultPoint;
         [SerializeField] private GameObject _resultPrefab;
-        [SerializeField] private float _mixingDuration = 5f;
+        private float _pendingCraftingDuration;
         [SerializeField] private ActionTimer _actionTimer;
         [SerializeField] private RunningMotion _runningMotion;
 
@@ -198,6 +198,7 @@ namespace DontDillyDally.Data
             }
 
             _pendingResultMaterial = result.ResultMaterial;
+            _pendingCraftingDuration = result.CraftingDuration;
             _door?.LockClosed();
             _runningMotion?.TryStart();
 
@@ -207,7 +208,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            _actionTimer.TryStart(_mixingDuration, CompleteMixingProcess);
+            _actionTimer.TryStart(_pendingCraftingDuration, CompleteMixingProcess);
         }
 
         private void CompleteMixingProcess()
