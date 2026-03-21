@@ -192,6 +192,13 @@ namespace DontDillyDally.Data
         private void CompleteFill(PlayerInteractionAbility interactionAbility, ItemObject heldItem, CraftedMaterialType resultMaterial)
         {
             _isInteractionLocked = false;
+
+            if (interactionAbility == null || heldItem == null)
+            {
+                ClearPendingState();
+                return;
+            }
+
             interactionAbility.EndExternalInteractionLock();
 
             if (!interactionAbility.TryConsumeHeldItem(heldItem))
