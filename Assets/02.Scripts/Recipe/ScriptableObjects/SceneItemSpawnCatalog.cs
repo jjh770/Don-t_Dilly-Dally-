@@ -93,7 +93,7 @@ namespace DontDillyDally.Data
 
         public bool HasKind(SpawnItemKind kind)
         {
-            return GetValidEntries().Any(entry => entry.Kind == kind);
+            return Entries.Any(entry => entry != null && entry.IsValid() && entry.Kind == kind);
         }
 
         public bool Validate()

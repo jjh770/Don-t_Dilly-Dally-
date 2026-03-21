@@ -8,6 +8,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private const float HalfAngleMultiplier = 0.5f;
     private const float MinMoveSqrMagnitude = 0.01f;
     private const float DefaultSpeedMultiplier = 1f;
+    private const float PendingOwnershipTimeout = 2f;
     private const int GizmoSegments = 20;
     private const int MaxDetectionColliders = 10;
 
@@ -49,6 +50,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private IInteractable _pendingHoldInteractable;
     private ItemObject _pendingHeldItem;
     private NetworkItemOwnership _pendingOwnership;
+    private float _pendingOwnershipElapsed;
     private bool _isExternalInteractionLocked;
 
     private void Awake()
@@ -220,6 +222,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         _pendingHoldInteractable = interactable;
         _pendingHeldItem = itemObject;
         _pendingOwnership = ownership;
+        _pendingOwnershipElapsed = 0f;
 
         ownership.TryAcquireOrRequestOwnership();
         return false;
@@ -228,15 +231,13 @@ public class PlayerInteractionAbility : MonoBehaviour
     private void BeginHold(IInteractable interactable, IHoldable holdable, ItemObject itemObject)
     {
         holdable.Interact(_holdPoint, PhotonNetwork.LocalPlayer.ActorNumber);
-        itemObject.NetworkOwnership?.BeginHold(PhotonNetwork.LocalPlayer.ActorNumber);
+        itemObject.NetworkOwnership?.NotifyHoldStarted();
         itemObject.NotifyLeftSource();
 
         _currentInteractable = interactable;
         _currentHeldItem = itemObject;
 
-        _pendingHoldInteractable = null;
-        _pendingHeldItem = null;
-        _pendingOwnership = null;
+        ClearPendingHold();
 
         _playerAnimator.PlayHoldAnimation(true);
     }
@@ -252,19 +253,6 @@ public class PlayerInteractionAbility : MonoBehaviour
         return itemObject != null;
     }
 
-    private bool TryAcquireItemOwnership(ItemObject itemObject)
-    {
-        PhotonView photonView = itemObject.GetComponent<PhotonView>();
-        if (photonView == null || PhotonNetwork.LocalPlayer == null)
-            return false;
-
-        if (photonView.IsMine)
-            return true;
-
-        photonView.RequestOwnership();
-        return false;
-    }
-
     private void TryCompletePendingHold()
     {
         if (_pendingHoldInteractable is not IHoldable holdable)
@@ -273,17 +261,31 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (_pendingHeldItem == null || _pendingOwnership == null)
             return;
 
+        _pendingOwnershipElapsed += Time.deltaTime;
+        if (_pendingOwnershipElapsed >= PendingOwnershipTimeout)
+        {
+            ClearPendingHold();
+            return;
+        }
+
         if (!_pendingOwnership.IsOwnedLocally)
             return;
 
         BeginHold(_pendingHoldInteractable, holdable, _pendingHeldItem);
     }
 
+    private void ClearPendingHold()
+    {
+        _pendingHoldInteractable = null;
+        _pendingHeldItem = null;
+        _pendingOwnership = null;
+        _pendingOwnershipElapsed = 0f;
+    }
+
     private void StopInteract()
     {
         if (_currentInteractable is IHoldable holdable)
         {
-            _currentHeldItem?.NetworkOwnership?.EndHold();
             holdable.StopInteract();
 
             ReleaseHeldItemOwnershipToMaster();
@@ -332,7 +334,6 @@ public class PlayerInteractionAbility : MonoBehaviour
             return false;
 
         ItemObject heldItem = _currentHeldItem;
-        _currentHeldItem?.NetworkOwnership?.EndHold();
         holdable.StopInteract();
 
         _playerAnimator.PlayHoldAnimation(false);
@@ -362,7 +363,6 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (_currentInteractable is not IHoldable holdable)
             return false;
 
-        _currentHeldItem?.NetworkOwnership?.EndHold();
         holdable.StopInteract();
 
         if (returnOwnershipToMaster)
@@ -455,7 +455,6 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         _playerAnimator.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
-        _currentHeldItem?.NetworkOwnership?.EndHold();
         holdable.Throw(throwDirection, _throwForce, _playerColliders);
 
         _currentInteractable = null;

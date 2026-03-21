@@ -14,7 +14,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     [Header("착지 감지 설정")]
     [SerializeField] private float _settleVelocityThreshold = 0.05f;
     [SerializeField] private float _settleAngularVelocityThreshold = 0.05f;
-    [SerializeField] private float _settleCheckDelay = 0.1f;
     [SerializeField] private float _settleRequiredDuration = 0.25f;
 
     private bool _isWaitingForOwnershipReturn;
@@ -249,7 +248,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         SetCollisionWithThrower(colliders, false);
     }
 
-    private void SetCollisionWithThrower(Collider[] colliders, bool Isignore)
+    private void SetCollisionWithThrower(Collider[] colliders, bool isIgnore)
     {
         if (_collider == null) return;
 
@@ -257,7 +256,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         {
             if (col != null)
             {
-                Physics.IgnoreCollision(_collider, col, Isignore);
+                Physics.IgnoreCollision(_collider, col, isIgnore);
             }
         }
     }
