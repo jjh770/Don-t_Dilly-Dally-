@@ -31,6 +31,8 @@ namespace DontDillyDally.Data
         private NetworkItemState _networkItemState;
         private int _currentAssignedLayer = InvalidLayer;
 
+        public event System.Action ModelRefreshed;
+
         public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
         public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
         public NetworkItemState NetworkState => _networkItemState;
@@ -153,6 +155,8 @@ namespace DontDillyDally.Data
             {
                 ApplyLayerRecursively(_currentAssignedLayer);
             }
+
+            ModelRefreshed?.Invoke();
         }
 
         protected void ClearCurrentModel()

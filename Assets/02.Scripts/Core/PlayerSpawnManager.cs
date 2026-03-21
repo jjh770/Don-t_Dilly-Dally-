@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 {
-    public Transform _spawnPoint;
+    [SerializeField] private Transform _spawnPoint;
 
     [SerializeField] private GameObject _playerPrefab;
 

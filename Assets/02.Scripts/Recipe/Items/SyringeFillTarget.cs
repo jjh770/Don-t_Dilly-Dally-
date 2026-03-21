@@ -7,6 +7,7 @@ namespace DontDillyDally.Data
     public class SyringeFillTarget : MonoBehaviour, IInteractable
     {
         private const string ResultPrefabName = "BasicMaterialItem";
+        private const float PendingOwnershipTimeout = 2f;
         private const ToolType FillInputMask = ToolType.Syringe | ToolType.AnestheticFluid | ToolType.SedativeFluid;
 
         [Header("주사기 주입 설정")]
@@ -21,6 +22,7 @@ namespace DontDillyDally.Data
         private PlayerInteractionAbility _pendingInteractionAbility;
         private ItemObject _pendingHeldItem;
         private FillResult _pendingFillResult;
+        private float _pendingOwnershipElapsed;
 
         public bool IsInteracting => _isInteractionLocked;
         public Transform Transform => transform;
@@ -49,6 +51,18 @@ namespace DontDillyDally.Data
             if (_networkOwnership != null)
             {
                 _networkOwnership.OwnershipAcquiredLocally -= HandleOwnershipAcquiredLocally;
+            }
+        }
+
+        private void Update()
+        {
+            if (_pendingInteractionAbility == null)
+                return;
+
+            _pendingOwnershipElapsed += Time.deltaTime;
+            if (_pendingOwnershipElapsed >= PendingOwnershipTimeout)
+            {
+                ClearPendingState();
             }
         }
 
@@ -87,6 +101,7 @@ namespace DontDillyDally.Data
                 _pendingInteractionAbility = interactionAbility;
                 _pendingHeldItem = heldItem;
                 _pendingFillResult = fillResult;
+                _pendingOwnershipElapsed = 0f;
                 _networkOwnership.TryAcquireOrRequestOwnership();
                 return;
             }
@@ -245,6 +260,7 @@ namespace DontDillyDally.Data
             _pendingInteractionAbility = null;
             _pendingHeldItem = null;
             _pendingFillResult = FillResult.Failure();
+            _pendingOwnershipElapsed = 0f;
         }
 
         private static bool IsSupportedFillInput(ToolType toolType)

@@ -1,4 +1,3 @@
-using DontDillyDally.Data;
 using Photon.Pun;
 using UnityEngine;
 
@@ -12,7 +11,6 @@ public class HoldableItemNetworkSync : MonoBehaviour
     private Rigidbody _rigidbody;
     private Collider _collider;
     private HoldableItem _holdableItem;
-    private NetworkItemOwnership _networkOwnership;
 
     private void Awake()
     {
@@ -20,7 +18,6 @@ public class HoldableItemNetworkSync : MonoBehaviour
         _rigidbody = GetComponent<Rigidbody>();
         _collider = GetComponent<Collider>();
         _holdableItem = GetComponent<HoldableItem>();
-        _networkOwnership = GetComponent<NetworkItemOwnership>();
     }
 
     public void EnforceRemotePhysicsAuthority()
@@ -36,13 +33,8 @@ public class HoldableItemNetworkSync : MonoBehaviour
     {
         if (stream.IsWriting)
         {
-            bool isHeld = _networkOwnership != null && _networkOwnership.IsHeld;
-            int holderActorNumber = _networkOwnership != null
-                ? _networkOwnership.HolderActorNumber
-                : _holdableItem.HolderActorNumber;
-
-            stream.SendNext(isHeld);
-            stream.SendNext(holderActorNumber);
+            stream.SendNext(_holdableItem.IsInteracting);
+            stream.SendNext(_holdableItem.HolderActorNumber);
             return;
         }
 

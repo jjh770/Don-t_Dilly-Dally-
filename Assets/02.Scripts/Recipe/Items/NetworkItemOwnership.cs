@@ -12,13 +12,14 @@ namespace DontDillyDally.Data
         private PhotonView _photonView;
         private NetworkItemState _itemState;
         private ItemObject _itemObject;
+        private HoldableItem _holdableItem;
         private bool _isOwnershipRequestPending;
 
         public event Action<NetworkItemOwnership> OwnershipAcquiredLocally;
 
         public bool HasLeftSource => _itemState != null && _itemState.HasLeftSource;
-        public bool IsHeld => _itemState != null && _itemState.IsHeld;
-        public int HolderActorNumber => _itemState != null ? _itemState.HolderActorNumber : -1;
+        public bool IsHeld => _holdableItem != null && _holdableItem.IsInteracting;
+        public int HolderActorNumber => _holdableItem != null ? _holdableItem.HolderActorNumber : -1;
         public bool IsOwnedLocally => _photonView != null && _photonView.IsMine;
         public PhotonView PhotonView => _photonView;
         public NetworkItemState State => _itemState;
@@ -28,6 +29,7 @@ namespace DontDillyDally.Data
             _photonView = GetComponent<PhotonView>();
             _itemState = GetComponent<NetworkItemState>();
             _itemObject = GetComponent<ItemObject>();
+            _holdableItem = GetComponent<HoldableItem>();
 
             if (_itemState == null)
                 _itemState = gameObject.AddComponent<NetworkItemState>();
@@ -59,18 +61,12 @@ namespace DontDillyDally.Data
             return false;
         }
 
-        public void BeginHold(int holderActorNumber)
+        public void NotifyHoldStarted()
         {
-            _itemState?.BeginHold(holderActorNumber);
             _itemObject?.SetAsInteractableItem();
 
             if (_photonView != null && PhotonNetwork.InRoom)
                 _photonView.RPC(nameof(RPC_SetAsInteractableItem), RpcTarget.Others);
-        }
-
-        public void EndHold()
-        {
-            _itemState?.EndHold();
         }
 
         public void MarkLeftSource()
