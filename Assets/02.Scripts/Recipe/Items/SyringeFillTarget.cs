@@ -13,17 +13,14 @@ namespace DontDillyDally.Data
         [SerializeField] private CraftingRuleDatabase _ruleDatabase;
         [SerializeField] private ActionTimer _actionTimer;
         [SerializeField] private GameObject _resultPrefab;
-        private float _pendingFillDuration;
 
         private MixToolItem _mixToolItem;
-        private Collider _targetCollider;
         private NetworkItemOwnership _networkOwnership;
         private bool _isInteractionLocked;
 
         private PlayerInteractionAbility _pendingInteractionAbility;
         private ItemObject _pendingHeldItem;
-        private ToolType _pendingUsedToolsMask;
-        private CraftedMaterialType _pendingResultMaterial;
+        private FillResult _pendingFillResult;
 
         public bool IsInteracting => _isInteractionLocked;
         public Transform Transform => transform;
@@ -31,7 +28,6 @@ namespace DontDillyDally.Data
         private void Awake()
         {
             _mixToolItem = GetComponent<MixToolItem>();
-            _targetCollider = GetComponent<Collider>();
             _networkOwnership = GetComponent<NetworkItemOwnership>();
 
             if (_actionTimer == null)
@@ -58,7 +54,7 @@ namespace DontDillyDally.Data
 
         public bool CanInteractWith(ItemObject heldItem)
         {
-            return TryResolveFill(heldItem, out _, out _, out _);
+            return ResolveFill(heldItem).Success;
         }
 
         public void Interact(Transform interactor)
@@ -80,7 +76,8 @@ namespace DontDillyDally.Data
             }
 
             ItemObject heldItem = interactionAbility.CurrentHeldItem;
-            if (!TryResolveFill(heldItem, out ToolType usedToolsMask, out CraftedMaterialType resultMaterial, out float fillDuration))
+            FillResult fillResult = ResolveFill(heldItem);
+            if (!fillResult.Success)
             {
                 return;
             }
@@ -89,14 +86,12 @@ namespace DontDillyDally.Data
             {
                 _pendingInteractionAbility = interactionAbility;
                 _pendingHeldItem = heldItem;
-                _pendingUsedToolsMask = usedToolsMask;
-                _pendingResultMaterial = resultMaterial;
-                _pendingFillDuration = fillDuration;
+                _pendingFillResult = fillResult;
                 _networkOwnership.TryAcquireOrRequestOwnership();
                 return;
             }
 
-            StartFill(interactionAbility, heldItem, resultMaterial, fillDuration);
+            StartFill(interactionAbility, heldItem, fillResult);
         }
 
         public void StopInteract()
@@ -115,18 +110,14 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            StartFill(_pendingInteractionAbility, _pendingHeldItem, _pendingResultMaterial, _pendingFillDuration);
+            StartFill(_pendingInteractionAbility, _pendingHeldItem, _pendingFillResult);
         }
 
-        private bool TryResolveFill(ItemObject heldItem, out ToolType usedToolsMask, out CraftedMaterialType resultMaterial, out float fillDuration)
+        private FillResult ResolveFill(ItemObject heldItem)
         {
-            usedToolsMask = ToolType.None;
-            resultMaterial = CraftedMaterialType.Unknown;
-            fillDuration = 0f;
-
             if (_ruleDatabase == null || _mixToolItem == null || heldItem is not MixToolItem heldMixToolItem)
             {
-                return false;
+                return FillResult.Failure();
             }
 
             ToolType targetToolType = _mixToolItem.ToolType;
@@ -134,39 +125,37 @@ namespace DontDillyDally.Data
 
             if (!IsSupportedFillInput(targetToolType) || !IsSupportedFillInput(heldToolType))
             {
-                return false;
+                return FillResult.Failure();
             }
 
             if (targetToolType == heldToolType)
             {
-                return false;
+                return FillResult.Failure();
             }
 
-            usedToolsMask = targetToolType | heldToolType;
+            ToolType usedToolsMask = targetToolType | heldToolType;
 
             if ((usedToolsMask & ToolType.Syringe) == ToolType.None)
             {
-                return false;
+                return FillResult.Failure();
             }
 
             ToolType fluidMask = usedToolsMask & (ToolType.AnestheticFluid | ToolType.SedativeFluid);
             if (fluidMask == ToolType.None || fluidMask == (ToolType.AnestheticFluid | ToolType.SedativeFluid))
             {
-                return false;
+                return FillResult.Failure();
             }
 
             CraftingRuleSO rule = _ruleDatabase.FindRule(usedToolsMask, ActionType.Fill);
             if (rule == null || rule.ResultMaterial == CraftedMaterialType.Unknown)
             {
-                return false;
+                return FillResult.Failure();
             }
 
-            resultMaterial = rule.ResultMaterial;
-            fillDuration = rule.CraftingDuration;
-            return true;
+            return FillResult.Succeed(usedToolsMask, rule.ResultMaterial, rule.CraftingDuration);
         }
 
-        private void StartFill(PlayerInteractionAbility interactionAbility, ItemObject heldItem, CraftedMaterialType resultMaterial, float fillDuration)
+        private void StartFill(PlayerInteractionAbility interactionAbility, ItemObject heldItem, FillResult fillResult)
         {
             if (_isInteractionLocked)
             {
@@ -189,7 +178,7 @@ namespace DontDillyDally.Data
 
             if (_actionTimer != null)
             {
-                bool started = _actionTimer.TryStart(fillDuration, () => CompleteFill(interactionAbility, heldItem, resultMaterial));
+                bool started = _actionTimer.TryStart(fillResult.FillDuration, () => CompleteFill(interactionAbility, heldItem, fillResult.ResultMaterial));
                 if (started)
                 {
                     ClearPendingState();
@@ -197,7 +186,7 @@ namespace DontDillyDally.Data
                 }
             }
 
-            CompleteFill(interactionAbility, heldItem, resultMaterial);
+            CompleteFill(interactionAbility, heldItem, fillResult.ResultMaterial);
         }
 
         private void CompleteFill(PlayerInteractionAbility interactionAbility, ItemObject heldItem, CraftedMaterialType resultMaterial)
@@ -248,9 +237,7 @@ namespace DontDillyDally.Data
         {
             _pendingInteractionAbility = null;
             _pendingHeldItem = null;
-            _pendingUsedToolsMask = ToolType.None;
-            _pendingResultMaterial = CraftedMaterialType.Unknown;
-            _pendingFillDuration = 0f;
+            _pendingFillResult = FillResult.Failure();
         }
 
         private static bool IsSupportedFillInput(ToolType toolType)
