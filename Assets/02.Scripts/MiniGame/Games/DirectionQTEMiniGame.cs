@@ -15,7 +15,7 @@ namespace DontDillyDally.MiniGame
         public QTEPrompt[] Prompts => _prompts;
 
         // 전체 제한 시간 대비 남은 시간 비율 (0~1).
-        public float RemainingTimeRatio => _timeLimit > 0f ? Mathf.Clamp01(_remainingTime / _timeLimit) : 0f;
+        public float RemainingTimeRatio => _timeLimit > 0f ? Mathf.Clamp01(1f - _elapsedTime / _timeLimit) : 0f;
 
         public float NormalizedProgress =>
             TotalPrompts > 0 ? (float)CurrentPromptIndex / TotalPrompts : 0f;
@@ -31,7 +31,6 @@ namespace DontDillyDally.MiniGame
         private QTEPrompt[] _prompts;
         private float _elapsedTime;
         private float _timeLimit;
-        private float _remainingTime;
 
         public DirectionQTEMiniGame(IInputProvider input)
         {
@@ -52,7 +51,6 @@ namespace DontDillyDally.MiniGame
             CurrentPromptIndex = 0;
             _elapsedTime = 0f;
             _timeLimit = _config.TimeLimit;
-            _remainingTime = _timeLimit;
             LastInputResult = null;
 
             CurrentState = EMiniGameState.Playing;
@@ -61,13 +59,15 @@ namespace DontDillyDally.MiniGame
         // 매 프레임마다 입력과 시간 체크
         public void Tick(float deltaTime)
         {
-            if (CurrentState != EMiniGameState.Playing) return;
+            if (CurrentState != EMiniGameState.Playing)
+            {
+                return;
+            }
 
             _elapsedTime += deltaTime;
-            _remainingTime -= deltaTime;
 
             // 전체 시간 초과 → 실패
-            if (_remainingTime <= 0f)
+            if (_elapsedTime >= _timeLimit)
             {
                 CurrentState = EMiniGameState.Failed;
                 OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
@@ -75,7 +75,10 @@ namespace DontDillyDally.MiniGame
             }
 
             EQteDirection? pressedDirection = ReadDirectionInput();
-            if (pressedDirection == null) return;
+            if (pressedDirection == null)
+            {
+                return;
+            }
 
             if (pressedDirection == _prompts[CurrentPromptIndex].EQteDirection)
             {
@@ -102,7 +105,11 @@ namespace DontDillyDally.MiniGame
         // 게임 실패 처리
         public void Abort()
         {
-            if (CurrentState != EMiniGameState.Playing) return;
+            if (CurrentState != EMiniGameState.Playing)
+            {
+                return;
+            }
+
             CurrentState = EMiniGameState.Failed;
             OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
         }

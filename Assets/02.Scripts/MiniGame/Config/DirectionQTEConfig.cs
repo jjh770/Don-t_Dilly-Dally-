@@ -10,13 +10,5 @@ namespace DontDillyDally.MiniGame
         [Range(4, 12)]
         public int SequenceLength = 6;
 
-        // 4방향 고정이므로 static readonly로 선언
-        public static readonly KeyCode[] DirectionKeys =
-        {
-            KeyCode.UpArrow,
-            KeyCode.DownArrow,
-            KeyCode.LeftArrow,
-            KeyCode.RightArrow
-        };
     }
 }
