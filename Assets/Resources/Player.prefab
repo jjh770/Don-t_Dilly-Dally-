@@ -291,8 +291,8 @@ GameObject:
   - component: {fileID: 2730377794116614648}
   - component: {fileID: 4425972123046568354}
   - component: {fileID: 6621175980971503525}
-  - component: {fileID: -3965015228644286602}
-  - component: {fileID: -210357192827917704}
+  - component: {fileID: 2460008741056850297}
+  - component: {fileID: 2809619115966644710}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -544,7 +544,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0ddeb39cafb372147afe6c4fb7bd45e0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBootStrapper
---- !u!114 &-3965015228644286602
+--- !u!114 &2460008741056850297
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -553,9 +553,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 6536501996314029870}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1263c473b3142349ba53fe3b9492e2a, type: 3}
+  m_Script: {fileID: 11500000, guid: c31635b493d05e24dac7bc930e25a53c, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CustomizingController
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomizingView
   _skeletonRoot: {fileID: 2355616669142722231}
   _baseEquipmentSlot: {fileID: 1378158722145974261}
   _skinColorSlot: {fileID: 8533177028474222426}
@@ -567,7 +567,8 @@ MonoBehaviour:
   _shoesSlot: {fileID: 3180390672719045892}
   _costumesSlot: {fileID: 2363339242642504327}
   _autoRemapBones: 1
---- !u!114 &-210357192827917704
+  _targetLayer: 7
+--- !u!114 &2809619115966644710
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -576,10 +577,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 6536501996314029870}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59d99131fb9df1a4ebecc42b7d127c11, type: 3}
+  m_Script: {fileID: 11500000, guid: d2207b2e1f2085346aedd70c14db86e2, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CustomizingNetworkSync
-  _playerCustomizing: {fileID: -3965015228644286602}
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomizingController
+  _fallbackCatalog: {fileID: 11400000, guid: b20724bb51205a6479b5f428267e80cd, type: 2}
+  _fallbackBaseEquipmentCatalog: {fileID: 11400000, guid: 8639e2bbef41ad04bb81ef1791c415e2, type: 2}
 --- !u!1001 &6620413002501761784
 PrefabInstance:
   m_ObjectHideFlags: 0

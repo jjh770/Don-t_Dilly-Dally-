@@ -17,19 +17,14 @@ public class CustomizingManager : MonoBehaviour
 
     private Customizing _domain;
     private ICustomizingRepository _repository;
-
-    // Saved State: 마지막으로 저장된 확정 상태
     private CustomizingState _savedState;
 
-    // 이벤트
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
     public event Action OnSaved;
     public event Action OnLoaded;
 
-    public Customizing Domain => _domain;
-    public CustomizingCatalogSO Catalog => _catalog;
-    public BaseEquipmentCatalogSO BaseEquipmentCatalog => _baseEquipmentCatalog;
+    public bool IsInitialized => _domain != null;
 
     private void Awake()
     {
@@ -47,13 +42,9 @@ public class CustomizingManager : MonoBehaviour
 
     private void Start()
     {
-        // 중복 인스턴스면 실행하지 않음
-        if (Instance != this) return;
-
         Initialize();
 
-        if (_autoLoadOnStart)
-            Load();
+        if (_autoLoadOnStart) Load();
     }
 
     public void Initialize()
@@ -94,7 +85,6 @@ public class CustomizingManager : MonoBehaviour
         else
             _domain.InitializeWithDefaults();
 
-        // 로드된 상태를 Saved State로 저장
         _savedState.CopyFrom(_domain.State);
 
         Debug.Log("[CustomizingManager] 로드 완료");
@@ -109,7 +99,6 @@ public class CustomizingManager : MonoBehaviour
             return;
         }
 
-        // Working State를 Saved State로 복사
         _savedState.CopyFrom(_domain.State);
 
         var saveData = _domain.ToSaveData();
@@ -161,7 +150,6 @@ public class CustomizingManager : MonoBehaviour
         return SelectItem(item);
     }
 
-    // UI 열기: Working State = Saved State
     public void OpenCustomizingUI()
     {
         if (_domain == null) return;
@@ -171,7 +159,6 @@ public class CustomizingManager : MonoBehaviour
         OnLoaded?.Invoke();
     }
 
-    // UI 닫기: Working State 버리고 Saved State로 복원
     public void CloseCustomizingUI()
     {
         if (_domain == null) return;
@@ -181,7 +168,6 @@ public class CustomizingManager : MonoBehaviour
         OnLoaded?.Invoke();
     }
 
-    // 리셋: Working State = Saved State
     public void ResetToSaved()
     {
         if (_domain == null) return;
@@ -191,20 +177,49 @@ public class CustomizingManager : MonoBehaviour
         OnLoaded?.Invoke();
     }
 
-    // 기존 호환성 유지
     public void ResetAll()
     {
         ResetToSaved();
     }
 
-    // 현재 장착 아이템
+    // ========== 조회 API ==========
     public CustomizingItemSO GetEquipped(CustomizingType type)
     {
         var spec = _domain?.GetEquipped(type);
         return spec as CustomizingItemSO;
     }
 
-    // 카테고리별 해금 아이템 목록
+    public Dictionary<CustomizingType, string> GetEquippedItemIds()
+    {
+        if (_domain?.State == null)
+            return new Dictionary<CustomizingType, string>();
+
+        return new Dictionary<CustomizingType, string>(_domain.State.GetAll());
+    }
+
+    public CustomizingItemSO GetItemById(string itemId)
+    {
+        return _catalog?.GetItemById(itemId);
+    }
+
+    public BaseEquipmentItemSO GetBaseEquipmentItem(BaseEquipmentType type)
+    {
+        return _baseEquipmentCatalog?.GetItem(type);
+    }
+
+    public IEnumerable<(BaseEquipmentType type, BaseEquipmentItemSO item)> GetAllBaseEquipmentItems()
+    {
+        if (_baseEquipmentCatalog == null)
+            yield break;
+
+        foreach (BaseEquipmentType type in Enum.GetValues(typeof(BaseEquipmentType)))
+        {
+            var item = _baseEquipmentCatalog.GetItem(type);
+            if (item != null)
+                yield return (type, item);
+        }
+    }
+
     public List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type)
     {
         return _catalog?.GetUnlockedItemsByType(type) ?? new List<CustomizingItemSO>();
