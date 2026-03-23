@@ -9,7 +9,7 @@ public class TTSManager : MonoBehaviour
     private const int SampleRate = 24000;
 
     [Header("API Settings")]
-    [SerializeField] private APIKeyConfig _apiKeyConfig;
+    [SerializeField] private KeyConfig _apiKeyConfig;
 
     [Header("Voice Settings")]
     [SerializeField] private string _languageCode = "ko-KR";

@@ -10,7 +10,7 @@ namespace DontDillyDally.Data
     public class DiseaseGenerationService : MonoBehaviour
     {
         [Header("API 설정")]
-        [SerializeField] private APIKeyConfig _apiKeyConfig;
+        [SerializeField] private KeyConfig _apiKeyConfig;
         [SerializeField] private string _model = "gemini-3-flash-preview";
 
         [Header("요청 설정")]
