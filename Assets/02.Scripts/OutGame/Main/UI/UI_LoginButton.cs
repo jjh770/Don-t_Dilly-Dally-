@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class UI_LoginButton : MonoBehaviour
 {
     [SerializeField] private GoogleAuthManager _authManager;
+    [SerializeField] private GameObject _loadingEffect;
     [SerializeField] private Button _loginButton;
     [SerializeField] private Button _cancelButton;
 
@@ -15,6 +16,7 @@ public class UI_LoginButton : MonoBehaviour
         _loginButton.onClick.AddListener(OnLogInButtonClick);
         _cancelButton.onClick.AddListener(OnCancelButtonButtonClick);
         ShowLoginUI();
+        StopRoading();
     }
 
     private void OnCancelButtonButtonClick()
@@ -38,11 +40,11 @@ public class UI_LoginButton : MonoBehaviour
 
     private void StartRoading()
     {
-        Debug.Log("로딩 시작");
+        _loadingEffect.SetActive(true);
     }
     private void StopRoading()
     {
-        Debug.Log("로딩 끝");
+        _loadingEffect.SetActive(false);
     }
 
     public void ShowLoginUI()
