@@ -50,6 +50,12 @@ public class PlayerMovementAbility : PlayerAbility
 
     private void FixedUpdate()
     {
+        // 원격 플레이어는 물리 처리 안 함
+        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
+        {
+            return;
+        }
+
         if (_isMovementLocked)
         {
             _currentSpeed = 0f;

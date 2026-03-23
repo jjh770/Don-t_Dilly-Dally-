@@ -292,6 +292,7 @@ GameObject:
   - component: {fileID: 4425972123046568354}
   - component: {fileID: 6621175980971503525}
   - component: {fileID: -3965015228644286602}
+  - component: {fileID: -210357192827917704}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -437,7 +438,7 @@ MonoBehaviour:
   _throwRotationSpeed: 20
   _throwDelay: 0.2
   _rotationAngleThreshold: 5
-  _holdPoint: {fileID: 0}
+  _holdPoint: {fileID: 1418133846914244361}
   _interactableLayer:
     serializedVersion: 2
     m_Bits: 320
@@ -566,6 +567,19 @@ MonoBehaviour:
   _shoesSlot: {fileID: 3180390672719045892}
   _costumesSlot: {fileID: 2363339242642504327}
   _autoRemapBones: 1
+--- !u!114 &-210357192827917704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6536501996314029870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59d99131fb9df1a4ebecc42b7d127c11, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CustomizingNetworkSync
+  _playerCustomizing: {fileID: -3965015228644286602}
 --- !u!1001 &6620413002501761784
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -636,6 +650,11 @@ Transform:
 --- !u!4 &1378158722145974261 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 5242289484776824077, guid: 9cb354e6053b9b8459809bfb1ae93999, type: 3}
+  m_PrefabInstance: {fileID: 6620413002501761784}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1418133846914244361 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 5210198253768193521, guid: 9cb354e6053b9b8459809bfb1ae93999, type: 3}
   m_PrefabInstance: {fileID: 6620413002501761784}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &2191859062875871018 stripped

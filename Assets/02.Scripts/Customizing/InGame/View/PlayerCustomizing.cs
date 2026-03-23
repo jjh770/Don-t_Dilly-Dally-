@@ -34,33 +34,44 @@ public class PlayerCustomizing : MonoBehaviour
     // 캐시된 본 딕셔너리
     private Dictionary<string, Transform> _boneCache;
 
+    // 로컬 플레이어 여부
+    private bool _isLocalPlayer = false;
+    private PhotonView _photonView;
+
     private void Awake()
     {
         AutoFindSkeletonRoot();
         BuildBoneCache();
+        _photonView = GetComponentInParent<PhotonView>();
     }
 
     private void Start()
     {
-        SubscribeToManager();
+        _isLocalPlayer = _photonView != null && _photonView.IsMine;
 
-        // 매니저가 이미 준비되어 있으면 바로 적용 (클론된 플레이어용)
-        if (CustomizingManager.Instance != null && CustomizingManager.Instance.Domain != null)
+        // 로컬 플레이어만 CustomizingManager 이벤트 구독
+        if (_isLocalPlayer)
         {
-            ApplyAllFromManager();
-        }
+            SubscribeToManager();
 
-        // 내 캐릭터면 카메라 타겟으로 설정
-        var photonView = GetComponentInParent<PhotonView>();
-        if (photonView != null && photonView.IsMine)
-        {
+            // 매니저가 이미 준비되어 있으면 바로 적용
+            if (CustomizingManager.Instance != null && CustomizingManager.Instance.Domain != null)
+            {
+                ApplyAllFromManager();
+            }
+
+            // 카메라 타겟 설정
             CharacterPreviewCamera.SetLocalPlayerTarget(transform);
         }
+        // 원격 플레이어는 CustomizingNetworkSync에서 처리
     }
 
     private void OnDestroy()
     {
-        UnsubscribeFromManager();
+        if (_isLocalPlayer)
+        {
+            UnsubscribeFromManager();
+        }
     }
 
     private void SubscribeToManager()
@@ -81,11 +92,13 @@ public class PlayerCustomizing : MonoBehaviour
 
     private void HandleLoaded()
     {
+        if (!_isLocalPlayer) return;
         ApplyAllFromManager();
     }
 
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
     {
+        if (!_isLocalPlayer) return;
         ApplyItem(type, item);
     }
 
@@ -107,6 +120,11 @@ public class PlayerCustomizing : MonoBehaviour
             ApplyItem(type, item);
         }
     }
+
+    /// <summary>
+    /// 로컬 플레이어 여부 반환
+    /// </summary>
+    public bool IsLocalPlayer => _isLocalPlayer;
 
     // 기본 아이템 장착
     public void ApplyBaseEquipment(BaseEquipmentType type, BaseEquipmentItemSO item)
