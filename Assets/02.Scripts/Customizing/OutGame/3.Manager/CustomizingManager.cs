@@ -47,6 +47,9 @@ public class CustomizingManager : MonoBehaviour
 
     private void Start()
     {
+        // 중복 인스턴스면 실행하지 않음
+        if (Instance != this) return;
+
         Initialize();
 
         if (_autoLoadOnStart)

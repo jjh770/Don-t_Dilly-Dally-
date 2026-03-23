@@ -134,16 +134,22 @@ public class CustomizingNetworkSync : MonoBehaviourPunCallbacks
     {
         if (_playerCustomizing == null)
         {
-            Debug.LogError("[CustomizingNetworkSync] PlayerCustomizing이 없음");
+            Debug.LogWarning("[CustomizingNetworkSync] PlayerCustomizing이 없음");
+            return;
+        }
+
+        if (CustomizingManager.Instance == null)
+        {
+            Debug.LogWarning("[CustomizingNetworkSync] CustomizingManager가 없음");
             return;
         }
 
         var itemIds = DeserializeCustomizingData(serializedData);
-        var catalog = CustomizingManager.Instance?.Catalog;
+        var catalog = CustomizingManager.Instance.Catalog;
 
         if (catalog == null)
         {
-            Debug.LogError("[CustomizingNetworkSync] Catalog가 없음");
+            Debug.LogWarning("[CustomizingNetworkSync] Catalog가 없음");
             return;
         }
 
