@@ -1,8 +1,9 @@
-using UnityEngine;
+using Photon.Pun;
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
-public class CustomizingController : MonoBehaviour
+public class PlayerCustomizing : MonoBehaviour
 {
     [Header("Skeleton")]
     [SerializeField] private Transform _skeletonRoot;
@@ -47,6 +48,13 @@ public class CustomizingController : MonoBehaviour
         if (CustomizingManager.Instance != null && CustomizingManager.Instance.Domain != null)
         {
             ApplyAllFromManager();
+        }
+
+        // 내 캐릭터면 카메라 타겟으로 설정
+        var photonView = GetComponentInParent<PhotonView>();
+        if (photonView != null && photonView.IsMine)
+        {
+            CharacterPreviewCamera.SetLocalPlayerTarget(transform);
         }
     }
 
