@@ -57,6 +57,15 @@ public class UI_Customizing : MonoBehaviour
         SelectCategory(_currentCategory);
     }
 
+    private void Update()
+    {
+        // Back 버튼 (Escape 키 / Android 뒤로가기) 처리
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            OnCloseClicked();
+        }
+    }
+
     private void OnDestroy()
     {
         if (_manager != null)
@@ -153,15 +162,10 @@ public class UI_Customizing : MonoBehaviour
 
     private UI_CustomizingItem CreateItemButton(CustomizingItemSO item)
     {
-        if (_itemPrefab == null || _itemListParent == null)
-        {
-            Debug.LogError("[UI_Customizing] 아이템 프리팹 또는 부모가 할당되지 않음");
-            return null;
-        }
+        if (_itemPrefab == null || _itemListParent == null) return null;
 
         var buttonObj = Instantiate(_itemPrefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
-
         button.Setup(item, () => OnItemClicked(item));
 
         return button;
@@ -180,27 +184,20 @@ public class UI_Customizing : MonoBehaviour
     private void OnItemClicked(CustomizingItemSO item)
     {
         if (_manager == null) return;
-
-        var result = _manager.ToggleItem(item);
-        if (result == EEquipResult.Locked)
-        {
-            Debug.Log($"[UI_Customizing] 아이템 잠김: {item.DisplayName}");
-        }
+        _manager.ToggleItem(item);
     }
     private void OnSaveClicked()
     {
         _manager?.Save();
-        Debug.Log("[UI_Customizing] 저장 클릭");
     }
+
     private void OnResetClicked()
     {
         _manager?.ResetToSaved();
-        Debug.Log("[UI_Customizing] 리셋 클릭 - Saved State로 복원");
     }
 
     private void OnCloseClicked()
     {
-        // UI 닫기 전 Saved State로 복원
         _manager?.CloseCustomizingUI();
         gameObject.SetActive(false);
     }
