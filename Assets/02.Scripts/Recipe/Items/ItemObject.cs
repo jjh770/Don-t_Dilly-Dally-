@@ -11,10 +11,7 @@ namespace DontDillyDally.Data
         private const string SupplyItemLayerName = "SupplyItem";
         private const string InteractableItemLayerName = "InteractableItem";
 
-        protected delegate bool PresentationResolver<TItemType>(
-            TItemType itemType,
-            out string displayName,
-            out GameObject modelPrefab);
+        protected delegate bool PresentationResolver<TItemType>(TItemType itemType, out string displayName, out GameObject modelPrefab);
 
         [Header("아이템 공통 정보")]
         [Tooltip("인스펙터와 UI에서 사용할 아이템 표시 이름")]
@@ -34,6 +31,8 @@ namespace DontDillyDally.Data
         private NetworkItemState _networkItemState;
         private int _currentAssignedLayer = InvalidLayer;
 
+        public event System.Action ModelRefreshed;
+
         public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
         public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
         public NetworkItemState NetworkState => _networkItemState;
@@ -41,16 +40,21 @@ namespace DontDillyDally.Data
         protected virtual void Awake()
         {
             if (ModelPrefab != null)
+            {
                 RefreshModel();
-            _networkItemState = GetComponent<NetworkItemState>();
+            }
 
+            _networkItemState = GetComponent<NetworkItemState>();
             if (_networkItemState == null)
+            {
                 _networkItemState = gameObject.AddComponent<NetworkItemState>();
+            }
 
             _networkItemOwnership = GetComponent<NetworkItemOwnership>();
-
             if (_networkItemOwnership == null)
+            {
                 _networkItemOwnership = gameObject.AddComponent<NetworkItemOwnership>();
+            }
         }
 
         public virtual void Initialize(string displayName, GameObject modelPrefab = null)
@@ -77,16 +81,17 @@ namespace DontDillyDally.Data
             GameObject resolvedModelPrefab = ModelPrefab;
 
             if (presentationResolver != null &&
-                presentationResolver(
-                    itemType,
-                    out string catalogDisplayName,
-                    out GameObject catalogModelPrefab))
+                presentationResolver(itemType, out string catalogDisplayName, out GameObject catalogModelPrefab))
             {
                 if (!string.IsNullOrWhiteSpace(catalogDisplayName))
+                {
                     resolvedDisplayName = catalogDisplayName;
+                }
 
                 if (catalogModelPrefab != null)
+                {
                     resolvedModelPrefab = catalogModelPrefab;
+                }
             }
 
             TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
@@ -99,7 +104,9 @@ namespace DontDillyDally.Data
         {
             BoxCollider targetCollider = GetTargetBoxCollider();
             if (targetCollider == null)
+            {
                 return;
+            }
 
             targetCollider.center = center;
             targetCollider.size = size;
@@ -113,11 +120,15 @@ namespace DontDillyDally.Data
         public bool TryApplyBoxColliderFromModelPrefab(GameObject modelPrefab)
         {
             if (modelPrefab == null)
+            {
                 return false;
+            }
 
             BoxCollider sourceCollider = modelPrefab.GetComponent<BoxCollider>();
             if (sourceCollider == null)
+            {
                 return false;
+            }
 
             ApplyBoxCollider(sourceCollider.center, sourceCollider.size);
             return true;
@@ -128,7 +139,9 @@ namespace DontDillyDally.Data
             ClearCurrentModel();
 
             if (ModelPrefab == null)
+            {
                 return;
+            }
 
             Transform parent = ModelRoot != null ? ModelRoot : transform;
             CurrentModelInstance = Instantiate(ModelPrefab, parent);
@@ -139,19 +152,27 @@ namespace DontDillyDally.Data
             DisableModelColliders();
 
             if (_currentAssignedLayer != InvalidLayer)
+            {
                 ApplyLayerRecursively(_currentAssignedLayer);
+            }
+
+            ModelRefreshed?.Invoke();
         }
 
         protected void ClearCurrentModel()
         {
             if (CurrentModelInstance != null)
+            {
                 Destroy(CurrentModelInstance);
+            }
         }
 
         private void DisableModelColliders()
         {
             if (CurrentModelInstance == null)
+            {
                 return;
+            }
 
             Collider[] modelColliders = CurrentModelInstance.GetComponentsInChildren<Collider>(true);
             foreach (Collider modelCollider in modelColliders)
@@ -163,7 +184,9 @@ namespace DontDillyDally.Data
         private BoxCollider GetTargetBoxCollider()
         {
             if (TargetBoxCollider != null)
+            {
                 return TargetBoxCollider;
+            }
 
             return GetComponent<BoxCollider>();
         }
@@ -191,7 +214,9 @@ namespace DontDillyDally.Data
         public void SetItemLayer(int layer)
         {
             if (layer == InvalidLayer)
+            {
                 return;
+            }
 
             _currentAssignedLayer = layer;
             ApplyLayerRecursively(layer);

@@ -1,22 +1,49 @@
+using System.Collections.Generic;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class RoomView : MonoBehaviour
 {
-    [SerializeField] private Button enterHospitalButton;
-    [SerializeField] private Button createHospitalButton;
-    [SerializeField] private TMP_InputField roomCodeInputField;
-    [SerializeField] private TMP_InputField nickNameInputField;
-    [SerializeField] private TextMeshProUGUI errorMessageText;
+    [SerializeField] private Button _enterHospitalButton;
+    [SerializeField] private Button _createHospitalButton;
+    [SerializeField] private Button _listOpenButton;
+
+    [SerializeField] private UI_HospitalList _myHospitalList;
+
+    [SerializeField] private TMP_InputField _roomCodeInputField;
+    [SerializeField] private TMP_InputField _nickNameInputField;
+    [SerializeField] private TextMeshProUGUI _errorMessageText;
+
+    [SerializeField] private float _errorFadeDuration = 0.25f;
+
+    [SerializeField] private float _errorVisibleDuration = 1.5f;
+
+
+    private Tween _errorTween;
 
     private RoomPresenter _presenter;
 
+    private void Start()
+    {
+        SetErrorAlpha(0f);
+    }
+
     private void OnEnable ()
     {
-        enterHospitalButton.onClick.AddListener(OnEnterButtonClick);
-        createHospitalButton.onClick.AddListener(OnCreateButtonClick);
-        nickNameInputField.onDeselect.AddListener(OnNickNameInputDeselect);
+        _enterHospitalButton.onClick.AddListener(OnEnterButtonClick);
+        _createHospitalButton.onClick.AddListener(OnCreateButtonClick);
+        _nickNameInputField.onDeselect.AddListener(OnNickNameInputDeselect);
+        _listOpenButton.onClick.AddListener(_myHospitalList.OpenToggle);
+
+        _myHospitalList.OnSelected += OnMyHospitalSelected;
+        _myHospitalList.OnDeleteOption += OnMyHospitalDeleted;
+    }
+
+    private void OnMyHospitalSelected(string name)
+    {
+        _presenter.SelectMyHospital(name);
     }
 
     private void OnNickNameInputDeselect(string name)
@@ -31,7 +58,7 @@ public class RoomView : MonoBehaviour
 
     public void OnEnterButtonClick()
     {
-        _presenter.EnterRoom(roomCodeInputField.text);
+        _presenter.EnterRoom(_roomCodeInputField.text);
     }
 
     public void OnCreateButtonClick()
@@ -39,16 +66,52 @@ public class RoomView : MonoBehaviour
         _presenter.CreateRoom();
     }
 
+    public void OnMyHospitalDeleted(string code)
+    {
+        _presenter.OnMyHospitalDeleted(code);
+    }
+
     public void ShowErrorMessage(string message)
     {
-        if (errorMessageText != null)
-            errorMessageText.text = message;
+        if (_errorMessageText == null) return;
+
+        _errorTween?.Kill();
+        _errorMessageText.text = message;
+        SetErrorAlpha(0f);
+
+        _errorTween = DOTween.Sequence()
+            .Append(_errorMessageText.DOFade(1f, _errorFadeDuration))
+            .AppendInterval(_errorVisibleDuration)
+            .Append(_errorMessageText.DOFade(0f, _errorFadeDuration));
     }
+
+    private void SetErrorAlpha(float alpha)
+    {
+        if (_errorMessageText == null) return;
+
+        Color color = _errorMessageText.color;
+        color.a = alpha;
+        _errorMessageText.color = color;
+    }
+
+    public void SetCodeInputField(string code)
+    {
+        _roomCodeInputField.text = code;
+    }
+    public void SetDropdown(IEnumerable<MyHospital> hospitals)
+    {
+        _myHospitalList.SetOptions(hospitals);
+    }
+
     private void OnDisable()
     {
-        enterHospitalButton.onClick.RemoveListener(OnEnterButtonClick);
-        createHospitalButton.onClick.RemoveListener(OnCreateButtonClick);
-        nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
-        _presenter.Dispose();
+        _enterHospitalButton.onClick.RemoveListener(OnEnterButtonClick);
+        _createHospitalButton.onClick.RemoveListener(OnCreateButtonClick);
+        _listOpenButton.onClick.RemoveListener(_myHospitalList.OpenToggle);
+        _nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
+        _myHospitalList.OnSelected -= OnMyHospitalSelected;
+        _myHospitalList.OnDeleteOption -= OnMyHospitalDeleted;
+
+        _presenter.Dispose(); 
     }
 }
