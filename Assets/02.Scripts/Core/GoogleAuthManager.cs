@@ -9,7 +9,7 @@ using UnityEngine;
 public class GoogleAuthManager : MonoBehaviour
 {
     [SerializeField] private KeyConfig _keyConfig;
-    [SerializeField] private float _timeOutTime = 1.0f;
+    [SerializeField] private float _timeoutInMinutes = 1.0f;
 
     private const string REDIRECT_URI = "http://localhost:5000/callback";
     private const string AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
@@ -74,7 +74,7 @@ public class GoogleAuthManager : MonoBehaviour
         try
         {
             var contextTask = _httpListener.GetContextAsync();
-            var timeoutTask = Task.Delay(TimeSpan.FromMinutes(_timeOutTime), cancellationToken);
+            var timeoutTask = Task.Delay(TimeSpan.FromMinutes(_timeoutInMinutes), cancellationToken);
 
             // ✅ 취소되면 timeoutTask가 OperationCanceledException을 throw
             var completed = await Task.WhenAny(contextTask, timeoutTask);
