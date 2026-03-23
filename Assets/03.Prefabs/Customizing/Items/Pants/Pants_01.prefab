@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &408390301472711722
+--- !u!1 &441672565625805484
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,8 +8,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3382425704261177600}
-  - component: {fileID: 575795548575352929}
+  - component: {fileID: 864514229957112452}
+  - component: {fileID: 1505870090328750292}
+  - component: {fileID: 1422935022822590686}
   m_Layer: 7
   m_Name: Pants_01
   m_TagString: Untagged
@@ -17,83 +18,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3382425704261177600
+--- !u!4 &864514229957112452
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 408390301472711722}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 1
-  m_Children:
-  - {fileID: 4428318190677531361}
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &575795548575352929
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 408390301472711722}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b96f1f9647f5a14dae933074fb7b55b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SkinnedMeshBoneRemapper
-  skeletonRootNames:
-  - Skeleton
-  - Armature
-  - Root
-  - Hips
-  autoRemapOnAwake: 0
-  destroyAfterRemap: 0
-  boneNameMapping: {fileID: 0}
-  showDebugLogs: 0
---- !u!1 &1774329058918389666
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4428318190677531361}
-  - component: {fileID: 5093932747416551787}
-  - component: {fileID: 6254541733563268027}
-  m_Layer: 7
-  m_Name: Pants_01
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4428318190677531361
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1774329058918389666}
+  m_GameObject: {fileID: 441672565625805484}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 3382425704261177600}
+  m_Father: {fileID: 3469972299630250872}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!137 &5093932747416551787
+--- !u!137 &1505870090328750292
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1774329058918389666}
+  m_GameObject: {fileID: 441672565625805484}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -147,19 +93,19 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
   m_DirtyAABB: 1
---- !u!114 &6254541733563268027
+--- !u!114 &1422935022822590686
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1774329058918389666}
+  m_GameObject: {fileID: 441672565625805484}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 78c76f632f14c8b4a9cf8149f2e24079, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkinnedMeshBoneInfo
-  boneNames:
+  _boneNames:
   - Root
   - Hips
   - LeftUpLeg
@@ -204,4 +150,58 @@ MonoBehaviour:
   - RightLeg
   - RightFoot
   - RightToeBase
-  rootBoneName: Root
+  _rootBoneName: Root
+--- !u!1 &4151705536309257493
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3469972299630250872}
+  - component: {fileID: 3184971170005063225}
+  m_Layer: 7
+  m_Name: Pants_01
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3469972299630250872
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4151705536309257493}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 1
+  m_Children:
+  - {fileID: 864514229957112452}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3184971170005063225
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4151705536309257493}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b96f1f9647f5a14dae933074fb7b55b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SkinnedMeshBoneRemapper
+  _skeletonRootNames:
+  - Skeleton
+  - Armature
+  - Root
+  - Hips
+  _autoRemapOnAwake: 0
+  _destroyAfterRemap: 0
+  _boneNameMapping: {fileID: 0}
+  _showDebugLogs: 0

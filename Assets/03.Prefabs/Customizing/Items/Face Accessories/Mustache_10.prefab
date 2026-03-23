@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1080078280442771860
+--- !u!1 &2635674411659199308
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,8 +8,8 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2632078179027499823}
-  - component: {fileID: 8560219830469521024}
+  - component: {fileID: 1059035787849520594}
+  - component: {fileID: 1856642889101634633}
   m_Layer: 7
   m_Name: Mustache_10
   m_TagString: Untagged
@@ -17,44 +17,44 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2632078179027499823
+--- !u!4 &1059035787849520594
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1080078280442771860}
+  m_GameObject: {fileID: 2635674411659199308}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 308366765157343254}
+  - {fileID: 8266983003752028423}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &8560219830469521024
+--- !u!114 &1856642889101634633
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1080078280442771860}
+  m_GameObject: {fileID: 2635674411659199308}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2b96f1f9647f5a14dae933074fb7b55b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkinnedMeshBoneRemapper
-  skeletonRootNames:
+  _skeletonRootNames:
   - Skeleton
   - Armature
   - Root
   - Hips
-  autoRemapOnAwake: 0
-  destroyAfterRemap: 0
-  boneNameMapping: {fileID: 0}
-  showDebugLogs: 0
---- !u!1 &7949165195891962247
+  _autoRemapOnAwake: 0
+  _destroyAfterRemap: 0
+  _boneNameMapping: {fileID: 0}
+  _showDebugLogs: 0
+--- !u!1 &8835123757823683707
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -62,9 +62,9 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 308366765157343254}
-  - component: {fileID: 1141647747260067623}
-  - component: {fileID: 7692065287465653262}
+  - component: {fileID: 8266983003752028423}
+  - component: {fileID: 5261995125832197087}
+  - component: {fileID: 1465159960649581262}
   m_Layer: 7
   m_Name: Mustache_10
   m_TagString: Untagged
@@ -72,28 +72,28 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &308366765157343254
+--- !u!4 &8266983003752028423
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7949165195891962247}
+  m_GameObject: {fileID: 8835123757823683707}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 2632078179027499823}
+  m_Father: {fileID: 1059035787849520594}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!137 &1141647747260067623
+--- !u!137 &5261995125832197087
 SkinnedMeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7949165195891962247}
+  m_GameObject: {fileID: 8835123757823683707}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -147,19 +147,19 @@ SkinnedMeshRenderer:
     m_Center: {x: 0, y: 0, z: 0}
     m_Extent: {x: 0, y: 0, z: 0}
   m_DirtyAABB: 1
---- !u!114 &7692065287465653262
+--- !u!114 &1465159960649581262
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7949165195891962247}
+  m_GameObject: {fileID: 8835123757823683707}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 78c76f632f14c8b4a9cf8149f2e24079, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SkinnedMeshBoneInfo
-  boneNames:
+  _boneNames:
   - Root
   - Hips
   - LeftUpLeg
@@ -204,4 +204,4 @@ MonoBehaviour:
   - RightLeg
   - RightFoot
   - RightToeBase
-  rootBoneName: Root
+  _rootBoneName: Root

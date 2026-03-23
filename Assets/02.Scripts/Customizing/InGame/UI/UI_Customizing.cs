@@ -194,12 +194,14 @@ public class UI_Customizing : MonoBehaviour
     }
     private void OnResetClicked()
     {
-        _manager?.ResetAll();
-        Debug.Log("[UI_Customizing] 초기화 클릭");
+        _manager?.ResetToSaved();
+        Debug.Log("[UI_Customizing] 리셋 클릭 - Saved State로 복원");
     }
 
     private void OnCloseClicked()
     {
+        // UI 닫기 전 Saved State로 복원
+        _manager?.CloseCustomizingUI();
         gameObject.SetActive(false);
     }
 

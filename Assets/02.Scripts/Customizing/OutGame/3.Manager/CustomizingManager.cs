@@ -18,6 +18,9 @@ public class CustomizingManager : MonoBehaviour
     private Customizing _domain;
     private ICustomizingRepository _repository;
 
+    // Saved State: 마지막으로 저장된 확정 상태
+    private CustomizingState _savedState;
+
     // 이벤트
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
@@ -60,6 +63,7 @@ public class CustomizingManager : MonoBehaviour
 
         _repository = new LocalCustomizingRepository(_userId);
         _domain = new Customizing(_catalog);
+        _savedState = new CustomizingState();
 
         OnInitialized?.Invoke();
     }
@@ -84,6 +88,9 @@ public class CustomizingManager : MonoBehaviour
         else
             _domain.InitializeWithDefaults();
 
+        // 로드된 상태를 Saved State로 저장
+        _savedState.CopyFrom(_domain.State);
+
         Debug.Log("[CustomizingManager] 로드 완료");
         OnLoaded?.Invoke();
     }
@@ -95,6 +102,9 @@ public class CustomizingManager : MonoBehaviour
             Debug.LogError("[CustomizingManager] 초기화되지 않음");
             return;
         }
+
+        // Working State를 Saved State로 복사
+        _savedState.CopyFrom(_domain.State);
 
         var saveData = _domain.ToSaveData();
         saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
@@ -145,10 +155,40 @@ public class CustomizingManager : MonoBehaviour
         return SelectItem(item);
     }
 
+    // UI 열기: Working State = Saved State
+    public void OpenCustomizingUI()
+    {
+        if (_domain == null) return;
+
+        _domain.State.CopyFrom(_savedState);
+        Debug.Log("[CustomizingManager] 커스터마이징 UI 열림 - Working State 초기화");
+        OnLoaded?.Invoke();
+    }
+
+    // UI 닫기: Working State 버리고 Saved State로 복원
+    public void CloseCustomizingUI()
+    {
+        if (_domain == null) return;
+
+        _domain.State.CopyFrom(_savedState);
+        Debug.Log("[CustomizingManager] 커스터마이징 UI 닫힘 - Saved State로 복원");
+        OnLoaded?.Invoke();
+    }
+
+    // 리셋: Working State = Saved State
+    public void ResetToSaved()
+    {
+        if (_domain == null) return;
+
+        _domain.State.CopyFrom(_savedState);
+        Debug.Log("[CustomizingManager] Saved State로 리셋");
+        OnLoaded?.Invoke();
+    }
+
+    // 기존 호환성 유지
     public void ResetAll()
     {
-        _domain?.ResetToDefaults();
-        OnLoaded?.Invoke();
+        ResetToSaved();
     }
 
     // 현재 장착 아이템

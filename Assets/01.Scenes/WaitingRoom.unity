@@ -481,7 +481,7 @@ MonoBehaviour:
   _roomCodeCopyButton: {fileID: 1482588785}
   _roomCodeText: {fileID: 790507080}
   _readyButtonText: {fileID: 592739938}
-  _errorText: {fileID: 509892820}
+  _errorMessageText: {fileID: 0}
   _readyText: Ready
   _unreadyText: Unready
   _errorFadeDuration: 0.25
@@ -834,6 +834,8 @@ GameObject:
   - component: {fileID: 423399926}
   - component: {fileID: 423399925}
   - component: {fileID: 423399924}
+  - component: {fileID: 423399931}
+  - component: {fileID: 423399930}
   m_Layer: 6
   m_Name: SmallItem (2)
   m_TagString: Untagged
@@ -853,6 +855,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &423399925
@@ -975,6 +980,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &423399930
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423399923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &423399931
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 423399923}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 9
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &490504579
 GameObject:
   m_ObjectHideFlags: 0
@@ -1695,6 +1734,8 @@ GameObject:
   - component: {fileID: 615507358}
   - component: {fileID: 615507357}
   - component: {fileID: 615507356}
+  - component: {fileID: 615507363}
+  - component: {fileID: 615507362}
   m_Layer: 6
   m_Name: SmallItem (8)
   m_TagString: Untagged
@@ -1714,6 +1755,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &615507357
@@ -1836,6 +1880,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &615507362
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 615507355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &615507363
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 615507355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 8
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &685444772
 GameObject:
   m_ObjectHideFlags: 0
@@ -1850,6 +1928,8 @@ GameObject:
   - component: {fileID: 685444775}
   - component: {fileID: 685444774}
   - component: {fileID: 685444773}
+  - component: {fileID: 685444780}
+  - component: {fileID: 685444779}
   m_Layer: 6
   m_Name: SmallItem (4)
   m_TagString: Untagged
@@ -1869,6 +1949,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &685444774
@@ -1991,6 +2074,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &685444779
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 685444772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &685444780
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 685444772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 7
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &722474081
 GameObject:
   m_ObjectHideFlags: 0
@@ -2005,6 +2122,8 @@ GameObject:
   - component: {fileID: 722474084}
   - component: {fileID: 722474083}
   - component: {fileID: 722474082}
+  - component: {fileID: 722474089}
+  - component: {fileID: 722474088}
   m_Layer: 6
   m_Name: SmallItem (3)
   m_TagString: Untagged
@@ -2024,6 +2143,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &722474083
@@ -2146,6 +2268,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &722474088
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 722474081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &722474089
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 722474081}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 6
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &790507078
 GameObject:
   m_ObjectHideFlags: 0
@@ -3002,6 +3158,8 @@ GameObject:
   - component: {fileID: 1043445509}
   - component: {fileID: 1043445508}
   - component: {fileID: 1043445507}
+  - component: {fileID: 1043445514}
+  - component: {fileID: 1043445513}
   m_Layer: 6
   m_Name: SmallItem (5)
   m_TagString: Untagged
@@ -3021,6 +3179,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &1043445508
@@ -3143,6 +3304,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1043445513
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1043445506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &1043445514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1043445506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 5
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1084664284
 GameObject:
   m_ObjectHideFlags: 0
@@ -3372,6 +3567,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e72daeb62d0defc439dc5d1ab4b51919, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WaitingRoomClickManager
+  _playerTag: Player
 --- !u!4 &1129518049
 Transform:
   m_ObjectHideFlags: 0
@@ -3770,6 +3966,8 @@ GameObject:
   - component: {fileID: 1315913288}
   - component: {fileID: 1315913287}
   - component: {fileID: 1315913286}
+  - component: {fileID: 1315913293}
+  - component: {fileID: 1315913292}
   m_Layer: 6
   m_Name: SmallItem (1)
   m_TagString: Untagged
@@ -3789,6 +3987,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &1315913287
@@ -3911,6 +4112,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1315913292
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315913285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &1315913293
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1315913285}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 4
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1360175781
 GameObject:
   m_ObjectHideFlags: 0
@@ -4078,6 +4313,8 @@ GameObject:
   - component: {fileID: 1421477843}
   - component: {fileID: 1421477842}
   - component: {fileID: 1421477841}
+  - component: {fileID: 1421477848}
+  - component: {fileID: 1421477847}
   m_Layer: 6
   m_Name: SmallItem
   m_TagString: Untagged
@@ -4097,6 +4334,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &1421477842
@@ -4219,6 +4459,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1421477847
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1421477840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &1421477848
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1421477840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 3
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1427488508
 GameObject:
   m_ObjectHideFlags: 0
@@ -4233,6 +4507,8 @@ GameObject:
   - component: {fileID: 1427488511}
   - component: {fileID: 1427488510}
   - component: {fileID: 1427488509}
+  - component: {fileID: 1427488516}
+  - component: {fileID: 1427488515}
   m_Layer: 6
   m_Name: SmallItem (7)
   m_TagString: Untagged
@@ -4252,6 +4528,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &1427488510
@@ -4374,6 +4653,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1427488515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427488508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &1427488516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1427488508}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 2
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1482588783
 GameObject:
   m_ObjectHideFlags: 0
@@ -4983,6 +5296,8 @@ GameObject:
   - component: {fileID: 2054303214}
   - component: {fileID: 2054303213}
   - component: {fileID: 2054303212}
+  - component: {fileID: 2054303219}
+  - component: {fileID: 2054303218}
   m_Layer: 6
   m_Name: SmallItem (6)
   m_TagString: Untagged
@@ -5002,6 +5317,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 287f9230cd109ba4f8dc0f670351a54f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
+  _settleVelocityThreshold: 0.05
+  _settleAngularVelocityThreshold: 0.05
+  _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
 --- !u!54 &2054303213
@@ -5124,6 +5442,40 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2054303218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2054303211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+--- !u!114 &2054303219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2054303211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 1
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
