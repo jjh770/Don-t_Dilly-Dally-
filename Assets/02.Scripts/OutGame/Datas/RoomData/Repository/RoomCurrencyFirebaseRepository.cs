@@ -31,7 +31,7 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[RoomDataRepository] 불러오기 실패, null을 반환합니다. :" + e);
+            Debug.LogWarning("[RoomDataRepository] 불러오기 실패, null을 반환합니다. :" + e);
             return null;
         }
     }

@@ -11,6 +11,8 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     private string _currentAccount;
 
+    private string _playerID = "Player";
+
     public PlayerInformation PlayerInformation => _playerInformation;
 
     public event Action OnDataManagerReady;
@@ -25,7 +27,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     private async UniTask InitializeDataAsync()
     {
-        await LoadPlayerInformation("Player");
+        await LoadPlayerInformation(_playerID);
         IsReady = true;
         OnDataManagerReady?.Invoke();   
     }
@@ -84,6 +86,11 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         { 
             Debug.Log(e);
         }
+    }
+
+    public void SetPlayerID(string id)
+    {
+        _playerID = id;
     }
 
     public override void OnJoinedRoom()

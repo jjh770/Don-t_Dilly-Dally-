@@ -1,6 +1,6 @@
 using UnityEngine;
 
-[CreateAssetMenu(fileName = "APIKeyConfig", menuName = "Config/API Key Config")]
+[CreateAssetMenu(fileName = "KeyConfig", menuName = "Config/Key Config")]
 public class KeyConfig : ScriptableObject
 {
     [Header("Gemini")]
