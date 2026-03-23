@@ -156,7 +156,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -449,7 +448,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -551,7 +549,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -1122,7 +1119,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -1431,7 +1427,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -1637,7 +1632,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -2341,7 +2335,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -2536,7 +2529,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -2816,6 +2808,17 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1920193435 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8924349937187639143, guid: 78707dff5102169448a760e7d04c9820, type: 3}
+  m_PrefabInstance: {fileID: 6454173493105311219}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1932643846
 GameObject:
   m_ObjectHideFlags: 0
@@ -2853,7 +2856,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::InteractableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -3011,6 +3013,17 @@ MonoBehaviour:
   sceneViewId: 1
   InstantiationId: 0
   isRuntimeInstantiated: 0
+--- !u!114 &1965445182 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8491377214554227764, guid: 78707dff5102169448a760e7d04c9820, type: 3}
+  m_PrefabInstance: {fileID: 6454173493105311219}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &2483350805196522754
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3245,10 +3258,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 244347685147811187, guid: 78707dff5102169448a760e7d04c9820, type: 3}
-      propertyPath: _hintInterval
-      value: 0.1
-      objectReference: {fileID: 0}
     - target: {fileID: 1359893702010130576, guid: 78707dff5102169448a760e7d04c9820, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -3333,10 +3342,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: MiniGameCanvas
       objectReference: {fileID: 0}
-    - target: {fileID: 4626792671670247532, guid: 78707dff5102169448a760e7d04c9820, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
+    - target: {fileID: 7292901957862083940, guid: 78707dff5102169448a760e7d04c9820, type: 3}
+      propertyPath: _glowBorder2
+      value: 
+      objectReference: {fileID: 1920193435}
+    - target: {fileID: 7292901957862083940, guid: 78707dff5102169448a760e7d04c9820, type: 3}
+      propertyPath: _glowBorder3
+      value: 
+      objectReference: {fileID: 1965445182}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

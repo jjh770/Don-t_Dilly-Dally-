@@ -27,8 +27,21 @@ namespace DontDillyDally.MiniGame
         [Tooltip("알파 페이드 시간")]
         [SerializeField] private float _fadeDuration = 0.2f;
 
+        [Header("빛나는 테두리 (현재 방향키 강조)")]
+        [Tooltip("2번째 테두리 이미지 (알파 펄스)")]
+        [SerializeField] private Image _glowBorder2;
+        [Tooltip("3번째 테두리 이미지 (알파 펄스)")]
+        [SerializeField] private Image _glowBorder3;
+        [Tooltip("테두리 알파 펄스 한 사이클 시간 (초)")]
+        [SerializeField] private float _glowPulseDuration = 0.6f;
+
         [Header("타이머")]
         [SerializeField] private Image _radialTimer;
+
+        [Header("타이머 그라디언트 색상")]
+        [SerializeField] private Color _timerColorFull = new Color(0.4f, 1f, 0.2f);
+        [SerializeField] private Color _timerColorMid = new Color(1f, 0.6f, 0f);
+        [SerializeField] private Color _timerColorEmpty = new Color(1f, 0.2f, 0.2f);
 
         [Header("공통 결과 연출")]
         [SerializeField] private MiniGameResultEffect _resultEffect;
@@ -38,6 +51,7 @@ namespace DontDillyDally.MiniGame
         private int _lastPromptIndex = -1;
         private bool _slotsBuilt;
         private Tween _slideTween;
+        private Sequence _glowSequence;
 
         public void Initialize(IMiniGame game)
         {
@@ -45,12 +59,19 @@ namespace DontDillyDally.MiniGame
             _lastPromptIndex = -1;
             _slotsBuilt = false;
 
+            if (_radialTimer != null)
+            {
+                _radialTimer.fillAmount = 1f;
+                _radialTimer.color = _timerColorFull;
+            }
+
             if (_resultEffect != null)
             {
                 _resultEffect.Reset();
             }
 
             TryBuildSlots();
+            StartGlowPulse();
         }
 
         public void SetVisible(bool visible)
@@ -61,6 +82,7 @@ namespace DontDillyDally.MiniGame
             {
                 ClearSlots();
                 _slotsBuilt = false;
+                StopGlowPulse();
             }
         }
 
@@ -79,6 +101,8 @@ namespace DontDillyDally.MiniGame
 
         public void ShowResult(bool isSuccess)
         {
+            StopGlowPulse();
+
             if (_resultEffect != null)
             {
                 if (isSuccess)
@@ -165,9 +189,6 @@ namespace DontDillyDally.MiniGame
             _lastPromptIndex = currentIndex;
         }
 
-        /// <summary>
-        /// 컨테이너의 X 위치를 이동하여 targetIndex 슬롯이 중앙에 오게 한다.
-        /// </summary>
         private void SlideToIndex(int targetIndex)
         {
             KillSlideTween();
@@ -181,10 +202,6 @@ namespace DontDillyDally.MiniGame
                 .SetUpdate(true);
         }
 
-        /// <summary>
-        /// 클리어된 슬롯의 알파를 거리에 따라 페이드 처리한다.
-        /// distance 1 → 알파 0.75, distance 2 → 0.5, distance 3 → 0.25, distance 4+ → 0
-        /// </summary>
         private void UpdateClearedAlpha(int currentIndex)
         {
             for (int i = 0; i < currentIndex && i < _slots.Count; i++)
@@ -205,11 +222,93 @@ namespace DontDillyDally.MiniGame
             }
         }
 
+        // ── 빛나는 테두리 순차 펄스 ──
+        // 2번 0→1 → 3번 0→1 → 둘 다 0으로 리셋 → 무한 반복
+
+        private void StartGlowPulse()
+        {
+            StopGlowPulse();
+            if (_glowBorder2 == null && _glowBorder3 == null) return;
+
+            SetImageAlpha(_glowBorder2, 0f);
+            SetImageAlpha(_glowBorder3, 0f);
+
+            _glowSequence = DOTween.Sequence()
+                .SetUpdate(true)
+                .SetLoops(-1, LoopType.Restart);
+
+            // 2번 테두리: 0→1
+            if (_glowBorder2 != null)
+            {
+                _glowSequence.Append(
+                    DOTween.ToAlpha(() => _glowBorder2.color, c => _glowBorder2.color = c,
+                        1f, _glowPulseDuration).SetEase(Ease.InOutSine));
+            }
+
+            // 3번 테두리: 0→1 (2번 완료 후 시작)
+            if (_glowBorder3 != null)
+            {
+                _glowSequence.Append(
+                    DOTween.ToAlpha(() => _glowBorder3.color, c => _glowBorder3.color = c,
+                        1f, _glowPulseDuration).SetEase(Ease.InOutSine));
+            }
+
+            // 둘 다 동시에 0으로 페이드아웃
+            if (_glowBorder2 != null)
+            {
+                _glowSequence.Append(
+                    DOTween.ToAlpha(() => _glowBorder2.color, c => _glowBorder2.color = c,
+                        0f, _glowPulseDuration * 0.5f).SetEase(Ease.InOutSine));
+            }
+            if (_glowBorder3 != null)
+            {
+                // Join → 2번과 동시에 페이드아웃
+                _glowSequence.Join(
+                    DOTween.ToAlpha(() => _glowBorder3.color, c => _glowBorder3.color = c,
+                        0f, _glowPulseDuration * 0.5f).SetEase(Ease.InOutSine));
+            }
+        }
+
+        private void StopGlowPulse()
+        {
+            if (_glowSequence != null && _glowSequence.IsActive())
+            {
+                _glowSequence.Kill();
+                _glowSequence = null;
+            }
+
+            SetImageAlpha(_glowBorder2, 0f);
+            SetImageAlpha(_glowBorder3, 0f);
+        }
+
+        private static void SetImageAlpha(Image image, float alpha)
+        {
+            if (image == null) return;
+            Color c = image.color;
+            c.a = alpha;
+            image.color = c;
+        }
+
+        // ── 타이머 ──
+
         private void UpdateRadialTimer()
         {
             if (_radialTimer == null) return;
-            _radialTimer.fillAmount = _game.RemainingTimeRatio;
+
+            float timeRatio = _game.RemainingTimeRatio;
+            _radialTimer.fillAmount = timeRatio;
+            _radialTimer.color = EvaluateTimerColor(timeRatio);
         }
+
+        private Color EvaluateTimerColor(float t)
+        {
+            if (t >= 0.5f)
+                return Color.Lerp(_timerColorMid, _timerColorFull, (t - 0.5f) * 2f);
+            else
+                return Color.Lerp(_timerColorEmpty, _timerColorMid, t * 2f);
+        }
+
+        // ── 유틸 ──
 
         private void KillSlideTween()
         {
@@ -234,6 +333,7 @@ namespace DontDillyDally.MiniGame
 
         private void OnDestroy()
         {
+            StopGlowPulse();
             ClearSlots();
         }
     }

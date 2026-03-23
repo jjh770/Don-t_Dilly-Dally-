@@ -126,6 +126,7 @@ namespace DontDillyDally.MiniGame
             CursorPosition = 0f;
             _movingDirection = 1;
             _isRoundActive = true;
+            LastRoundResult = null;
 
             // 2라운드부터 속도 증가
             if (CurrentRound > 0)

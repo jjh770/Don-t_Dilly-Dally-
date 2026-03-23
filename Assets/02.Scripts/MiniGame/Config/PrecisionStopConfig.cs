@@ -7,28 +7,30 @@ namespace DontDillyDally.MiniGame
     {
         [Header("순발력 정지 설정")]
         [Tooltip("시도 횟수 (라운드)")]
-        [Range(1, 5)]
+        [Range(1, 10)]
         public int RoundCount = 3;
 
         [Tooltip("목표 구간의 너비 (0~1 기준). 작을수록 어려움")]
-        [Range(0.05f, 0.3f)]
+        [Range(0.03f, 0.6f)]
         public float TargetZoneWidth = 0.15f;
 
         [Tooltip("화살표 이동 속도 (0~1 기준 초당 이동량)")]
+        [Range(0.1f, 5f)]
         public float CursorSpeed = 0.8f;
 
         [Tooltip("라운드마다 속도 증가 배율")]
+        [Range(1f, 2f)]
         public float SpeedMultiplierPerRound = 1.15f;
 
         [Tooltip("정지 입력 키")]
         public KeyCode InputKey = KeyCode.Space;
 
-        [Tooltip("목표 구간 중심 배치 여백")]
-        [Range(0.1f, 0.3f)]
+        [Tooltip("목표 구간 중심 배치 여백 (양 끝으로부터의 최소 거리)")]
+        [Range(0.05f, 0.4f)]
         public float TargetZonePadding = 0.15f;
 
         [Tooltip("라운드 전환 대기 시간 (초)")]
-        [Range(0.2f, 2f)]
+        [Range(0.1f, 3f)]
         public float RoundTransitionDelay = 0.6f;
     }
 }
