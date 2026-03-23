@@ -25,15 +25,6 @@ namespace DontDillyDally.Data
         [FormerlySerializedAs("craftingDuration")]
         public float CraftingDuration;
 
-        [Header("표현")]
-        [Tooltip("결과 아이템의 표시 이름입니다.")]
-        [FormerlySerializedAs("displayName")]
-        public string DisplayName;
-
-        [Tooltip("결과 아이템에 사용할 선택적 프리팹 경로입니다.")]
-        [FormerlySerializedAs("prefabPath")]
-        public string PrefabPath;
-
         public bool IsMatch(ToolType tool, ActionType action)
         {
             if (RequiredAction == ActionType.None)

@@ -9,29 +9,31 @@ namespace DontDillyDally.Data
         Sterilized = 1
     }
 
-    // 트레이 월드 오브젝트가 보관하는 상태 컴포넌트입니다.
-    // 트레이 내부 데이터와 트레이 종류를 함께 관리합니다.
+    // 트레이의 도메인 상태만 관리하는 월드 오브젝트 컴포넌트입니다.
+    [RequireComponent(typeof(TrayItemSlots))]
     public class TrayItem : ItemObject, IPunInstantiateMagicCallback
     {
         [Header("트레이 상태")]
-        [Tooltip("이 트레이가 담고 있는 실제 제출 데이터")]
+        [Tooltip("이 트레이가 들고 있는 실제 제출 데이터입니다.")]
         public SubmittedTray TrayData = new SubmittedTray();
 
-        [SerializeField] private TrayKind _trayKind = TrayKind.Normal;
-
         public bool HasTrayData => TrayData != null;
-        public TrayKind Kind => _trayKind;
-        public bool IsSterilizedTray => _trayKind == TrayKind.Sterilized;
+        public TrayKind Kind => TrayData != null ? TrayData.Kind : TrayKind.Normal;
+        public bool IsSterilizedTray => Kind == TrayKind.Sterilized;
+        public TrayItemSlots Slots { get; private set; }
+
+        protected override void Awake()
+        {
+            base.Awake();
+            Slots = GetComponent<TrayItemSlots>();
+        }
 
         public override void Initialize(string displayName, GameObject modelPrefab = null)
         {
             InitializeTray(displayName, modelPrefab, isSterilized: false);
         }
 
-        public void InitializeTray(
-            string displayName,
-            GameObject modelPrefab = null,
-            bool isSterilized = false)
+        public void InitializeTray(string displayName, GameObject modelPrefab = null, bool isSterilized = false)
         {
             base.Initialize(displayName, modelPrefab);
             ResetTrayData(isSterilized);
@@ -40,30 +42,28 @@ namespace DontDillyDally.Data
         public void EnsureTrayData()
         {
             if (TrayData == null)
+            {
                 TrayData = new SubmittedTray();
+            }
         }
 
         public void ResetTrayData(bool isSterilized = false)
         {
             TrayData = new SubmittedTray
             {
-                IsSterilized = isSterilized
+                Kind = isSterilized ? TrayKind.Sterilized : TrayKind.Normal
             };
-
-            _trayKind = isSterilized ? TrayKind.Sterilized : TrayKind.Normal;
         }
 
         public void LoadTrayData(SubmittedTray trayData)
         {
             TrayData = trayData ?? new SubmittedTray();
-            _trayKind = TrayData.IsSterilized ? TrayKind.Sterilized : TrayKind.Normal;
         }
 
         public void SetTrayKind(TrayKind trayKind)
         {
-            _trayKind = trayKind;
             EnsureTrayData();
-            TrayData.IsSterilized = trayKind == TrayKind.Sterilized;
+            TrayData.SetTrayKind(trayKind);
         }
 
         public void SetTrayKindAndSync(TrayKind trayKind)
@@ -72,7 +72,9 @@ namespace DontDillyDally.Data
 
             PhotonView photonView = GetComponent<PhotonView>();
             if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
+            {
                 return;
+            }
 
             photonView.RPC(nameof(RPC_SetTrayKind), RpcTarget.Others, (int)trayKind);
         }
@@ -91,7 +93,9 @@ namespace DontDillyDally.Data
         private void RPC_SetTrayKind(int trayKindValue)
         {
             if (!System.Enum.IsDefined(typeof(TrayKind), trayKindValue))
+            {
                 return;
+            }
 
             SetTrayKind((TrayKind)trayKindValue);
         }
@@ -106,12 +110,6 @@ namespace DontDillyDally.Data
         {
             EnsureTrayData();
             return TrayData.TakeLastItem();
-        }
-
-        public void ClearItems()
-        {
-            EnsureTrayData();
-            TrayData.ClearItems();
         }
 
         public SubmittedTray GetTraySnapshot()
