@@ -9,6 +9,7 @@ using UnityEngine;
 public class GoogleAuthManager : MonoBehaviour
 {
     [SerializeField] private KeyConfig _keyConfig;
+    [SerializeField] private float _timeOutTime = 1.0f;
 
     private const string REDIRECT_URI = "http://localhost:5000/callback";
     private const string AUTH_URL = "https://accounts.google.com/o/oauth2/auth";
@@ -73,7 +74,7 @@ public class GoogleAuthManager : MonoBehaviour
         try
         {
             var contextTask = _httpListener.GetContextAsync();
-            var timeoutTask = Task.Delay(TimeSpan.FromMinutes(2), cancellationToken);
+            var timeoutTask = Task.Delay(TimeSpan.FromMinutes(_timeOutTime), cancellationToken);
 
             // ✅ 취소되면 timeoutTask가 OperationCanceledException을 throw
             var completed = await Task.WhenAny(contextTask, timeoutTask);
@@ -82,7 +83,10 @@ public class GoogleAuthManager : MonoBehaviour
             {
                 // 타임아웃이 취소로 인한 것인지 확인
                 cancellationToken.ThrowIfCancellationRequested();
-                throw new TimeoutException("로그인 시간이 초과되었습니다.");
+
+                Debug.Log("로그인 시간이 초과되었습니다.");
+                _cts.Cancel(); // httpListener.Stop()이 Register에 등록되어 있으므로 정리까지 처리됨
+                return null;
             }
 
             var context = await contextTask;
