@@ -20,7 +20,7 @@ public class UI_LoginButton : MonoBehaviour
         _loginButton.onClick.AddListener(OnLogInButtonClick);
         _cancelButton.onClick.AddListener(OnCancelButtonButtonClick);
         ShowLoginUI();
-        StopRoading();
+        StopLoading();
     }
 
     private void OnCancelButtonButtonClick()
@@ -35,18 +35,18 @@ public class UI_LoginButton : MonoBehaviour
 
     private async UniTask Login()
     {
-        StartRoading();
+        StartLoading();
         ShowCancelUI();
         await _authManager.StartGoogleLogin();
         ShowLoginUI();
-        StopRoading();
+        StopLoading();
     }
 
-    private void StartRoading()
+    private void StartLoading()
     {
         _loadingEffect.SetActive(true);
     }
-    private void StopRoading()
+    private void StopLoading()
     {
         _loadingEffect.SetActive(false);
     }
