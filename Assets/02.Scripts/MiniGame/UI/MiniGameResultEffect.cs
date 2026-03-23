@@ -4,10 +4,8 @@ using UnityEngine;
 
 namespace DontDillyDally.MiniGame
 {
-    /// <summary>
-    /// 모든 미니게임에서 재활용 가능한 성공/실패 결과 연출 컴포넌트.
-    /// MiniGameCanvas 프리팹의 공통 영역에 하나만 배치한다.
-    /// </summary>
+    // 모든 미니게임에서 재활용 가능한 성공/실패 결과 연출 컴포넌트.
+    // MiniGameCanvas 프리팹의 공통 영역에 하나만 배치한다.
     public sealed class MiniGameResultEffect : MonoBehaviour
     {
         [Header("파티클")]

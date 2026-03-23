@@ -94,7 +94,10 @@ namespace DontDillyDally.MiniGame
 
         public void UpdateView()
         {
-            if (_game == null || _game.CurrentState != EMiniGameState.Playing) return;
+            if (_game == null || _game.CurrentState != EMiniGameState.Playing)
+            {
+                return;
+            }
 
             if (!_slotsBuilt)
             {
@@ -112,19 +115,33 @@ namespace DontDillyDally.MiniGame
             if (_resultEffect != null)
             {
                 if (isSuccess)
+                {
                     _resultEffect.PlaySuccess();
+                }
                 else
+                {
                     _resultEffect.PlayFail();
+                }
             }
         }
 
         private void TryBuildSlots()
         {
-            if (_slotsBuilt) return;
-            if (_game == null || _slotPrefab == null || _slotContainer == null) return;
+            if (_slotsBuilt)
+            {
+                return;
+            }
+
+            if (_game == null || _slotPrefab == null || _slotContainer == null)
+            {
+                return;
+            }
 
             var prompts = _game.Prompts;
-            if (prompts == null) return;
+            if (prompts == null)
+            {
+                return;
+            }
 
             ClearSlots();
 
@@ -171,7 +188,10 @@ namespace DontDillyDally.MiniGame
         private void UpdateSlotStates()
         {
             int currentIndex = _game.CurrentPromptIndex;
-            if (currentIndex == _lastPromptIndex) return;
+            if (currentIndex == _lastPromptIndex)
+            {
+                return;
+            }
 
             // 이전 슬롯 → Cleared 처리.
             if (_lastPromptIndex >= 0 && _lastPromptIndex < _slots.Count)
@@ -240,7 +260,10 @@ namespace DontDillyDally.MiniGame
         private void StartGlowPulse()
         {
             StopGlowPulse();
-            if (_glowBorder2 == null && _glowBorder3 == null) return;
+            if (_glowBorder2 == null && _glowBorder3 == null)
+            {
+                return;
+            }
 
             SetImageAlpha(_glowBorder2, 0f);
             SetImageAlpha(_glowBorder3, 0f);
@@ -301,7 +324,10 @@ namespace DontDillyDally.MiniGame
 
         private void PlayGlowPunch()
         {
-            if (_glowBorderRoot == null) return;
+            if (_glowBorderRoot == null)
+            {
+                return;
+            }
 
             DOTween.Kill(_glowBorderRoot);
             _glowBorderRoot.localScale = Vector3.one;
@@ -312,7 +338,11 @@ namespace DontDillyDally.MiniGame
 
         private static void SetImageAlpha(Image image, float alpha)
         {
-            if (image == null) return;
+            if (image == null)
+            {
+                return;
+            }
+
             Color c = image.color;
             c.a = alpha;
             image.color = c;
@@ -322,7 +352,10 @@ namespace DontDillyDally.MiniGame
 
         private void UpdateRadialTimer()
         {
-            if (_radialTimer == null) return;
+            if (_radialTimer == null)
+            {
+                return;
+            }
 
             float timeRatio = _game.RemainingTimeRatio;
             _radialTimer.fillAmount = timeRatio;
@@ -332,9 +365,13 @@ namespace DontDillyDally.MiniGame
         private Color EvaluateTimerColor(float t)
         {
             if (t >= 0.5f)
+            {
                 return Color.Lerp(_timerColorMid, _timerColorFull, (t - 0.5f) * 2f);
+            }
             else
+            {
                 return Color.Lerp(_timerColorEmpty, _timerColorMid, t * 2f);
+            }
         }
 
         // ── 유틸 ──

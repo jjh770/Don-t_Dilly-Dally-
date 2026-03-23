@@ -46,12 +46,13 @@ namespace DontDillyDally.MiniGame
             }
         }
 
-        /// <summary>
-        /// 알파값을 DOTween으로 부드럽게 전환한다.
-        /// </summary>
+        // 알파값을 DOTween으로 부드럽게 전환한다.
         public void FadeAlpha(float targetAlpha, float duration)
         {
-            if (_canvasGroup == null) return;
+            if (_canvasGroup == null)
+            {
+                return;
+            }
 
             if (_fadeTween != null && _fadeTween.IsActive())
             {
@@ -74,7 +75,11 @@ namespace DontDillyDally.MiniGame
 
         public void SetState(ESlotState state)
         {
-            if (_state == state) return;
+            if (_state == state)
+            {
+                return;
+            }
+
             _state = state;
 
             switch (state)

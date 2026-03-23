@@ -64,7 +64,10 @@ namespace DontDillyDally.MiniGame
         // 매 프레임마다 입력과 시간 체크
         public void Tick(float deltaTime)
         {
-            if (CurrentState != EMiniGameState.Playing) return;
+            if (CurrentState != EMiniGameState.Playing)
+            {
+                return;
+            }
 
             _elapsedTime += deltaTime;
 
@@ -110,7 +113,11 @@ namespace DontDillyDally.MiniGame
         // 게임 실패 처리
         public void Abort()
         {
-            if (CurrentState != EMiniGameState.Playing) return;
+            if (CurrentState != EMiniGameState.Playing)
+            {
+                return;
+            }
+
             CurrentState = EMiniGameState.Failed;
             OnCompleted?.Invoke(new MiniGameResult(GameType, false, _elapsedTime));
         }

@@ -6,7 +6,7 @@ namespace DontDillyDally.MiniGame
         void UpdateView();
         void SetVisible(bool visible);
 
-        /// <summary>성공/실패 결과를 화면에 표시 (Launcher의 딜레이 동안 보여줌)</summary>
+        // 성공/실패 결과를 화면에 표시 (Launcher의 딜레이 동안 보여줌)
         void ShowResult(bool isSuccess);
     }
 }

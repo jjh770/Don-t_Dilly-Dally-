@@ -73,7 +73,10 @@ namespace DontDillyDally.MiniGame
 
         public void UpdateView()
         {
-            if (_game == null || _game.CurrentState != EMiniGameState.Playing) return;
+            if (_game == null || _game.CurrentState != EMiniGameState.Playing)
+            {
+                return;
+            }
 
             // 게이지 바 업데이트
             if (_gaugeBarFill != null)
@@ -113,9 +116,13 @@ namespace DontDillyDally.MiniGame
             if (_resultEffect != null)
             {
                 if (isSuccess)
+                {
                     _resultEffect.PlaySuccess();
+                }
                 else
+                {
                     _resultEffect.PlayFail();
+                }
             }
         }
 
@@ -137,9 +144,20 @@ namespace DontDillyDally.MiniGame
         // Idle(1번) ↔ Pressed+Effect(2,3번) 토글.
         private void SetSpaceBarHint(bool pressed)
         {
-            if (_spaceBarIdle != null) _spaceBarIdle.SetActive(!pressed);
-            if (_spaceBarPressed != null) _spaceBarPressed.SetActive(pressed);
-            if (_spaceBarEffect != null) _spaceBarEffect.SetActive(pressed);
+            if (_spaceBarIdle != null)
+            {
+                _spaceBarIdle.SetActive(!pressed);
+            }
+
+            if (_spaceBarPressed != null)
+            {
+                _spaceBarPressed.SetActive(pressed);
+            }
+
+            if (_spaceBarEffect != null)
+            {
+                _spaceBarEffect.SetActive(pressed);
+            }
         }
 
         // 0~1 progress를 빨강 → 주황 → 연두 그라디언트로 변환.

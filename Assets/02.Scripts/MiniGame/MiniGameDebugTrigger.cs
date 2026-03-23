@@ -11,7 +11,10 @@ namespace DontDillyDally.MiniGame
 
         private void Update()
         {
-            if (_launcher == null) return;
+            if (_launcher == null)
+            {
+                return;
+            }
 
             if (Input.GetKeyDown(KeyCode.F1))
             {

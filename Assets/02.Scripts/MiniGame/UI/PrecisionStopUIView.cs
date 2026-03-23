@@ -89,7 +89,10 @@ namespace DontDillyDally.MiniGame
 
         public void UpdateView()
         {
-            if (_game == null) return;
+            if (_game == null)
+            {
+                return;
+            }
 
             UpdateCursorPosition();
             UpdateTargetZone();
@@ -100,7 +103,10 @@ namespace DontDillyDally.MiniGame
 
         private void UpdateCursorPosition()
         {
-            if (_cursor == null || _gaugeBar == null) return;
+            if (_cursor == null || _gaugeBar == null)
+            {
+                return;
+            }
 
             float xPos = _game.CursorPosition * _gaugeWidth - _gaugeWidth * 0.5f;
             _cursor.anchoredPosition = new Vector2(xPos, _cursor.anchoredPosition.y);
@@ -108,7 +114,10 @@ namespace DontDillyDally.MiniGame
 
         private void UpdateTargetZone()
         {
-            if (_targetZone == null || _gaugeBar == null) return;
+            if (_targetZone == null || _gaugeBar == null)
+            {
+                return;
+            }
 
             float center = _game.TargetZoneCenter;
             float width = _game.TargetZoneWidth;
@@ -122,7 +131,10 @@ namespace DontDillyDally.MiniGame
 
         private void UpdateRadialTimer()
         {
-            if (_radialTimer == null) return;
+            if (_radialTimer == null)
+            {
+                return;
+            }
 
             float timeRatio = _game.RemainingTimeRatio;
             _radialTimer.fillAmount = timeRatio;
@@ -131,16 +143,26 @@ namespace DontDillyDally.MiniGame
 
         private void UpdateRoundText()
         {
-            if (_roundText == null) return;
+            if (_roundText == null)
+            {
+                return;
+            }
+
             _roundText.text = $"{_game.DisplayRound} / {_game.TotalRounds}";
         }
 
         private void UpdateFeedback()
         {
-            if (_feedbackText == null) return;
+            if (_feedbackText == null)
+            {
+                return;
+            }
 
             bool? currentResult = _game.LastRoundResult;
-            if (currentResult == _lastRoundResult) return;
+            if (currentResult == _lastRoundResult)
+            {
+                return;
+            }
 
             _lastRoundResult = currentResult;
 
@@ -150,7 +172,9 @@ namespace DontDillyDally.MiniGame
                 _feedbackText.color = _hitColor;
 
                 if (_targetZoneImage != null)
+                {
                     _targetZoneImage.color = _hitColor;
+                }
 
                 PlayHitShake();
             }
@@ -160,7 +184,9 @@ namespace DontDillyDally.MiniGame
                 _feedbackText.color = _missColor;
 
                 if (_targetZoneImage != null)
+                {
                     _targetZoneImage.color = _missColor;
+                }
 
                 PlayMissShake();
             }
@@ -169,18 +195,27 @@ namespace DontDillyDally.MiniGame
                 _feedbackText.text = "";
 
                 if (_targetZoneImage != null)
+                {
                     _targetZoneImage.color = _defaultZoneColor;
+                }
             }
         }
 
         public void ShowResult(bool isSuccess)
         {
-            if (_resultEffect == null) return;
+            if (_resultEffect == null)
+            {
+                return;
+            }
 
             if (isSuccess)
+            {
                 _resultEffect.PlaySuccess();
+            }
             else
+            {
                 _resultEffect.PlayFail();
+            }
         }
 
         // ── DOTween 라운드 피드백 ──
@@ -191,7 +226,10 @@ namespace DontDillyDally.MiniGame
         private void PlayHitShake()
         {
             RectTransform target = ShakeTarget;
-            if (target == null) return;
+            if (target == null)
+            {
+                return;
+            }
 
             KillShakeTween();
             target.localScale = Vector3.one;
@@ -204,7 +242,10 @@ namespace DontDillyDally.MiniGame
         private void PlayMissShake()
         {
             RectTransform target = ShakeTarget;
-            if (target == null) return;
+            if (target == null)
+            {
+                return;
+            }
 
             KillShakeTween();
 
@@ -227,9 +268,13 @@ namespace DontDillyDally.MiniGame
         private Color EvaluateTimerColor(float t)
         {
             if (t >= 0.5f)
+            {
                 return Color.Lerp(_timerColorMid, _timerColorFull, (t - 0.5f) * 2f);
+            }
             else
+            {
                 return Color.Lerp(_timerColorEmpty, _timerColorMid, t * 2f);
+            }
         }
 
         private void OnDestroy()
