@@ -28,12 +28,18 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private float _fadeDuration = 0.2f;
 
         [Header("빛나는 테두리 (현재 방향키 강조)")]
+        [Tooltip("테두리 최상위 오브젝트 (정답 시 띠용 효과)")]
+        [SerializeField] private RectTransform _glowBorderRoot;
         [Tooltip("2번째 테두리 이미지 (알파 펄스)")]
         [SerializeField] private Image _glowBorder2;
         [Tooltip("3번째 테두리 이미지 (알파 펄스)")]
         [SerializeField] private Image _glowBorder3;
         [Tooltip("테두리 알파 펄스 한 사이클 시간 (초)")]
         [SerializeField] private float _glowPulseDuration = 0.6f;
+        [Tooltip("정답 시 띠용 크기")]
+        [SerializeField] private float _glowPunchScale = 0.25f;
+        [Tooltip("정답 시 띠용 시간")]
+        [SerializeField] private float _glowPunchDuration = 0.25f;
 
         [Header("타이머")]
         [SerializeField] private Image _radialTimer;
@@ -172,6 +178,12 @@ namespace DontDillyDally.MiniGame
             {
                 bool wasSuccess = _game.LastInputResult == true;
                 _slots[_lastPromptIndex].SetState(wasSuccess ? ESlotState.Cleared : ESlotState.Failed);
+
+                // 정답 시 테두리 띠용
+                if (wasSuccess)
+                {
+                    PlayGlowPunch();
+                }
             }
 
             // 현재 슬롯 → Current 처리.
@@ -277,8 +289,25 @@ namespace DontDillyDally.MiniGame
                 _glowSequence = null;
             }
 
+            if (_glowBorderRoot != null)
+            {
+                DOTween.Kill(_glowBorderRoot);
+                _glowBorderRoot.localScale = Vector3.one;
+            }
+
             SetImageAlpha(_glowBorder2, 0f);
             SetImageAlpha(_glowBorder3, 0f);
+        }
+
+        private void PlayGlowPunch()
+        {
+            if (_glowBorderRoot == null) return;
+
+            DOTween.Kill(_glowBorderRoot);
+            _glowBorderRoot.localScale = Vector3.one;
+            _glowBorderRoot
+                .DOPunchScale(Vector3.one * _glowPunchScale, _glowPunchDuration, 8, 0.5f)
+                .SetUpdate(true);
         }
 
         private static void SetImageAlpha(Image image, float alpha)
