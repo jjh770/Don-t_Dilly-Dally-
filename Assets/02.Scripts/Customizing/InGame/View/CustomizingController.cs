@@ -42,6 +42,12 @@ public class CustomizingController : MonoBehaviour
     private void Start()
     {
         SubscribeToManager();
+
+        // 매니저가 이미 준비되어 있으면 바로 적용 (클론된 플레이어용)
+        if (CustomizingManager.Instance != null && CustomizingManager.Instance.Domain != null)
+        {
+            ApplyAllFromManager();
+        }
     }
 
     private void OnDestroy()
