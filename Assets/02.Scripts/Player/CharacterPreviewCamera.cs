@@ -5,11 +5,10 @@ public class CharacterPreviewCamera : MonoBehaviour
     public static CharacterPreviewCamera Instance { get; private set; }
 
     [Header("Follow 세팅")]
-    [SerializeField] private Vector3 _offset = new Vector3(0f, 2f, -5f);
-    [SerializeField] private float _smoothSpeed = 10f;
+    [SerializeField] private Vector3 _offset = new Vector3(0f, 2f, 7.1f);
 
     [Header("Look 세팅")]
-    [SerializeField] private Vector3 _lookOffset = new Vector3(0f, 1f, 0f);
+    [SerializeField] private Vector3 _lookOffset = new Vector3(0f, 0.9f, 0f);
 
     private Transform _target;
 
@@ -30,9 +29,7 @@ public class CharacterPreviewCamera : MonoBehaviour
     {
         if (_target == null) return;
 
-        Vector3 desiredPosition = _target.position + _target.rotation * _offset;
-        transform.position = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.deltaTime);
-
+        transform.position = _target.position + _target.rotation * _offset;
         transform.LookAt(_target.position + _lookOffset);
     }
 
