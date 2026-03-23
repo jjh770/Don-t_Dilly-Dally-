@@ -3,8 +3,6 @@ using UnityEngine;
 
 public class DataBootstrapper : MonoBehaviour
 {
-    [SerializeField] private RoomDataManager _roomDataManager;
-    [SerializeField] private PlayerDataManager _playerDataManager;
 
     private void Awake()
     {
@@ -17,8 +15,8 @@ public class DataBootstrapper : MonoBehaviour
         IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository(FirebaseInitializer.Instance.Database);
         IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository(FirebaseInitializer.Instance.Database);
 
-        _roomDataManager.Initialized(roomDataRepository);
-        _playerDataManager.Initialized(playerRepository);
+        RoomDataManager.Instance.Initialized(roomDataRepository);
+        PlayerDataManager.Instance.Initialized(playerRepository);
 
         Debug.Log("[DataBootstrapper] Data 조회 가능");
     }
