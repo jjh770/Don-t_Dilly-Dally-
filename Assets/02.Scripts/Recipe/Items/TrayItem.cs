@@ -55,6 +55,26 @@ namespace DontDillyDally.Data
             };
         }
 
+        public void ResetTrayDataAndSync(bool isSterilized = false)
+        {
+            ResetTrayData(isSterilized);
+
+            PhotonView photonView = GetComponent<PhotonView>();
+            if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
+            {
+                return;
+            }
+
+            photonView.RPC(nameof(RPC_ResetTrayData), RpcTarget.Others, isSterilized);
+        }
+
+        public void ClearContentsAndSync()
+        {
+            bool isSterilized = IsSterilizedTray;
+            Slots?.ClearStoredItems();
+            ResetTrayDataAndSync(isSterilized);
+        }
+
         public void LoadTrayData(SubmittedTray trayData)
         {
             TrayData = trayData ?? new SubmittedTray();
@@ -98,6 +118,12 @@ namespace DontDillyDally.Data
             }
 
             SetTrayKind((TrayKind)trayKindValue);
+        }
+
+        [PunRPC]
+        private void RPC_ResetTrayData(bool isSterilized)
+        {
+            ResetTrayData(isSterilized);
         }
 
         public bool TryAddItem(CraftedItem item)

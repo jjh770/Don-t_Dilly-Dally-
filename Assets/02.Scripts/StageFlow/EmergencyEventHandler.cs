@@ -19,6 +19,8 @@ namespace DontDillyDally.StageFlow
 
         private float _timeSinceLastRandomCheck;
 
+        public float FailHealthPenalty => _failHealthPenalty;
+
         public bool ShouldTriggerOnRecipeFail()
         {
             return UnityEngine.Random.value <= _recipeFailChance;
@@ -40,25 +42,37 @@ namespace DontDillyDally.StageFlow
             _timeSinceLastRandomCheck = 0f;
         }
 
+        public MiniGameType GetRandomMiniGameType()
+        {
+            return SelectMiniGameType();
+        }
+
+        public float GetPenaltyByMiniGameResult(bool isSuccess)
+        {
+            return isSuccess ? 0f : _failHealthPenalty;
+        }
+
         public async UniTask<float> ExecuteEmergency(
             MiniGameLauncher launcher,
             CancellationToken ct)
         {
             MiniGameType type = SelectMiniGameType();
+            return await ExecuteEmergency(launcher, type, ct);
+        }
 
+        public async UniTask<float> ExecuteEmergency(
+            MiniGameLauncher launcher,
+            MiniGameType type,
+            CancellationToken ct)
+        {
             var tcs = new UniTaskCompletionSource<MiniGameResult>();
             using (ct.Register(() => tcs.TrySetCanceled()))
             {
                 launcher.Launch(type, result => tcs.TrySetResult(result));
                 MiniGameResult result = await tcs.Task;
 
-                if (!result.IsSuccess)
-                {
-                    return _failHealthPenalty;
-                }
+                return GetPenaltyByMiniGameResult(result.IsSuccess);
             }
-
-            return 0f;
         }
 
         private MiniGameType SelectMiniGameType()

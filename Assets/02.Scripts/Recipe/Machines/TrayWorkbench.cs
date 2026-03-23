@@ -168,14 +168,24 @@ namespace DontDillyDally.Data
         public SubmittedTray TakeTrayAndReset()
         {
             SubmittedTray trayToSubmit = TakeTraySnapshot();
-
-            TrayItem trayItem = GetResolvedTrayItem();
-            if (trayItem != null)
+            if (trayToSubmit == null)
             {
-                trayItem.ResetTrayData();
+                return null;
             }
 
+            ClearSubmittedTray();
             return trayToSubmit;
+        }
+
+        public void ClearSubmittedTray()
+        {
+            TrayItem trayItem = GetResolvedTrayItem();
+            if (trayItem == null)
+            {
+                return;
+            }
+
+            trayItem.ClearContentsAndSync();
         }
 
         private TrayItem GetResolvedTrayItem()

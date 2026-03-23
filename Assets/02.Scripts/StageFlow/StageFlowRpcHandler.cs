@@ -1,5 +1,6 @@
 using System;
 using DontDillyDally.Data;
+using DontDillyDally.MiniGame;
 using Photon.Pun;
 using UniRx;
 using UnityEngine;
@@ -30,7 +31,16 @@ namespace DontDillyDally.StageFlow
 
         // ── 이벤트 (StageFlowManager가 구독) ────────────────────────
         public event Action<EGameOverReason> OnGameOverReceived;
-        public event Action<SubmittedTray> OnTraySubmittedReceived;
+        public event Action<SubmittedTray, int, int> OnTraySubmittedReceived; // tray, trayViewId, submitterActorNumber
+
+        // ── 미니게임 이벤트 ─────────────────────────────────────────
+        public event Action<MiniGameType> OnMiniGameRequested;
+        public event Action<bool> OnMiniGameResultReceived;
+
+        // ── ACK 이벤트 (마스터가 구독) ───────────────────────────────
+        public event Action<int> OnStageDataAckReceived; // actorNumber
+        public event Action<int> OnSurgeonAckReceived; // actorNumber
+        public event Action<int> OnGameOverAckReceived; // actorNumber
 
         private bool _isGameOver;
 
@@ -79,6 +89,10 @@ namespace DontDillyDally.StageFlow
         public void SetRecipeIndex(int index)
         {
             _currentRecipeIndex.Value = index;
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC(nameof(RPC_SyncRecipeIndex), RpcTarget.Others, index);
+            }
         }
 
         public void SetSurgeon(int actorNumber)
@@ -114,7 +128,7 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        public void SubmitTray(SubmittedTray tray)
+        public void SubmitTray(SubmittedTray tray, int trayViewId = -1)
         {
             if (tray == null)
             {
@@ -124,12 +138,27 @@ namespace DontDillyDally.StageFlow
 
             if (PhotonNetwork.IsMasterClient)
             {
-                OnTraySubmittedReceived?.Invoke(tray);
+                OnTraySubmittedReceived?.Invoke(tray, trayViewId, PhotonNetwork.LocalPlayer.ActorNumber);
                 return;
             }
 
             string json = JsonUtility.ToJson(tray);
-            photonView.RPC(nameof(RPC_SubmitTray), RpcTarget.MasterClient, json);
+            photonView.RPC(nameof(RPC_SubmitTray), RpcTarget.MasterClient, json, trayViewId);
+        }
+
+        // ── 미니게임 RPC 전송 ─────────────────────────────────────────
+
+        public void RequestMiniGame(int targetActorNumber, MiniGameType type)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC(nameof(RPC_RequestMiniGame), RpcTarget.Others, targetActorNumber, (int)type);
+            }
+        }
+
+        public void SendMiniGameResult(bool success)
+        {
+            photonView.RPC(nameof(RPC_MiniGameResult), RpcTarget.MasterClient, success);
         }
 
         // ================================================================
@@ -162,9 +191,24 @@ namespace DontDillyDally.StageFlow
         }
 
         [PunRPC]
+        private void RPC_SyncRecipeIndex(int index)
+        {
+            _currentRecipeIndex.Value = index;
+        }
+
+        [PunRPC]
         private void RPC_SetSurgeon(int actorNumber)
         {
             _surgeonActorNumber.Value = actorNumber;
+            photonView.RPC(nameof(RPC_SurgeonAck), RpcTarget.MasterClient);
+        }
+
+        [PunRPC]
+        private void RPC_SurgeonAck(PhotonMessageInfo info)
+        {
+            int actor = info.Sender?.ActorNumber ?? -1;
+            Debug.Log($"[StageFlow] [RPC] 집도의 ACK 수신: Actor {actor}");
+            OnSurgeonAckReceived?.Invoke(actor);
         }
 
         [PunRPC]
@@ -173,9 +217,20 @@ namespace DontDillyDally.StageFlow
             var stageData = JsonUtility.FromJson<StageData>(json);
             Debug.Log($"[StageFlow] [RPC] 스테이지 데이터 수신: 환자 {stageData.Patients.Count}명");
             OnStageDataReceived?.Invoke(stageData);
+
+            // 마스터에게 수신 확인 전송
+            photonView.RPC(nameof(RPC_StageDataAck), RpcTarget.MasterClient);
         }
 
         public event Action<StageData> OnStageDataReceived;
+
+        [PunRPC]
+        private void RPC_StageDataAck(PhotonMessageInfo info)
+        {
+            int actorNumber = info.Sender?.ActorNumber ?? -1;
+            Debug.Log($"[StageFlow] [RPC] 스테이지 데이터 ACK 수신: Actor {actorNumber}");
+            OnStageDataAckReceived?.Invoke(actorNumber);
+        }
 
         [PunRPC]
         private void RPC_GameOver(int reason)
@@ -186,6 +241,15 @@ namespace DontDillyDally.StageFlow
             Debug.Log($"[StageFlow] [RPC] 게임 오버 수신: {(EGameOverReason)reason}");
             _currentPhase.Value = EStagePhase.GameOver;
             OnGameOverReceived?.Invoke((EGameOverReason)reason);
+            photonView.RPC(nameof(RPC_GameOverAck), RpcTarget.MasterClient);
+        }
+
+        [PunRPC]
+        private void RPC_GameOverAck(PhotonMessageInfo info)
+        {
+            int actor = info.Sender?.ActorNumber ?? -1;
+            Debug.Log($"[StageFlow] [RPC] 게임 오버 ACK 수신: Actor {actor}");
+            OnGameOverAckReceived?.Invoke(actor);
         }
 
         [PunRPC]
@@ -194,12 +258,8 @@ namespace DontDillyDally.StageFlow
             EventManager.Instance?.Publish(EventType.PatientCritical, "긴급 처치가 필요합니다!");
         }
 
-        // ================================================================
-        //  상태 리셋
-        // ================================================================
-
         [PunRPC]
-        private void RPC_SubmitTray(string json, PhotonMessageInfo info)
+        private void RPC_SubmitTray(string json, int trayViewId, PhotonMessageInfo info)
         {
             SubmittedTray tray = JsonUtility.FromJson<SubmittedTray>(json);
             if (tray == null)
@@ -208,9 +268,32 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            Debug.Log($"[StageFlow] [RPC] 트레이 제출 수신: Actor {info.Sender?.ActorNumber ?? -1}");
-            OnTraySubmittedReceived?.Invoke(tray);
+            int submitterActorNumber = info.Sender?.ActorNumber ?? -1;
+            Debug.Log($"[StageFlow] [RPC] 트레이 제출 수신: Actor {submitterActorNumber}");
+            OnTraySubmittedReceived?.Invoke(tray, trayViewId, submitterActorNumber);
         }
+
+        // ── 미니게임 RPC 수신 ─────────────────────────────────────────
+
+        [PunRPC]
+        private void RPC_RequestMiniGame(int targetActorNumber, int miniGameType)
+        {
+            if (PhotonNetwork.LocalPlayer.ActorNumber != targetActorNumber) return;
+
+            Debug.Log($"[StageFlow] [RPC] 미니게임 요청 수신: {(MiniGameType)miniGameType}");
+            OnMiniGameRequested?.Invoke((MiniGameType)miniGameType);
+        }
+
+        [PunRPC]
+        private void RPC_MiniGameResult(bool success)
+        {
+            Debug.Log($"[StageFlow] [RPC] 미니게임 결과 수신: {(success ? "성공" : "실패")}");
+            OnMiniGameResultReceived?.Invoke(success);
+        }
+
+        // ================================================================
+        //  상태 리셋
+        // ================================================================
 
         public void ResetState()
         {

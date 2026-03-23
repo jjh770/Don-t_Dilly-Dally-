@@ -1,16 +1,23 @@
-using System;
-using System.Collections.Generic;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
 using DontDillyDally.MiniGame;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UniRx;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
 {
+    public enum EStageRole
+    {
+        None = 0,
+        Surgeon,
+        Assistant
+    }
+
     public class StageFlowManager : PunSingleton<StageFlowManager>
     {
         // ── 위임 컴포넌트 ────────────────────────────────────────────
@@ -18,6 +25,9 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private StageFlowRpcHandler _rpc;
         [SerializeField] private StageTimer _timer;
         [SerializeField] private EmergencyEventHandler _emergencyHandler;
+
+        [Header("미니게임")]
+        [SerializeField] private float _miniGameFailPenalty = 10f;
 
         [Header("디버그")]
         [SerializeField] private bool _debugMode;
@@ -31,11 +41,114 @@ namespace DontDillyDally.StageFlow
         public IReadOnlyReactiveProperty<int> CurrentPatientIndex => _rpc.CurrentPatientIndex;
         public IReadOnlyReactiveProperty<int> CurrentRecipeIndex => _rpc.CurrentRecipeIndex;
         public IReadOnlyReactiveProperty<int> SurgeonActorNumber => _rpc.SurgeonActorNumber;
+        public StageData CurrentStageData => _stageData;
         public float LocalRemainingTime => _timer != null ? _timer.RemainingTime : 0f;
+        public TraySubmissionHandler TrayHandler => _trayHandler;
+        public bool CanSubmitRecipeTray => _trayHandler != null && _trayHandler.CanSubmit;
+        public EStageRole LocalRole => GetLocalRole();
+        public bool IsLocalSurgeon => LocalRole == EStageRole.Surgeon;
+        public bool IsLocalAssistant => LocalRole == EStageRole.Assistant;
+        public bool CanLocalInteractWithPatient => CanSubmitRecipeTray && IsLocalSurgeon;
+
+        public EStageRole GetLocalRole()
+        {
+            if (!PhotonNetwork.InRoom ||
+                PhotonNetwork.LocalPlayer == null)
+            {
+                return EStageRole.None;
+            }
+
+            return GetRoleForActorNumber(PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+
+        public EStageRole GetRoleForActorNumber(int actorNumber)
+        {
+            if (_rpc == null ||
+                actorNumber <= 0 ||
+                _rpc.SurgeonActorNumber.Value <= 0)
+            {
+                return EStageRole.None;
+            }
+
+            return _rpc.SurgeonActorNumber.Value == actorNumber
+                ? EStageRole.Surgeon
+                : EStageRole.Assistant;
+        }
+
+        public string GetLocalRoleDisplayName()
+        {
+            return LocalRole switch
+            {
+                EStageRole.Surgeon => "집도의",
+                EStageRole.Assistant => "어시스트",
+                _ => "역할 미정"
+            };
+        }
+
+        public bool TryGetCurrentDisease(out DiseaseData disease)
+        {
+            disease = null;
+
+            if (_stageData == null ||
+                _stageData.Patients == null ||
+                _rpc == null)
+            {
+                return false;
+            }
+
+            int patientIndex = _rpc.CurrentPatientIndex.Value;
+            if (patientIndex < 0 || patientIndex >= _stageData.Patients.Count)
+            {
+                return false;
+            }
+
+            disease = _stageData.Patients[patientIndex];
+            return disease != null;
+        }
+
+        public bool TryGetCurrentRecipe(out RecipeData recipe)
+        {
+            recipe = null;
+
+            if (!TryGetCurrentDisease(out DiseaseData disease) ||
+                disease.Recipes == null ||
+                disease.Recipes.Count == 0 ||
+                _rpc == null)
+            {
+                return false;
+            }
+
+            int currentRecipeOrder = _rpc.CurrentRecipeIndex.Value;
+            int selectedIndex = -1;
+            int minOrder = int.MaxValue;
+
+            for (int i = 0; i < disease.Recipes.Count; i++)
+            {
+                RecipeData candidate = disease.Recipes[i];
+                if (candidate == null ||
+                    candidate.Order < currentRecipeOrder ||
+                    candidate.Order >= minOrder)
+                {
+                    continue;
+                }
+
+                minOrder = candidate.Order;
+                selectedIndex = i;
+            }
+
+            if (selectedIndex < 0)
+            {
+                return false;
+            }
+
+            recipe = disease.Recipes[selectedIndex];
+            return recipe != null;
+        }
 
         // ── 내부 상태 ────────────────────────────────────────────────
         private StageData _stageData;
         private TreatmentJudgeManager _judgeManager;
+        private PatientHealthController _patientHealthController;
         private CancellationTokenSource _flowCts;
         private bool _isGameOver;
 
@@ -43,12 +156,17 @@ namespace DontDillyDally.StageFlow
         private DiseaseGenerationManager _diseaseGenManager;
         private MiniGameLauncher _miniGameLauncher;
 
-        // ── 트레이 제출 브릿지 ───────────────────────────────────────
-        private UniTaskCompletionSource<SubmittedTray> _traySubmissionTcs;
+        // ── 트레이 제출 핸들러 ──────────────────────────────────────
+        private TraySubmissionHandler _trayHandler;
+
+        // ── 미니게임 결과 대기 ──────────────────────────────────────
+        private UniTaskCompletionSource<bool> _miniGameResultTcs;
 
         // ── 캐시된 델리게이트 (구독 해제용) ─────────────────────────
         private Action _onTimerExpired;
         private Action<float> _onTimerSyncTick;
+        private Action<float> _onPatientHealthChanged;
+        private Action _onPatientHealthDepleted;
 
         // ── 이벤트 ──────────────────────────────────────────────────
         public event Action<EGameOverReason> OnGameOver;
@@ -58,15 +176,14 @@ namespace DontDillyDally.StageFlow
         //  초기화
         // ================================================================
 
-        public void Initialize(
-            DiseaseGenerationManager diseaseGenManager,
-            MiniGameLauncher miniGameLauncher,
-            StageData stageData)
+        public void Initialize(DiseaseGenerationManager diseaseGenManager, MiniGameLauncher miniGameLauncher, StageData stageData)
         {
             _diseaseGenManager = diseaseGenManager;
             _miniGameLauncher = miniGameLauncher;
             _stageData = stageData;
             _judgeManager = new TreatmentJudgeManager();
+            _trayHandler = new TraySubmissionHandler(_rpc, () => _isGameOver);
+            _patientHealthController = new PatientHealthController();
 
             // 타이머 이벤트 바인딩
             _onTimerExpired = () => TriggerGameOver(EGameOverReason.TimeExpired);
@@ -74,9 +191,22 @@ namespace DontDillyDally.StageFlow
             _timer.OnExpired += _onTimerExpired;
             _timer.OnSyncTick += _onTimerSyncTick;
 
+            _onPatientHealthChanged = health => _rpc.SetHealth(health);
+            _onPatientHealthDepleted = () => TriggerGameOver(EGameOverReason.PatientDeath);
+            _patientHealthController.OnHealthChanged += _onPatientHealthChanged;
+            _patientHealthController.OnHealthDepleted += _onPatientHealthDepleted;
+
             // 클라이언트 측 게임 오버 수신
             _rpc.OnGameOverReceived += reason => OnGameOver?.Invoke(reason);
             _rpc.OnStageDataReceived += data => _stageData = data;
+
+            // 미니게임 RPC 수신
+            _rpc.OnMiniGameRequested += HandleMiniGameRequested;
+            _rpc.OnMiniGameResultReceived += HandleMiniGameResultReceived;
+
+            // 페이즈에 따른 플레이어 움직임 제어
+            _rpc.CurrentPhase.Subscribe(OnPhaseChangedForMovement).AddTo(this);
+            PlayerRegistry.OnPlayerRegistered += OnPlayerRegistered;
 
             Debug.Log($"[StageFlow] Initialize 완료 | 디버그모드={_debugMode} | 마스터={PhotonNetwork.IsMasterClient} | 환자수={_stageData.PatientCount} | 제한시간={_stageData.TotalTimeLimitSec}초");
 
@@ -118,6 +248,7 @@ namespace DontDillyDally.StageFlow
 
                 // Phase 4: 스테이지 클리어
                 Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀");
+                PausePatientHealthDrain();
                 _timer.Pause();
                 SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
@@ -138,29 +269,109 @@ namespace DontDillyDally.StageFlow
 
         private async UniTask RunLoadingPhase(CancellationToken ct)
         {
-            // 1. 집도의 랜덤 선정
+            // 1. 집도의 랜덤 선정 + ACK 대기
             Debug.Log("[StageFlow]   (1/3) 집도의 선정 중...");
-            SelectSurgeon();
+            int surgeonActor = SelectSurgeon();
+            await BroadcastAndWaitAck(
+                () => _rpc.SetSurgeon(surgeonActor),
+                handler => _rpc.OnSurgeonAckReceived += handler,
+                handler => _rpc.OnSurgeonAckReceived -= handler,
+                "집도의 선정",
+                5000, ct);
 
             // 2. 질병 데이터 생성
             Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
             await GenerateAllDiseases(ct);
             Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 완료: {_stageData.Patients.Count}개");
 
-            // 3. 스테이지 데이터를 클라이언트에 전송
+            // 3. 스테이지 데이터를 클라이언트에 전송 + ACK 대기
             Debug.Log("[StageFlow]   (3/3) 스테이지 데이터 클라이언트 전송");
             string json = JsonUtility.ToJson(_stageData);
-            _rpc.BroadcastStageData(json);
+            await BroadcastAndWaitAck(
+                () => _rpc.BroadcastStageData(json),
+                handler => _rpc.OnStageDataAckReceived += handler,
+                handler => _rpc.OnStageDataAckReceived -= handler,
+                "스테이지 데이터",
+                10000, ct);
         }
 
-        private void SelectSurgeon()
+        /// <summary>
+        /// 공용 ACK 대기 헬퍼. broadcast를 호출하고 모든 클라이언트의 ACK를 기다립니다.
+        /// 타임아웃 시 retry를 1회 시도한 뒤 진행합니다.
+        /// </summary>
+        private async UniTask BroadcastAndWaitAck(
+            Action broadcast,
+            Action<Action<int>> subscribe,
+            Action<Action<int>> unsubscribe,
+            string label,
+            int timeoutMs,
+            CancellationToken ct)
+        {
+            int otherPlayerCount = PhotonNetwork.PlayerList.Length - 1;
+            if (otherPlayerCount <= 0)
+            {
+                Debug.Log($"[StageFlow]   {label}: 다른 플레이어 없음, ACK 생략");
+                broadcast();
+                return;
+            }
+
+            HashSet<int> pendingActors = new HashSet<int>();
+            foreach (Player player in PhotonNetwork.PlayerList)
+            {
+                if (!player.IsLocal)
+                {
+                    pendingActors.Add(player.ActorNumber);
+                }
+            }
+
+            UniTaskCompletionSource allAckTcs = new UniTaskCompletionSource();
+
+            void OnAck(int actorNumber)
+            {
+                pendingActors.Remove(actorNumber);
+                Debug.Log($"[StageFlow]   {label} ACK: Actor {actorNumber} (남은 {pendingActors.Count}명)");
+                if (pendingActors.Count == 0)
+                {
+                    allAckTcs.TrySetResult();
+                }
+            }
+
+            subscribe(OnAck);
+
+            try
+            {
+                broadcast();
+
+                bool completed = await UniTask.WhenAny(
+                    allAckTcs.Task,
+                    UniTask.Delay(timeoutMs, cancellationToken: ct)
+                ) == 0;
+
+                if (completed)
+                {
+                    Debug.Log($"[StageFlow]   {label}: 모든 클라이언트 확인 완료");
+                }
+                else
+                {
+                    Debug.LogWarning($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) — 재전송");
+                    broadcast();
+                    await UniTask.Delay(2000, cancellationToken: ct);
+                }
+            }
+            finally
+            {
+                unsubscribe(OnAck);
+            }
+        }
+
+        private int SelectSurgeon()
         {
             Player[] players = PhotonNetwork.PlayerList;
             int randomIndex = UnityEngine.Random.Range(0, players.Length);
             int selectedActorNumber = players[randomIndex].ActorNumber;
 
-            _rpc.SetSurgeon(selectedActorNumber);
             Debug.Log($"[StageFlow] 집도의 선정: Actor {selectedActorNumber}");
+            return selectedActorNumber;
         }
 
         private async UniTask GenerateAllDiseases(CancellationToken ct)
@@ -228,12 +439,14 @@ namespace DontDillyDally.StageFlow
                 if (i > 0)
                 {
                     Debug.Log("[StageFlow]   환자 전환 중... (타이머 일시정지)");
+                    PausePatientHealthDrain();
                     _timer.Pause();
                     SyncTimerState();
                     _rpc.SetPhase(EStagePhase.PatientTransition);
                     await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct);
                     _rpc.SetPhase(EStagePhase.Playing);
                     _timer.Resume();
+                    ResumePatientHealthDrain();
                     SyncTimerState();
                     Debug.Log("[StageFlow]   환자 전환 완료 (타이머 재개)");
                 }
@@ -248,7 +461,7 @@ namespace DontDillyDally.StageFlow
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{_stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {_stageData.InitialPatientHealth}");
 
             _judgeManager.SetDisease(disease);
-            _rpc.SetHealth(_stageData.InitialPatientHealth);
+            InitializePatientHealth();
             _emergencyHandler.ResetTimer();
 
             await RunRecipeLoop(disease, ct);
@@ -267,7 +480,7 @@ namespace DontDillyDally.StageFlow
                 _rpc.SetRecipeIndex(recipeIndex);
                 Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 대기 중... (트레이 제출 대기)");
 
-                SubmittedTray tray = await WaitForTraySubmission(ct);
+                SubmittedTray tray = await _trayHandler.WaitForSubmission(ct);
                 Debug.Log("[StageFlow]     트레이 제출됨 → 판정 중...");
 
                 TreatmentJudgeResult result = _judgeManager.JudgeNextRecipe(
@@ -280,6 +493,9 @@ namespace DontDillyDally.StageFlow
                         EventType.SurgerySuccess,
                         $"레시피 {result.CompletedRecipeId} 성공!");
 
+                    // 집도의에게만 레시피 성공 후 수술 미니게임 권한을 부여합니다.
+                    await RunRecipeMiniGame(ct);
+
                     if (result.DiseaseCured)
                     {
                         Debug.Log("[StageFlow]     ★ 질병 완치!");
@@ -290,16 +506,14 @@ namespace DontDillyDally.StageFlow
                 }
                 else if (result.FailureReason == TreatmentFailureReason.RecipeMismatch)
                 {
-                    float newHealth = _rpc.PatientHealth.Value - disease.FailHealthPenalty;
-                    _rpc.SetHealth(newHealth);
+                    float newHealth = ApplyPatientDamage(disease.FailHealthPenalty);
                     Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{disease.FailHealthPenalty} → 현재 체력: {newHealth}");
 
                     EventManager.Instance?.Publish(EventType.SurgeryFail, "잘못된 조합물!");
 
-                    if (newHealth <= 0f)
+                    if (_isGameOver)
                     {
                         Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");
-                        TriggerGameOver(EGameOverReason.PatientDeath);
                         return;
                     }
 
@@ -312,31 +526,218 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        // ── 트레이 제출 ─────────────────────────────────────────────
+        // ── 트레이 제출 (외부 API — TraySubmissionHandler에 위임) ──
 
-        private async UniTask<SubmittedTray> WaitForTraySubmission(CancellationToken ct)
-        {
-            _traySubmissionTcs = new UniTaskCompletionSource<SubmittedTray>();
-
-            using (ct.Register(() => _traySubmissionTcs.TrySetCanceled()))
-            {
-                return await _traySubmissionTcs.Task;
-            }
-        }
-
-        /// <summary>
-        /// 외부 시스템(트레이 상호작용)에서 호출합니다.
-        /// 마스터 클라이언트에서만 처리됩니다.
-        /// </summary>
         public void OnTraySubmitted(SubmittedTray tray)
         {
-            if (!PhotonNetwork.IsMasterClient) return;
-            _traySubmissionTcs?.TrySetResult(tray);
+            _trayHandler.OnTraySubmitted(tray);
         }
+
+        public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
+        {
+            return _trayHandler.RequestSubmission(tray, trayViewId);
+        }
+
+        // ── 타이머 동기화 ─────────────────────────────────────────────
 
         private void SyncTimerState()
         {
             _rpc.SetTimer(_timer.RemainingTime);
+        }
+
+        private void InitializePatientHealth()
+        {
+            if (_patientHealthController == null || _stageData == null)
+            {
+                return;
+            }
+
+            _patientHealthController.Initialize(
+                _stageData.InitialPatientHealth,
+                _stageData.PatientHealthDrainPerSecond);
+
+            if (_rpc.CurrentPhase.Value == EStagePhase.Playing)
+            {
+                _patientHealthController.ResumeDrain();
+            }
+        }
+
+        private float ApplyPatientDamage(float damage)
+        {
+            if (_patientHealthController == null)
+            {
+                return _rpc.PatientHealth.Value;
+            }
+
+            _patientHealthController.ApplyDamage(damage);
+            return _rpc.PatientHealth.Value;
+        }
+
+        private void PausePatientHealthDrain()
+        {
+            _patientHealthController?.PauseDrain();
+        }
+
+        private void ResumePatientHealthDrain()
+        {
+            if (_rpc.CurrentPhase.Value == EStagePhase.Playing)
+            {
+                _patientHealthController?.ResumeDrain();
+            }
+        }
+
+        // ── 레시피 성공 미니게임 ──────────────────────────────────────
+
+        private async UniTask RunRecipeMiniGame(CancellationToken ct)
+        {
+            MiniGameType type = SelectRandomMiniGameType();
+            int surgeonActorNumber = GetMiniGameTargetActorNumber();
+            Debug.Log($"[StageFlow]     레시피 미니게임 시작: {type} | 집도의 Actor {surgeonActorNumber}");
+
+            bool success;
+
+            if (_debugMode)
+            {
+                Debug.Log("[StageFlow]     디버그: 미니게임 스킵");
+                await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: ct);
+                success = true;
+            }
+            else
+            {
+                success = await LaunchRoleMiniGame(surgeonActorNumber, type, ct);
+            }
+
+            Debug.Log($"[StageFlow]     레시피 미니게임 결과: {(success ? "성공" : "실패")}");
+
+            if (!success)
+            {
+                float newHealth = ApplyPatientDamage(_miniGameFailPenalty);
+                Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} → 현재 체력: {newHealth}");
+
+                if (_isGameOver)
+                {
+                    Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");
+                    return;
+                }
+
+                if (_emergencyHandler.ShouldTriggerOnRecipeFail())
+                {
+                    Debug.Log("[StageFlow]     ⚡ 미니게임 실패 → 긴급 이벤트 발동!");
+                    await HandleEmergencyEvent(ct);
+                }
+            }
+        }
+
+        private async UniTask<bool> LaunchLocalMiniGame(MiniGameType type, CancellationToken ct)
+        {
+            if (_miniGameLauncher == null)
+            {
+                Debug.LogWarning("[StageFlow] 로컬 미니게임 런처가 없어 실패로 처리합니다.");
+                return false;
+            }
+
+            if (_miniGameLauncher.IsPlaying)
+            {
+                Debug.LogWarning("[StageFlow] 이미 실행 중인 미니게임이 있어 실패로 처리합니다.");
+                return false;
+            }
+
+            var tcs = new UniTaskCompletionSource<MiniGameResult>();
+            using (ct.Register(() => tcs.TrySetCanceled()))
+            {
+                _miniGameLauncher.Launch(type, result => tcs.TrySetResult(result));
+                MiniGameResult result = await tcs.Task;
+                return result.IsSuccess;
+            }
+        }
+
+        private async UniTask<bool> LaunchRoleMiniGame(int targetActorNumber, MiniGameType type, CancellationToken ct)
+        {
+            if (PhotonNetwork.LocalPlayer != null &&
+                targetActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+            {
+                return await LaunchLocalMiniGame(type, ct);
+            }
+
+            return await LaunchRemoteMiniGame(targetActorNumber, type, ct);
+        }
+
+        private async UniTask<bool> LaunchRemoteMiniGame(int targetActorNumber, MiniGameType type, CancellationToken ct)
+        {
+            if (targetActorNumber <= 0)
+            {
+                Debug.LogWarning("[StageFlow] 원격 미니게임 대상이 없어 실패로 처리합니다.");
+                return false;
+            }
+
+            _miniGameResultTcs = new UniTaskCompletionSource<bool>();
+            using (ct.Register(() => _miniGameResultTcs.TrySetCanceled()))
+            {
+                _rpc.RequestMiniGame(targetActorNumber, type);
+                return await _miniGameResultTcs.Task;
+            }
+        }
+
+        /// <summary>
+        /// 비-마스터 클라이언트에서 미니게임 RPC 수신 시 호출됩니다.
+        /// </summary>
+        private void HandleMiniGameRequested(MiniGameType type)
+        {
+            if (!IsLocalSurgeon)
+            {
+                Debug.LogWarning("[StageFlow] 집도의가 아닌 클라이언트가 미니게임 요청을 받아 실패로 응답합니다.");
+                _rpc.SendMiniGameResult(false);
+                return;
+            }
+
+            if (_miniGameLauncher == null)
+            {
+                Debug.LogWarning("[StageFlow] 로컬 미니게임 런처가 없어 실패로 응답합니다.");
+                _rpc.SendMiniGameResult(false);
+                return;
+            }
+
+            if (_miniGameLauncher.IsPlaying)
+            {
+                Debug.LogWarning("[StageFlow] 이미 실행 중인 미니게임이 있어 실패로 응답합니다.");
+                _rpc.SendMiniGameResult(false);
+                return;
+            }
+
+            Debug.Log($"[StageFlow] 미니게임 요청 수신 → 로컬 실행: {type}");
+            _miniGameLauncher.Launch(type, result =>
+            {
+                _rpc.SendMiniGameResult(result.IsSuccess);
+            });
+        }
+
+        /// <summary>
+        /// 마스터에서 원격 미니게임 결과 RPC 수신 시 호출됩니다.
+        /// </summary>
+        private void HandleMiniGameResultReceived(bool success)
+        {
+            _miniGameResultTcs?.TrySetResult(success);
+        }
+
+        private MiniGameType SelectRandomMiniGameType()
+        {
+            MiniGameType[] types = (MiniGameType[])Enum.GetValues(typeof(MiniGameType));
+            return types[UnityEngine.Random.Range(0, types.Length)];
+        }
+
+        private int GetMiniGameTargetActorNumber()
+        {
+            if (_rpc != null && _rpc.SurgeonActorNumber.Value > 0)
+            {
+                return _rpc.SurgeonActorNumber.Value;
+            }
+
+            if (PhotonNetwork.LocalPlayer != null)
+            {
+                return PhotonNetwork.LocalPlayer.ActorNumber;
+            }
+
+            return -1;
         }
 
         // ── 긴급 이벤트 ─────────────────────────────────────────────
@@ -348,7 +749,7 @@ namespace DontDillyDally.StageFlow
 
             float healthPenalty;
 
-            if (_debugMode || _miniGameLauncher == null)
+            if (_debugMode)
             {
                 Debug.Log("[StageFlow] 디버그: 긴급 이벤트 발생 (미니게임 스킵)");
                 await UniTask.Delay(TimeSpan.FromSeconds(1), cancellationToken: ct);
@@ -356,18 +757,19 @@ namespace DontDillyDally.StageFlow
             }
             else
             {
-                healthPenalty = await _emergencyHandler.ExecuteEmergency(
-                    _miniGameLauncher, ct);
+                MiniGameType type = _emergencyHandler.GetRandomMiniGameType();
+                int surgeonActorNumber = GetMiniGameTargetActorNumber();
+                bool success = await LaunchRoleMiniGame(surgeonActorNumber, type, ct);
+                healthPenalty = _emergencyHandler.GetPenaltyByMiniGameResult(success);
             }
 
             if (healthPenalty > 0f)
             {
-                float newHealth = _rpc.PatientHealth.Value - healthPenalty;
-                _rpc.SetHealth(newHealth);
+                float newHealth = ApplyPatientDamage(healthPenalty);
 
-                if (newHealth <= 0f)
+                if (_isGameOver)
                 {
-                    TriggerGameOver(EGameOverReason.PatientDeath);
+                    Debug.Log($"[StageFlow]     긴급 처치 실패! 현재 체력: {newHealth}");
                 }
             }
         }
@@ -382,11 +784,11 @@ namespace DontDillyDally.StageFlow
             Debug.Log($"[StageFlow] ========== 게임 오버: {reason} ==========");
 
             _flowCts?.Cancel();
+            PausePatientHealthDrain();
             _timer.Pause();
             SyncTimerState();
 
             _rpc.SetPhase(EStagePhase.GameOver);
-            _rpc.BroadcastGameOver(reason);
 
             OnGameOver?.Invoke(reason);
 
@@ -400,13 +802,63 @@ namespace DontDillyDally.StageFlow
             Debug.Log($"[StageFlow] {message} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀");
             EventManager.Instance?.Publish(EventType.GameOver, message);
 
-            ReturnToWaitingRoomDelayed().Forget();
+            BroadcastGameOverAndWaitAck(reason).Forget();
         }
 
-        private async UniTaskVoid ReturnToWaitingRoomDelayed()
+        private async UniTaskVoid BroadcastGameOverAndWaitAck(EGameOverReason reason)
+        {
+            var cts = new CancellationTokenSource();
+            cts.CancelAfter(12000);
+
+            try
+            {
+                await BroadcastAndWaitAck(
+                    () => _rpc.BroadcastGameOver(reason),
+                    handler => _rpc.OnGameOverAckReceived += handler,
+                    handler => _rpc.OnGameOverAckReceived -= handler,
+                    "게임 오버",
+                    5000, cts.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[StageFlow] 게임 오버 ACK 대기 중 타임아웃");
+            }
+
+            await ReturnToWaitingRoomDelayed();
+        }
+
+        private async UniTask ReturnToWaitingRoomDelayed()
         {
             await UniTask.Delay(TimeSpan.FromSeconds(5));
             PhotonServerManager.Instance.ReturnWaitingRoom();
+        }
+
+        // ── 플레이어 움직임 제어 ──────────────────────────────────────
+
+        private void OnPhaseChangedForMovement(EStagePhase phase)
+        {
+            bool canMove = phase == EStagePhase.Playing;
+            SetAllPlayersMovementLocked(!canMove);
+        }
+
+        private void OnPlayerRegistered(PlayerController player)
+        {
+            if (player != null && player.MovementAbility != null)
+            {
+                bool canMove = _rpc.CurrentPhase.Value == EStagePhase.Playing;
+                player.MovementAbility.SetMovementLocked(!canMove);
+            }
+        }
+
+        private void SetAllPlayersMovementLocked(bool locked)
+        {
+            foreach (PlayerController player in PlayerRegistry.GetAllPlayers())
+            {
+                if (player != null && player.MovementAbility != null)
+                {
+                    player.MovementAbility.SetMovementLocked(locked);
+                }
+            }
         }
 
         // ── Update ──────────────────────────────────────────────────
@@ -421,6 +873,14 @@ namespace DontDillyDally.StageFlow
             if (!PhotonNetwork.IsMasterClient || _isGameOver)
                 return;
 
+            if (_rpc.CurrentPhase.Value != EStagePhase.Playing)
+                return;
+
+            _patientHealthController?.Tick(Time.deltaTime);
+
+            if (_isGameOver)
+                return;
+
             if (_emergencyHandler.ShouldTriggerRandom(Time.deltaTime))
             {
                 HandleEmergencyEvent(_flowCts.Token).Forget();
@@ -433,7 +893,7 @@ namespace DontDillyDally.StageFlow
         {
             if (!PhotonNetwork.IsMasterClient) return;
             if (_rpc.CurrentPhase.Value != EStagePhase.Playing) return;
-            if (_traySubmissionTcs == null) return;
+            if (!_trayHandler.IsWaitingForSubmission) return;
 
             if (Input.GetKeyDown(KeyCode.T))
             {
@@ -441,7 +901,7 @@ namespace DontDillyDally.StageFlow
                 if (correctTray != null)
                 {
                     Debug.Log("[StageFlow] 디버그: 정답 트레이 제출 (T)");
-                    OnTraySubmitted(correctTray);
+                    _trayHandler.OnTraySubmitted(correctTray);
                 }
             }
 
@@ -449,7 +909,7 @@ namespace DontDillyDally.StageFlow
             {
                 var wrongTray = new SubmittedTray();
                 Debug.Log("[StageFlow] 디버그: 오답 트레이 제출 (Y)");
-                OnTraySubmitted(wrongTray);
+                _trayHandler.OnTraySubmitted(wrongTray);
             }
         }
 
@@ -489,6 +949,23 @@ namespace DontDillyDally.StageFlow
 
             if (_onTimerExpired != null) _timer.OnExpired -= _onTimerExpired;
             if (_onTimerSyncTick != null) _timer.OnSyncTick -= _onTimerSyncTick;
+
+            if (_rpc != null)
+            {
+                _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
+                _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
+            }
+
+            PlayerRegistry.OnPlayerRegistered -= OnPlayerRegistered;
+
+            if (_patientHealthController != null)
+            {
+                if (_onPatientHealthChanged != null) _patientHealthController.OnHealthChanged -= _onPatientHealthChanged;
+                if (_onPatientHealthDepleted != null) _patientHealthController.OnHealthDepleted -= _onPatientHealthDepleted;
+                _patientHealthController.Reset();
+            }
+
+            _trayHandler?.Dispose();
         }
     }
 }

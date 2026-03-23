@@ -93,12 +93,7 @@ namespace DontDillyDally.Data
 
             if (interactionAbility.CurrentHeldItem == null)
             {
-                if (_isBatchCompleted)
-                {
-                    TryTakeCompletedItem(interactionAbility);
-                    return;
-                }
-
+                HandleOpenDoorEmptyHandInteraction(interactionAbility);
                 return;
             }
 
@@ -264,6 +259,20 @@ namespace DontDillyDally.Data
             if (!HasAnyStoredItems())
             {
                 _isBatchCompleted = false;
+            }
+        }
+
+        private void HandleOpenDoorEmptyHandInteraction(PlayerInteractionAbility interactionAbility)
+        {
+            if (_isBatchCompleted)
+            {
+                TryTakeCompletedItem(interactionAbility);
+                return;
+            }
+
+            if (HasAnyStoredItems())
+            {
+                _door?.TryClose();
             }
         }
 
