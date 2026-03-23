@@ -282,7 +282,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 0.4, y: 0.356, z: 0.272}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7641056966115395560}
@@ -377,7 +377,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c31d689b5c603e418662589759e2358, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SterilizationMachineDoor
-  _doorVisual: {fileID: 0}
+  _doorVisual: {fileID: 5227657041754624410}
   _closedLocalEulerAngles: {x: 0, y: 0, z: 0}
   _openLocalEulerAngles: {x: 0, y: 180, z: 0}
   _startOpen: 0
@@ -433,7 +433,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348160c5b99644f4d928fffd6310ffd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SterilizationMachine
-  _craftingMachine: {fileID: 0}
+  _ruleDatabase: {fileID: 11400000, guid: 61a7f26c5bf37034e97d9364ffd7f8f4, type: 2}
 --- !u!114 &6343537734064404030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -453,6 +453,7 @@ MonoBehaviour:
   - {fileID: 625564890154434417}
   - {fileID: 2070111626689446047}
   - {fileID: 3752236861428293230}
+  _resultPrefab: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
   _sterilizationDuration: 5
   _actionTimer: {fileID: 1967075194894486486}
   _runningMotion: {fileID: 3101245820696990766}
@@ -602,6 +603,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5756801544215138790, guid: 7f65e592de901a3418fa3501f039ff7e, type: 3}
+      propertyPath: _motionTarget
+      value: 
+      objectReference: {fileID: 768441550279945129}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

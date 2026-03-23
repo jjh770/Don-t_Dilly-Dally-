@@ -1,4 +1,5 @@
 using System;
+using DontDillyDally.Data;
 using Photon.Pun;
 using UniRx;
 using UnityEngine;
@@ -29,6 +30,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 이벤트 (StageFlowManager가 구독) ────────────────────────
         public event Action<EGameOverReason> OnGameOverReceived;
+        public event Action<SubmittedTray> OnTraySubmittedReceived;
 
         private bool _isGameOver;
 
@@ -57,10 +59,11 @@ namespace DontDillyDally.StageFlow
 
         public void SetTimer(float time)
         {
-            _stageTimer.Value = time;
+            float clampedTime = Mathf.Max(0f, time);
+            _stageTimer.Value = clampedTime;
             if (PhotonNetwork.IsMasterClient)
             {
-                photonView.RPC(nameof(RPC_SyncTimer), RpcTarget.Others, time);
+                photonView.RPC(nameof(RPC_SyncTimer), RpcTarget.Others, clampedTime);
             }
         }
 
@@ -111,6 +114,24 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        public void SubmitTray(SubmittedTray tray)
+        {
+            if (tray == null)
+            {
+                Debug.LogWarning("[StageFlow] [RPC] 제출할 트레이가 없습니다.");
+                return;
+            }
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                OnTraySubmittedReceived?.Invoke(tray);
+                return;
+            }
+
+            string json = JsonUtility.ToJson(tray);
+            photonView.RPC(nameof(RPC_SubmitTray), RpcTarget.MasterClient, json);
+        }
+
         // ================================================================
         //  RPC 수신 (클라이언트 측)
         // ================================================================
@@ -131,7 +152,7 @@ namespace DontDillyDally.StageFlow
         [PunRPC]
         private void RPC_SyncTimer(float time)
         {
-            _stageTimer.Value = time;
+            _stageTimer.Value = Mathf.Max(0f, time);
         }
 
         [PunRPC]
@@ -176,6 +197,20 @@ namespace DontDillyDally.StageFlow
         // ================================================================
         //  상태 리셋
         // ================================================================
+
+        [PunRPC]
+        private void RPC_SubmitTray(string json, PhotonMessageInfo info)
+        {
+            SubmittedTray tray = JsonUtility.FromJson<SubmittedTray>(json);
+            if (tray == null)
+            {
+                Debug.LogWarning("[StageFlow] [RPC] 트레이 제출 데이터 역직렬화에 실패했습니다.");
+                return;
+            }
+
+            Debug.Log($"[StageFlow] [RPC] 트레이 제출 수신: Actor {info.Sender?.ActorNumber ?? -1}");
+            OnTraySubmittedReceived?.Invoke(tray);
+        }
 
         public void ResetState()
         {

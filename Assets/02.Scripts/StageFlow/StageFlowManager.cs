@@ -31,6 +31,7 @@ namespace DontDillyDally.StageFlow
         public IReadOnlyReactiveProperty<int> CurrentPatientIndex => _rpc.CurrentPatientIndex;
         public IReadOnlyReactiveProperty<int> CurrentRecipeIndex => _rpc.CurrentRecipeIndex;
         public IReadOnlyReactiveProperty<int> SurgeonActorNumber => _rpc.SurgeonActorNumber;
+        public float LocalRemainingTime => _timer != null ? _timer.RemainingTime : 0f;
 
         // ── 내부 상태 ────────────────────────────────────────────────
         private StageData _stageData;
@@ -117,6 +118,8 @@ namespace DontDillyDally.StageFlow
 
                 // Phase 4: 스테이지 클리어
                 Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀");
+                _timer.Pause();
+                SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
                 OnStageClear?.Invoke();
                 EventManager.Instance?.Publish(EventType.SurgerySuccess, "모든 환자 치료 완료!");
@@ -211,8 +214,8 @@ namespace DontDillyDally.StageFlow
         private async UniTask RunGameLoop(CancellationToken ct)
         {
             _timer.Set(_stageData.TotalTimeLimitSec);
-            _rpc.SetTimer(_stageData.TotalTimeLimitSec);
             _timer.Resume();
+            SyncTimerState();
             Debug.Log($"[StageFlow]   타이머 시작: {_stageData.TotalTimeLimitSec}초 | 환자 {_stageData.Patients.Count}명 치료 시작");
 
             for (int i = 0; i < _stageData.Patients.Count; i++)
@@ -226,10 +229,12 @@ namespace DontDillyDally.StageFlow
                 {
                     Debug.Log("[StageFlow]   환자 전환 중... (타이머 일시정지)");
                     _timer.Pause();
+                    SyncTimerState();
                     _rpc.SetPhase(EStagePhase.PatientTransition);
                     await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct);
                     _rpc.SetPhase(EStagePhase.Playing);
                     _timer.Resume();
+                    SyncTimerState();
                     Debug.Log("[StageFlow]   환자 전환 완료 (타이머 재개)");
                 }
 
@@ -329,6 +334,11 @@ namespace DontDillyDally.StageFlow
             _traySubmissionTcs?.TrySetResult(tray);
         }
 
+        private void SyncTimerState()
+        {
+            _rpc.SetTimer(_timer.RemainingTime);
+        }
+
         // ── 긴급 이벤트 ─────────────────────────────────────────────
 
         private async UniTask HandleEmergencyEvent(CancellationToken ct)
@@ -373,6 +383,7 @@ namespace DontDillyDally.StageFlow
 
             _flowCts?.Cancel();
             _timer.Pause();
+            SyncTimerState();
 
             _rpc.SetPhase(EStagePhase.GameOver);
             _rpc.BroadcastGameOver(reason);
