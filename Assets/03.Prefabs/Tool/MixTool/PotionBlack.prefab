@@ -30,6 +30,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1137584883685721586}
   - {fileID: 484735443095952735}
   - {fileID: 6698423258880981443}
   m_Father: {fileID: 0}
@@ -51,7 +52,7 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 3
   m_Size: {x: 0.15677829, y: 0.2411404, z: 0.15919685}
   m_Center: {x: 0, y: 0.1205702, z: 0}
@@ -145,6 +146,50 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &6929083672199473024
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1137584883685721586}
+  - component: {fileID: 366844062014290238}
+  m_Layer: 0
+  m_Name: HoldAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1137584883685721586
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929083672199473024}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.15132834, y: 0.10014303, z: -0.54270196, w: 0.82008886}
+  m_LocalPosition: {x: -0.0972, y: 0.0693, z: -0.0273}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2492577209114994873}
+  m_LocalEulerAnglesHint: {x: 20.91, y: 0, z: -66.99}
+--- !u!114 &366844062014290238
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6929083672199473024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfea1f9b42063b2448194b7595539c4a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldAnchor
 --- !u!1 &8307725947589634660
 GameObject:
   m_ObjectHideFlags: 0

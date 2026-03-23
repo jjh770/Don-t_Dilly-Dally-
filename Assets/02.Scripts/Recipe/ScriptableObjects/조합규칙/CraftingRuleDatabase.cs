@@ -17,10 +17,25 @@ namespace DontDillyDally.Data
             foreach (CraftingRuleSO rule in Rules)
             {
                 if (rule != null && rule.IsMatch(tool, action))
+                {
                     return rule;
+                }
             }
 
             return null;
+        }
+
+        public bool ContainsResult(CraftedMaterialType resultMaterial)
+        {
+            foreach (CraftingRuleSO rule in Rules)
+            {
+                if (rule != null && rule.ResultMaterial == resultMaterial)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
     }

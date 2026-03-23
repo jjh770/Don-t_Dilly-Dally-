@@ -14,7 +14,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     [Header("착지 감지 설정")]
     [SerializeField] private float _settleVelocityThreshold = 0.05f;
     [SerializeField] private float _settleAngularVelocityThreshold = 0.05f;
-    [SerializeField] private float _settleCheckDelay = 0.1f;
     [SerializeField] private float _settleRequiredDuration = 0.25f;
 
     private bool _isWaitingForOwnershipReturn;
@@ -29,6 +28,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     private PhotonView _photonView;
     private HoldableItemNetworkSync _networkSync;
     private Transform _currentHoldPoint;
+    private Transform _holdAnchor;
 
     // 누가 들었는가 확인용
     private const int InvalidActorNumber = -1;
@@ -37,15 +37,32 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     public int HolderActorNumber => _holderActorNumber;
     public bool HasHolder => _holderActorNumber != InvalidActorNumber;
 
+    private DontDillyDally.Data.ItemObject _itemObject;
+
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
         _collider = GetComponent<Collider>();
         _photonView = GetComponent<PhotonView>();
         _networkSync = GetComponent<HoldableItemNetworkSync>();
+        _itemObject = GetComponent<DontDillyDally.Data.ItemObject>();
 
         if (_networkSync == null)
             _networkSync = gameObject.AddComponent<HoldableItemNetworkSync>();
+
+        RefreshHoldAnchor();
+    }
+
+    private void OnEnable()
+    {
+        if (_itemObject != null)
+            _itemObject.ModelRefreshed += RefreshHoldAnchor;
+    }
+
+    private void OnDisable()
+    {
+        if (_itemObject != null)
+            _itemObject.ModelRefreshed -= RefreshHoldAnchor;
     }
 
     private void LateUpdate()
@@ -74,7 +91,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         if (targetHoldPoint == null)
             return;
 
-        transform.SetPositionAndRotation(targetHoldPoint.position, targetHoldPoint.rotation);
+        ApplyHoldTransform(targetHoldPoint);
     }
 
     private void UpdateOwnershipReturn()
@@ -133,7 +150,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _collider.enabled = false;
 
         transform.SetParent(null);
-        transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+        ApplyHoldTransform(holdPoint);
     }
 
     public void StopInteract()
@@ -188,6 +205,29 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
     }
 
+    public void RefreshHoldAnchor()
+    {
+        HoldAnchor anchor = GetComponentInChildren<HoldAnchor>();
+        _holdAnchor = anchor != null ? anchor.transform : null;
+    }
+
+    private void ApplyHoldTransform(Transform holdPoint)
+    {
+        if (_holdAnchor == null)
+        {
+            transform.SetPositionAndRotation(holdPoint.position, holdPoint.rotation);
+            return;
+        }
+
+        Quaternion anchorLocalRotation = _holdAnchor.localRotation;
+        Quaternion targetRotation = holdPoint.rotation * Quaternion.Inverse(anchorLocalRotation);
+
+        Vector3 anchorWorldOffset = targetRotation * _holdAnchor.localPosition;
+        Vector3 targetPosition = holdPoint.position - anchorWorldOffset;
+
+        transform.SetPositionAndRotation(targetPosition, targetRotation);
+    }
+
     private void StopDynamicMotion()
     {
         if (_rigidbody == null || _rigidbody.isKinematic)
@@ -208,7 +248,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         SetCollisionWithThrower(colliders, false);
     }
 
-    private void SetCollisionWithThrower(Collider[] colliders, bool Isignore)
+    private void SetCollisionWithThrower(Collider[] colliders, bool isIgnore)
     {
         if (_collider == null) return;
 
@@ -216,7 +256,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         {
             if (col != null)
             {
-                Physics.IgnoreCollision(_collider, col, Isignore);
+                Physics.IgnoreCollision(_collider, col, isIgnore);
             }
         }
     }
