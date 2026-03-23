@@ -6,7 +6,7 @@ using UnityEngine.Networking;
 public class LLMService : MonoBehaviour
 {
     [Header("API 설정")]
-    [SerializeField] private APIKeyConfig _apiKeyConfig;
+    [SerializeField] private KeyConfig _apiKeyConfig;
     [SerializeField] private string _model = "gemini-3.1-flash-lite-preview";
 
     [Header("요청 설정")]

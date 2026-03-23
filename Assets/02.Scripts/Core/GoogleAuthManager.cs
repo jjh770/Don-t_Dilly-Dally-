@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class GoogleAuthManager : MonoBehaviour
 {
-    [SerializeField] private APIKeyConfig _keyConfig;
+    [SerializeField] private KeyConfig _keyConfig;
 
     private const string REDIRECT_URI = "http://localhost:5000/callback";
 
