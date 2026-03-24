@@ -30,6 +30,8 @@ public class UI_Customizing : MonoBehaviour
     private CustomizingViewModel _viewModel;
     private List<UI_CustomizingItem> _itemButtons = new();
 
+    public event Action OnClosed;
+
     public void Initialize(CustomizingViewModel viewModel)
     {
         if (_viewModel != null) return;
@@ -146,7 +148,7 @@ public class UI_Customizing : MonoBehaviour
     private void OnCloseClicked()
     {
         _viewModel?.Cancel();
-        gameObject.SetActive(false);
+        OnClosed?.Invoke();
     }
 
     private void RefreshItemList()
