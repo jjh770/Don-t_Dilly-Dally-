@@ -11,7 +11,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     private string _currentAccount;
 
-    private string _playerID = "Player";
+    [SerializeField] private string _playerID = "Player";
 
     public PlayerInformation PlayerInformation => _playerInformation;
 
