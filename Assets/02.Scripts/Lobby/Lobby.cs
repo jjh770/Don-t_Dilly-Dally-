@@ -5,7 +5,6 @@ public class Lobby : MonoBehaviour
 {
     [Header("프리뷰 캐릭터")]
     [SerializeField] private GameObject _previewCharacterPrefab;
-    [SerializeField] private Transform _spawnPoint;
 
     [Header("UI")]
     [SerializeField] private UI_Customizing _customizingUI;
@@ -45,19 +44,17 @@ public class Lobby : MonoBehaviour
     {
         if (_previewCharacterPrefab == null) return;
 
-        Vector3 position = _spawnPoint != null ? _spawnPoint.position : Vector3.zero;
-        Quaternion rotation = _spawnPoint != null ? _spawnPoint.rotation : Quaternion.identity;
+        Vector3 position = Vector3.zero;
+        Quaternion rotation = Quaternion.identity;
 
         _previewCharacter = Instantiate(_previewCharacterPrefab, position, rotation);
 
-        // 멀티플레이어용 컴포넌트 제거
         var photonController = _previewCharacter.GetComponent<PlayerCustomizingController>();
         if (photonController != null)
         {
             Destroy(photonController);
         }
 
-        // 로컬 프리뷰용 컨트롤러 추가
         _previewCharacter.AddComponent<LobbyPreviewController>();
     }
 
@@ -76,7 +73,6 @@ public class Lobby : MonoBehaviour
         _viewModel = new CustomizingViewModel(manager);
         _customizingUI.Initialize(_viewModel);
 
-        // 닫기 이벤트 구독
         _customizingUI.OnClosed += OnCustomizingClosed;
     }
 
@@ -109,7 +105,6 @@ public class Lobby : MonoBehaviour
         }
     }
 
-    // UI_Customizing에서 닫기 시 호출
     public void OnCustomizingClosed()
     {
         if (_transition != null)
