@@ -1,10 +1,11 @@
 using DG.Tweening;
+using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    [RequireComponent(typeof(Collider))]
-    public class MachineDoor : MonoBehaviour, IInteractable
+    [RequireComponent(typeof(Collider), typeof(PhotonView))]
+    public class MachineDoor : MonoBehaviourPun, IInteractable
     {
         [SerializeField] private Transform _doorVisual;
         [SerializeField] private Vector3 _closedLocalEulerAngles;
@@ -14,6 +15,7 @@ namespace DontDillyDally.Data
         [SerializeField] private Ease _transitionEase = Ease.OutCubic;
 
         private Collider _interactionCollider;
+        private PhotonView _localPhotonView;
         private Tween _doorTween;
         private bool _isTransitioning;
 
@@ -29,6 +31,7 @@ namespace DontDillyDally.Data
                 _doorVisual = transform;
             }
 
+            _localPhotonView = GetComponent<PhotonView>();
             _interactionCollider = GetComponent<Collider>();
             IsOpen = _startOpen;
             ApplyImmediateState();
@@ -48,11 +51,17 @@ namespace DontDillyDally.Data
 
             if (IsOpen)
             {
-                TryClose();
+                if (TryClose() && PhotonNetwork.InRoom && _localPhotonView != null)
+                {
+                    _localPhotonView.RPC(nameof(RPC_DoorSetState), RpcTarget.Others, false, false);
+                }
                 return;
             }
 
-            TryOpen();
+            if (TryOpen() && PhotonNetwork.InRoom && _localPhotonView != null)
+            {
+                _localPhotonView.RPC(nameof(RPC_DoorSetState), RpcTarget.Others, true, false);
+            }
         }
 
         public void StopInteract()
@@ -88,6 +97,28 @@ namespace DontDillyDally.Data
             IsOpen = false;
             IsLocked = true;
             ApplyImmediateState();
+        }
+
+        [PunRPC]
+        private void RPC_DoorSetState(bool open, bool locked)
+        {
+            if (locked)
+            {
+                LockClosed();
+                return;
+            }
+            if (IsLocked)
+            {
+                Unlock();
+            }
+            if (open && !IsOpen)
+            {
+                TryOpen();
+            }
+            else if (!open && IsOpen)
+            {
+                TryClose();
+            }
         }
 
         public void Unlock()

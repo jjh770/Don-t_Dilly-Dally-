@@ -9,6 +9,7 @@ using UnityEngine;
 public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 {
     public bool IsInteracting { get; private set; }
+    public bool IsStoredInContainer { get; private set; }
     public Transform Transform => transform;
 
     [Header("착지 감지 설정")]
@@ -140,6 +141,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     {
         _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
+        IsStoredInContainer = false;
 
         IsInteracting = true;
         _currentHoldPoint = holdPoint;
@@ -203,6 +205,17 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _rigidbody.isKinematic = true;
         _collider.enabled = true;
         transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
+    }
+
+    public void SetStoredInContainer(bool stored)
+    {
+        IsStoredInContainer = stored;
+
+        if (stored)
+        {
+            _collider.enabled = false;
+            _rigidbody.isKinematic = true;
+        }
     }
 
     public void RefreshHoldAnchor()

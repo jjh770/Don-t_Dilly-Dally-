@@ -6,13 +6,16 @@ public class PlayerController : MonoBehaviour
 {
     private PhotonView _photonView;
     private PlayerInteractionAbility _playerInteractionAbility;
+    private PlayerMovementAbility _movementAbility;
 
     public PhotonView PhotonView => _photonView;
+    public PlayerMovementAbility MovementAbility => _movementAbility;
 
     private void Awake()
     {
         _photonView = GetComponent<PhotonView>();
         _playerInteractionAbility = GetComponent<PlayerInteractionAbility>();
+        _movementAbility = GetComponent<PlayerMovementAbility>();
     }
 
     private void OnEnable()

@@ -54,6 +54,38 @@ namespace DontDillyDally.Data
             return true;
         }
 
+        public void ClearStoredItems()
+        {
+            if (_storedSlotItems == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                ItemObject storedItem = _storedSlotItems[i];
+                _storedSlotItems[i] = null;
+
+                if (storedItem == null)
+                {
+                    continue;
+                }
+
+                PhotonView photonView = storedItem.GetComponent<PhotonView>();
+                if (PhotonNetwork.InRoom && photonView != null)
+                {
+                    if (photonView.IsMine || photonView.AmController)
+                    {
+                        PhotonNetwork.Destroy(storedItem.gameObject);
+                    }
+
+                    continue;
+                }
+
+                Destroy(storedItem.gameObject);
+            }
+        }
+
         private Transform GetSlotTransform(int slotIndex)
         {
             if (_itemSlotPoints != null &&
@@ -78,6 +110,13 @@ namespace DontDillyDally.Data
             foreach (Collider col in colliders)
             {
                 col.enabled = false;
+            }
+
+            // 네트워크 동기화가 콜라이더를 다시 활성화하지 않도록 플래그 설정
+            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
+            if (holdable != null)
+            {
+                holdable.SetStoredInContainer(true);
             }
         }
 

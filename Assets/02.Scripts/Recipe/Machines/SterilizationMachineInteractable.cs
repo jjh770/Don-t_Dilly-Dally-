@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class SterilizationMachineInteractable : MonoBehaviour, IInteractable
+    public class SterilizationMachineInteractable : MonoBehaviourPun, IInteractable
     {
         private const string SterilizedResultPrefabName = "BasicMaterialItem";
         private const int MaxSlots = 4;
@@ -93,12 +93,7 @@ namespace DontDillyDally.Data
 
             if (interactionAbility.CurrentHeldItem == null)
             {
-                if (_isBatchCompleted)
-                {
-                    TryTakeCompletedItem(interactionAbility);
-                    return;
-                }
-
+                HandleOpenDoorEmptyHandInteraction(interactionAbility);
                 return;
             }
 
@@ -119,6 +114,8 @@ namespace DontDillyDally.Data
         public void StopInteract()
         {
         }
+
+        #region Interaction Handlers
 
         private void TryInsertItem(PlayerInteractionAbility interactionAbility, ItemObject itemObject, int slotIndex)
         {
@@ -158,12 +155,20 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            int itemViewId = GetPhotonViewId(itemObject);
+
             Transform slotTransform = GetSlotTransform(slotIndex);
             PlaceStoredItem(itemObject, slotTransform);
             SetStoredItemInteractionEnabled(itemObject, false);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PendingResultMaterial = pendingResultMaterial;
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_SterilInsert), RpcTarget.Others,
+                    slotIndex, itemViewId, (int)pendingResultMaterial);
+            }
         }
 
         private void StartSterilizationBatch()
@@ -176,18 +181,43 @@ namespace DontDillyDally.Data
             _door?.LockClosed();
             _runningMotion?.TryStart();
 
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_SterilStartBatch), RpcTarget.Others, _sterilizationDuration);
+            }
+
             if (_actionTimer == null)
             {
-                CompleteSterilizationBatch();
+                OnSterilizationTimerComplete();
                 return;
             }
 
-            _actionTimer.TryStart(_sterilizationDuration, CompleteSterilizationBatch);
+            _actionTimer.TryStart(_sterilizationDuration, OnSterilizationTimerComplete);
+        }
+
+        private void OnSterilizationTimerComplete()
+        {
+            if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
+            {
+                // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
+                photonView.RPC(nameof(RPC_SterilRequestCompletion), RpcTarget.MasterClient);
+                return;
+            }
+
+            // 마스터이거나 오프라인: 직접 완료 처리
+            CompleteSterilizationBatch();
         }
 
         private void CompleteSterilizationBatch()
         {
             _runningMotion?.StopMotion();
+
+            // 결과 아이템의 ViewID를 수집하여 RPC로 전송
+            int[] resultViewIds = new int[MaxSlots];
+            for (int i = 0; i < resultViewIds.Length; i++)
+            {
+                resultViewIds[i] = -1;
+            }
 
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -200,6 +230,7 @@ namespace DontDillyDally.Data
                 if (slot.Item is TrayItem trayItem)
                 {
                     _sterilizationMachine.TrySterilizeTray(trayItem);
+                    resultViewIds[i] = GetPhotonViewId(trayItem);
                     continue;
                 }
 
@@ -228,11 +259,17 @@ namespace DontDillyDally.Data
                     PlaceStoredItem(resultItem, slotTransform);
                     SetStoredItemInteractionEnabled(resultItem, false);
                     slot.Item = resultItem;
+                    resultViewIds[i] = GetPhotonViewId(resultItem);
                 }
             }
 
             _isBatchCompleted = HasAnyStoredItems();
             _door?.Unlock();
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_SterilCompleteBatch), RpcTarget.Others, resultViewIds);
+            }
         }
 
         private void TryTakeCompletedItem(PlayerInteractionAbility interactionAbility)
@@ -261,15 +298,30 @@ namespace DontDillyDally.Data
             }
 
             _slots[slotIndex].Clear();
-            if (!HasAnyStoredItems())
+            bool hasRemaining = HasAnyStoredItems();
+            if (!hasRemaining)
             {
                 _isBatchCompleted = false;
             }
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
+            }
         }
 
-        private bool HasAnyStoredItems()
+        private void HandleOpenDoorEmptyHandInteraction(PlayerInteractionAbility interactionAbility)
         {
-            return GetFirstOccupiedSlotIndex() >= 0;
+            if (_isBatchCompleted)
+            {
+                TryTakeCompletedItem(interactionAbility);
+                return;
+            }
+
+            if (HasAnyStoredItems())
+            {
+                CloseDoorAndSync();
+            }
         }
 
         private void HandleClosedDoorInteraction()
@@ -281,11 +333,164 @@ namespace DontDillyDally.Data
 
             if (_isBatchCompleted || !HasAnyStoredItems())
             {
-                _door.TryOpen();
+                OpenDoorAndSync();
                 return;
             }
 
             StartSterilizationBatch();
+        }
+
+        #endregion
+
+        #region RPC Handlers
+
+        [PunRPC]
+        private void RPC_SterilRequestCompletion()
+        {
+            // 마스터 클라이언트만 완료 처리 실행
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            CompleteSterilizationBatch();
+        }
+
+        [PunRPC]
+        private void RPC_SterilInsert(int slotIndex, int itemViewId, int pendingResultMaterial)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
+            {
+                return;
+            }
+
+            PhotonView itemPV = PhotonView.Find(itemViewId);
+            if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+            {
+                return;
+            }
+
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(itemObject, slotTransform);
+            SetStoredItemInteractionEnabled(itemObject, false);
+
+            _slots[slotIndex].Item = itemObject;
+            _slots[slotIndex].PendingResultMaterial = (CraftedMaterialType)pendingResultMaterial;
+        }
+
+        [PunRPC]
+        private void RPC_SterilStartBatch(float duration)
+        {
+            _door?.LockClosed();
+            _runningMotion?.TryStart();
+
+            // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
+            _actionTimer?.TryStart(duration, () => { });
+        }
+
+        [PunRPC]
+        private void RPC_SterilCompleteBatch(int[] resultViewIds)
+        {
+            _runningMotion?.StopMotion();
+            _actionTimer?.Cancel();
+
+            // 모든 슬롯 초기화 후 결과 아이템 재배치
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                _slots[i].Clear();
+            }
+
+            if (resultViewIds != null)
+            {
+                for (int i = 0; i < resultViewIds.Length && i < _slots.Length; i++)
+                {
+                    if (resultViewIds[i] < 0)
+                    {
+                        continue;
+                    }
+
+                    PhotonView resultPV = PhotonView.Find(resultViewIds[i]);
+                    if (resultPV == null || !resultPV.TryGetComponent(out ItemObject resultItem))
+                    {
+                        continue;
+                    }
+
+                    Transform slotTransform = GetSlotTransform(i);
+                    PlaceStoredItem(resultItem, slotTransform);
+                    SetStoredItemInteractionEnabled(resultItem, false);
+                    _slots[i].Item = resultItem;
+                }
+            }
+
+            _isBatchCompleted = HasAnyStoredItems();
+            _door?.Unlock();
+        }
+
+        [PunRPC]
+        private void RPC_SterilTakeItem(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
+            {
+                return;
+            }
+
+            ItemObject item = _slots[slotIndex].Item;
+            if (item != null)
+            {
+                SetStoredItemInteractionEnabled(item, true);
+            }
+
+            _slots[slotIndex].Clear();
+
+            if (!HasAnyStoredItems())
+            {
+                _isBatchCompleted = false;
+            }
+        }
+
+        [PunRPC]
+        private void RPC_SterilOpenDoor()
+        {
+            _door?.TryOpen();
+        }
+
+        [PunRPC]
+        private void RPC_SterilCloseDoor()
+        {
+            _door?.TryClose();
+        }
+
+        #endregion
+
+        #region Door Sync Helpers
+
+        private void OpenDoorAndSync()
+        {
+            _door?.TryOpen();
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
+            }
+        }
+
+        private void CloseDoorAndSync()
+        {
+            _door?.TryClose();
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_SterilCloseDoor), RpcTarget.Others);
+            }
+        }
+
+        #endregion
+
+        #region Slot Queries
+
+        private bool HasAnyStoredItems()
+        {
+            return GetFirstOccupiedSlotIndex() >= 0;
         }
 
         private bool IsDoorOpen()
@@ -319,10 +524,9 @@ namespace DontDillyDally.Data
             return -1;
         }
 
-        private Transform GetDefaultSlotTransform()
-        {
-            return transform;
-        }
+        #endregion
+
+        #region Utility
 
         private Transform GetSlotTransform(int slotIndex)
         {
@@ -334,7 +538,7 @@ namespace DontDillyDally.Data
                 return _traySlotPoints[slotIndex];
             }
 
-            return GetDefaultSlotTransform();
+            return transform;
         }
 
         private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
@@ -355,10 +559,10 @@ namespace DontDillyDally.Data
 
             itemObject.transform.SetParent(slotTransform, true);
 
-            PhotonView photonView = itemObject.GetComponent<PhotonView>();
-            if (photonView != null && PhotonNetwork.MasterClient != null)
+            PhotonView pv = itemObject.GetComponent<PhotonView>();
+            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
             {
-                photonView.TransferOwnership(PhotonNetwork.MasterClient);
+                pv.TransferOwnership(PhotonNetwork.MasterClient);
             }
         }
 
@@ -373,6 +577,12 @@ namespace DontDillyDally.Data
             foreach (Collider col in colliders)
             {
                 col.enabled = isEnabled;
+            }
+
+            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
+            if (holdable != null)
+            {
+                holdable.SetStoredInContainer(!isEnabled);
             }
         }
 
@@ -401,5 +611,18 @@ namespace DontDillyDally.Data
 
             return spawnedObject;
         }
+
+        private static int GetPhotonViewId(ItemObject itemObject)
+        {
+            if (itemObject == null)
+            {
+                return -1;
+            }
+
+            PhotonView pv = itemObject.GetComponent<PhotonView>();
+            return pv != null ? pv.ViewID : -1;
+        }
+
+        #endregion
     }
 }

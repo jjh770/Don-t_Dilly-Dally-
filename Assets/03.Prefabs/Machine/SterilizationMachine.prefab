@@ -265,6 +265,8 @@ GameObject:
   - component: {fileID: 4061686820445454964}
   - component: {fileID: 7988616223184336257}
   - component: {fileID: 3712949425308407815}
+  - component: {fileID: 845588141738192786}
+  - component: {fileID: 5892739165567156299}
   m_Layer: 6
   m_Name: Sterilizer_DoorModel
   m_TagString: Untagged
@@ -280,13 +282,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6421301919939919050}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.4, y: 0.356, z: 0.272}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 1, y: 1, z: 3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 7641056966115395560}
-  m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!33 &7212060389554207186
 MeshFilter:
   m_ObjectHideFlags: 0
@@ -377,12 +379,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c31d689b5c603e418662589759e2358, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SterilizationMachineDoor
-  _doorVisual: {fileID: 0}
+  _doorVisual: {fileID: 5227657041754624410}
   _closedLocalEulerAngles: {x: 0, y: 0, z: 0}
   _openLocalEulerAngles: {x: 0, y: 180, z: 0}
   _startOpen: 0
   _transitionDuration: 0.3
   _transitionEase: 9
+--- !u!114 &845588141738192786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6421301919939919050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 5892739165567156299}
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &5892739165567156299
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6421301919939919050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonTransformView
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0
+  m_UseLocal: 1
 --- !u!1 &6578923504061536258
 GameObject:
   m_ObjectHideFlags: 0
@@ -395,6 +436,8 @@ GameObject:
   - component: {fileID: 8081892331610193422}
   - component: {fileID: 6343537734064404030}
   - component: {fileID: 2278354768568614436}
+  - component: {fileID: 117005571442279720}
+  - component: {fileID: 3577476699573146321}
   m_Layer: 6
   m_Name: SterilizationMachine
   m_TagString: Untagged
@@ -433,7 +476,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 348160c5b99644f4d928fffd6310ffd8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SterilizationMachine
-  _craftingMachine: {fileID: 0}
+  _ruleDatabase: {fileID: 11400000, guid: 61a7f26c5bf37034e97d9364ffd7f8f4, type: 2}
 --- !u!114 &6343537734064404030
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -453,6 +496,7 @@ MonoBehaviour:
   - {fileID: 625564890154434417}
   - {fileID: 2070111626689446047}
   - {fileID: 3752236861428293230}
+  _resultPrefab: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
   _sterilizationDuration: 5
   _actionTimer: {fileID: 1967075194894486486}
   _runningMotion: {fileID: 3101245820696990766}
@@ -477,6 +521,45 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.82, y: 0.71999997, z: 0.5818008}
   m_Center: {x: 0, y: 0.35999998, z: 0.010900408}
+--- !u!114 &117005571442279720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6578923504061536258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 3577476699573146321}
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &3577476699573146321
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6578923504061536258}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonTransformView
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0
+  m_UseLocal: 1
 --- !u!1001 &6881226451508424650
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -602,6 +685,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 5756801544215138790, guid: 7f65e592de901a3418fa3501f039ff7e, type: 3}
+      propertyPath: _motionTarget
+      value: 
+      objectReference: {fileID: 768441550279945129}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

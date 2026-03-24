@@ -50,6 +50,11 @@ public class HoldableItemNetworkSync : MonoBehaviour
 
         _holdableItem.ApplyNetworkHoldState(isHeld, holderActorNumber);
         _rigidbody.isKinematic = true;
+
+        // 컨테이너(트레이, 머신 슬롯 등)에 적재된 아이템은 콜라이더를 다시 활성화하지 않음
+        if (_holdableItem.IsStoredInContainer)
+            return;
+
         _collider.enabled = !isHeld;
     }
 }
