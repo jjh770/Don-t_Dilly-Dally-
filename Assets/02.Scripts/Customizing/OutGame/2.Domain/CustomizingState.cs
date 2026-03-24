@@ -87,4 +87,16 @@ public class CustomizingState
             }
         }
     }
+
+    // 다른 상태에서 복사
+    public void CopyFrom(CustomizingState other)
+    {
+        Clear();
+        if (other == null) return;
+
+        foreach (var kvp in other._equippedItemIds)
+        {
+            _equippedItemIds[kvp.Key] = kvp.Value;
+        }
+    }
 }

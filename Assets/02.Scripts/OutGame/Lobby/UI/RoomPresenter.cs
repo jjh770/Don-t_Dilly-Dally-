@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+
 public class RoomPresenter
 {
     private RoomView _view;
@@ -12,7 +15,7 @@ public class RoomPresenter
 
     public void EnterRoom(string code)
     {
-        PhotonServerManager.Instance.TryJoinRoom(code);
+        PhotonServerManager.Instance.TryJoinRoom(code);   
     }
 
     public void CreateRoom()

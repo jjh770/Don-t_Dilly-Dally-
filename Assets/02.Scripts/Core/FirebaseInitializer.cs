@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
+using Firebase;
 
 
 public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
@@ -31,6 +32,9 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
             Database = FirebaseFirestore.DefaultInstance; // Firestore 모듈 가져오기.
 
             Debug.Log("[FirebaseInitializer] Firebase 초기화 성공");
+            Debug.Log(FirebaseApp.DefaultInstance.Options.ProjectId);
+            Debug.Log(FirebaseApp.DefaultInstance.Options.StorageBucket);
+
             OnFirebaseInitialized?.Invoke();
         }
         else
