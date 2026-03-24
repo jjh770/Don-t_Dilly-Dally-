@@ -79,12 +79,7 @@ public class RecipeItemEntry : MonoBehaviour
         // 멸균 트레이 뱃지
         if (showSterilizedBadge)
         {
-            SetSlot(
-                slotIndex,
-                iconTable.GetMaterialIcon(CraftedMaterialType.SterilizedTray),
-                ActionType.None,
-                null,
-                tintColor);
+            SetSlot(slotIndex, iconTable.GetMaterialIcon(CraftedMaterialType.SterilizedTray), ActionType.Sterilize, iconTable.GetActionIcon(ActionType.Sterilize), tintColor);
             slotIndex++;
         }
 
@@ -100,9 +95,7 @@ public class RecipeItemEntry : MonoBehaviour
                 }
 
                 ActionType requiredAction = iconTable.GetRequiredAction(material);
-                Sprite actionSprite = requiredAction != ActionType.None
-                    ? iconTable.GetActionIcon(requiredAction)
-                    : null;
+                Sprite actionSprite = requiredAction != ActionType.None ? iconTable.GetActionIcon(requiredAction) : null;
 
                 SetSlot(slotIndex, iconTable.GetMaterialIcon(material), requiredAction, actionSprite, tintColor);
                 slotIndex++;

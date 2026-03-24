@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class PotionMixingMachineInteractable : MonoBehaviour, IInteractable
+    public class PotionMixingMachineInteractable : MonoBehaviourPun, IInteractable
     {
         private const string ResultPrefabName = "BasicMaterialItem";
         private const int MaxSlots = 3;
@@ -118,11 +118,13 @@ namespace DontDillyDally.Data
         {
         }
 
+        #region Interaction Handlers
+
         private void HandleClosedDoorInteraction()
         {
             if (_storedOutputItem != null || !HasAnyStoredPotions())
             {
-                _door?.TryOpen();
+                OpenDoorAndSync();
                 return;
             }
 
@@ -133,7 +135,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            _door?.TryOpen();
+            OpenDoorAndSync();
         }
 
         private void HandleOpenDoorEmptyHandInteraction(PlayerInteractionAbility interactionAbility)
@@ -155,7 +157,7 @@ namespace DontDillyDally.Data
 
             if (canMix || isFull)
             {
-                _door?.TryClose();
+                CloseDoorAndSync();
                 return;
             }
 
@@ -179,12 +181,20 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            int itemViewId = GetPhotonViewId(itemObject);
+
             Transform slotTransform = GetSlotTransform(slotIndex);
             PlaceStoredItem(itemObject, slotTransform);
             SetStoredItemInteractionEnabled(itemObject, false);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PotionToolType = potionToolType;
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_PotionInsert), RpcTarget.Others,
+                    slotIndex, itemViewId, (int)potionToolType);
+            }
         }
 
         private void StartMixingProcess(IReadOnlyList<ToolType> loadedPotions)
@@ -202,13 +212,32 @@ namespace DontDillyDally.Data
             _door?.LockClosed();
             _runningMotion?.TryStart();
 
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_PotionStartMixing), RpcTarget.Others,
+                    (int)result.ResultMaterial, result.CraftingDuration);
+            }
+
             if (_actionTimer == null)
             {
-                CompleteMixingProcess();
+                OnMixingTimerComplete();
                 return;
             }
 
-            _actionTimer.TryStart(_pendingCraftingDuration, CompleteMixingProcess);
+            _actionTimer.TryStart(_pendingCraftingDuration, OnMixingTimerComplete);
+        }
+
+        private void OnMixingTimerComplete()
+        {
+            if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
+            {
+                // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
+                photonView.RPC(nameof(RPC_PotionRequestCompletion), RpcTarget.MasterClient);
+                return;
+            }
+
+            // 마스터이거나 오프라인: 직접 완료 처리
+            CompleteMixingProcess();
         }
 
         private void CompleteMixingProcess()
@@ -219,6 +248,12 @@ namespace DontDillyDally.Data
             if (_pendingResultMaterial == CraftedMaterialType.Unknown)
             {
                 _door?.Unlock();
+
+                if (PhotonNetwork.InRoom)
+                {
+                    photonView.RPC(nameof(RPC_PotionCompleteMixing), RpcTarget.Others, -1);
+                }
+
                 return;
             }
 
@@ -229,6 +264,12 @@ namespace DontDillyDally.Data
             if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
             {
                 _door?.Unlock();
+
+                if (PhotonNetwork.InRoom)
+                {
+                    photonView.RPC(nameof(RPC_PotionCompleteMixing), RpcTarget.Others, -1);
+                }
+
                 return;
             }
 
@@ -236,6 +277,12 @@ namespace DontDillyDally.Data
             SetStoredItemInteractionEnabled(resultItem, false);
             _storedOutputItem = resultItem;
             _door?.Unlock();
+
+            if (PhotonNetwork.InRoom)
+            {
+                int resultViewId = GetPhotonViewId(resultItem);
+                photonView.RPC(nameof(RPC_PotionCompleteMixing), RpcTarget.Others, resultViewId);
+            }
         }
 
         private void TryTakeStoredInput(PlayerInteractionAbility interactionAbility)
@@ -258,6 +305,11 @@ namespace DontDillyDally.Data
             }
 
             _slots[slotIndex].Clear();
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
+            }
         }
 
         private void TryTakeOutput(PlayerInteractionAbility interactionAbility)
@@ -273,7 +325,159 @@ namespace DontDillyDally.Data
             }
 
             _storedOutputItem = null;
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
+            }
         }
+
+        #endregion
+
+        #region RPC Handlers
+
+        [PunRPC]
+        private void RPC_PotionRequestCompletion()
+        {
+            // 마스터 클라이언트만 완료 처리 실행
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            CompleteMixingProcess();
+        }
+
+        [PunRPC]
+        private void RPC_PotionInsert(int slotIndex, int itemViewId, int potionToolType)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
+            {
+                return;
+            }
+
+            PhotonView itemPV = PhotonView.Find(itemViewId);
+            if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+            {
+                return;
+            }
+
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(itemObject, slotTransform);
+            SetStoredItemInteractionEnabled(itemObject, false);
+
+            _slots[slotIndex].Item = itemObject;
+            _slots[slotIndex].PotionToolType = (ToolType)potionToolType;
+        }
+
+        [PunRPC]
+        private void RPC_PotionStartMixing(int resultMaterial, float duration)
+        {
+            _pendingResultMaterial = (CraftedMaterialType)resultMaterial;
+            _pendingCraftingDuration = duration;
+            _door?.LockClosed();
+            _runningMotion?.TryStart();
+
+            // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
+            _actionTimer?.TryStart(duration, () => { });
+        }
+
+        [PunRPC]
+        private void RPC_PotionCompleteMixing(int resultItemViewId)
+        {
+            _runningMotion?.StopMotion();
+            _actionTimer?.Cancel();
+
+            // 슬롯 초기화 (아이템은 PhotonNetwork.Destroy로 이미 제거됨)
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                _slots[i].Clear();
+            }
+
+            _pendingResultMaterial = CraftedMaterialType.Unknown;
+
+            if (resultItemViewId >= 0)
+            {
+                PhotonView resultPV = PhotonView.Find(resultItemViewId);
+                if (resultPV != null && resultPV.TryGetComponent(out ItemObject resultItem))
+                {
+                    Transform outputTransform = GetOutputTransform();
+                    PlaceStoredItem(resultItem, outputTransform);
+                    SetStoredItemInteractionEnabled(resultItem, false);
+                    _storedOutputItem = resultItem;
+                }
+            }
+
+            _door?.Unlock();
+        }
+
+        [PunRPC]
+        private void RPC_PotionTakeInput(int slotIndex)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
+            {
+                return;
+            }
+
+            ItemObject item = _slots[slotIndex].Item;
+            if (item != null)
+            {
+                SetStoredItemInteractionEnabled(item, true);
+            }
+
+            _slots[slotIndex].Clear();
+        }
+
+        [PunRPC]
+        private void RPC_PotionTakeOutput()
+        {
+            if (_storedOutputItem != null)
+            {
+                SetStoredItemInteractionEnabled(_storedOutputItem, true);
+            }
+
+            _storedOutputItem = null;
+        }
+
+        [PunRPC]
+        private void RPC_PotionOpenDoor()
+        {
+            _door?.TryOpen();
+        }
+
+        [PunRPC]
+        private void RPC_PotionCloseDoor()
+        {
+            _door?.TryClose();
+        }
+
+        #endregion
+
+        #region Door Sync Helpers
+
+        private void OpenDoorAndSync()
+        {
+            _door?.TryOpen();
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_PotionOpenDoor), RpcTarget.Others);
+            }
+        }
+
+        private void CloseDoorAndSync()
+        {
+            _door?.TryClose();
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_PotionCloseDoor), RpcTarget.Others);
+            }
+        }
+
+        #endregion
+
+        #region Slot Queries
 
         private void ConsumeAllStoredInputs()
         {
@@ -344,6 +548,10 @@ namespace DontDillyDally.Data
             return -1;
         }
 
+        #endregion
+
+        #region Utility
+
         private Transform GetSlotTransform(int slotIndex)
         {
             if (_slotPoints != null &&
@@ -395,10 +603,10 @@ namespace DontDillyDally.Data
 
             itemObject.transform.SetParent(slotTransform, true);
 
-            PhotonView photonView = itemObject.GetComponent<PhotonView>();
-            if (photonView != null && PhotonNetwork.MasterClient != null)
+            PhotonView pv = itemObject.GetComponent<PhotonView>();
+            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
             {
-                photonView.TransferOwnership(PhotonNetwork.MasterClient);
+                pv.TransferOwnership(PhotonNetwork.MasterClient);
             }
         }
 
@@ -413,6 +621,12 @@ namespace DontDillyDally.Data
             foreach (Collider col in colliders)
             {
                 col.enabled = isEnabled;
+            }
+
+            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
+            if (holdable != null)
+            {
+                holdable.SetStoredInContainer(!isEnabled);
             }
         }
 
@@ -436,5 +650,18 @@ namespace DontDillyDally.Data
 
             return spawnedObject;
         }
+
+        private static int GetPhotonViewId(ItemObject itemObject)
+        {
+            if (itemObject == null)
+            {
+                return -1;
+            }
+
+            PhotonView pv = itemObject.GetComponent<PhotonView>();
+            return pv != null ? pv.ViewID : -1;
+        }
+
+        #endregion
     }
 }

@@ -111,6 +111,13 @@ namespace DontDillyDally.Data
             {
                 col.enabled = false;
             }
+
+            // 네트워크 동기화가 콜라이더를 다시 활성화하지 않도록 플래그 설정
+            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
+            if (holdable != null)
+            {
+                holdable.SetStoredInContainer(true);
+            }
         }
 
         private static void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
