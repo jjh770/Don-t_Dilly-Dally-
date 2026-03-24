@@ -8,7 +8,7 @@ public class CharacterPreviewCamera : MonoBehaviour
     [SerializeField] private Vector3 _offset = new Vector3(0f, 2f, 7.1f);
 
     [Header("Look 세팅")]
-    [SerializeField] private Vector3 _lookOffset = new Vector3(0f, 0.9f, 0f);
+    [SerializeField] private Vector3 _lookOffset = new Vector3(0f, 0.8f, 0f);
 
     private Transform _target;
 
