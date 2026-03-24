@@ -11,14 +11,22 @@ namespace DontDillyDally.MiniGame
         // 집도의가 미니게임을 시작했음을 다른 클라이언트에 알림 (이펙트/연출용).
         public void BroadcastMiniGameStarted(MiniGameType type)
         {
-            if (!PhotonNetwork.IsConnected) return;
+            if (!PhotonNetwork.IsConnected)
+            {
+                return;
+            }
+
             photonView.RPC(nameof(RPC_NotifyMiniGameStarted), RpcTarget.Others, (int)type);
         }
 
         // 미니게임 결과를 다른 클라이언트에 전달.
         public void BroadcastMiniGameResult(MiniGameResult result)
         {
-            if (!PhotonNetwork.IsConnected) return;
+            if (!PhotonNetwork.IsConnected)
+            {
+                return;
+            }
+
             photonView.RPC(
                 nameof(RPC_NotifyMiniGameResult),
                 RpcTarget.Others,

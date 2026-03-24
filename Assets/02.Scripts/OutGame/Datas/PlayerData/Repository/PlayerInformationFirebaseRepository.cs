@@ -33,7 +33,7 @@ public class PlayerInformationFirebaseRepository : IPlayerInformationRepository
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[PlayerInformationFirebaseRepository] 불러오기 실패, null을 반환합니다. :" + e);
+            Debug.LogWarning("[PlayerInformationFirebaseRepository] 불러오기 실패, null을 반환합니다. :" + e);
             return null;
         }
     }

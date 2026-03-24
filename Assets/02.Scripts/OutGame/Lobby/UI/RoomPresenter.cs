@@ -56,5 +56,6 @@ public class RoomPresenter
     public void Dispose()
     {
         PhotonServerManager.Instance.OnFailedToJoinRoom -= OnFailedToJoinRoom;
+        PlayerDataManager.Instance.OnDataManagerReady -= OnDataManagerSet;
     }
 }

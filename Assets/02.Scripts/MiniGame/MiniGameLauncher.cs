@@ -67,7 +67,10 @@ namespace DontDillyDally.MiniGame
         public void AbortCurrent()
         {
             // 결과 연출 코루틴이 진행 중이면 중복 호출 방지.
-            if (_resultCoroutine != null) return;
+            if (_resultCoroutine != null)
+            {
+                return;
+            }
 
             _activeMiniGame?.Abort();
         }
