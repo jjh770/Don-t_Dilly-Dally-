@@ -26,8 +26,7 @@ public class CustomizingManagerEditor : Editor
             return;
         }
 
-        // 초기화 상태 확인
-        if (manager.Domain == null)
+        if (!manager.IsInitialized)
         {
             EditorGUILayout.HelpBox("Manager not initialized", MessageType.Warning);
             return;

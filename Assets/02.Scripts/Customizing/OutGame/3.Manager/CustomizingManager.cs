@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
-public class CustomizingManager : MonoBehaviour
+public class CustomizingManager : MonoBehaviour, ICustomizingManager
 {
     public static CustomizingManager Instance { get; private set; }
 
@@ -17,21 +17,22 @@ public class CustomizingManager : MonoBehaviour
 
     private Customizing _domain;
     private ICustomizingRepository _repository;
+    private CustomizingState _savedState;
 
-    // 이벤트
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
     public event Action OnSaved;
     public event Action OnLoaded;
 
-    public Customizing Domain => _domain;
-    public CustomizingCatalogSO Catalog => _catalog;
-    public BaseEquipmentCatalogSO BaseEquipmentCatalog => _baseEquipmentCatalog;
+    public bool IsInitialized => _domain != null;
 
     private void Awake()
     {
         if (Instance == null)
+        {
             Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
         else if (Instance != this)
         {
             Destroy(gameObject);
@@ -43,8 +44,7 @@ public class CustomizingManager : MonoBehaviour
     {
         Initialize();
 
-        if (_autoLoadOnStart)
-            Load();
+        if (_autoLoadOnStart) Load();
     }
 
     public void Initialize()
@@ -54,12 +54,18 @@ public class CustomizingManager : MonoBehaviour
             Debug.LogError("[CustomizingManager] 카탈로그가 할당되지 않았습니다.");
             return;
         }
+        if (_baseEquipmentCatalog == null)
+        {
+            Debug.LogError("[CustomizingManager] 기본 장착 카탈로그가 할당되지 않았습니다.");
+            return;
+        }
 
         _catalog.Initialize();
-        _baseEquipmentCatalog?.Initialize();
+        _baseEquipmentCatalog.Initialize();
 
         _repository = new LocalCustomizingRepository(_userId);
         _domain = new Customizing(_catalog);
+        _savedState = new CustomizingState();
 
         OnInitialized?.Invoke();
     }
@@ -84,6 +90,8 @@ public class CustomizingManager : MonoBehaviour
         else
             _domain.InitializeWithDefaults();
 
+        _savedState.CopyFrom(_domain.State);
+
         Debug.Log("[CustomizingManager] 로드 완료");
         OnLoaded?.Invoke();
     }
@@ -95,6 +103,8 @@ public class CustomizingManager : MonoBehaviour
             Debug.LogError("[CustomizingManager] 초기화되지 않음");
             return;
         }
+
+        _savedState.CopyFrom(_domain.State);
 
         var saveData = _domain.ToSaveData();
         saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
@@ -145,20 +155,76 @@ public class CustomizingManager : MonoBehaviour
         return SelectItem(item);
     }
 
-    public void ResetAll()
+    public void OpenCustomizingUI()
     {
-        _domain?.ResetToDefaults();
+        if (_domain == null) return;
+
+        _domain.State.CopyFrom(_savedState);
+        Debug.Log("[CustomizingManager] 커스터마이징 UI 열림 - Working State 초기화");
         OnLoaded?.Invoke();
     }
 
-    // 현재 장착 아이템
+    public void CloseCustomizingUI()
+    {
+        if (_domain == null) return;
+
+        _domain.State.CopyFrom(_savedState);
+        Debug.Log("[CustomizingManager] 커스터마이징 UI 닫힘 - Saved State로 복원");
+        OnLoaded?.Invoke();
+    }
+
+    public void ResetToSaved()
+    {
+        if (_domain == null) return;
+
+        _domain.State.CopyFrom(_savedState);
+        Debug.Log("[CustomizingManager] Saved State로 리셋");
+        OnLoaded?.Invoke();
+    }
+
+    public void ResetAll()
+    {
+        ResetToSaved();
+    }
+
+    // ========== 조회 API ==========
     public CustomizingItemSO GetEquipped(CustomizingType type)
     {
         var spec = _domain?.GetEquipped(type);
         return spec as CustomizingItemSO;
     }
 
-    // 카테고리별 해금 아이템 목록
+    public Dictionary<CustomizingType, string> GetEquippedItemIds()
+    {
+        if (_domain?.State == null)
+            return new Dictionary<CustomizingType, string>();
+
+        return new Dictionary<CustomizingType, string>(_domain.State.GetAll());
+    }
+
+    public CustomizingItemSO GetItemById(string itemId)
+    {
+        return _catalog?.GetItemById(itemId);
+    }
+
+    public BaseEquipmentItemSO GetBaseEquipmentItem(BaseEquipmentType type)
+    {
+        return _baseEquipmentCatalog?.GetItem(type);
+    }
+
+    public IEnumerable<(BaseEquipmentType type, BaseEquipmentItemSO item)> GetAllBaseEquipmentItems()
+    {
+        if (_baseEquipmentCatalog == null)
+            yield break;
+
+        foreach (BaseEquipmentType type in Enum.GetValues(typeof(BaseEquipmentType)))
+        {
+            var item = _baseEquipmentCatalog.GetItem(type);
+            if (item != null)
+                yield return (type, item);
+        }
+    }
+
     public List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type)
     {
         return _catalog?.GetUnlockedItemsByType(type) ?? new List<CustomizingItemSO>();

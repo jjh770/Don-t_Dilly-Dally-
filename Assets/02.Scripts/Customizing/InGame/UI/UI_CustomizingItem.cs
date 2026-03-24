@@ -9,7 +9,7 @@ public class UI_CustomizingItem : MonoBehaviour
     [SerializeField] private Image _backgroundImage;
     [SerializeField] private GameObject _selectedIndicator;
     [SerializeField] private Button _button;
-    
+
     [Header("색")]
     [SerializeField] private Color _normalColor = Color.white;
     [SerializeField] private Color _selectedColor = new Color(0.8f, 0.9f, 1f);
@@ -23,6 +23,22 @@ public class UI_CustomizingItem : MonoBehaviour
 
         if (_button != null)
             _button.onClick.AddListener(HandleClick);
+    }
+
+    public void Setup(CustomizingItemViewData viewData, Action onClickCallback)
+    {
+        _onClick = onClickCallback;
+
+        if (_iconImage != null && viewData.Icon != null)
+        {
+            _iconImage.sprite = viewData.Icon;
+            _iconImage.color = viewData.IsLocked ? Color.gray : _normalColor;
+        }
+
+        SetSelected(viewData.IsSelected);
+
+        if (_button != null)
+            _button.interactable = !viewData.IsLocked;
     }
 
     public void Setup(CustomizingItemSO item, Action onClickCallback)

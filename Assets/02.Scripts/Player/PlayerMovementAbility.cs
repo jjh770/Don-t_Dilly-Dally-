@@ -29,6 +29,14 @@ public class PlayerMovementAbility : PlayerAbility
         _playerAnimator = GetComponent<PlayerAnimator>();
     }
 
+    private void Start()
+    {
+        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
+        {
+            _rigidbody.isKinematic = true;
+        }
+    }
+
     private void Update()
     {
         if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
@@ -50,6 +58,11 @@ public class PlayerMovementAbility : PlayerAbility
 
     private void FixedUpdate()
     {
+        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
+        {
+            return;
+        }
+
         if (_isMovementLocked)
         {
             _currentSpeed = 0f;
