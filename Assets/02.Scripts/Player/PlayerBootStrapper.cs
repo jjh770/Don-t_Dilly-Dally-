@@ -18,7 +18,7 @@ public class PlayerBootStrapper : MonoBehaviour
         );
         _playerView = GetComponentInChildren<PlayerView>();
 
-         _playerPresenter = new PlayerPresenter(_playerModel, _playerView, owner);
+        _playerPresenter = new PlayerPresenter(_playerModel, _playerView, owner);
         _playerView.Initialize(_playerPresenter);
         _playerPresenter.Initialize();
     }
