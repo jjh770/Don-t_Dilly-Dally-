@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class CustomizingViewModel
 {
-    private readonly CustomizingManager _manager;
+    private readonly ICustomizingManager _manager;
 
     private CustomizingType _currentCategory = CustomizingType.SkinColor;
     private List<CustomizingItemViewData> _visibleItems = new();
@@ -19,7 +19,7 @@ public class CustomizingViewModel
     public bool HasUnsavedChanges => CheckUnsavedChanges();
     public bool IsInitialized => _manager != null && _manager.IsInitialized;
 
-    public CustomizingViewModel(CustomizingManager manager)
+    public CustomizingViewModel(ICustomizingManager manager)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         SubscribeToManager();

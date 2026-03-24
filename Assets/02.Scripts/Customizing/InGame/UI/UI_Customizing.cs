@@ -30,9 +30,22 @@ public class UI_Customizing : MonoBehaviour
     private CustomizingViewModel _viewModel;
     private List<UI_CustomizingItem> _itemButtons = new();
 
+    public void Initialize(CustomizingViewModel viewModel)
+    {
+        if (_viewModel != null) return;
+
+        _viewModel = viewModel ?? throw new System.ArgumentNullException(nameof(viewModel));
+        SubscribeToViewModel();
+    }
+
     private void Start()
     {
-        InitializeViewModel();
+        if (_viewModel == null)
+        {
+            Debug.LogError("[UI_Customizing] ViewModel이 주입되지 않았습니다. Initialize()를 먼저 호출하세요.");
+            return;
+        }
+
         SetupButtons();
         SetupCategoryTabs();
 
@@ -52,19 +65,6 @@ public class UI_Customizing : MonoBehaviour
     {
         UnsubscribeFromViewModel();
         _viewModel?.Dispose();
-    }
-
-    private void InitializeViewModel()
-    {
-        var manager = CustomizingManager.Instance;
-        if (manager == null)
-        {
-            Debug.LogError("[UI_Customizing] CustomizingManager를 찾을 수 없습니다.");
-            return;
-        }
-
-        _viewModel = new CustomizingViewModel(manager);
-        SubscribeToViewModel();
     }
 
     private void SubscribeToViewModel()

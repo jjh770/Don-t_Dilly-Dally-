@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 
-public class CustomizingManager : MonoBehaviour
+public class CustomizingManager : MonoBehaviour, ICustomizingManager
 {
     public static CustomizingManager Instance { get; private set; }
 
@@ -54,9 +54,14 @@ public class CustomizingManager : MonoBehaviour
             Debug.LogError("[CustomizingManager] 카탈로그가 할당되지 않았습니다.");
             return;
         }
+        if (_baseEquipmentCatalog == null)
+        {
+            Debug.LogError("[CustomizingManager] 기본 장착 카탈로그가 할당되지 않았습니다.");
+            return;
+        }
 
         _catalog.Initialize();
-        _baseEquipmentCatalog?.Initialize();
+        _baseEquipmentCatalog.Initialize();
 
         _repository = new LocalCustomizingRepository(_userId);
         _domain = new Customizing(_catalog);

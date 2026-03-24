@@ -3,9 +3,10 @@ using UnityEngine.UI;
 
 public class WaitingRoom : MonoBehaviour
 {
-    [SerializeField] private GameObject _customizingUI;
+    [SerializeField] private UI_Customizing _customizingUI;
     [SerializeField] private Button _button;
 
+    private CustomizingViewModel _viewModel;
 
     private void OnEnable()
     {
@@ -19,9 +20,20 @@ public class WaitingRoom : MonoBehaviour
 
     private void OnClick()
     {
-        if (_customizingUI != null)
+        if (_customizingUI == null) return;
+
+        if (_viewModel == null)
         {
-            _customizingUI.SetActive(true);
+            var manager = CustomizingManager.Instance;
+            if (manager == null)
+            {
+                Debug.LogError("[WaitingRoom] CustomizingManager가 없습니다.");
+                return;
+            }
+            _viewModel = new CustomizingViewModel(manager);
+            _customizingUI.Initialize(_viewModel);
         }
+
+        _customizingUI.gameObject.SetActive(true);
     }
 }

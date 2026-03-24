@@ -29,6 +29,14 @@ public class PlayerMovementAbility : PlayerAbility
         _playerAnimator = GetComponent<PlayerAnimator>();
     }
 
+    private void Start()
+    {
+        if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
+        {
+            _rigidbody.isKinematic = true;
+        }
+    }
+
     private void Update()
     {
         if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
@@ -50,7 +58,6 @@ public class PlayerMovementAbility : PlayerAbility
 
     private void FixedUpdate()
     {
-        // 원격 플레이어는 물리 처리 안 함
         if (_owner.PhotonView != null && !_owner.PhotonView.IsMine)
         {
             return;

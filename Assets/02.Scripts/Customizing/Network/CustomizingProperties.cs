@@ -9,21 +9,21 @@ public static class CustomizingProperties
 {
     private const string PROPERTY_KEY = "cust";
 
-
+    // 현재 장착 정보 -> JSON 문자열로 변환
     public static string Serialize(Dictionary<CustomizingType, string> items)
     {
         if (items == null || items.Count == 0) return "{}";
 
         var data = new SerializedData();
-        data.items = new SerializedItem[items.Count];
+        data.Items = new SerializedItem[items.Count];
 
         int i = 0;
         foreach (var kvp in items)
         {
-            data.items[i] = new SerializedItem
+            data.Items[i] = new SerializedItem
             {
-                t = (int)kvp.Key,
-                id = kvp.Value
+                CustomizingType = (int)kvp.Key,
+                ItemID = kvp.Value
             };
             i++;
         }
@@ -31,6 +31,7 @@ public static class CustomizingProperties
         return JsonUtility.ToJson(data);
     }
 
+    // JSON 문자열 -> 현재 장착 정보로 변환
     public static Dictionary<CustomizingType, string> Deserialize(string json)
     {
         var result = new Dictionary<CustomizingType, string>();
@@ -41,12 +42,12 @@ public static class CustomizingProperties
         try
         {
             var data = JsonUtility.FromJson<SerializedData>(json);
-            if (data?.items != null)
+            if (data?.Items != null)
             {
-                foreach (var item in data.items)
+                foreach (var item in data.Items)
                 {
-                    var type = (CustomizingType)item.t;
-                    result[type] = item.id;
+                    var type = (CustomizingType)item.CustomizingType;
+                    result[type] = item.ItemID;
                 }
             }
         }
@@ -58,6 +59,8 @@ public static class CustomizingProperties
         return result;
     }
 
+    // 로컬 플레이어의 커스터마이징 정보를
+    // Photon LocalPlayer의 커스텀 프로퍼티에 저장
     public static void SetLocalPlayerCustomizing(Dictionary<CustomizingType, string> items)
     {
         if (!PhotonNetwork.IsConnected || PhotonNetwork.LocalPlayer == null)
@@ -73,6 +76,7 @@ public static class CustomizingProperties
         Debug.Log($"[CustomizingProperties] 로컬 커스터마이징 등록 완료");
     }
 
+    // 특정 플레이어의 커스터마이징 정보 읽기
     public static Dictionary<CustomizingType, string> GetPlayerCustomizing(Player player)
     {
         if (player == null)
@@ -86,6 +90,7 @@ public static class CustomizingProperties
         return new Dictionary<CustomizingType, string>();
     }
 
+    // 이번 변경분
     public static bool TryGetFromChangedProps(Hashtable changedProps, out Dictionary<CustomizingType, string> items)
     {
         items = null;
@@ -102,13 +107,13 @@ public static class CustomizingProperties
     [Serializable]
     private class SerializedData
     {
-        public SerializedItem[] items;
+        public SerializedItem[] Items;
     }
 
     [Serializable]
     private class SerializedItem
     {
-        public int t;      // CustomizingType
-        public string id;  // ItemId
+        public int CustomizingType;
+        public string ItemID;
     }
 }
