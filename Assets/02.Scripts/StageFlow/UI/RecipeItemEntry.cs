@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using DontDillyDally.Data;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,20 +23,13 @@ public class RecipeItemEntry : MonoBehaviour
     [SerializeField] private RectTransform _iconContainer;
 
     [Header("아이콘 설정")]
-    [SerializeField] private float _materialIconSize = 48f;
-    [SerializeField] private float _actionIconSize = 20f;
-    [SerializeField] private float _slotSpacing = 8f;
+    [SerializeField] private float _materialIconSize = 60f;
+    [SerializeField] private float _actionIconSize = 50f;
+    [SerializeField] private float _slotSpacing = 10f;
 
     private readonly List<MaterialSlot> _slotPool = new List<MaterialSlot>();
 
-    public void SetData(
-        string recipeName,
-        List<CraftedMaterialType> materials,
-        MaterialIconTable iconTable,
-        Color textColor,
-        Color bgColor,
-        bool isBold,
-        bool showSterilizedBadge)
+    public void SetData(string recipeName, List<CraftedMaterialType> materials, MaterialIconTable iconTable, Color textColor, Color bgColor, bool isBold, bool showSterilizedBadge)
     {
         if (_nameText != null)
         {
@@ -53,11 +46,7 @@ public class RecipeItemEntry : MonoBehaviour
         RefreshSlots(materials, iconTable, textColor, showSterilizedBadge);
     }
 
-    private void RefreshSlots(
-        List<CraftedMaterialType> materials,
-        MaterialIconTable iconTable,
-        Color tintColor,
-        bool showSterilizedBadge)
+    private void RefreshSlots(List<CraftedMaterialType> materials, MaterialIconTable iconTable, Color tintColor, bool showSterilizedBadge)
     {
         if (_iconContainer == null || iconTable == null)
         {
@@ -168,7 +157,7 @@ public class RecipeItemEntry : MonoBehaviour
     private MaterialSlot CreateSlot(int index)
     {
         // 슬롯 루트 (재료 + 액션을 세로로 묶는 컨테이너)
-        GameObject slotObj = new GameObject($"Slot_{index}", typeof(RectTransform), typeof(VerticalLayoutGroup));
+        GameObject slotObj = new GameObject($"Slot_{index}", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
         slotObj.layer = gameObject.layer;
 
         RectTransform slotRt = slotObj.GetComponent<RectTransform>();
@@ -178,10 +167,14 @@ public class RecipeItemEntry : MonoBehaviour
         VerticalLayoutGroup vlg = slotObj.GetComponent<VerticalLayoutGroup>();
         vlg.childAlignment = TextAnchor.UpperCenter;
         vlg.childForceExpandWidth = false;
-        vlg.childForceExpandHeight = false;
+        vlg.childForceExpandHeight = true;
         vlg.childControlWidth = false;
         vlg.childControlHeight = false;
-        vlg.spacing = 2f;
+        vlg.spacing = _slotSpacing;
+
+        ContentSizeFitter contentSizeFitter = slotObj.GetComponent<ContentSizeFitter>();
+        contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         // 재료 아이콘
         Image materialIcon = CreateIconImage(slotRt, $"Material_{index}", _materialIconSize);

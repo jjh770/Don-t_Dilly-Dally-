@@ -28,6 +28,7 @@ namespace DontDillyDally.StageFlow
 
         [Header("미니게임")]
         [SerializeField] private float _miniGameFailPenalty = 10f;
+        [SerializeField] private float _miniGameSuccessHeal = 5f;
 
         [Header("디버그")]
         [SerializeField] private bool _debugMode;
@@ -573,6 +574,17 @@ namespace DontDillyDally.StageFlow
             return _rpc.PatientHealth.Value;
         }
 
+        private float RecoverPatientHealth(float heal)
+        {
+            if (_patientHealthController == null)
+            {
+                return _rpc.PatientHealth.Value;
+            }
+
+            _patientHealthController.ApplyHeal(heal);
+            return _rpc.PatientHealth.Value;
+        }
+
         private void PausePatientHealthDrain()
         {
             _patientHealthController?.PauseDrain();
@@ -608,6 +620,13 @@ namespace DontDillyDally.StageFlow
             }
 
             Debug.Log($"[StageFlow]     레시피 미니게임 결과: {(success ? "성공" : "실패")}");
+
+            if (success)
+            {
+                float recoveredHealth = RecoverPatientHealth(_miniGameSuccessHeal);
+                Debug.Log($"[StageFlow]     미니게임 성공! 체력 +{_miniGameSuccessHeal} → 현재 체력: {recoveredHealth}");
+                return;
+            }
 
             if (!success)
             {

@@ -77,6 +77,23 @@ namespace DontDillyDally.StageFlow
             ApplyDamageInternal(damage);
         }
 
+        public void ApplyHeal(float heal)
+        {
+            if (!_isInitialized || _isDepleted || heal <= 0f)
+            {
+                return;
+            }
+
+            float nextHealth = Mathf.Min(_maxHealth, _currentHealth + heal);
+            if (Mathf.Approximately(nextHealth, _currentHealth))
+            {
+                return;
+            }
+
+            _currentHealth = nextHealth;
+            OnHealthChanged?.Invoke(_currentHealth);
+        }
+
         public void Reset()
         {
             _currentHealth = 0f;
