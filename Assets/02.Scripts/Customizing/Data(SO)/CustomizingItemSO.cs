@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 [CreateAssetMenu(fileName = "CustomizingItem", menuName = "Customizing/Item")]
 public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
@@ -10,6 +11,11 @@ public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
 
     [Header("Visual")]
     [SerializeField] private Sprite _previewIcon;
+
+    [Header("Addressables")]
+    [SerializeField] private AssetReferenceGameObject _partPrefabRef;
+
+    [Header("Legacy (마이그레이션 후 제거)")]
     [SerializeField] private GameObject _partPrefab;
 
     [Header("Settings")]
@@ -24,7 +30,12 @@ public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
     public bool IsLocked => _isLocked;
     public int SortOrder => _sortOrder;
     public Sprite PreviewIcon => _previewIcon;
+
+    public AssetReferenceGameObject PartPrefabRef => _partPrefabRef;
     public GameObject PartPrefab => _partPrefab;
+
+    public bool HasAddressableRef => _partPrefabRef != null && _partPrefabRef.RuntimeKeyIsValid();
+    public string AddressableKey => HasAddressableRef ? _partPrefabRef.AssetGUID : null;
 
 #if UNITY_EDITOR
     private void OnValidate()

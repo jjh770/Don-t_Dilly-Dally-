@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerCustomizingView))]
@@ -54,6 +56,12 @@ public class LobbyPreviewController : MonoBehaviour
             return;
         }
 
+        InitializeAsync().Forget();
+    }
+
+    private async UniTaskVoid InitializeAsync()
+    {
+        await PreloadAllItems();
         ApplyCustomizing();
         SetupPreviewCamera();
         _isInitialized = true;
@@ -67,9 +75,24 @@ public class LobbyPreviewController : MonoBehaviour
             manager.OnLoaded -= OnManagerFirstLoaded;
         }
 
-        ApplyCustomizing();
-        SetupPreviewCamera();
-        _isInitialized = true;
+        InitializeAsync().Forget();
+    }
+
+    private async UniTask PreloadAllItems()
+    {
+        var manager = CustomizingManager.Instance;
+        if (manager == null) return;
+
+        var allItems = new List<CustomizingItemSO>();
+
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        {
+            var items = manager.GetUnlockedItemsByType(type);
+            allItems.AddRange(items);
+        }
+
+        await _view.PreloadItemsAsync(allItems);
+        Debug.Log($"[LobbyPreviewController] {allItems.Count}개 아이템 프리로드 완료");
     }
 
     private void HandleLoaded()
