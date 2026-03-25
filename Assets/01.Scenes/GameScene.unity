@@ -2903,6 +2903,8 @@ MonoBehaviour:
   _panelRoot: {fileID: 1442447137}
   _healthGauge: {fileID: 2122214375}
   _healthText: {fileID: 1277536145}
+  _healthTweenDuration: 0.25
+  _healthTweenEase: 9
 --- !u!1001 &1469529438
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3353,7 +3355,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -0.002835021, y: 0}
+  m_AnchoredPosition: {x: -0.0001415618, y: 0}
   m_SizeDelta: {x: 0, y: 200}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1898351497
@@ -3821,7 +3823,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_FillRect: {fileID: 1578316849}
   m_HandleRect: {fileID: 0}
@@ -3829,7 +3831,7 @@ MonoBehaviour:
   m_MinValue: 0
   m_MaxValue: 1
   m_WholeNumbers: 0
-  m_Value: 1
+  m_Value: 0
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []

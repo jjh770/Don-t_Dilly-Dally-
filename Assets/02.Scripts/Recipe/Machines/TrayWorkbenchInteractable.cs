@@ -147,6 +147,7 @@ namespace DontDillyDally.Data
             }
 
             // 워크벤치 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
+            SetTrayInteractionEnabled(trayItem, true);
             _trayWorkbench.ClearCurrentTrayItem(trayItem);
 
             if (PhotonNetwork.InRoom)
@@ -200,6 +201,7 @@ namespace DontDillyDally.Data
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem != null)
             {
+                SetTrayInteractionEnabled(trayItem, true);
                 _trayWorkbench.ClearCurrentTrayItem(trayItem);
             }
         }
@@ -226,11 +228,30 @@ namespace DontDillyDally.Data
             }
 
             trayItem.transform.SetParent(_traySlotPoint, true);
+        }
 
-            PhotonView pv = trayItem.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
+        private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)
+        {
+            if (trayItem == null)
             {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
+                return;
+            }
+
+            Collider[] colliders = trayItem.GetComponentsInChildren<Collider>(true);
+            foreach (Collider col in colliders)
+            {
+                col.enabled = isEnabled;
+            }
+
+            HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
+            if (holdable != null)
+            {
+                holdable.SetStoredInContainer(!isEnabled);
+            }
+
+            if (isEnabled)
+            {
+                trayItem.transform.SetParent(null, true);
             }
         }
 

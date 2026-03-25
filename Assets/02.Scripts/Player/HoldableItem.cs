@@ -213,6 +213,18 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
     }
 
+    public void ApplyNetworkContainerState(bool isStored)
+    {
+        IsStoredInContainer = isStored;
+
+        if (isStored)
+        {
+            IsInteracting = false;
+            _currentHoldPoint = null;
+            _holderActorNumber = InvalidActorNumber;
+        }
+    }
+
     public void SetStoredInContainer(bool stored)
     {
         IsStoredInContainer = stored;

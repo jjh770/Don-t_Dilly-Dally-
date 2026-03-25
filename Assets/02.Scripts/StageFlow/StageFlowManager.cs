@@ -130,6 +130,7 @@ namespace DontDillyDally.StageFlow
         // ── 이벤트 ──────────────────────────────────────────────────
         public event Action<EGameOverReason> OnGameOver;
         public event Action OnStageClear;
+        public event Action<StageRuntimeData> OnStageDataChanged;
 
         // ================================================================
         //  초기화
@@ -139,6 +140,7 @@ namespace DontDillyDally.StageFlow
         public void Initialize(StageRuntimeData stageData)
         {
             _stageData = stageData;
+            OnStageDataChanged?.Invoke(_stageData);
             _recipeJudge = new TreatmentRecipeJudge();
             _trayHandler = new TraySubmissionHandler(_rpc, () => _isGameOver);
             _patientHealthController = new PatientHealthController();
@@ -157,7 +159,7 @@ namespace DontDillyDally.StageFlow
 
             // 클라이언트 측 게임 오버, 스테이지 데이터 수신 (RPCHandler를 통해 로컬에서 수신)
             _rpc.OnGameOverReceived += reason => OnGameOver?.Invoke(reason);
-            _rpc.OnStageDataReceived += data => _stageData = data;
+            _rpc.OnStageDataReceived += HandleStageDataReceived;
 
             // 미니게임 RPC 수신
             _rpc.OnMiniGameRequested += HandleMiniGameRequested;
@@ -440,8 +442,7 @@ namespace DontDillyDally.StageFlow
                 SubmittedTray tray = await _trayHandler.WaitForSubmission(ct);
                 Debug.Log("[StageFlow]     트레이 제출됨 → 판정 중...");
 
-                TreatmentJudgeResult result = _recipeJudge.JudgeNextRecipe(
-                    tray, _rpc.PatientHealth.Value);
+                TreatmentJudgeResult result = _recipeJudge.JudgeNextRecipe(tray, _rpc.PatientHealth.Value);
 
                 if (result.Success)
                 {
@@ -829,6 +830,12 @@ namespace DontDillyDally.StageFlow
         }
 
         // 현재 씬의 모든 플레이어 이동을 일괄 잠그거나 해제합니다.
+        private void HandleStageDataReceived(StageRuntimeData data)
+        {
+            _stageData = data;
+            OnStageDataChanged?.Invoke(_stageData);
+        }
+
         private void SetAllPlayersMovementLocked(bool locked)
         {
             foreach (PlayerController player in PlayerRegistry.GetAllPlayers())
@@ -875,6 +882,7 @@ namespace DontDillyDally.StageFlow
 
             if (_rpc != null)
             {
+                _rpc.OnStageDataReceived -= HandleStageDataReceived;
                 _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
             }

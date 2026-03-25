@@ -583,6 +583,11 @@ namespace DontDillyDally.Data
             {
                 holdable.SetStoredInContainer(!isEnabled);
             }
+
+            if (isEnabled)
+            {
+                itemObject.transform.SetParent(null, true);
+            }
         }
 
         private GameObject SpawnSterilizedResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)

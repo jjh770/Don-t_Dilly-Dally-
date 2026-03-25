@@ -35,18 +35,29 @@ public class HoldableItemNetworkSync : MonoBehaviour
         {
             stream.SendNext(_holdableItem.IsInteracting);
             stream.SendNext(_holdableItem.HolderActorNumber);
+            stream.SendNext(_holdableItem.IsStoredInContainer);
             return;
         }
 
         bool networkIsHeld = (bool)stream.ReceiveNext();
         int networkHolderActorNumber = (int)stream.ReceiveNext();
-        ApplyRemoteHeldState(networkIsHeld, networkHolderActorNumber);
+        bool networkIsStoredInContainer = (bool)stream.ReceiveNext();
+        ApplyRemoteHeldState(networkIsHeld, networkHolderActorNumber, networkIsStoredInContainer);
     }
 
-    private void ApplyRemoteHeldState(bool isHeld, int holderActorNumber)
+    private void ApplyRemoteHeldState(bool isHeld, int holderActorNumber, bool isStoredInContainer)
     {
         if (_photonView != null && _photonView.IsMine)
             return;
+
+        _holdableItem.ApplyNetworkContainerState(isStoredInContainer);
+
+        if (isStoredInContainer)
+        {
+            _rigidbody.isKinematic = true;
+            _collider.enabled = false;
+            return;
+        }
 
         _holdableItem.ApplyNetworkHoldState(isHeld, holderActorNumber);
         _rigidbody.isKinematic = true;

@@ -16,7 +16,7 @@ namespace DontDillyDally.StageFlow
     {
         // ── ReactiveProperty (외부 구독용) ──────────────────────────
         private readonly ReactiveProperty<EStagePhase> _currentPhase = new(EStagePhase.None);
-        private readonly ReactiveProperty<float> _patientHealth = new(100f);
+        private readonly ReactiveProperty<float> _patientHealth = new(0f);
         private readonly ReactiveProperty<float> _stageTimer = new(0f);
         private readonly ReactiveProperty<int> _currentPatientIndex = new(0);
         private readonly ReactiveProperty<int> _currentRecipeIndex = new(0);
