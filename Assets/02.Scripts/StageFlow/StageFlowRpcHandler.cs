@@ -1,7 +1,7 @@
-using System;
 using DontDillyDally.Data;
 using DontDillyDally.MiniGame;
 using Photon.Pun;
+using System;
 using UniRx;
 using UnityEngine;
 
@@ -16,7 +16,7 @@ namespace DontDillyDally.StageFlow
     {
         // ── ReactiveProperty (외부 구독용) ──────────────────────────
         private readonly ReactiveProperty<EStagePhase> _currentPhase = new(EStagePhase.None);
-        private readonly ReactiveProperty<float> _patientHealth = new(100f);
+        private readonly ReactiveProperty<float> _patientHealth = new(0f);
         private readonly ReactiveProperty<float> _stageTimer = new(0f);
         private readonly ReactiveProperty<int> _currentPatientIndex = new(0);
         private readonly ReactiveProperty<int> _currentRecipeIndex = new(0);
@@ -42,12 +42,15 @@ namespace DontDillyDally.StageFlow
         public event Action<int> OnSurgeonAckReceived; // actorNumber
         public event Action<int> OnGameOverAckReceived; // actorNumber
 
+        // ── 스테이지 데이터 수신 이벤트 (StageFlowManager가 구독) ───────────────────────────────
+        public event Action<StageRuntimeData> OnStageDataReceived;
         private bool _isGameOver;
 
         // ================================================================
         //  마스터 → 클라이언트 동기화 메서드
         // ================================================================
 
+        // 페이즈 변경 상태 전파 (마스터가 호출, 모두가 수신, 다른 기능 없음)
         public void SetPhase(EStagePhase phase)
         {
             Debug.Log($"[StageFlow] 페이즈 변경: {_currentPhase.Value} → {phase}");
@@ -57,7 +60,7 @@ namespace DontDillyDally.StageFlow
                 photonView.RPC(nameof(RPC_SetPhase), RpcTarget.Others, (int)phase);
             }
         }
-
+        // 체력 동기화 시기 : 환자 변경, 치료 성공/실패, 긴급 처치 등 체력에 변화가 생길 때마다
         public void SetHealth(float health)
         {
             _patientHealth.Value = health;
@@ -67,6 +70,7 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // 타이머 동기화 시기 : 주기적(틱당) + 타이머 일시정지, 시작, 페이즈 전환 등 특수한 경우
         public void SetTimer(float time)
         {
             float clampedTime = Mathf.Max(0f, time);
@@ -77,6 +81,7 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // 환자/레시피 인덱스 동기화 시기 : 환자 변경, 레시피 변경 시마다
         public void SetPatientIndex(int index)
         {
             _currentPatientIndex.Value = index;
@@ -95,6 +100,7 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // 집도의 동기화 시기 : 집도의가 변경될 때 (스테이지 시작 시 한 번)
         public void SetSurgeon(int actorNumber)
         {
             _surgeonActorNumber.Value = actorNumber;
@@ -147,7 +153,6 @@ namespace DontDillyDally.StageFlow
         }
 
         // ── 미니게임 RPC 전송 ─────────────────────────────────────────
-
         public void RequestMiniGame(int targetActorNumber, MiniGameType type)
         {
             if (PhotonNetwork.IsMasterClient)
@@ -214,7 +219,7 @@ namespace DontDillyDally.StageFlow
         [PunRPC]
         private void RPC_ReceiveStageData(string json)
         {
-            var stageData = JsonUtility.FromJson<StageData>(json);
+            var stageData = JsonUtility.FromJson<StageRuntimeData>(json);
             Debug.Log($"[StageFlow] [RPC] 스테이지 데이터 수신: 환자 {stageData.Patients.Count}명");
             OnStageDataReceived?.Invoke(stageData);
 
@@ -222,7 +227,6 @@ namespace DontDillyDally.StageFlow
             photonView.RPC(nameof(RPC_StageDataAck), RpcTarget.MasterClient);
         }
 
-        public event Action<StageData> OnStageDataReceived;
 
         [PunRPC]
         private void RPC_StageDataAck(PhotonMessageInfo info)

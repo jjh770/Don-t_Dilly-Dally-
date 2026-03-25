@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DontDillyDally.StageFlow
 {
     [Serializable]
-    public class EmergencyEventHandler
+    public class EmergencyEventPolicy
     {
         [Header("레시피 실패 시 긴급 이벤트")]
         [SerializeField, Range(0f, 1f)] private float _recipeFailChance = 0.7f;

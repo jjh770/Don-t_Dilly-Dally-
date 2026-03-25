@@ -131,7 +131,7 @@ public class PatientInfoPanelUI : MonoBehaviour
     {
         ClearEntries();
 
-        StageData stageData = _stageFlowManager.CurrentStageData;
+        StageRuntimeData stageData = _stageFlowManager.CurrentStageData;
         if (stageData == null || stageData.Patients == null)
         {
             return;

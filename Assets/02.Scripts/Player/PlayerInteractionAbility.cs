@@ -288,8 +288,6 @@ public class PlayerInteractionAbility : MonoBehaviour
         {
             holdable.StopInteract();
 
-            ReleaseHeldItemOwnershipToMaster();
-
             _playerAnimator.PlayHoldAnimation(false);
             _currentInteractable = null;
             _currentHeldItem = null;

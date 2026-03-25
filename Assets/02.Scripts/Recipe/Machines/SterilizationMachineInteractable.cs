@@ -292,11 +292,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryStartHoldFromExternal(interactable))
-            {
-                return;
-            }
-
+            // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _slots[slotIndex].Clear();
             bool hasRemaining = HasAnyStoredItems();
             if (!hasRemaining)
@@ -308,6 +304,9 @@ namespace DontDillyDally.Data
             {
                 photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
             }
+
+            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
+            interactionAbility.TryStartHoldFromExternal(interactable);
         }
 
         private void HandleOpenDoorEmptyHandInteraction(PlayerInteractionAbility interactionAbility)
@@ -583,6 +582,11 @@ namespace DontDillyDally.Data
             if (holdable != null)
             {
                 holdable.SetStoredInContainer(!isEnabled);
+            }
+
+            if (isEnabled)
+            {
+                itemObject.transform.SetParent(null, true);
             }
         }
 
