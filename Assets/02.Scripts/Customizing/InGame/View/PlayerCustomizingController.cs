@@ -8,6 +8,7 @@ using UnityEngine;
 public class PlayerCustomizingController : MonoBehaviourPunCallbacks
 {
     private PlayerCustomizingView _view;
+    private ICustomizingAssetLoader _assetLoader;
     private bool _isInitialized;
     private bool _isCustomizingApplied;
 
@@ -16,6 +17,8 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
     private void Awake()
     {
         _view = GetComponent<PlayerCustomizingView>();
+        _assetLoader = new AddressableAssetLoader();
+        _view.Initialize(_assetLoader);
     }
 
     private void Start()

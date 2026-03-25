@@ -1,5 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class PlayerCustomizingView : MonoBehaviour
@@ -28,34 +31,115 @@ public class PlayerCustomizingView : MonoBehaviour
     private Dictionary<BaseEquipmentType, GameObject> _baseEquipmentInstances = new();
     private Dictionary<string, Transform> _boneCache;
 
+    private ICustomizingAssetLoader _assetLoader;
+    private Dictionary<CustomizingType, string> _loadedAssetKeys = new();               // 현재 각 슬롯에 어떤 Key가 로드되어 있는지 기록
+    private Dictionary<CustomizingType, CancellationTokenSource> _loadingCts = new();   // 각 타입별 현재 진행 중인 로딩 취소 토큰 저장
+
     private void Awake()
     {
         AutoFindSkeletonRoot();
         BuildBoneCache();
     }
 
-    // 커스터마이징 아이템 하나 입히기
+    public void Initialize(ICustomizingAssetLoader assetLoader)
+    {
+        _assetLoader = assetLoader ?? throw new ArgumentNullException(nameof(assetLoader));
+    }
+
+    private void OnDestroy()
+    {
+        CancelAllLoading();
+        ReleaseAllAssets();
+        (_assetLoader as IDisposable)?.Dispose();
+    }
+
+    private void CancelAllLoading()
+    {
+        foreach (var cts in _loadingCts.Values)
+        {
+            cts?.Cancel();      // 현재 진행 중인 로딩 취소
+            cts?.Dispose();     // 토큰 자원 해제
+        }
+        _loadingCts.Clear();    // 딕셔너리 비우기
+    }
+
+    public async UniTask PreloadItemsAsync(IEnumerable<CustomizingItemSO> items)
+    {
+        var keys = items
+            .Where(item => item != null && item.HasAssetRef)
+            .Select(item => item.AssetKey)
+            .Where(key => !string.IsNullOrEmpty(key));
+
+        await _assetLoader.PreloadAsync(keys);
+    }
+
     public void ApplyItem(CustomizingType type, CustomizingItemSO item)
     {
-        if (item == null)
+        if (item == null || !item.HasAssetRef)
         {
             ClearSlot(type);
             return;
         }
 
-        if (item.PartPrefab == null)
+        ApplyItemAsync(type, item).Forget();
+    }
+
+    // 비동기 로딩
+    public async UniTask ApplyItemAsync(CustomizingType type, CustomizingItemSO item)
+    {
+        // 같은 타입 슬롯에 이전 로딩이 남아있으면 먼저 취소
+        CancelLoading(type);
+
+        if (item == null || !item.HasAssetRef)
         {
-            Debug.LogWarning($"[PlayerCustomizingView] 아이템에 프리팹 없음: {item.ItemId}");
-            ClearSlot(type);
+            ClearSlotInternal(type);
             return;
         }
 
-        ClearSlot(type);
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+        _loadingCts[type] = cts;
 
-        Transform slotParent = GetSlotParent(type);
-        GameObject instance = InstantiatePart(item.PartPrefab, slotParent, item.PartPrefab.name);
+        try
+        {
+            var prefab = await _assetLoader.LoadAsync(item.AssetKey);
+            
+            if (cts.IsCancellationRequested || prefab == null) return;
 
-        _equippedInstances[type] = instance;
+            ClearSlotInternal(type);
+
+            Transform slotParent = GetSlotParent(type);
+            GameObject instance = InstantiatePart(prefab, slotParent, prefab.name);
+
+            _equippedInstances[type] = instance;
+            _loadedAssetKeys[type] = item.AssetKey;
+        }
+        catch (OperationCanceledException)
+        {
+            // 취소됨 - 기존 파츠 유지
+        }
+        catch (Exception e)
+        {
+            // 로드 실패 - 기존 파츠 유지
+            Debug.LogError($"[PlayerCustomizingView] 에셋 로드 실패: {item.ItemId}, {e.Message}");
+        }
+        finally
+        {
+            if (_loadingCts.TryGetValue(type, out var existingCts) && existingCts == cts)
+            {
+                _loadingCts.Remove(type);
+            }
+            cts.Dispose();
+        }
+    }
+
+    private void CancelLoading(CustomizingType type)
+    {
+        if (_loadingCts.TryGetValue(type, out var cts))
+        {
+            cts.Cancel();
+            cts.Dispose();
+            _loadingCts.Remove(type);
+        }
     }
 
     public void ApplyBaseEquipment(BaseEquipmentType type, BaseEquipmentItemSO item)
@@ -86,11 +170,34 @@ public class PlayerCustomizingView : MonoBehaviour
 
     public void ClearSlot(CustomizingType type)
     {
+        CancelLoading(type);
+        ClearSlotInternal(type);
+    }
+
+    private void ClearSlotInternal(CustomizingType type)
+    {
         if (_equippedInstances.TryGetValue(type, out var instance))
         {
             DestroyInstance(instance);
             _equippedInstances.Remove(type);
         }
+
+        ReleaseAsset(type);
+    }
+
+    private void ReleaseAsset(CustomizingType type)
+    {
+        if (_loadedAssetKeys.TryGetValue(type, out var key))
+        {
+            _assetLoader?.Release(key);
+            _loadedAssetKeys.Remove(type);
+        }
+    }
+
+    private void ReleaseAllAssets()
+    {
+        _assetLoader?.ReleaseAll();
+        _loadedAssetKeys.Clear();
     }
 
     public void ClearBaseEquipmentSlot(BaseEquipmentType type)
@@ -129,6 +236,8 @@ public class PlayerCustomizingView : MonoBehaviour
             DestroyImmediate(instance);
     }
 
+
+    // ======== Bone 매핑 ========
     private void AutoFindSkeletonRoot()
     {
         if (_skeletonRoot != null) return;
