@@ -6,6 +6,7 @@ public static class CustomizingTypeExtensions
         {
             // Unequip 가능
             case CustomizingType.Hat:
+            case CustomizingType.HairStyle:
             case CustomizingType.FaceAccessory:
             case CustomizingType.Glasses:
             case CustomizingType.Shoes:
@@ -14,7 +15,6 @@ public static class CustomizingTypeExtensions
 
             // Unequip 불가
             case CustomizingType.SkinColor:
-            case CustomizingType.HairStyle:
             case CustomizingType.Faces:
             default:
                 return false;

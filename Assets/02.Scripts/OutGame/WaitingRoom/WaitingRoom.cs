@@ -34,6 +34,6 @@ public class WaitingRoom : MonoBehaviour
             _customizingUI.Initialize(_viewModel);
         }
 
-        _customizingUI.gameObject.SetActive(true);
+        _customizingUI.Show();
     }
 }
