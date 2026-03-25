@@ -33,7 +33,7 @@ public class WaitingRoomPresenter
     {
         if (!PhotonServerManager.Instance.TryStartStage(out string errorMessage))
         {
-            _waitingRoomView.ShowErrorMessage(errorMessage);
+            _waitingRoomView.ShowMessage(errorMessage);
         }
     }
 
@@ -41,6 +41,8 @@ public class WaitingRoomPresenter
     {
         string roomCode = PhotonServerManager.Instance.RoomCode;
         GUIUtility.systemCopyBuffer = roomCode;
+        string message = "클립보드에 복사되었습니다.";
+        _waitingRoomView.ShowMessage(message);
     }
 
     public void ExitRoom()

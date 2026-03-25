@@ -1,6 +1,7 @@
+using Photon.Pun;
 using UnityEngine;
 
-public class WaitingRoomBootStrapper : MonoBehaviour
+public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 {
     [SerializeField] private WaitingRoomClickManager _clickManager;
 
@@ -9,9 +10,21 @@ public class WaitingRoomBootStrapper : MonoBehaviour
     [SerializeField] private ContextMenuView _popupView;
 
     private WaitingRoomModel _model;
-    private WaitingRoomPresenter  _presenter;
+    private WaitingRoomPresenter _presenter;
 
     private void Start()
+    {
+        if (!PhotonNetwork.InRoom) return;
+
+        Init();
+    }
+
+    public override void OnJoinedRoom()
+    {
+        Init();
+    }
+
+    private void Init()
     {
         _model = new WaitingRoomModel(PhotonServerManager.Instance.IsMasterClient, PhotonServerManager.Instance.GetLocalPlayerReadyState());
 
