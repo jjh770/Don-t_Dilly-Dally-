@@ -7,11 +7,14 @@ using UnityEngine;
 public class LobbyPreviewController : MonoBehaviour
 {
     private PlayerCustomizingView _view;
+    private ICustomizingAssetLoader _assetLoader;
     private bool _isInitialized;
 
     private void Awake()
     {
         _view = GetComponent<PlayerCustomizingView>();
+        _assetLoader = new AddressableAssetLoader();
+        _view.Initialize(_assetLoader);
     }
 
     private void Start()

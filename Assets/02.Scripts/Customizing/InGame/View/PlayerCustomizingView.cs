@@ -32,39 +32,42 @@ public class PlayerCustomizingView : MonoBehaviour
     private Dictionary<string, Transform> _boneCache;
 
     private ICustomizingAssetLoader _assetLoader;
-    private Dictionary<CustomizingType, string> _loadedAddressableKeys = new();
-    private Dictionary<CustomizingType, CancellationTokenSource> _loadingCts = new();
+    private Dictionary<CustomizingType, string> _loadedAssetKeys = new();               // 현재 각 슬롯에 어떤 Key가 로드되어 있는지 기록
+    private Dictionary<CustomizingType, CancellationTokenSource> _loadingCts = new();   // 각 타입별 현재 진행 중인 로딩 취소 토큰 저장
 
     private void Awake()
     {
         AutoFindSkeletonRoot();
         BuildBoneCache();
-        _assetLoader = new AddressableAssetLoader();
+    }
+
+    public void Initialize(ICustomizingAssetLoader assetLoader)
+    {
+        _assetLoader = assetLoader ?? throw new ArgumentNullException(nameof(assetLoader));
     }
 
     private void OnDestroy()
     {
-        foreach (var cts in _loadingCts.Values)
-        {
-            cts?.Cancel();
-            cts?.Dispose();
-        }
-        _loadingCts.Clear();
-
-        ReleaseAllAddressables();
+        CancelAllLoading();
+        ReleaseAllAssets();
         (_assetLoader as IDisposable)?.Dispose();
     }
 
-    public void SetAssetLoader(ICustomizingAssetLoader loader)
+    private void CancelAllLoading()
     {
-        _assetLoader = loader;
+        foreach (var cts in _loadingCts.Values)
+        {
+            cts?.Cancel();      // 현재 진행 중인 로딩 취소
+            cts?.Dispose();     // 토큰 자원 해제
+        }
+        _loadingCts.Clear();    // 딕셔너리 비우기
     }
 
     public async UniTask PreloadItemsAsync(IEnumerable<CustomizingItemSO> items)
     {
         var keys = items
-            .Where(item => item != null && item.HasAddressableRef)
-            .Select(item => item.AddressableKey)
+            .Where(item => item != null && item.HasAssetRef)
+            .Select(item => item.AssetKey)
             .Where(key => !string.IsNullOrEmpty(key));
 
         await _assetLoader.PreloadAsync(keys);
@@ -72,7 +75,7 @@ public class PlayerCustomizingView : MonoBehaviour
 
     public void ApplyItem(CustomizingType type, CustomizingItemSO item)
     {
-        if (item == null || !item.HasAddressableRef)
+        if (item == null || !item.HasAssetRef)
         {
             ClearSlot(type);
             return;
@@ -81,44 +84,43 @@ public class PlayerCustomizingView : MonoBehaviour
         ApplyItemAsync(type, item).Forget();
     }
 
-    // Addressables 비동기 로딩
+    // 비동기 로딩
     public async UniTask ApplyItemAsync(CustomizingType type, CustomizingItemSO item)
     {
+        // 같은 타입 슬롯에 이전 로딩이 남아있으면 먼저 취소
         CancelLoading(type);
 
-        if (item == null || !item.HasAddressableRef)
+        if (item == null || !item.HasAssetRef)
         {
             ClearSlotInternal(type);
             return;
         }
 
-        ClearSlotInternal(type);
-
-        var cts = new CancellationTokenSource();
+        var cts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
         _loadingCts[type] = cts;
 
         try
         {
-            var prefab = await _assetLoader.LoadAsync(item.AddressableKey);
+            var prefab = await _assetLoader.LoadAsync(item.AssetKey);
+            
+            if (cts.IsCancellationRequested || prefab == null) return;
 
-            if (cts.Token.IsCancellationRequested || prefab == null)
-            {
-                return;
-            }
+            ClearSlotInternal(type);
 
             Transform slotParent = GetSlotParent(type);
             GameObject instance = InstantiatePart(prefab, slotParent, prefab.name);
 
             _equippedInstances[type] = instance;
-            _loadedAddressableKeys[type] = item.AddressableKey;
+            _loadedAssetKeys[type] = item.AssetKey;
         }
         catch (OperationCanceledException)
         {
-            // 취소됨
+            // 취소됨 - 기존 파츠 유지
         }
         catch (Exception e)
         {
-            Debug.LogError($"[PlayerCustomizingView] Addressable 로드 실패: {item.ItemId}, {e.Message}");
+            // 로드 실패 - 기존 파츠 유지
+            Debug.LogError($"[PlayerCustomizingView] 에셋 로드 실패: {item.ItemId}, {e.Message}");
         }
         finally
         {
@@ -166,26 +168,6 @@ public class PlayerCustomizingView : MonoBehaviour
         }
     }
 
-    public async UniTask ApplyAllAsync(Func<CustomizingType, CustomizingItemSO> itemGetter)
-    {
-        var tasks = new List<UniTask>();
-
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
-        {
-            var item = itemGetter(type);
-            if (item != null && item.HasAddressableRef)
-            {
-                tasks.Add(ApplyItemAsync(type, item));
-            }
-            else
-            {
-                ApplyItem(type, item);
-            }
-        }
-
-        await UniTask.WhenAll(tasks);
-    }
-
     public void ClearSlot(CustomizingType type)
     {
         CancelLoading(type);
@@ -200,22 +182,22 @@ public class PlayerCustomizingView : MonoBehaviour
             _equippedInstances.Remove(type);
         }
 
-        ReleaseAddressable(type);
+        ReleaseAsset(type);
     }
 
-    private void ReleaseAddressable(CustomizingType type)
+    private void ReleaseAsset(CustomizingType type)
     {
-        if (_loadedAddressableKeys.TryGetValue(type, out var key))
+        if (_loadedAssetKeys.TryGetValue(type, out var key))
         {
             _assetLoader?.Release(key);
-            _loadedAddressableKeys.Remove(type);
+            _loadedAssetKeys.Remove(type);
         }
     }
 
-    private void ReleaseAllAddressables()
+    private void ReleaseAllAssets()
     {
         _assetLoader?.ReleaseAll();
-        _loadedAddressableKeys.Clear();
+        _loadedAssetKeys.Clear();
     }
 
     public void ClearBaseEquipmentSlot(BaseEquipmentType type)
@@ -254,6 +236,8 @@ public class PlayerCustomizingView : MonoBehaviour
             DestroyImmediate(instance);
     }
 
+
+    // ======== Bone 매핑 ========
     private void AutoFindSkeletonRoot()
     {
         if (_skeletonRoot != null) return;

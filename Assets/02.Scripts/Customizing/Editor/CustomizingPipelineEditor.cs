@@ -1152,7 +1152,7 @@ public class CustomizingPipelineEditor : EditorWindow
             string soName = Path.GetFileNameWithoutExtension(soPath);
 
             // 이미 Addressable이 연결되어 있으면 스킵 (덮어쓰기 아닌 경우)
-            if (itemSO.HasAddressableRef && !_overwriteExisting)
+            if (itemSO.HasAssetRef && !_overwriteExisting)
             {
                 continue;
             }
@@ -1287,7 +1287,7 @@ public class CustomizingPipelineEditor : EditorWindow
             if (itemSO == null) continue;
 
             // 연결된 프리팹에서 타입 추론
-            if (!itemSO.HasAddressableRef || itemSO.PartPrefabRef == null)
+            if (!itemSO.HasAssetRef || itemSO.PartPrefabRef == null)
             {
                 Log($"[WARN] No prefab linked: {soPath}");
                 continue;

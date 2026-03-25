@@ -29,8 +29,8 @@ public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
     public Sprite PreviewIcon => _previewIcon;
 
     public AssetReferenceGameObject PartPrefabRef => _partPrefabRef;
-    public bool HasAddressableRef => _partPrefabRef != null && _partPrefabRef.RuntimeKeyIsValid();
-    public string AddressableKey => HasAddressableRef ? _partPrefabRef.AssetGUID : null;
+    public bool HasAssetRef => _partPrefabRef != null && _partPrefabRef.RuntimeKeyIsValid();
+    public string AssetKey => HasAssetRef ? _partPrefabRef.AssetGUID : null;
 
 #if UNITY_EDITOR
     private void OnValidate()
