@@ -140,20 +140,24 @@ public class CustomizingAddressableMigrator : EditorWindow
 
             if (so == null) continue;
 
+            GameObject prefab = null;
+            if (so.HasAddressableRef && so.PartPrefabRef != null)
+            {
+                prefab = so.PartPrefabRef.editorAsset as GameObject;
+            }
+
             var item = new MigrationItem
             {
                 SO = so,
-                Prefab = so.PartPrefab,
+                Prefab = prefab,
                 HasAddressableRef = so.HasAddressableRef,
                 Selected = false,
             };
 
             if (item.HasAddressableRef)
-                item.Status = "Already migrated";
-            else if (item.Prefab == null)
-                item.Status = "No prefab";
+                item.Status = "Migrated";
             else
-                item.Status = "Pending";
+                item.Status = "No Addressable";
 
             _migrationItems.Add(item);
         }

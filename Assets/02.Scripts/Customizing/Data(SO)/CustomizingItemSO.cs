@@ -15,9 +15,6 @@ public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
     [Header("Addressables")]
     [SerializeField] private AssetReferenceGameObject _partPrefabRef;
 
-    [Header("Legacy (마이그레이션 후 제거)")]
-    [SerializeField] private GameObject _partPrefab;
-
     [Header("Settings")]
     [SerializeField] private bool _isDefault;
     [SerializeField] private bool _isLocked;
@@ -32,8 +29,6 @@ public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
     public Sprite PreviewIcon => _previewIcon;
 
     public AssetReferenceGameObject PartPrefabRef => _partPrefabRef;
-    public GameObject PartPrefab => _partPrefab;
-
     public bool HasAddressableRef => _partPrefabRef != null && _partPrefabRef.RuntimeKeyIsValid();
     public string AddressableKey => HasAddressableRef ? _partPrefabRef.AssetGUID : null;
 

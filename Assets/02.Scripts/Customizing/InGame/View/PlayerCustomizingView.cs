@@ -70,22 +70,15 @@ public class PlayerCustomizingView : MonoBehaviour
         await _assetLoader.PreloadAsync(keys);
     }
 
-    // 커스터마이징 아이템 하나 입히기 (Addressables 우선, fallback으로 직접 참조)
     public void ApplyItem(CustomizingType type, CustomizingItemSO item)
     {
-        if (item == null)
+        if (item == null || !item.HasAddressableRef)
         {
             ClearSlot(type);
             return;
         }
 
-        if (item.HasAddressableRef)
-        {
-            ApplyItemAsync(type, item).Forget();
-            return;
-        }
-
-        ApplyItemLegacy(type, item);
+        ApplyItemAsync(type, item).Forget();
     }
 
     // Addressables 비동기 로딩
@@ -126,7 +119,6 @@ public class PlayerCustomizingView : MonoBehaviour
         catch (Exception e)
         {
             Debug.LogError($"[PlayerCustomizingView] Addressable 로드 실패: {item.ItemId}, {e.Message}");
-            ApplyItemLegacy(type, item);
         }
         finally
         {
@@ -136,24 +128,6 @@ public class PlayerCustomizingView : MonoBehaviour
             }
             cts.Dispose();
         }
-    }
-
-    // Legacy 직접 참조 방식 (마이그레이션 완료 후 제거)
-    private void ApplyItemLegacy(CustomizingType type, CustomizingItemSO item)
-    {
-        if (item.PartPrefab == null)
-        {
-            Debug.LogWarning($"[PlayerCustomizingView] 아이템에 프리팹 없음: {item.ItemId}");
-            ClearSlot(type);
-            return;
-        }
-
-        ClearSlot(type);
-
-        Transform slotParent = GetSlotParent(type);
-        GameObject instance = InstantiatePart(item.PartPrefab, slotParent, item.PartPrefab.name);
-
-        _equippedInstances[type] = instance;
     }
 
     private void CancelLoading(CustomizingType type)

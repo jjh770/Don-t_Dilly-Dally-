@@ -24,7 +24,7 @@ public class CustomizingItemSOEditor : Editor
         // Visual
         EditorGUILayout.LabelField("Visual", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("_previewIcon"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("_partPrefab"));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty("_partPrefabRef"));
 
         EditorGUILayout.Space(10);
 
