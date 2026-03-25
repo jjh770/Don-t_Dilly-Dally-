@@ -19,9 +19,7 @@ namespace DontDillyDally.StageFlow
         private bool _expired;
         private double _endTimestamp;
 
-        public float RemainingTime => _running
-            ? CalculateRemainingTime()
-            : _pausedRemainingTime;
+        public float RemainingTime => _running ? CalculateRemainingTime() : _pausedRemainingTime;
         public bool IsRunning => _running;
 
         public event Action OnExpired;
@@ -112,9 +110,7 @@ namespace DontDillyDally.StageFlow
 
         private static double GetCurrentTime()
         {
-            return PhotonNetwork.IsConnected
-                ? PhotonNetwork.Time
-                : Time.realtimeSinceStartupAsDouble;
+            return PhotonNetwork.IsConnected ? PhotonNetwork.Time : Time.realtimeSinceStartupAsDouble;
         }
     }
 }

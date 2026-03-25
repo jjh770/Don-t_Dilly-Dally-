@@ -11,17 +11,13 @@ namespace DontDillyDally.StageFlow
     public class PatientHealthController
     {
         private float _currentHealth;
-        private float _maxHealth = 1f;
+        private float _maxHealth;
         private float _drainPerSecond;
         private bool _isInitialized;
         private bool _isDrainActive;
         private bool _isDepleted;
 
         public float CurrentHealth => _currentHealth;
-        public float MaxHealth => _maxHealth;
-        public float DrainPerSecond => _drainPerSecond;
-        public bool IsDrainActive => _isDrainActive;
-        public bool IsInitialized => _isInitialized;
 
         public event Action<float> OnHealthChanged;
         public event Action OnHealthDepleted;
@@ -55,11 +51,7 @@ namespace DontDillyDally.StageFlow
 
         public void Tick(float deltaTime)
         {
-            if (!_isInitialized ||
-                !_isDrainActive ||
-                _isDepleted ||
-                deltaTime <= 0f ||
-                _drainPerSecond <= 0f)
+            if (!_isInitialized || !_isDrainActive || _isDepleted || deltaTime <= 0f || _drainPerSecond <= 0f)
             {
                 return;
             }
@@ -94,16 +86,6 @@ namespace DontDillyDally.StageFlow
             OnHealthChanged?.Invoke(_currentHealth);
         }
 
-        public void Reset()
-        {
-            _currentHealth = 0f;
-            _maxHealth = 1f;
-            _drainPerSecond = 0f;
-            _isInitialized = false;
-            _isDrainActive = false;
-            _isDepleted = false;
-        }
-
         private void ApplyDamageInternal(float damage)
         {
             if (!_isInitialized || _isDepleted)
@@ -128,6 +110,16 @@ namespace DontDillyDally.StageFlow
             _isDepleted = true;
             _isDrainActive = false;
             OnHealthDepleted?.Invoke();
+        }
+
+        public void Reset()
+        {
+            _currentHealth = 0f;
+            _maxHealth = 1f;
+            _drainPerSecond = 0f;
+            _isInitialized = false;
+            _isDrainActive = false;
+            _isDepleted = false;
         }
     }
 }

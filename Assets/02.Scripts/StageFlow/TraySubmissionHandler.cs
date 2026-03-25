@@ -121,7 +121,7 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            trayItem.ResetTrayDataAndSync(trayItem.IsSterilizedTray);
+            trayItem.ClearContentsAndSync();
         }
 
         // ── 정리 ──────────────────────────────────────────────────────

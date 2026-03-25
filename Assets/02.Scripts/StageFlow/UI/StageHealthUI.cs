@@ -52,7 +52,7 @@ public class StageHealthUI : MonoBehaviour
 
         if (_stageFlowManager.CurrentStageData != null)
         {
-            _maxHealth = Mathf.Max(1f, _stageFlowManager.CurrentStageData.InitialPatientHealth);
+            _maxHealth = Mathf.Max(1f, _stageFlowManager.CurrentStageData.MaxPatientHealth);
         }
 
         _cachedHealth = Mathf.Clamp(_stageFlowManager.PatientHealth.Value, 0f, _maxHealth);
@@ -74,7 +74,7 @@ public class StageHealthUI : MonoBehaviour
             {
                 if (_stageFlowManager.CurrentStageData != null)
                 {
-                    _maxHealth = Mathf.Max(1f, _stageFlowManager.CurrentStageData.InitialPatientHealth);
+                    _maxHealth = Mathf.Max(1f, _stageFlowManager.CurrentStageData.MaxPatientHealth);
                 }
 
                 _cachedHealth = Mathf.Clamp(_stageFlowManager.PatientHealth.Value, 0f, _maxHealth);
