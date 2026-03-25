@@ -490,13 +490,13 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 32.3
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 375
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -516,13 +516,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 412157608}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalRotation: {x: -0, y: 0.99995553, z: -0.009433505, w: 0}
+  m_LocalPosition: {x: 0, y: 2.16, z: 9.08}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 1.081, y: 180, z: 0}
 --- !u!114 &412157612
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -834,6 +834,37 @@ Transform:
   m_GameObject: {fileID: 589208934}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &612400227
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 612400228}
+  m_Layer: 0
+  m_Name: --------- UI ----------
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &612400228
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 612400227}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3923,8 +3954,8 @@ SceneRoots:
   m_Roots:
   - {fileID: 353956670}
   - {fileID: 412157611}
-  - {fileID: 138580716}
   - {fileID: 1550674192}
+  - {fileID: 612400228}
   - {fileID: 713543886}
   - {fileID: 1355677119}
   - {fileID: 1354828487}
@@ -3934,8 +3965,9 @@ SceneRoots:
   - {fileID: 1369935243}
   - {fileID: 2017879582}
   - {fileID: 1899094939}
+  - {fileID: 1934658413}
   - {fileID: 1721396351}
   - {fileID: 1220003896}
-  - {fileID: 1934658413}
   - {fileID: 1197743600}
+  - {fileID: 138580716}
   - {fileID: 1756382844}
