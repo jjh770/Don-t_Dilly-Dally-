@@ -54,12 +54,19 @@ namespace DontDillyDally.Data
             return true;
         }
 
-        public void ClearStoredItems()
+        /// <summary>
+        /// 슬롯에 저장된 아이템을 모두 정리합니다.
+        /// 로컬에서 파괴할 수 없는 아이템(소유권 없음)의 ViewID 배열을 반환합니다.
+        /// </summary>
+        public int[] ClearStoredItems()
         {
             if (_storedSlotItems == null)
             {
-                return;
+                return null;
             }
+
+            int undestroyedCount = 0;
+            int[] undestroyedViewIds = new int[MaxItemSlots];
 
             for (int i = 0; i < _storedSlotItems.Length; i++)
             {
@@ -78,12 +85,26 @@ namespace DontDillyDally.Data
                     {
                         PhotonNetwork.Destroy(storedItem.gameObject);
                     }
+                    else
+                    {
+                        // 소유권이 없어 파괴 불가 → ViewID 수집
+                        undestroyedViewIds[undestroyedCount++] = photonView.ViewID;
+                    }
 
                     continue;
                 }
 
                 Destroy(storedItem.gameObject);
             }
+
+            if (undestroyedCount == 0)
+            {
+                return null;
+            }
+
+            int[] result = new int[undestroyedCount];
+            System.Array.Copy(undestroyedViewIds, result, undestroyedCount);
+            return result;
         }
 
         private Transform GetSlotTransform(int slotIndex)

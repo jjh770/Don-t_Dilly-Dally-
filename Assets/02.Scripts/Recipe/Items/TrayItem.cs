@@ -71,8 +71,36 @@ namespace DontDillyDally.Data
         public void ClearContentsAndSync()
         {
             bool isSterilized = IsSterilizedTray;
-            Slots?.ClearStoredItems();
+            int[] undestroyedViewIds = Slots?.ClearStoredItems();
             ResetTrayDataAndSync(isSterilized);
+
+            // 로컬에서 파괴할 수 없는 아이템(소유권 없음)을 마스터에게 파괴 요청
+            if (undestroyedViewIds != null && undestroyedViewIds.Length > 0 && PhotonNetwork.InRoom)
+            {
+                PhotonView pv = GetComponent<PhotonView>();
+                if (pv != null)
+                {
+                    pv.RPC(nameof(RPC_RequestDestroyItems), RpcTarget.MasterClient, undestroyedViewIds);
+                }
+            }
+        }
+
+        [PunRPC]
+        private void RPC_RequestDestroyItems(int[] viewIds)
+        {
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                return;
+            }
+
+            foreach (int viewId in viewIds)
+            {
+                PhotonView targetView = PhotonView.Find(viewId);
+                if (targetView != null && (targetView.IsMine || targetView.AmController))
+                {
+                    PhotonNetwork.Destroy(targetView.gameObject);
+                }
+            }
         }
 
         public void LoadTrayData(SubmittedTray trayData)

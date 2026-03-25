@@ -299,17 +299,16 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryStartHoldFromExternal(interactable))
-            {
-                return;
-            }
-
+            // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _slots[slotIndex].Clear();
 
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
             }
+
+            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
+            interactionAbility.TryStartHoldFromExternal(interactable);
         }
 
         private void TryTakeOutput(PlayerInteractionAbility interactionAbility)
@@ -319,17 +318,16 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryStartHoldFromExternal(interactable))
-            {
-                return;
-            }
-
+            // 출력 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _storedOutputItem = null;
 
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
             }
+
+            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
+            interactionAbility.TryStartHoldFromExternal(interactable);
         }
 
         #endregion

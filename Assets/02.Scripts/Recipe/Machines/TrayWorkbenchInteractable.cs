@@ -244,7 +244,6 @@ namespace DontDillyDally.Data
             PhotonView pv = itemObject.GetComponent<PhotonView>();
             return pv != null ? pv.ViewID : -1;
         }
-
         #endregion
     }
 }

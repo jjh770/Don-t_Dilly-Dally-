@@ -149,7 +149,13 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 
         StopDynamicMotion();
         _rigidbody.isKinematic = true;
-        _collider.enabled = false;
+
+        // 자식 콜라이더 포함 모두 비활성화 (홀드포인트로 이동 시 충돌 방지)
+        Collider[] allColliders = GetComponentsInChildren<Collider>(true);
+        foreach (Collider col in allColliders)
+        {
+            col.enabled = false;
+        }
 
         transform.SetParent(null);
         ApplyHoldTransform(holdPoint);
@@ -213,7 +219,14 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 
         if (stored)
         {
-            _collider.enabled = false;
+            // 루트 콜라이더뿐 아니라 자식 콜라이더도 모두 비활성화
+            // (자식 콜라이더가 남아있으면 소유권 이전 대기 중 플레이어를 밀어냄)
+            Collider[] allColliders = GetComponentsInChildren<Collider>(true);
+            foreach (Collider col in allColliders)
+            {
+                col.enabled = false;
+            }
+
             _rigidbody.isKinematic = true;
         }
     }
