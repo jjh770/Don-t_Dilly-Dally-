@@ -56,8 +56,6 @@ public class Lobby : MonoBehaviour
         {
             Destroy(photonController);
         }
-
-        _previewCharacter.AddComponent<LobbyPreviewController>();
         _previewAnimator = _previewCharacter.GetComponentInChildren<LobbyPreviewAnimator>();
     }
 
@@ -104,7 +102,6 @@ public class Lobby : MonoBehaviour
         }
         else if (_customizingUI != null)
         {
-            // 전환 효과 없으면 단순 활성화
             _customizingUI.gameObject.SetActive(true);
         }
     }

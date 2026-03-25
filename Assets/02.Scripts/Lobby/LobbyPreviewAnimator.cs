@@ -1,43 +1,36 @@
 using UnityEngine;
-using System.Collections.Generic;
 
+[RequireComponent(typeof(Animator))]
 public class LobbyPreviewAnimator : MonoBehaviour
 {
-    [Header("Animator")]
-    [SerializeField] private Animator _animator;
+    [Header("세팅")]
+    [SerializeField] private float _idleDuration = 12f;
+    [SerializeField] private int _poseCount = 3;
 
-    [Header("Settings")]
-    [SerializeField] private float _idleDurationBeforePose = 15f;
+    private const int InvalidPoseIndex = -1;
+    private const int DefaultAnimatorLayer = 0;
+    private const int MinPoseCount = 1;
+    private const float ResetTimer = 0f;
 
-    [Header("Pose Animations")]
-    [SerializeField] private List<AnimationClip> _poseClips = new();
+    private const string ParamPoseIndex = "PoseIndex";
+    private const string ParamPose = "Pose";
+    private const string ParamCustomizingSave = "CustomizingSave";
+    private const string TagPose = "Pose";
 
-    [Header("Parameters")]
-    [SerializeField] private string _poseIndexParam = "PoseIndex";
-    [SerializeField] private string _poseTriggerParam = "Pose";
-    [SerializeField] private string _customizingSaveTriggerParam = "CustomizingSave";
+    private static readonly int PoseIndexHash = Animator.StringToHash(ParamPoseIndex);
+    private static readonly int PoseTriggerHash = Animator.StringToHash(ParamPose);
+    private static readonly int CustomizingSaveHash = Animator.StringToHash(ParamCustomizingSave);
+    private static readonly int PoseStateTagHash = Animator.StringToHash(TagPose);
 
     private float _idleTimer;
     private bool _isPlayingPose;
+    private int _lastPoseIndex = InvalidPoseIndex;
 
-    private int _poseIndexHash;
-    private int _poseTriggerHash;
-    private int _customizingSaveHash;
-
-    public IReadOnlyList<AnimationClip> PoseClips => _poseClips;
-    public bool IsPlayingPose => _isPlayingPose;
-    public float IdleTimer => _idleTimer;
+    private Animator _animator;
 
     private void Awake()
     {
-        if (_animator == null)
-        {
-            _animator = GetComponentInChildren<Animator>();
-        }
-
-        _poseIndexHash = Animator.StringToHash(_poseIndexParam);
-        _poseTriggerHash = Animator.StringToHash(_poseTriggerParam);
-        _customizingSaveHash = Animator.StringToHash(_customizingSaveTriggerParam);
+        _animator = GetComponent<Animator>();
     }
 
     private void Update()
@@ -56,7 +49,7 @@ public class LobbyPreviewAnimator : MonoBehaviour
     {
         _idleTimer += Time.deltaTime;
 
-        if (_idleTimer >= _idleDurationBeforePose)
+        if (_idleTimer >= _idleDuration)
         {
             PlayRandomPose();
         }
@@ -66,9 +59,9 @@ public class LobbyPreviewAnimator : MonoBehaviour
     {
         if (_animator == null) return;
 
-        var stateInfo = _animator.GetCurrentAnimatorStateInfo(0);
+        var stateInfo = _animator.GetCurrentAnimatorStateInfo(DefaultAnimatorLayer);
 
-        if (!stateInfo.IsTag("Pose") && _isPlayingPose)
+        if (!stateInfo.tagHash.Equals(PoseStateTagHash) && _isPlayingPose)
         {
             OnPoseFinished();
         }
@@ -77,40 +70,42 @@ public class LobbyPreviewAnimator : MonoBehaviour
     private void PlayRandomPose()
     {
         if (_animator == null) return;
-        if (_poseClips == null || _poseClips.Count == 0) return;
+        if (_poseCount < MinPoseCount) return;
 
-        int randomIndex = Random.Range(0, _poseClips.Count);
+        int randomIndex = GetRandomPoseIndex();
+        _lastPoseIndex = randomIndex;
 
-        _animator.SetInteger(_poseIndexHash, randomIndex);
-        _animator.SetTrigger(_poseTriggerHash);
+        _animator.SetInteger(PoseIndexHash, randomIndex);
+        _animator.SetTrigger(PoseTriggerHash);
         _isPlayingPose = true;
-        _idleTimer = 0f;
+        _idleTimer = ResetTimer;
+    }
 
-        string clipName = _poseClips[randomIndex] != null ? _poseClips[randomIndex].name : "Unknown";
-        Debug.Log($"[LobbyPreviewAnimator] 포즈 재생: {randomIndex} ({clipName})");
+    private int GetRandomPoseIndex()
+    {
+        if (_poseCount == MinPoseCount) return 0;
+
+        int randomIndex;
+        do
+        {
+            randomIndex = Random.Range(0, _poseCount);
+        } while (randomIndex == _lastPoseIndex);
+
+        return randomIndex;
     }
 
     private void OnPoseFinished()
     {
         _isPlayingPose = false;
-        _idleTimer = 0f;
-        Debug.Log("[LobbyPreviewAnimator] 포즈 종료, Idle 복귀");
-    }
-
-    public void ForceIdle()
-    {
-        _isPlayingPose = false;
-        _idleTimer = 0f;
+        _idleTimer = ResetTimer;
     }
 
     public void PlayCustomizingSave()
     {
         if (_animator == null) return;
 
-        _animator.SetTrigger(_customizingSaveHash);
+        _animator.SetTrigger(CustomizingSaveHash);
         _isPlayingPose = true;
-        _idleTimer = 0f;
-
-        Debug.Log("[LobbyPreviewAnimator] CustomizingSave 애니메이션 재생");
+        _idleTimer = ResetTimer;
     }
 }
