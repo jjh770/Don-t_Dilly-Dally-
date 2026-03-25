@@ -316,6 +316,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _rigidbody.isKinematic = false;
         _collider.enabled = true;
         _holderActorNumber = InvalidActorNumber;
+
+        _isWaitingForOwnershipReturn = true;
     }
 
     private Transform TryResolveHoldPoint(int holderActorNumber)
