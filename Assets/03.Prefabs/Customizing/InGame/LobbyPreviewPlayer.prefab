@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 6195406281393458411}
   - component: {fileID: 6297388653794688563}
   - component: {fileID: 3038821889760306527}
+  - component: {fileID: -4167982734882526433}
   m_Layer: 7
   m_Name: LobbyPreviewPlayer
   m_TagString: Player
@@ -47,7 +48,7 @@ Animator:
   m_GameObject: {fileID: 3775339006636566168}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 571adabd431d59248ab0524b96f6d52a, type: 3}
-  m_Controller: {fileID: 9100000, guid: 79e4be3ec0f43c24c8f1e6ba093a4991, type: 2}
+  m_Controller: {fileID: 9100000, guid: 1bce340e7622bfc40a98fb319312db6d, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -119,6 +120,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 83301303614bc8e4694fcbc85f706219, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyPreviewController
+--- !u!114 &-4167982734882526433
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3775339006636566168}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f92065b0046e86b4b80731e22fc632b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LobbyPreviewAnimator
+  _animator: {fileID: 0}
+  _idleDurationBeforePose: 15
+  _poseClips:
+  - {fileID: -203655887218126122, guid: af3444fadd5919841b2247932abf25ac, type: 3}
+  - {fileID: -203655887218126122, guid: d3619f591128c434e8265ad062001011, type: 3}
+  - {fileID: -203655887218126122, guid: 56b5922d9ee1047458823462005aebfa, type: 3}
+  - {fileID: -203655887218126122, guid: b836dd112240a404784f77eccf9c1a33, type: 3}
+  - {fileID: -203655887218126122, guid: 916816444e6ffd646996fbfc6b0a770f, type: 3}
+  _poseIndexParam: PoseIndex
+  _poseTriggerParam: Pose
 --- !u!1001 &5184199415286638223
 PrefabInstance:
   m_ObjectHideFlags: 0

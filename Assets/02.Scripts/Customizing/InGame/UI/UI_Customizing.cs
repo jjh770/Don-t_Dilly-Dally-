@@ -148,7 +148,15 @@ public class UI_Customizing : MonoBehaviour
     private void OnCloseClicked()
     {
         _viewModel?.Cancel();
-        OnClosed?.Invoke();
+
+        if (OnClosed != null)
+        {
+            OnClosed.Invoke();
+        }
+        else
+        {
+            gameObject.SetActive(false);
+        }
     }
 
     private void RefreshItemList()
