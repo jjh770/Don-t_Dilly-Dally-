@@ -59,6 +59,12 @@ namespace DontDillyDally.Data
             if (heldItem is BasicMaterialItem basicMaterialItem)
             {
                 TryPlaceBasicMaterial(interactionAbility, basicMaterialItem);
+                return;
+            }
+
+            if (heldItem is MixToolItem mixToolItem)
+            {
+                TryPlaceMixToolItem(interactionAbility, mixToolItem);
             }
         }
 
@@ -132,6 +138,64 @@ namespace DontDillyDally.Data
             }
         }
 
+        private void TryPlaceMixToolItem(PlayerInteractionAbility interactionAbility, MixToolItem mixToolItem)
+        {
+            CraftedMaterialType materialType = ResolveMixToolMaterialType(mixToolItem.ToolType);
+            if (materialType == CraftedMaterialType.None)
+            {
+                return;
+            }
+
+            TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
+            if (trayItem == null || trayItem.Slots == null)
+            {
+                return;
+            }
+
+            if (!_trayWorkbench.CanPlaceBasicMaterialOnTray(materialType))
+            {
+                return;
+            }
+
+            int availableSlotIndex = trayItem.Slots.GetFirstAvailableSlotIndex();
+            if (availableSlotIndex < 0)
+            {
+                return;
+            }
+
+            if (!interactionAbility.TryReleaseHeldItem(mixToolItem, returnOwnershipToMaster: false))
+            {
+                return;
+            }
+
+            int itemViewId = GetPhotonViewId(mixToolItem);
+
+            trayItem.Slots.TryStoreItem(mixToolItem, availableSlotIndex);
+
+            int playerId = PhotonNetwork.LocalPlayer != null
+                ? PhotonNetwork.LocalPlayer.ActorNumber
+                : 0;
+
+            _trayWorkbench.TryPlaceBasicMaterialOnTray(materialType, playerId);
+
+            if (PhotonNetwork.InRoom)
+            {
+                photonView.RPC(nameof(RPC_WorkbenchPlaceMaterial), RpcTarget.Others,
+                    itemViewId, availableSlotIndex, (int)materialType, playerId);
+            }
+        }
+
+        private static CraftedMaterialType ResolveMixToolMaterialType(ToolType toolType)
+        {
+            return toolType switch
+            {
+                ToolType.PotionCyan    => CraftedMaterialType.FilledPotionCyan,
+                ToolType.PotionMagenta => CraftedMaterialType.FilledPotionMagenta,
+                ToolType.PotionYellow  => CraftedMaterialType.FilledPotionYellow,
+                _ => CraftedMaterialType.None
+            };
+        }
+
         private void TryTakeTray(PlayerInteractionAbility interactionAbility)
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
@@ -186,12 +250,12 @@ namespace DontDillyDally.Data
             }
 
             PhotonView materialPV = PhotonView.Find(materialViewId);
-            if (materialPV == null || !materialPV.TryGetComponent(out BasicMaterialItem basicMaterialItem))
+            if (materialPV == null || !materialPV.TryGetComponent(out ItemObject itemObject))
             {
                 return;
             }
 
-            trayItem.Slots.TryStoreItem(basicMaterialItem, slotIndex);
+            trayItem.Slots.TryStoreItem(itemObject, slotIndex);
             _trayWorkbench.TryPlaceBasicMaterialOnTray((CraftedMaterialType)materialType, playerId);
         }
 
