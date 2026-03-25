@@ -15,12 +15,14 @@ public class LobbyPreviewAnimator : MonoBehaviour
     [Header("Parameters")]
     [SerializeField] private string _poseIndexParam = "PoseIndex";
     [SerializeField] private string _poseTriggerParam = "Pose";
+    [SerializeField] private string _customizingSaveTriggerParam = "CustomizingSave";
 
     private float _idleTimer;
     private bool _isPlayingPose;
 
     private int _poseIndexHash;
     private int _poseTriggerHash;
+    private int _customizingSaveHash;
 
     public IReadOnlyList<AnimationClip> PoseClips => _poseClips;
     public bool IsPlayingPose => _isPlayingPose;
@@ -35,6 +37,7 @@ public class LobbyPreviewAnimator : MonoBehaviour
 
         _poseIndexHash = Animator.StringToHash(_poseIndexParam);
         _poseTriggerHash = Animator.StringToHash(_poseTriggerParam);
+        _customizingSaveHash = Animator.StringToHash(_customizingSaveTriggerParam);
     }
 
     private void Update()
@@ -98,5 +101,16 @@ public class LobbyPreviewAnimator : MonoBehaviour
     {
         _isPlayingPose = false;
         _idleTimer = 0f;
+    }
+
+    public void PlayCustomizingSave()
+    {
+        if (_animator == null) return;
+
+        _animator.SetTrigger(_customizingSaveHash);
+        _isPlayingPose = true;
+        _idleTimer = 0f;
+
+        Debug.Log("[LobbyPreviewAnimator] CustomizingSave 애니메이션 재생");
     }
 }

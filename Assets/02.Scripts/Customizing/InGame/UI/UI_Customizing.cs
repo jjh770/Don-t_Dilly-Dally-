@@ -31,6 +31,7 @@ public class UI_Customizing : MonoBehaviour
     private List<UI_CustomizingItem> _itemButtons = new();
 
     public event Action OnClosed;
+    public event Action OnSaved;
 
     public void Initialize(CustomizingViewModel viewModel)
     {
@@ -138,6 +139,7 @@ public class UI_Customizing : MonoBehaviour
     private void OnSaveClicked()
     {
         _viewModel?.Save();
+        OnSaved?.Invoke();
     }
 
     private void OnResetClicked()

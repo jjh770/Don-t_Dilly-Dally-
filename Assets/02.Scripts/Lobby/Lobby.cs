@@ -15,6 +15,7 @@ public class Lobby : MonoBehaviour
 
     private GameObject _previewCharacter;
     private CustomizingViewModel _viewModel;
+    private LobbyPreviewAnimator _previewAnimator;
 
     private void Start()
     {
@@ -30,6 +31,7 @@ public class Lobby : MonoBehaviour
         if (_customizingUI != null)
         {
             _customizingUI.OnClosed -= OnCustomizingClosed;
+            _customizingUI.OnSaved -= OnCustomizingSaved;
         }
 
         if (_previewCharacter != null)
@@ -56,6 +58,7 @@ public class Lobby : MonoBehaviour
         }
 
         _previewCharacter.AddComponent<LobbyPreviewController>();
+        _previewAnimator = _previewCharacter.GetComponentInChildren<LobbyPreviewAnimator>();
     }
 
     private void InitializeCustomizingUI()
@@ -74,6 +77,7 @@ public class Lobby : MonoBehaviour
         _customizingUI.Initialize(_viewModel);
 
         _customizingUI.OnClosed += OnCustomizingClosed;
+        _customizingUI.OnSaved += OnCustomizingSaved;
     }
 
     private void SetupButtons()
@@ -111,5 +115,10 @@ public class Lobby : MonoBehaviour
         {
             _transition.TransitionToLobby();
         }
+    }
+
+    private void OnCustomizingSaved()
+    {
+        _previewAnimator?.PlayCustomizingSave();
     }
 }
