@@ -924,6 +924,45 @@ public class CustomizingPipelineEditor : EditorWindow
         return prefabName.EndsWith("_01") || prefabName.EndsWith("_1");
     }
 
+    /// <summary>
+    /// Addressable 레퍼런스 설정
+    /// </summary>
+    private void SetAddressableReference(CustomizingItemSO itemSO, GameObject prefab)
+    {
+        var settings = UnityEditor.AddressableAssets.AddressableAssetSettingsDefaultObject.Settings;
+        if (settings == null)
+        {
+            Log("[ERROR] Addressables not initialized");
+            return;
+        }
+
+        string prefabPath = AssetDatabase.GetAssetPath(prefab);
+        string prefabGuid = AssetDatabase.AssetPathToGUID(prefabPath);
+
+        // Addressable 그룹에 등록
+        var group = settings.FindGroup("Customizing") ?? settings.DefaultGroup;
+        var entry = settings.FindAssetEntry(prefabGuid);
+        if (entry == null)
+        {
+            entry = settings.CreateOrMoveEntry(prefabGuid, group, false, false);
+            entry.address = prefab.name;
+        }
+
+        // SO에 AssetReference 설정
+        var serializedObject = new SerializedObject(itemSO);
+        var refProperty = serializedObject.FindProperty("_partPrefabRef");
+        if (refProperty != null)
+        {
+            var guidProperty = refProperty.FindPropertyRelative("m_AssetGUID");
+            if (guidProperty != null)
+            {
+                guidProperty.stringValue = prefabGuid;
+                serializedObject.ApplyModifiedProperties();
+                EditorUtility.SetDirty(itemSO);
+            }
+        }
+    }
+
     #endregion
 
     #region BaseEquipment SO Generation
@@ -1112,8 +1151,8 @@ public class CustomizingPipelineEditor : EditorWindow
 
             string soName = Path.GetFileNameWithoutExtension(soPath);
 
-            // 이미 프리팹이 연결되어 있으면 스킵 (덮어쓰기 아닌 경우)
-            if (itemSO.PartPrefab != null && !_overwriteExisting)
+            // 이미 Addressable이 연결되어 있으면 스킵 (덮어쓰기 아닌 경우)
+            if (itemSO.HasAssetRef && !_overwriteExisting)
             {
                 continue;
             }
@@ -1121,10 +1160,8 @@ public class CustomizingPipelineEditor : EditorWindow
             // 매칭되는 프리팹 찾기
             if (prefabMap.TryGetValue(soName, out GameObject prefab))
             {
-                var serializedObject = new SerializedObject(itemSO);
-                serializedObject.FindProperty("_partPrefab").objectReferenceValue = prefab;
-                serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(itemSO);
+                // Addressable로 등록 및 연결
+                SetAddressableReference(itemSO, prefab);
 
                 Log($"[SUCCESS] Linked: {soName} ← {prefab.name}");
                 _sosUpdated++;
@@ -1250,10 +1287,15 @@ public class CustomizingPipelineEditor : EditorWindow
             if (itemSO == null) continue;
 
             // 연결된 프리팹에서 타입 추론
-            GameObject prefab = itemSO.PartPrefab;
-            if (prefab == null)
+            if (!itemSO.HasAssetRef || itemSO.PartPrefabRef == null)
             {
                 Log($"[WARN] No prefab linked: {soPath}");
+                continue;
+            }
+            GameObject prefab = itemSO.PartPrefabRef.editorAsset as GameObject;
+            if (prefab == null)
+            {
+                Log($"[WARN] Cannot load prefab: {soPath}");
                 continue;
             }
 
