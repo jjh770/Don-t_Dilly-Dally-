@@ -115,6 +115,10 @@ public class Lobby : MonoBehaviour
         {
             _transition.TransitionToLobby();
         }
+        else if (_customizingUI != null)
+        {
+            _customizingUI.gameObject.SetActive(false);
+        }
     }
 
     private void OnCustomizingSaved()
