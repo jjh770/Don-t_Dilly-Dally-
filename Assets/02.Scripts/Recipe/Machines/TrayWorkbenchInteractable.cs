@@ -81,7 +81,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(trayItem, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(trayItem))
             {
                 return;
             }
@@ -116,7 +116,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem))
             {
                 return;
             }
@@ -163,7 +163,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(mixToolItem, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(mixToolItem))
             {
                 return;
             }

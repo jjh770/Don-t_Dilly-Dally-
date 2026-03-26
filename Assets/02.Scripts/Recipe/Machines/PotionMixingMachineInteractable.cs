@@ -176,7 +176,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(itemObject, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(itemObject))
             {
                 return;
             }
