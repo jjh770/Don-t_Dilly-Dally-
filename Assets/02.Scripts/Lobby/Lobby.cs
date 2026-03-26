@@ -13,9 +13,13 @@ public class Lobby : MonoBehaviour
     [Header("전환 효과")]
     [SerializeField] private LobbyCustomizingTransition _transition;
 
+    [Header("렌더 카메라")]
+    [SerializeField] private CharacterPreviewCameraForLobby _characterPreviewCameraForLobby;
+
     private GameObject _previewCharacter;
     private CustomizingUIViewModel _viewModel;
     private LobbyPreviewAnimator _previewAnimator;
+
 
     private void Start()
     {
@@ -50,6 +54,8 @@ public class Lobby : MonoBehaviour
         Quaternion rotation = Quaternion.identity;
 
         _previewCharacter = Instantiate(_previewCharacterPrefab, position, rotation);
+
+        _characterPreviewCameraForLobby.SetTransform(_previewCharacter.transform);
 
         var photonController = _previewCharacter.GetComponent<CustomizingCharacterController>();
         if (photonController != null)

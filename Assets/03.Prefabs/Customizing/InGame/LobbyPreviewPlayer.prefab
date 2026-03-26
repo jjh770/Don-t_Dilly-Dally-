@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 6297388653794688563}
   - component: {fileID: 3038821889760306527}
   - component: {fileID: -4167982734882526433}
+  - component: {fileID: 4274593337534190370}
   m_Layer: 7
   m_Name: LobbyPreviewPlayer
   m_TagString: Player
@@ -132,12 +133,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f92065b0046e86b4b80731e22fc632b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyPreviewAnimator
-  _animator: {fileID: 0}
-  _idleDurationBeforePose: 12
+  _idleDuration: 12
   _poseCount: 5
-  _poseIndexParam: PoseIndex
-  _poseTriggerParam: Pose
-  _customizingSaveTriggerParam: CustomizingSave
+--- !u!136 &4274593337534190370
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3775339006636566168}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.4
+  m_Height: 1.1471468
+  m_Direction: 1
+  m_Center: {x: 0, y: 0.5858453, z: 0}
 --- !u!1001 &5184199415286638223
 PrefabInstance:
   m_ObjectHideFlags: 0
