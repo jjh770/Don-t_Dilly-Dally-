@@ -9,6 +9,7 @@ using UnityEngine;
 public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 {
     public bool IsInteracting { get; private set; }
+    public bool IsStoredInContainer { get; private set; }
     public Transform Transform => transform;
 
     [Header("착지 감지 설정")]
@@ -140,6 +141,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     {
         _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
+        IsStoredInContainer = false;
 
         IsInteracting = true;
         _currentHoldPoint = holdPoint;
@@ -147,7 +149,13 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
 
         StopDynamicMotion();
         _rigidbody.isKinematic = true;
-        _collider.enabled = false;
+
+        // 자식 콜라이더 포함 모두 비활성화 (홀드포인트로 이동 시 충돌 방지)
+        Collider[] allColliders = GetComponentsInChildren<Collider>(true);
+        foreach (Collider col in allColliders)
+        {
+            col.enabled = false;
+        }
 
         transform.SetParent(null);
         ApplyHoldTransform(holdPoint);
@@ -203,6 +211,38 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _rigidbody.isKinematic = true;
         _collider.enabled = true;
         transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
+
+        _isWaitingForOwnershipReturn = true;
+    }
+
+    public void ApplyNetworkContainerState(bool isStored)
+    {
+        IsStoredInContainer = isStored;
+
+        if (isStored)
+        {
+            IsInteracting = false;
+            _currentHoldPoint = null;
+            _holderActorNumber = InvalidActorNumber;
+        }
+    }
+
+    public void SetStoredInContainer(bool stored)
+    {
+        IsStoredInContainer = stored;
+
+        if (stored)
+        {
+            // 루트 콜라이더뿐 아니라 자식 콜라이더도 모두 비활성화
+            // (자식 콜라이더가 남아있으면 소유권 이전 대기 중 플레이어를 밀어냄)
+            Collider[] allColliders = GetComponentsInChildren<Collider>(true);
+            foreach (Collider col in allColliders)
+            {
+                col.enabled = false;
+            }
+
+            _rigidbody.isKinematic = true;
+        }
     }
 
     public void RefreshHoldAnchor()
@@ -290,6 +330,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _rigidbody.isKinematic = false;
         _collider.enabled = true;
         _holderActorNumber = InvalidActorNumber;
+
+        _isWaitingForOwnershipReturn = true;
     }
 
     private Transform TryResolveHoldPoint(int holderActorNumber)

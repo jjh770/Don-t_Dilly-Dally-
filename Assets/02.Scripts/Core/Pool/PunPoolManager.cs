@@ -2,10 +2,10 @@ using Photon.Pun;
 using System.Collections.Generic;
 using UnityEngine;
 
-// [사용법]
+// 사용 예시
 // 생성: PhotonNetwork.Instantiate("BandagePrefab", position, rotation);
 // 반납: PhotonNetwork.Destroy(gameObject);
-public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefabPool
+public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
 {
     [SerializeField] private PoolablePrefabTable _prefabTable;
 
@@ -25,7 +25,17 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
         WarmUp();
     }
 
-    // IPunPrefabPool — 반드시 비활성화 상태로 반환 (PUN2가 활성화 처리)
+    private void OnDestroy()
+    {
+        if (ReferenceEquals(PhotonNetwork.PrefabPool, this))
+        {
+            // 씬 전용 풀 매니저가 제거될 때는 PUN 기본 풀로 되돌린다.
+            PhotonNetwork.PrefabPool = null;
+        }
+    }
+
+    // IPunPrefabPool 구현:
+    // PUN2가 활성화 처리를 하므로 비활성 상태의 오브젝트를 반환해야 한다.
     public GameObject Instantiate(string prefabId, Vector3 position, Quaternion rotation)
     {
         if (_prefabTable.TryGetEntry(prefabId, out _))
@@ -49,7 +59,8 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
         return Object.Instantiate(prefab, position, rotation);
     }
 
-    // IPunPrefabPool — PUN2가 SetActive(false) 처리 후 호출
+    // IPunPrefabPool 구현:
+    // PUN2가 SetActive(false)까지 처리한 뒤 호출하므로 큐에만 되돌려 놓는다.
     public void Destroy(GameObject go)
     {
         if (!go.TryGetComponent<PoolableObject>(out var poolable))
@@ -58,7 +69,7 @@ public class PunPoolManager : PunPersistentSingleton<PunPoolManager>, IPunPrefab
             return;
         }
 
-        // 오브젝트 초기화 후 풀로 반환
+        // 풀 루트 아래로 되돌려 다음 재사용을 준비한다.
         go.transform.SetParent(_poolRoot);
         go.transform.localPosition = Vector3.zero;
         go.transform.localRotation = Quaternion.identity;

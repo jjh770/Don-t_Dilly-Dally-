@@ -54,6 +54,59 @@ namespace DontDillyDally.Data
             return true;
         }
 
+        /// <summary>
+        /// 슬롯에 저장된 아이템을 모두 정리합니다.
+        /// 로컬에서 파괴할 수 없는 아이템(소유권 없음)의 ViewID 배열을 반환합니다.
+        /// </summary>
+        public int[] ClearStoredItems()
+        {
+            if (_storedSlotItems == null)
+            {
+                return null;
+            }
+
+            int undestroyedCount = 0;
+            int[] undestroyedViewIds = new int[MaxItemSlots];
+
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                ItemObject storedItem = _storedSlotItems[i];
+                _storedSlotItems[i] = null;
+
+                if (storedItem == null)
+                {
+                    continue;
+                }
+
+                PhotonView photonView = storedItem.GetComponent<PhotonView>();
+                if (PhotonNetwork.InRoom && photonView != null)
+                {
+                    if (photonView.IsMine || photonView.AmController)
+                    {
+                        PhotonNetwork.Destroy(storedItem.gameObject);
+                    }
+                    else
+                    {
+                        // 소유권이 없어 파괴 불가 → ViewID 수집
+                        undestroyedViewIds[undestroyedCount++] = photonView.ViewID;
+                    }
+
+                    continue;
+                }
+
+                Destroy(storedItem.gameObject);
+            }
+
+            if (undestroyedCount == 0)
+            {
+                return null;
+            }
+
+            int[] result = new int[undestroyedCount];
+            System.Array.Copy(undestroyedViewIds, result, undestroyedCount);
+            return result;
+        }
+
         private Transform GetSlotTransform(int slotIndex)
         {
             if (_itemSlotPoints != null &&
@@ -78,6 +131,13 @@ namespace DontDillyDally.Data
             foreach (Collider col in colliders)
             {
                 col.enabled = false;
+            }
+
+            // 네트워크 동기화가 콜라이더를 다시 활성화하지 않도록 플래그 설정
+            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
+            if (holdable != null)
+            {
+                holdable.SetStoredInContainer(true);
             }
         }
 

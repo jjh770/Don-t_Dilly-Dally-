@@ -288,8 +288,6 @@ public class PlayerInteractionAbility : MonoBehaviour
         {
             holdable.StopInteract();
 
-            ReleaseHeldItemOwnershipToMaster();
-
             _playerAnimator.PlayHoldAnimation(false);
             _currentInteractable = null;
             _currentHeldItem = null;
@@ -305,21 +303,6 @@ public class PlayerInteractionAbility : MonoBehaviour
         }
 
         _currentInteractable = null;
-    }
-
-    private void ReleaseHeldItemOwnershipToMaster()
-    {
-        if (_currentHeldItem == null)
-            return;
-
-        PhotonView photonView = _currentHeldItem.GetComponent<PhotonView>();
-        if (photonView == null)
-            return;
-
-        if (PhotonNetwork.MasterClient == null)
-            return;
-
-        photonView.TransferOwnership(PhotonNetwork.MasterClient);
     }
 
     public bool TryConsumeHeldItem(ItemObject expectedItem = null)
@@ -352,7 +335,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         return true;
     }
 
-    public bool TryReleaseHeldItem(ItemObject expectedItem = null, bool returnOwnershipToMaster = true)
+    public bool TryReleaseHeldItem(ItemObject expectedItem = null)
     {
         if (_currentHeldItem == null)
             return false;
@@ -364,9 +347,6 @@ public class PlayerInteractionAbility : MonoBehaviour
             return false;
 
         holdable.StopInteract();
-
-        if (returnOwnershipToMaster)
-            ReleaseHeldItemOwnershipToMaster();
 
         _playerAnimator.PlayHoldAnimation(false);
         _currentInteractable = null;
