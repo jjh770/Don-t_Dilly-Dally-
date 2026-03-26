@@ -60,7 +60,7 @@ namespace DontDillyDally.Data
                 _networkOwnership.OwnershipAcquiredLocally -= HandleOwnershipAcquiredLocally;
             }
 
-            AbortCurrentInteraction();
+            AbortCurrentInteraction(returnOwnershipToMaster: false);
         }
 
         private void Update()
@@ -312,24 +312,28 @@ namespace DontDillyDally.Data
             _pendingOwnershipElapsed = 0f;
         }
 
-        private void FinishCurrentInteraction()
+        private void FinishCurrentInteraction(bool returnOwnershipToMaster = true)
         {
             ReleaseInteractionLockIfNeeded();
             ClearPendingState();
             ClearActiveFillState();
             _isInteractionLocked = false;
             _networkOwnership?.UnlockOwnershipOnController();
-            ReleaseOwnershipToMasterIfNeeded();
+
+            if (returnOwnershipToMaster)
+            {
+                ReleaseOwnershipToMasterIfNeeded();
+            }
         }
 
-        private void AbortCurrentInteraction()
+        private void AbortCurrentInteraction(bool returnOwnershipToMaster = true)
         {
             if (_isFillInProgress)
             {
                 _actionTimer?.Cancel();
             }
 
-            FinishCurrentInteraction();
+            FinishCurrentInteraction(returnOwnershipToMaster);
         }
 
         private void ClearActiveFillState()

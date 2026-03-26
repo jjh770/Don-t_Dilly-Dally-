@@ -310,6 +310,12 @@ namespace DontDillyDally.Data
             Collider[] colliders = trayItem.GetComponentsInChildren<Collider>(true);
             foreach (Collider col in colliders)
             {
+                ItemObject ownerItem = col.GetComponentInParent<ItemObject>();
+                if (ownerItem != null && ownerItem != trayItem)
+                {
+                    continue;
+                }
+
                 col.enabled = isEnabled;
             }
 
