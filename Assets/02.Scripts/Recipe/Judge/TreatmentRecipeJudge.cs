@@ -28,7 +28,7 @@ namespace DontDillyDally.Data
 
     // 현재 질병의 다음 레시피를 판정하고 치료 진행도를 관리합니다.
     // 환자 체력과 제출한 트레이의 정답 여부를 함께 확인합니다.
-    public class TreatmentJudgeManager
+    public class TreatmentRecipeJudge
     {
         private readonly HashSet<string> completedRecipeIds = new HashSet<string>();
 

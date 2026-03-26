@@ -27,7 +27,12 @@ public enum EventType
     MachineBroken,      // 기계가 고장났을 때
     ChainAccident,      // 사고가 계속 이어질 때
     PlayerMistake,      // 플레이어가 실수했을 때
-    TeamCooperation     // 팀이 협동할 때
+    TeamCooperation,    // 팀이 협동할 때
+
+    // 스테이지 흐름
+    EmergencyEvent,     // 긴급 이벤트 발생
+    RecipeSuccess,      // 레시피 단계 성공
+    RecipeFail          // 레시피 실패
 }
 
 [Serializable]
@@ -72,6 +77,9 @@ public class GameEvent
             EventType.PlayerMistake => EventPriority.Normal,
             EventType.AssistDeliverItem => EventPriority.Low,
             EventType.TeamCooperation => EventPriority.Low,
+            EventType.EmergencyEvent => EventPriority.High,
+            EventType.RecipeSuccess => EventPriority.Normal,
+            EventType.RecipeFail => EventPriority.Normal,
             _ => EventPriority.Normal
         };
     }
