@@ -2,11 +2,12 @@
 public enum CustomizingType
 {
     SkinColor,
-    Hat,     
-    HairStyle, 
-    Faces,  
+    Hat,
+    HairStyle,
+    Faces,
     FaceAccessory,
     Glasses,
-    Shoes, 
-    Costumes
+    Shoes,
+    Costumes,
+    None
 }

@@ -169,6 +169,12 @@ namespace DontDillyDally.Data
                 localPosition.y = -bottomOffset;
             }
             itemObject.transform.localPosition = localPosition;
+
+            PhotonView pv = itemObject.GetComponent<PhotonView>();
+            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
+            {
+                pv.TransferOwnership(PhotonNetwork.MasterClient);
+            }
         }
     }
 }

@@ -13,9 +13,13 @@ public class Lobby : MonoBehaviour
     [Header("전환 효과")]
     [SerializeField] private LobbyCustomizingTransition _transition;
 
+    [Header("렌더 카메라")]
+    [SerializeField] private CharacterPreviewCameraForLobby _characterPreviewCameraForLobby;
+
     private GameObject _previewCharacter;
-    private CustomizingViewModel _viewModel;
+    private CustomizingUIViewModel _viewModel;
     private LobbyPreviewAnimator _previewAnimator;
+
 
     private void Start()
     {
@@ -51,7 +55,9 @@ public class Lobby : MonoBehaviour
 
         _previewCharacter = Instantiate(_previewCharacterPrefab, position, rotation);
 
-        var photonController = _previewCharacter.GetComponent<PlayerCustomizingController>();
+        _characterPreviewCameraForLobby.SetTransform(_previewCharacter.transform);
+
+        var photonController = _previewCharacter.GetComponent<CustomizingCharacterController>();
         if (photonController != null)
         {
             Destroy(photonController);
@@ -71,7 +77,7 @@ public class Lobby : MonoBehaviour
         }
 
         // ViewModel 생성 및 주입
-        _viewModel = new CustomizingViewModel(manager);
+        _viewModel = new CustomizingUIViewModel(manager);
         _customizingUI.Initialize(_viewModel);
 
         _customizingUI.OnClosed += OnCustomizingClosed;

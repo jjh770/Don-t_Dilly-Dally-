@@ -44,7 +44,7 @@ namespace DontDillyDally.StageFlow
 
         public MiniGameType GetRandomMiniGameType()
         {
-            return SelectMiniGameType();
+            return MiniGameTypeExtensions.GetRandom();
         }
 
         public float GetPenaltyByMiniGameResult(bool isSuccess)
@@ -56,7 +56,7 @@ namespace DontDillyDally.StageFlow
             MiniGameLauncher launcher,
             CancellationToken ct)
         {
-            MiniGameType type = SelectMiniGameType();
+            MiniGameType type = MiniGameTypeExtensions.GetRandom();
             return await ExecuteEmergency(launcher, type, ct);
         }
 
@@ -73,12 +73,6 @@ namespace DontDillyDally.StageFlow
 
                 return GetPenaltyByMiniGameResult(result.IsSuccess);
             }
-        }
-
-        private MiniGameType SelectMiniGameType()
-        {
-            MiniGameType[] types = (MiniGameType[])Enum.GetValues(typeof(MiniGameType));
-            return types[UnityEngine.Random.Range(0, types.Length)];
         }
     }
 }

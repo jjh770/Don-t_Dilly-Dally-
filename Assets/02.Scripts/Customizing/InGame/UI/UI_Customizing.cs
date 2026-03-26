@@ -27,13 +27,13 @@ public class UI_Customizing : MonoBehaviour
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
     [SerializeField] private Color _tabNormalColor = Color.white;
 
-    private CustomizingViewModel _viewModel;
+    private CustomizingUIViewModel _viewModel;
     private List<UI_CustomizingItem> _itemButtons = new();
 
     public event Action OnClosed;
     public event Action OnSaved;
 
-    public void Initialize(CustomizingViewModel viewModel)
+    public void Initialize(CustomizingUIViewModel viewModel)
     {
         if (_viewModel != null) return;
 

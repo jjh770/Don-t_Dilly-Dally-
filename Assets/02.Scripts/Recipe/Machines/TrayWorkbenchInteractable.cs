@@ -81,7 +81,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(trayItem, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(trayItem))
             {
                 return;
             }
@@ -116,7 +116,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem))
             {
                 return;
             }
@@ -163,7 +163,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(mixToolItem, returnOwnershipToMaster: false))
+            if (!interactionAbility.TryReleaseHeldItem(mixToolItem))
             {
                 return;
             }
@@ -292,6 +292,12 @@ namespace DontDillyDally.Data
             }
 
             trayItem.transform.SetParent(_traySlotPoint, true);
+
+            PhotonView pv = trayItem.GetComponent<PhotonView>();
+            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
+            {
+                pv.TransferOwnership(PhotonNetwork.MasterClient);
+            }
         }
 
         private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)
@@ -304,6 +310,12 @@ namespace DontDillyDally.Data
             Collider[] colliders = trayItem.GetComponentsInChildren<Collider>(true);
             foreach (Collider col in colliders)
             {
+                ItemObject ownerItem = col.GetComponentInParent<ItemObject>();
+                if (ownerItem != null && ownerItem != trayItem)
+                {
+                    continue;
+                }
+
                 col.enabled = isEnabled;
             }
 
