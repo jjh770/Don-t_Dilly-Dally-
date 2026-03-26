@@ -21,7 +21,6 @@ public class CommentaryController : MonoBehaviour
     [SerializeField] private CommentarySyncManager _syncManager;
     [SerializeField] private CommentaryPlaybackManager _playbackManager;
     [SerializeField] private CommentaryGenerator _generator;
-    [SerializeField] private EventManager _eventManager;
 
     [Header("설정")]
     [SerializeField] private float _duplicateEventCooldown = 1f;
@@ -46,10 +45,18 @@ public class CommentaryController : MonoBehaviour
         Instance = this;
     }
 
+    private async void Start()
+    {
+        if (_generator != null)
+        {
+            await _generator.PreGenerateFixedVoices();
+        }
+    }
+
     private void OnEnable()
     {
-        if (_eventManager != null)
-            _eventManager.OnEventPublished += OnEventPublished;
+        if (EventManager.Instance != null)
+            EventManager.Instance.OnEventPublished += OnEventPublished;
 
         if (_syncManager != null)
             _syncManager.OnCommentaryReceived += OnCommentaryReceived;
@@ -60,8 +67,8 @@ public class CommentaryController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_eventManager != null)
-            _eventManager.OnEventPublished -= OnEventPublished;
+        if (EventManager.Instance != null)
+            EventManager.Instance.OnEventPublished -= OnEventPublished;
 
         if (_syncManager != null)
             _syncManager.OnCommentaryReceived -= OnCommentaryReceived;

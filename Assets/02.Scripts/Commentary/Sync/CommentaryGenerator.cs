@@ -22,7 +22,6 @@ public class CommentaryGenerator : MonoBehaviour
     [SerializeField] private LLMService _llmService;
     [SerializeField] private TTSManager _ttsManager;
     [SerializeField] private CommentaryPlaybackManager _playbackManager;
-    [SerializeField] private EventManager _eventManager;
 
     [Header("프롬프트")]
     [SerializeField] private TextAsset _systemPromptFile;
@@ -118,7 +117,7 @@ public class CommentaryGenerator : MonoBehaviour
             return result;
         }
 
-        var recentEvents = _eventManager?.GetRecentEvents(_recentEventCount) ?? new List<GameEvent>();
+        var recentEvents = EventManager.Instance?.GetRecentEvents(_recentEventCount) ?? new List<GameEvent>();
         string prompt = BuildPrompt(gameEvent, recentEvents);
         string systemPrompt = _systemPromptFile != null ? _systemPromptFile.text : "";
 
