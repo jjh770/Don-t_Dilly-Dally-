@@ -20,6 +20,16 @@ namespace DontDillyDally.StageFlow
 
     public class StageFlowManager : PunSingleton<StageFlowManager>
     {
+        // ── 타이밍 상수 ─────────────────────────────────────────────
+        private const int ACK_TIMEOUT_MS = 5000;
+        private const int ACK_RETRY_DELAY_MS = 2000;
+        private const int STAGE_DATA_ACK_TIMEOUT_MS = 10000;
+        private const int GAME_OVER_ACK_TOTAL_TIMEOUT_MS = 12000;
+        private const float STAGE_CLEAR_DELAY_SEC = 5f;
+        private const float CUTSCENE_DELAY_SEC = 3f;
+        private const float PATIENT_TRANSITION_DELAY_SEC = 2f;
+        private const float RETURN_TO_WAITING_ROOM_DELAY_SEC = 5f;
+
         // ── 위임 컴포넌트 ────────────────────────────────────────────
         [Header("핸들러")]
         [SerializeField] private StageFlowRpcHandler _rpc;
@@ -126,6 +136,7 @@ namespace DontDillyDally.StageFlow
         private Action<float> _onTimerSyncTick;
         private Action<float> _onPatientHealthChanged;
         private Action _onPatientHealthDepleted;
+        private Action<EGameOverReason> _onGameOverReceived;
 
         // ── 이벤트 ──────────────────────────────────────────────────
         public event Action<EGameOverReason> OnGameOver;
@@ -158,7 +169,8 @@ namespace DontDillyDally.StageFlow
             _patientHealthController.OnHealthDepleted += _onPatientHealthDepleted;
 
             // 클라이언트 측 게임 오버, 스테이지 데이터 수신 (RPCHandler를 통해 로컬에서 수신)
-            _rpc.OnGameOverReceived += reason => OnGameOver?.Invoke(reason);
+            _onGameOverReceived = reason => OnGameOver?.Invoke(reason);
+            _rpc.OnGameOverReceived += _onGameOverReceived;
             _rpc.OnStageDataReceived += HandleStageDataReceived;
 
             // 미니게임 RPC 수신
@@ -215,7 +227,7 @@ namespace DontDillyDally.StageFlow
                 OnStageClear?.Invoke();
                 EventManager.Instance?.Publish(EventType.SurgerySuccess, "모든 환자 치료 완료!");
 
-                await UniTask.Delay(TimeSpan.FromSeconds(5), cancellationToken: ct);
+                await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
                 Debug.Log("[StageFlow] 대기실로 복귀합니다.");
                 PhotonServerManager.Instance.ReturnWaitingRoom();
             }
@@ -238,7 +250,7 @@ namespace DontDillyDally.StageFlow
                 handler => _rpc.OnSurgeonAckReceived += handler, // ACK 수신 핸들러 구독
                 handler => _rpc.OnSurgeonAckReceived -= handler, // ACK 수신 핸들러 구독 해제
                 "집도의 선정",                                   // 작업명
-                5000, ct);                                       // 타임아웃 5초 대기, 취소 토큰 전달
+                ACK_TIMEOUT_MS, ct);                                 // 타임아웃 대기, 취소 토큰 전달
 
             // 2. 질병 데이터 생성
             Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
@@ -253,7 +265,7 @@ namespace DontDillyDally.StageFlow
                 handler => _rpc.OnStageDataAckReceived += handler, // ACK 수신 핸들러 구독
                 handler => _rpc.OnStageDataAckReceived -= handler, // ACK 수신 핸들러 구독 해제
                 "스테이지 데이터",                                 // 작업명
-                10000, ct);                                        // 타임아웃 10초 대기, 취소 토큰 전달
+                STAGE_DATA_ACK_TIMEOUT_MS, ct);                     // 타임아웃 대기, 취소 토큰 전달
         }
 
         /// <summary>
@@ -315,7 +327,7 @@ namespace DontDillyDally.StageFlow
                 {
                     Debug.LogWarning($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) — 재전송. 미응답 Actor: {string.Join(", ", pendingActors)}");
                     broadcast();
-                    await UniTask.Delay(2000, cancellationToken: ct);
+                    await UniTask.Delay(ACK_RETRY_DELAY_MS, cancellationToken: ct);
                 }
             }
             // 타임아웃나도 한번 더 broadcast() 실행 후 응답 없으면 이벤트 구독 해제
@@ -372,7 +384,7 @@ namespace DontDillyDally.StageFlow
             EventManager.Instance?.Publish(EventType.GameStart, "수술을 시작합니다!");
 
             // TODO: 실제 컷씬 시스템 연동 시 교체
-            await UniTask.Delay(TimeSpan.FromSeconds(3), cancellationToken: ct);
+            await UniTask.Delay(TimeSpan.FromSeconds(CUTSCENE_DELAY_SEC), cancellationToken: ct);
             Debug.Log("[StageFlow]   컷씬 재생 종료");
         }
 
@@ -400,7 +412,7 @@ namespace DontDillyDally.StageFlow
                     _timer.Pause();
                     SyncTimerState();
                     _rpc.SetPhase(EStagePhase.PatientTransition);
-                    await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct);
+                    await UniTask.Delay(TimeSpan.FromSeconds(PATIENT_TRANSITION_DELAY_SEC), cancellationToken: ct);
                     _rpc.SetPhase(EStagePhase.Playing);
                     _timer.Resume();
                     ResumePatientHealthDrain();
@@ -585,22 +597,19 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            if (!success)
+            float newHealth = ApplyPatientDamage(_miniGameFailPenalty);
+            Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} → 현재 체력: {newHealth}");
+
+            if (_isGameOver)
             {
-                float newHealth = ApplyPatientDamage(_miniGameFailPenalty);
-                Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} → 현재 체력: {newHealth}");
+                Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");
+                return;
+            }
 
-                if (_isGameOver)
-                {
-                    Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");
-                    return;
-                }
-
-                if (_emergencyPolicy.ShouldTriggerOnRecipeFail())
-                {
-                    Debug.Log("[StageFlow]     ⚡ 미니게임 실패 → 긴급 이벤트 발동!");
-                    await HandleEmergencyEvent(ct);
-                }
+            if (_emergencyPolicy.ShouldTriggerOnRecipeFail())
+            {
+                Debug.Log("[StageFlow]     ⚡ 미니게임 실패 → 긴급 이벤트 발동!");
+                await HandleEmergencyEvent(ct);
             }
         }
 
@@ -778,7 +787,7 @@ namespace DontDillyDally.StageFlow
         private async UniTaskVoid BroadcastGameOverAndWaitAck(EGameOverReason reason)
         {
             using var cts = new CancellationTokenSource();
-            cts.CancelAfter(12000);
+            cts.CancelAfter(GAME_OVER_ACK_TOTAL_TIMEOUT_MS);
 
             try
             {
@@ -787,7 +796,7 @@ namespace DontDillyDally.StageFlow
                     handler => _rpc.OnGameOverAckReceived += handler,
                     handler => _rpc.OnGameOverAckReceived -= handler,
                     "게임 오버",
-                    5000, cts.Token);
+                    ACK_TIMEOUT_MS, cts.Token);
             }
             catch (OperationCanceledException)
             {
@@ -800,7 +809,7 @@ namespace DontDillyDally.StageFlow
         // 짧은 대기 후 대기실 씬으로 복귀시킵니다.
         private async UniTask ReturnToWaitingRoomDelayed()
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(5));
+            await UniTask.Delay(TimeSpan.FromSeconds(RETURN_TO_WAITING_ROOM_DELAY_SEC));
             PhotonServerManager.Instance.ReturnWaitingRoom();
         }
 
@@ -876,6 +885,7 @@ namespace DontDillyDally.StageFlow
 
             if (_rpc != null)
             {
+                if (_onGameOverReceived != null) _rpc.OnGameOverReceived -= _onGameOverReceived;
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
                 _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;

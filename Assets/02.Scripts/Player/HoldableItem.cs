@@ -211,6 +211,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
         _rigidbody.isKinematic = true;
         _collider.enabled = true;
         transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
+
+        _isWaitingForOwnershipReturn = true;
     }
 
     public void ApplyNetworkContainerState(bool isStored)
