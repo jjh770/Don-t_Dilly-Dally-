@@ -46,19 +46,19 @@ public class SelectRoleManager : MonoBehaviourPunCallbacks
     }
 
     // 스테이지 시작 시 호출 - 마스터 클라이언트가 역할 선정
-    public void AssignRoles()
+    public int AssignRoles()
     {
         if (!PhotonNetwork.IsMasterClient)
         {
             Log("마스터 클라이언트가 아님 - 역할 선정 대기");
-            return;
+            return -1;
         }
 
         var players = PhotonNetwork.PlayerList;
         if (players.Length < 2)
         {
             Debug.LogWarning("[SelectRoleManager] 플레이어가 2명 미만 - 역할 선정 불가");
-            return;
+            return -1;
         }
 
         if (players.Length > 4)
@@ -71,6 +71,7 @@ public class SelectRoleManager : MonoBehaviourPunCallbacks
 
         // 집도의 선정 (랜덤)
         int surgeonIndex = SelectSurgeonIndex(sortedPlayers.Count);
+        int surgeonActorNumber = sortedPlayers[surgeonIndex].ActorNumber;
 
         // 역할 배정
         var roleAssignments = new Dictionary<int, RoleType>();
@@ -95,7 +96,8 @@ public class SelectRoleManager : MonoBehaviourPunCallbacks
         // RPC로 모든 클라이언트에 역할 전파
         photonView.RPC(nameof(RPC_AssignRoles), RpcTarget.AllBuffered, SerializeRoles(roleAssignments));
 
-        Log($"역할 배정 완료 - 집도의: Player {sortedPlayers[surgeonIndex].ActorNumber}");
+        Log($"역할 배정 완료 - 집도의: Player {surgeonActorNumber}");
+        return surgeonActorNumber;
     }
 
     // 집도의 인덱스 선정 (랜덤)

@@ -79,10 +79,8 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
 
     private void TryApplyExistingRole()
     {
-        var manager = SelectRoleManager.Instance;
-        if (manager == null || !manager.IsRoleAssigned) return;
-
-        var role = manager.GetPlayerRole(photonView.Owner);
+        // Custom Properties에서 직접 조회 (PlayerRoleView가 늦게 생성되어도 동작)
+        var role = RoleProperties.GetPlayerRole(photonView.Owner);
         if (role != RoleType.None)
         {
             ApplyRole(role);

@@ -245,18 +245,20 @@ namespace DontDillyDally.StageFlow
         // 집도의 선정과 질병 생성, 스테이지 데이터 동기화를 처리합니다.
         private async UniTask RunLoadingPhase(CancellationToken ct)
         {
-            // 1. 집도의 랜덤 선정 + ACK 대기
+            // 1. 집도의 선정 (SelectRoleManager가 담당) + ACK 대기
             Debug.Log("[StageFlow]   (1/3) 집도의 선정 중...");
-            int surgeonActor = SelectSurgeon();
+            int surgeonActor = SelectRoleManager.Instance?.AssignRoles() ?? -1;
+            if (surgeonActor < 0)
+            {
+                Debug.LogError("[StageFlow] 집도의 선정 실패");
+                return;
+            }
             await BroadcastAndWaitAck(
                 () => _rpc.SetSurgeon(surgeonActor),             // 집도의 선정 RPC 호출
                 handler => _rpc.OnSurgeonAckReceived += handler, // ACK 수신 핸들러 구독
                 handler => _rpc.OnSurgeonAckReceived -= handler, // ACK 수신 핸들러 구독 해제
                 "집도의 선정",                                   // 작업명
                 ACK_TIMEOUT_MS, ct);                                 // 타임아웃 대기, 취소 토큰 전달
-
-            // 역할 시각 표시 (인디케이터/닉네임 색상)
-            SelectRoleManager.Instance?.AssignRoles();
 
             // 2. 질병 데이터 생성
             Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
@@ -341,17 +343,6 @@ namespace DontDillyDally.StageFlow
             {
                 unsubscribe(OnAck);
             }
-        }
-
-        // 현재 방 플레이어 중 집도의를 랜덤으로 선택합니다.
-        private int SelectSurgeon()
-        {
-            Player[] players = PhotonNetwork.PlayerList;
-            int randomIndex = UnityEngine.Random.Range(0, players.Length);
-            int selectedActorNumber = players[randomIndex].ActorNumber;
-
-            Debug.Log($"[StageFlow] 집도의 선정: Actor {selectedActorNumber}");
-            return selectedActorNumber;
         }
 
         // 이번 스테이지의 모든 환자 질병 데이터를 생성합니다.
