@@ -367,8 +367,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (PhotonNetwork.LocalPlayer != null &&
-                PhotonNetwork.MasterClient.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+            if (PhotonNetwork.IsMasterClient)
             {
                 return;
             }
