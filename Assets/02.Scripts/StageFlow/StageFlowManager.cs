@@ -571,7 +571,7 @@ namespace DontDillyDally.StageFlow
         // 정답 레시피 이후 집도의 대상 미니게임을 실행하고 결과를 반영합니다.
         private async UniTask RunRecipeMiniGame(CancellationToken ct)
         {
-            MiniGameType type = SelectRandomMiniGameType();
+            MiniGameType type = MiniGameTypeExtensions.GetRandom();
             int surgeonActorNumber = GetMiniGameTargetActorNumber();
             Debug.Log($"[StageFlow]     레시피 미니게임 시작: {type} | 집도의 Actor {surgeonActorNumber}");
 
@@ -699,12 +699,6 @@ namespace DontDillyDally.StageFlow
             _miniGameResultTcs?.TrySetResult(success);
         }
 
-        // 사용 가능한 미니게임 타입 중 하나를 랜덤으로 선택합니다.
-        private MiniGameType SelectRandomMiniGameType()
-        {
-            MiniGameType[] types = (MiniGameType[])Enum.GetValues(typeof(MiniGameType));
-            return types[UnityEngine.Random.Range(0, types.Length)];
-        }
 
         // 현재 미니게임을 수행해야 할 집도의 ActorNumber를 반환합니다.
         private int GetMiniGameTargetActorNumber()
@@ -783,7 +777,7 @@ namespace DontDillyDally.StageFlow
         // 게임오버 사실을 모든 클라이언트에 전송하고 ACK를 기다립니다.
         private async UniTaskVoid BroadcastGameOverAndWaitAck(EGameOverReason reason)
         {
-            var cts = new CancellationTokenSource();
+            using var cts = new CancellationTokenSource();
             cts.CancelAfter(12000);
 
             try
