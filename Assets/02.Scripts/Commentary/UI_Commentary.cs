@@ -30,17 +30,17 @@ public class UI_Commentary : MonoBehaviour
 
     private void OnEnable()
     {
-        if (CommentaryManager.Instance != null)
+        if (CommentaryController.Instance != null)
         {
-            CommentaryManager.Instance.OnNarrationGenerated += ShowNarration;
+            CommentaryController.Instance.OnNarrationGenerated += ShowNarration;
         }
     }
 
     private void OnDisable()
     {
-        if (CommentaryManager.Instance != null)
+        if (CommentaryController.Instance != null)
         {
-            CommentaryManager.Instance.OnNarrationGenerated -= ShowNarration;
+            CommentaryController.Instance.OnNarrationGenerated -= ShowNarration;
         }
     }
 

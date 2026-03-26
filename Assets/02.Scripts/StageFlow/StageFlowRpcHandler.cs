@@ -259,7 +259,7 @@ namespace DontDillyDally.StageFlow
         [PunRPC]
         private void RPC_TriggerEmergency()
         {
-            EventManager.Instance?.Publish(EventType.PatientCritical, "긴급 처치가 필요합니다!");
+            CommentaryEventPublisher.Instance?.OnEmergencyEvent();
         }
 
         [PunRPC]
