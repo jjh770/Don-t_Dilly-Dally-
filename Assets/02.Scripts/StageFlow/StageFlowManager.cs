@@ -227,6 +227,9 @@ namespace DontDillyDally.StageFlow
                 OnStageClear?.Invoke();
                 EventManager.Instance?.Publish(EventType.SurgerySuccess, "모든 환자 치료 완료!");
 
+                // 역할 시각 표시 초기화
+                SelectRoleManager.Instance?.ClearRoles();
+
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
                 Debug.Log("[StageFlow] 대기실로 복귀합니다.");
                 PhotonServerManager.Instance.ReturnWaitingRoom();
@@ -251,6 +254,9 @@ namespace DontDillyDally.StageFlow
                 handler => _rpc.OnSurgeonAckReceived -= handler, // ACK 수신 핸들러 구독 해제
                 "집도의 선정",                                   // 작업명
                 ACK_TIMEOUT_MS, ct);                                 // 타임아웃 대기, 취소 토큰 전달
+
+            // 역할 시각 표시 (인디케이터/닉네임 색상)
+            SelectRoleManager.Instance?.AssignRoles();
 
             // 2. 질병 데이터 생성
             Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
@@ -779,6 +785,9 @@ namespace DontDillyDally.StageFlow
 
             Debug.Log($"[StageFlow] {message} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀");
             EventManager.Instance?.Publish(EventType.GameOver, message);
+
+            // 역할 시각 표시 초기화
+            SelectRoleManager.Instance?.ClearRoles();
 
             BroadcastGameOverAndWaitAck(reason).Forget();
         }

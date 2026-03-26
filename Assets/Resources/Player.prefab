@@ -319,6 +319,7 @@ GameObject:
   - component: {fileID: 6621175980971503525}
   - component: {fileID: 2460008741056850297}
   - component: {fileID: 2809619115966644710}
+  - component: {fileID: 3286292822046303028}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -607,6 +608,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2207b2e1f2085346aedd70c14db86e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerCustomizingController
+--- !u!114 &3286292822046303028
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6536501996314029870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1d66bc7494690b47ad9b1b3cd64d78a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerRoleView
+  _indicatorRenderer: {fileID: 3233333596537894041}
+  _nicknameText: {fileID: 0}
+  _nicknameTextUI: {fileID: 0}
+  _autoFindIndicator: 1
+  _indicatorChildName: Indicator
 --- !u!1 &8082944421811993182
 GameObject:
   m_ObjectHideFlags: 0
@@ -762,6 +780,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 225bef21264b4ba41b12d86491b0d9be, type: 3}
+--- !u!23 &3233333596537894041 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 1700416635234419589, guid: 225bef21264b4ba41b12d86491b0d9be, type: 3}
+  m_PrefabInstance: {fileID: 4271114687320045340}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &5463011635722503131 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8112821375346603207, guid: 225bef21264b4ba41b12d86491b0d9be, type: 3}
