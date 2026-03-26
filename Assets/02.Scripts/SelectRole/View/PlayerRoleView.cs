@@ -8,11 +8,8 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     [Header("인디케이터")]
     [SerializeField] private Renderer _indicatorRenderer;
 
-    private RoleType _currentRole = RoleType.None;
     private Material _originalMaterial;
     private bool _isInitialized;
-
-    public RoleType CurrentRole => _currentRole;
 
     private void Start()
     {
@@ -97,8 +94,6 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     {
         if (!_isInitialized) Initialize();
 
-        _currentRole = role;
-
         var manager = SelectRoleManager.Instance;
         var profile = manager?.VisualProfile;
 
@@ -122,8 +117,6 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
 
     public void ResetToDefault()
     {
-        _currentRole = RoleType.None;
-
         var manager = SelectRoleManager.Instance;
         var profile = manager?.VisualProfile;
 

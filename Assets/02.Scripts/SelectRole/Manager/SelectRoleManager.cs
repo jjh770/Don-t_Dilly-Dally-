@@ -8,6 +8,8 @@ using UnityEngine;
 [RequireComponent(typeof(PhotonView))]
 public class SelectRoleManager : MonoBehaviourPunCallbacks
 {
+    private const int MAX_PLAYERS = 4;
+
     public static SelectRoleManager Instance { get; private set; }
 
     [Header("역할 별 색깔 설정")]
@@ -56,7 +58,7 @@ public class SelectRoleManager : MonoBehaviourPunCallbacks
         var roleAssignments = new Dictionary<int, RoleType>();
         int assistantIndex = 0;
 
-        for (int i = 0; i < sortedPlayers.Count && i < 4; i++)
+        for (int i = 0; i < sortedPlayers.Count && i < MAX_PLAYERS; i++)
         {
             var player = sortedPlayers[i];
 
