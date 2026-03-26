@@ -41,11 +41,4 @@ public class RoleVisualProfileSO : ScriptableObject
 
         return _defaultNicknameColor;
     }
-
-    public bool HasAssistantMaterial(int index)
-    {
-        return _assistantMaterials != null && index >= 0 && index < _assistantMaterials.Length;
-    }
-
-    public int AssistantMaterialCount => _assistantMaterials?.Length ?? 0;
 }

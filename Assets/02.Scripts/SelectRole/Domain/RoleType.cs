@@ -9,13 +9,6 @@ public enum RoleType
 
 public static class RoleTypeExtensions
 {
-    public static bool IsSurgeon(this RoleType role) => role == RoleType.Surgeon;
-
-    public static bool IsAssistant(this RoleType role) =>
-        role == RoleType.Assistant1 ||
-        role == RoleType.Assistant2 ||
-        role == RoleType.Assistant3;
-
     public static int GetAssistantIndex(this RoleType role)
     {
         return role switch
