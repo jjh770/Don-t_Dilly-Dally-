@@ -4,10 +4,11 @@ using Photon.Realtime;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerCustomizingView))]
-public class PlayerCustomizingController : MonoBehaviourPunCallbacks
+[RequireComponent(typeof(CustomizingCharacterView))]
+public class CustomizingCharacterController : MonoBehaviourPunCallbacks
 {
-    private PlayerCustomizingView _view;
+    private CustomizingCharacterView _view;
+    private CustomizingCharacterViewModel _viewModel;
     private ICustomizingAssetLoader _assetLoader;
     private bool _isInitialized;
     private bool _isCustomizingApplied;
@@ -16,7 +17,7 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
 
     private void Awake()
     {
-        _view = GetComponent<PlayerCustomizingView>();
+        _view = GetComponent<CustomizingCharacterView>();
         _assetLoader = new AddressableAssetLoader();
         _view.Initialize(_assetLoader);
     }
@@ -30,17 +31,11 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
     {
         base.OnDisable();
 
-        if (IsLocalPlayer)
+        if (_viewModel != null)
         {
-            UnsubscribeFromManager();
-        }
-        else
-        {
-            var manager = CustomizingManager.Instance;
-            if (manager != null)
-            {
-                manager.OnLoaded -= HandleRemoteManagerReady;
-            }
+            UnsubscribeFromViewModel();
+            _viewModel.Dispose();
+            _viewModel = null;
         }
     }
 
@@ -48,6 +43,8 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
     {
         if (_isInitialized) return;
         _isInitialized = true;
+
+        TryCreateViewModel();
 
         if (IsLocalPlayer)
         {
@@ -59,73 +56,82 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
         }
     }
 
+    private bool TryCreateViewModel()
+    {
+        if (_viewModel != null) return true;
+
+        var manager = CustomizingManager.Instance;
+        if (manager == null) return false;
+
+        _viewModel = new CustomizingCharacterViewModel(manager);
+        return true;
+    }
+
     // 로컬 플레이어는 처음에
-    // 1. 매니저를 구독하고
+    // 1. ViewModel을 구독하고
     // 2. 아이템을 장착하고
     // 3. 네트워크에 동기화하고
     // 4. 커스터마이징 카메라에 세팅
     private void InitializeLocal()
     {
-        SubscribeToManager();
-        ApplyFromManager();
+        if (_viewModel == null) return;
+
+        SubscribeToViewModel();
+        ApplyFromViewModel();
         SyncToNetwork();
         SetCustomizingCameraTarget(transform);
     }
 
     // 원격 플레이어는 처음에
-    // 1. 매니저의 준비 완료 이벤트를 구독하고
+    // 1. ViewModel의 준비 완료 이벤트를 구독하고
     // 2. 네트워크에서 받은 커스터마이징을 적용
-    // ㄴ 매니저가 아직 준비되지 않았다면 준비 완료 후 다시 적용
+    // ㄴ ViewModel이 아직 준비되지 않았다면 준비 완료 후 다시 적용
     private void InitializeRemote()
     {
-        var manager = CustomizingManager.Instance;
-        if (manager != null)
+        if (_viewModel != null)
         {
-            manager.OnLoaded += HandleRemoteManagerReady;
+            _viewModel.OnLoaded += HandleRemoteViewModelReady;
         }
 
         TryApplyRemoteCustomizing();
     }
 
     // ===== 로컬 플레이어 =====
-    private void SubscribeToManager()
+    private void SubscribeToViewModel()
     {
-        var manager = CustomizingManager.Instance;
-        if (manager == null) return;
+        if (_viewModel == null) return;
 
-        manager.OnLoaded += HandleLoaded;
-        manager.OnItemChanged += HandleItemChanged;
-        manager.OnSaved += HandleSaved;
+        _viewModel.OnLoaded += HandleLoaded;
+        _viewModel.OnItemChanged += HandleItemChanged;
+        _viewModel.OnSaved += HandleSaved;
     }
 
-    private void UnsubscribeFromManager()
+    private void UnsubscribeFromViewModel()
     {
-        var manager = CustomizingManager.Instance;
-        if (manager == null) return;
+        if (_viewModel == null) return;
 
-        manager.OnLoaded -= HandleLoaded;
-        manager.OnItemChanged -= HandleItemChanged;
-        manager.OnSaved -= HandleSaved;
+        _viewModel.OnLoaded -= HandleLoaded;
+        _viewModel.OnItemChanged -= HandleItemChanged;
+        _viewModel.OnSaved -= HandleSaved;
+        _viewModel.OnLoaded -= HandleRemoteViewModelReady;
     }
 
-    private void ApplyFromManager()
+    private void ApplyFromViewModel()
     {
-        var manager = CustomizingManager.Instance;
-        if (manager == null || !manager.IsInitialized) return;
+        if (_viewModel == null || !_viewModel.IsInitialized) return;
 
         // 기본 장착
         ApplyAllBaseEquipment();
 
         // 커스터마이징
-        _view.ApplyAll(type => manager.GetEquipped(type));
+        _view.ApplyAll(type => _viewModel.GetEquipped(type));
     }
 
     private void ApplyAllBaseEquipment()
     {
-        var manager = CustomizingManager.Instance;
-        if (manager == null || !manager.IsInitialized) return;
+        if (_viewModel == null || !_viewModel.IsInitialized) return;
 
-        foreach (var (type, item) in manager.GetAllBaseEquipmentItems())
+        foreach (var (type, item) in _viewModel.GetAllBaseEquipmentItems())
         {
             _view.ApplyBaseEquipment(type, item);
         }
@@ -134,11 +140,9 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
     public void SyncToNetwork()
     {
         if (!IsLocalPlayer) return;
+        if (_viewModel == null || !_viewModel.IsInitialized) return;
 
-        var manager = CustomizingManager.Instance;
-        if (manager == null || !manager.IsInitialized) return;
-
-        var itemIds = manager.GetEquippedItemIds();
+        var itemIds = _viewModel.GetEquippedItemIds();
         // Photon Custom Properties에 저장
         // ㄴ 내 캐릭터 외형을 다른 사람에게 공유
         CustomizingProperties.SetLocalPlayerCustomizing(itemIds);
@@ -168,10 +172,11 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
             ApplyFromItemIds(items);
         }
     }
+
     private void HandleLoaded()
     {
         if (!IsLocalPlayer) return;
-        ApplyFromManager();
+        ApplyFromViewModel();
     }
 
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
@@ -187,12 +192,11 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
     }
 
     // ===== 원격 플레이어 =====
-    private void HandleRemoteManagerReady()
+    private void HandleRemoteViewModelReady()
     {
-        var manager = CustomizingManager.Instance;
-        if (manager != null)
+        if (_viewModel != null)
         {
-            manager.OnLoaded -= HandleRemoteManagerReady;
+            _viewModel.OnLoaded -= HandleRemoteViewModelReady;
         }
 
         TryApplyRemoteCustomizing();
@@ -201,9 +205,7 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
     private void TryApplyRemoteCustomizing()
     {
         if (_isCustomizingApplied) return;
-
-        var manager = CustomizingManager.Instance;
-        if (manager == null || !manager.IsInitialized) return;
+        if (_viewModel == null || !_viewModel.IsInitialized) return;
 
         var items = CustomizingProperties.GetPlayerCustomizing(photonView.Owner);
         if (items == null || items.Count == 0) return;
@@ -214,10 +216,9 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
 
     private void ApplyFromItemIds(Dictionary<CustomizingType, string> itemIds)
     {
-        var manager = CustomizingManager.Instance;
-        if (manager == null || !manager.IsInitialized)
+        if (_viewModel == null || !_viewModel.IsInitialized)
         {
-            Debug.LogWarning("[PlayerCustomizingController] CustomizingManager가 준비되지 않음");
+            Debug.LogWarning("[CustomizingCharacterController] ViewModel이 준비되지 않음");
             return;
         }
 
@@ -227,7 +228,7 @@ public class PlayerCustomizingController : MonoBehaviourPunCallbacks
         // 커스터마이징 적용
         foreach (var kvp in itemIds)
         {
-            var item = manager.GetItemById(kvp.Value);
+            var item = _viewModel.GetItemById(kvp.Value);
             _view.ApplyItem(kvp.Key, item);
         }
     }

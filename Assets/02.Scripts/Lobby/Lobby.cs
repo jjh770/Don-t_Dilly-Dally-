@@ -14,7 +14,7 @@ public class Lobby : MonoBehaviour
     [SerializeField] private LobbyCustomizingTransition _transition;
 
     private GameObject _previewCharacter;
-    private CustomizingViewModel _viewModel;
+    private CustomizingUIViewModel _viewModel;
     private LobbyPreviewAnimator _previewAnimator;
 
     private void Start()
@@ -51,7 +51,7 @@ public class Lobby : MonoBehaviour
 
         _previewCharacter = Instantiate(_previewCharacterPrefab, position, rotation);
 
-        var photonController = _previewCharacter.GetComponent<PlayerCustomizingController>();
+        var photonController = _previewCharacter.GetComponent<CustomizingCharacterController>();
         if (photonController != null)
         {
             Destroy(photonController);
@@ -71,7 +71,7 @@ public class Lobby : MonoBehaviour
         }
 
         // ViewModel 생성 및 주입
-        _viewModel = new CustomizingViewModel(manager);
+        _viewModel = new CustomizingUIViewModel(manager);
         _customizingUI.Initialize(_viewModel);
 
         _customizingUI.OnClosed += OnCustomizingClosed;

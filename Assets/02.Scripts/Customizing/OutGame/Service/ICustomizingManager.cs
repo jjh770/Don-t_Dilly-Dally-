@@ -12,6 +12,8 @@ public interface ICustomizingManager
     CustomizingItemSO GetEquipped(CustomizingType type);
     CustomizingItemSO GetItemById(string itemId);
     List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type);
+    Dictionary<CustomizingType, string> GetEquippedItemIds();
+    IEnumerable<(BaseEquipmentType type, BaseEquipmentItemSO item)> GetAllBaseEquipmentItems();
 
     EEquipResult ToggleItem(CustomizingItemSO item);
     void Save();

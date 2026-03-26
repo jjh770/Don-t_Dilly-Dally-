@@ -5,7 +5,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-public class PlayerCustomizingView : MonoBehaviour
+public class CustomizingCharacterView : MonoBehaviour
 {
     [Header("Skeleton")]
     [SerializeField] private Transform _skeletonRoot;
@@ -120,7 +120,7 @@ public class PlayerCustomizingView : MonoBehaviour
         catch (Exception e)
         {
             // 로드 실패 - 기존 파츠 유지
-            Debug.LogError($"[PlayerCustomizingView] 에셋 로드 실패: {item.ItemId}, {e.Message}");
+            Debug.LogError($"[CustomizingCharacterView] 에셋 로드 실패: {item.ItemId}, {e.Message}");
         }
         finally
         {
@@ -146,7 +146,7 @@ public class PlayerCustomizingView : MonoBehaviour
     {
         if (item == null || item.PartPrefab == null)
         {
-            Debug.LogWarning($"[PlayerCustomizingView] 기본 장착 아이템이 유효하지 않음: {type}");
+            Debug.LogWarning($"[CustomizingCharacterView] 기본 장착 아이템이 유효하지 않음: {type}");
             return;
         }
 

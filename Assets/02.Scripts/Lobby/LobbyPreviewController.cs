@@ -3,16 +3,16 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
-[RequireComponent(typeof(PlayerCustomizingView))]
+[RequireComponent(typeof(CustomizingCharacterView))]
 public class LobbyPreviewController : MonoBehaviour
 {
-    private PlayerCustomizingView _view;
+    private CustomizingCharacterView _view;
     private ICustomizingAssetLoader _assetLoader;
     private bool _isInitialized;
 
     private void Awake()
     {
-        _view = GetComponent<PlayerCustomizingView>();
+        _view = GetComponent<CustomizingCharacterView>();
         _assetLoader = new AddressableAssetLoader();
         _view.Initialize(_assetLoader);
     }
