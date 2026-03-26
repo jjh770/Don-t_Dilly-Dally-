@@ -308,7 +308,12 @@ namespace DontDillyDally.Data
             }
 
             // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            interactionAbility.TryStartHoldFromExternal(interactable);
+            // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
+            ItemObject itemToRestore = storedItem;
+            interactionAbility.TryStartHoldFromExternal(interactable, () =>
+            {
+                SetStoredItemInteractionEnabled(itemToRestore, true);
+            });
         }
 
         private void TryTakeOutput(PlayerInteractionAbility interactionAbility)
@@ -317,6 +322,8 @@ namespace DontDillyDally.Data
             {
                 return;
             }
+
+            ItemObject itemToRestore = _storedOutputItem;
 
             // 출력 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _storedOutputItem = null;
@@ -327,7 +334,11 @@ namespace DontDillyDally.Data
             }
 
             // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            interactionAbility.TryStartHoldFromExternal(interactable);
+            // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
+            interactionAbility.TryStartHoldFromExternal(interactable, () =>
+            {
+                SetStoredItemInteractionEnabled(itemToRestore, true);
+            });
         }
 
         #endregion

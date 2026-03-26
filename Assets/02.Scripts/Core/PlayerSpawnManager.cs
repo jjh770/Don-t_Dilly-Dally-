@@ -36,7 +36,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     public void Spawn()
     {
-        if (_spawnPoints == null)
+        if (_spawnPoints == null || _spawnPoints.Length == 0)
         {
             Debug.LogWarning("등록된 스폰 포인트가 없습니다.");
             return;

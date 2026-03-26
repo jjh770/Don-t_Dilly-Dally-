@@ -292,6 +292,7 @@ namespace DontDillyDally.Data
         private void ClearPendingState()
         {
             _isAwaitingOwnership = false;
+            _hasOutstandingFillOwnershipRequest = false;
             _pendingInteractionAbility = null;
             _pendingHeldItem = null;
             _pendingFillResult = FillResult.Failure();
@@ -316,7 +317,6 @@ namespace DontDillyDally.Data
             ReleaseInteractionLockIfNeeded();
             ClearPendingState();
             ClearActiveFillState();
-            _hasOutstandingFillOwnershipRequest = false;
             _isInteractionLocked = false;
             _networkOwnership?.UnlockOwnershipOnController();
             ReleaseOwnershipToMasterIfNeeded();

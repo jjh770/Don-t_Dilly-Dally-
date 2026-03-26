@@ -54,9 +54,17 @@ namespace DontDillyDally.Data
         /// </summary>
         public void LockOwnershipOnController()
         {
-            if (_photonView != null && _photonView.AmController && _photonView.Owner != null)
+            if (_photonView == null || !_photonView.AmController)
+                return;
+
+            if (_photonView.Owner != null)
             {
                 _grantedOwnerActorNumber = _photonView.Owner.ActorNumber;
+            }
+            else if (PhotonNetwork.LocalPlayer != null)
+            {
+                // Room object (Owner == null): 마스터 자신의 ActorNumber로 락을 건다
+                _grantedOwnerActorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
             }
         }
 
