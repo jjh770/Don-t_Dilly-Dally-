@@ -216,6 +216,8 @@ namespace DontDillyDally.Data
             _activeInteractionAbility = interactionAbility;
             _activeHeldItem = heldItem;
 
+            _networkOwnership?.LockOwnershipOnController();
+
             if (_actionTimer != null)
             {
                 bool started = _actionTimer.TryStart(fillResult.FillDuration, () => CompleteFill(fillResult.ResultMaterial));
@@ -316,6 +318,7 @@ namespace DontDillyDally.Data
             ClearActiveFillState();
             _hasOutstandingFillOwnershipRequest = false;
             _isInteractionLocked = false;
+            _networkOwnership?.UnlockOwnershipOnController();
             ReleaseOwnershipToMasterIfNeeded();
         }
 

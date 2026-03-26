@@ -1,6 +1,6 @@
-using System;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -9,11 +9,14 @@ namespace DontDillyDally.Data
     [RequireComponent(typeof(NetworkItemState))]
     public class NetworkItemOwnership : MonoBehaviour, IPunOwnershipCallbacks
     {
+        private const int NoActorNumber = -1;
+
         private PhotonView _photonView;
         private NetworkItemState _itemState;
         private ItemObject _itemObject;
         private HoldableItem _holdableItem;
         private bool _isOwnershipRequestPending;
+        private int _grantedOwnerActorNumber = NoActorNumber;
 
         public event Action<NetworkItemOwnership> OwnershipAcquiredLocally;
 
@@ -43,6 +46,26 @@ namespace DontDillyDally.Data
         private void OnDisable()
         {
             PhotonNetwork.RemoveCallbackTarget(this);
+        }
+
+        /// <summary>
+        /// Controller(Master)가 자신의 소유권을 사용 중으로 잠급니다.
+        /// 잠금 중에는 다른 플레이어의 소유권 요청이 거부됩니다.
+        /// </summary>
+        public void LockOwnershipOnController()
+        {
+            if (_photonView != null && _photonView.AmController && _photonView.Owner != null)
+            {
+                _grantedOwnerActorNumber = _photonView.Owner.ActorNumber;
+            }
+        }
+
+        public void UnlockOwnershipOnController()
+        {
+            if (_photonView != null && _photonView.AmController)
+            {
+                _grantedOwnerActorNumber = NoActorNumber;
+            }
         }
 
         public bool TryAcquireOrRequestOwnership()
@@ -116,6 +139,21 @@ namespace DontDillyDally.Data
             if (IsHeld && requestingPlayer.ActorNumber != HolderActorNumber)
                 return;
 
+            // 소유권이 부여되었지만 hold가 아직 확인되지 않은 경우, 다른 플레이어의 요청 거부
+            if (_grantedOwnerActorNumber != NoActorNumber && !IsHeld)
+            {
+                // 부여 대상이 더 이상 소유자가 아니면 (소유권 반환됨) 초기화
+                if (_photonView.Owner == null || _photonView.Owner.ActorNumber != _grantedOwnerActorNumber)
+                {
+                    _grantedOwnerActorNumber = NoActorNumber;
+                }
+                else if (requestingPlayer.ActorNumber != _grantedOwnerActorNumber)
+                {
+                    return;
+                }
+            }
+
+            _grantedOwnerActorNumber = requestingPlayer.ActorNumber;
             targetView.TransferOwnership(requestingPlayer);
         }
 
@@ -125,6 +163,12 @@ namespace DontDillyDally.Data
                 return;
 
             _isOwnershipRequestPending = false;
+
+            // 소유권이 Controller(Master)에게 돌아오면 부여 추적 초기화
+            if (_photonView.AmController && _photonView.IsMine)
+            {
+                _grantedOwnerActorNumber = NoActorNumber;
+            }
 
             if (_photonView.IsMine)
                 OwnershipAcquiredLocally?.Invoke(this);
