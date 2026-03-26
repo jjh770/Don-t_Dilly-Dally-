@@ -292,6 +292,12 @@ namespace DontDillyDally.Data
             }
 
             trayItem.transform.SetParent(_traySlotPoint, true);
+
+            PhotonView pv = trayItem.GetComponent<PhotonView>();
+            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
+            {
+                pv.TransferOwnership(PhotonNetwork.MasterClient);
+            }
         }
 
         private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)
@@ -304,6 +310,12 @@ namespace DontDillyDally.Data
             Collider[] colliders = trayItem.GetComponentsInChildren<Collider>(true);
             foreach (Collider col in colliders)
             {
+                ItemObject ownerItem = col.GetComponentInParent<ItemObject>();
+                if (ownerItem != null && ownerItem != trayItem)
+                {
+                    continue;
+                }
+
                 col.enabled = isEnabled;
             }
 

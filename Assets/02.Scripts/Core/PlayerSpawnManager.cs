@@ -1,10 +1,10 @@
-using System;
 using Photon.Pun;
+using System;
 using UnityEngine;
 
 public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 {
-    [SerializeField] private Transform _spawnPoint;
+    [SerializeField] private Transform[] _spawnPoints;
 
     [SerializeField] private GameObject _playerPrefab;
 
@@ -36,13 +36,14 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     public void Spawn()
     {
-        if (_spawnPoint == null)
+        if (_spawnPoints == null || _spawnPoints.Length == 0)
         {
             Debug.LogWarning("등록된 스폰 포인트가 없습니다.");
             return;
         }
 
-        Vector3 spawnPosition = _spawnPoint.position;
+        int randomIndex = UnityEngine.Random.Range(0, _spawnPoints.Length);
+        Vector3 spawnPosition = _spawnPoints[randomIndex].position;
 
         // 리소스 폴더에서 "Player" 이름을 가진 프리팹을 생성하고, 서버에 등록함
         // 리소스 폴더는 좋지 않음 => 다른 방법을 찾아보자
