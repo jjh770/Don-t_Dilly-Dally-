@@ -4,20 +4,23 @@ using UnityEngine;
 public class AttendanceManager : MonoBehaviour
 {
     private IAttendanceRepository _attendanceRepo;
-    private IRewardRepository _rewardRepo;
     private AttendanceDomainService _domainService;
-    private string _playerID;
+    private string _playerId;
 
     private bool _isCheckedToday = false;
 
     public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, string playerID)
     {
         _attendanceRepo = attendanceRepo;
-        _rewardRepo = rewardRepo;
-        _playerID = playerID;
+        _playerId = playerID;
 
         _domainService = new AttendanceDomainService(rewardRepo);
 
+        CheckAttendance();
+    }
+
+    public void CheckAttendance()
+    {
         if (_isCheckedToday) return;
 
         CheckAttendanceAsync().Forget();
@@ -25,11 +28,11 @@ public class AttendanceManager : MonoBehaviour
 
     private async UniTask CheckAttendanceAsync()
     {
-        var record = await _attendanceRepo.LoadAsync(_playerID);
+        var record = await _attendanceRepo.LoadAsync(_playerId);
 
         if (record == null)
         {
-            record = new AttendanceRecord(_playerID);
+            record = new AttendanceRecord(_playerId);
             Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
         }
 
@@ -51,7 +54,7 @@ public class AttendanceManager : MonoBehaviour
         var reward = _domainService.CheckAndGetReward(record);
         Debug.Log($"{record.TotalDays}일차 출석 : {reward.ItemId} 수령");
 
-        await _attendanceRepo.SaveAsync(_playerID, record);
+        await _attendanceRepo.SaveAsync(_playerId, record);
        // PlayerDataManager.Instance.ApplyReward(reward);
         //_ui.ShowRewardPopup(reward);
     }

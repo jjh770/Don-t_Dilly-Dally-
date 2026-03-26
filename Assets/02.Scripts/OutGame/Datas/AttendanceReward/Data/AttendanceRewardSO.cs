@@ -9,7 +9,7 @@ public class AttendanceRewardSO : ScriptableObject, IRewardRepository
     [Serializable]
     public class RewardEntry
     {
-        [field: SerializeField] public string ItemId {  get; set; }
+        [field: SerializeField] public string ItemId {  get; private set; }
     }
 
     [SerializeField] private List<RewardEntry> _rewards;
