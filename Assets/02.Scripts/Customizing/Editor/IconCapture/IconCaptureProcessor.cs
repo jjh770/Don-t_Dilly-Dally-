@@ -24,6 +24,9 @@ public class IconCaptureProcessor
     private readonly bool _usePrefix;
     private readonly bool _overwriteExisting;
 
+    // 커스텀 카메라 오프셋 (null이면 타입별 기본값 사용)
+    private IconCaptureCameraController.CameraOffset? _customCameraOffset;
+
     // 결과 추적
     private readonly List<string> _successList = new List<string>();
     private readonly List<string> _failedList = new List<string>();
@@ -60,6 +63,22 @@ public class IconCaptureProcessor
         _outputFolderPath = outputFolderPath;
         _usePrefix = usePrefix;
         _overwriteExisting = overwriteExisting;
+    }
+
+    /// <summary>
+    /// 커스텀 카메라 오프셋 설정 (설정하면 타입별 기본값 대신 사용)
+    /// </summary>
+    public void SetCustomCameraOffset(IconCaptureCameraController.CameraOffset offset)
+    {
+        _customCameraOffset = offset;
+    }
+
+    /// <summary>
+    /// 커스텀 카메라 오프셋 해제 (타입별 기본값으로 복원)
+    /// </summary>
+    public void ClearCustomCameraOffset()
+    {
+        _customCameraOffset = null;
     }
 
     // ========================================
@@ -163,7 +182,14 @@ public class IconCaptureProcessor
             }
 
             // 2. 카메라 포커스 조정
-            _cameraController.FocusOnTarget(instance, info.customizingType);
+            if (_customCameraOffset.HasValue)
+            {
+                _cameraController.FocusOnTarget(instance, _customCameraOffset.Value);
+            }
+            else
+            {
+                _cameraController.FocusOnTarget(instance, info.customizingType);
+            }
 
             // 3. 렌더링 및 텍스처 추출
             Texture2D capturedTexture = CaptureToTexture();
