@@ -6,7 +6,7 @@ public class WaitingRoom : MonoBehaviour
     [SerializeField] private UI_Customizing _customizingUI;
     [SerializeField] private Button _button;
 
-    private CustomizingViewModel _viewModel;
+    private CustomizingUIViewModel _viewModel;
 
     private void OnEnable()
     {
@@ -30,7 +30,7 @@ public class WaitingRoom : MonoBehaviour
                 Debug.LogError("[WaitingRoom] CustomizingManager가 없습니다.");
                 return;
             }
-            _viewModel = new CustomizingViewModel(manager);
+            _viewModel = new CustomizingUIViewModel(manager);
             _customizingUI.Initialize(_viewModel);
         }
 

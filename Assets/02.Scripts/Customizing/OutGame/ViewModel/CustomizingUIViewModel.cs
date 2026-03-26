@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-public class CustomizingViewModel
+public class CustomizingUIViewModel
 {
     private readonly ICustomizingManager _manager;
 
@@ -19,7 +19,7 @@ public class CustomizingViewModel
     public bool HasUnsavedChanges => CheckUnsavedChanges();
     public bool IsInitialized => _manager != null && _manager.IsInitialized;
 
-    public CustomizingViewModel(ICustomizingManager manager)
+    public CustomizingUIViewModel(ICustomizingManager manager)
     {
         _manager = manager ?? throw new ArgumentNullException(nameof(manager));
         SubscribeToManager();
