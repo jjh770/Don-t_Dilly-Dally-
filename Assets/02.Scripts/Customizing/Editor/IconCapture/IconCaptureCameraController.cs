@@ -63,6 +63,17 @@ public class IconCaptureCameraController
     /// <param name="customizingType">커스터마이징 타입 (카메라 각도 조정용)</param>
     public void FocusOnTarget(GameObject target, CustomizingType customizingType)
     {
+        var offset = GetCameraOffsetForType(customizingType);
+        FocusOnTarget(target, offset);
+    }
+
+    /// <summary>
+    /// 커스텀 카메라 오프셋으로 타겟을 바라보도록 카메라 조정
+    /// </summary>
+    /// <param name="target">캡처 대상 오브젝트</param>
+    /// <param name="offset">커스텀 카메라 오프셋</param>
+    public void FocusOnTarget(GameObject target, CameraOffset offset)
+    {
         if (target == null)
         {
             Debug.LogWarning("[IconCaptureCameraController] 타겟이 null입니다.");
@@ -72,9 +83,6 @@ public class IconCaptureCameraController
         // 바운딩 박스 계산
         Bounds bounds = CalculateBounds(target);
         Vector3 targetCenter = bounds.size != Vector3.zero ? bounds.center : target.transform.position;
-
-        // 타입별 카메라 오프셋 적용
-        var offset = GetCameraOffsetForType(customizingType);
 
         // 카메라 위치 = 타겟 중심 + 오프셋
         _captureCamera.transform.position = targetCenter + offset.cameraOffset;
@@ -95,6 +103,14 @@ public class IconCaptureCameraController
 
         Debug.Log($"[IconCaptureCameraController] 포커스: {target.name}, " +
                   $"Center: {targetCenter}, OrthoSize: {_captureCamera.orthographicSize:F2}");
+    }
+
+    /// <summary>
+    /// 타입별 기본 카메라 오프셋 반환 (에디터 UI에서 기본값 표시용)
+    /// </summary>
+    public CameraOffset GetDefaultOffsetForType(CustomizingType type)
+    {
+        return GetCameraOffsetForType(type);
     }
 
     /// <summary>
@@ -295,7 +311,7 @@ public class IconCaptureCameraController
     // 내부 구조체
     // ========================================
 
-    private struct CameraOffset
+    public struct CameraOffset
     {
         public Vector3 cameraOffset;     // 타겟 중심에서 카메라까지의 오프셋
         public float sizeMultiplier;     // 바운딩 박스 크기 대비 OrthoSize 배율

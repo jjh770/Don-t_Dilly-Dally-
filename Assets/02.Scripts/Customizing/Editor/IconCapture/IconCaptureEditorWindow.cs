@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 /// <summary>
 /// 커스터마이징 아이콘 자동 생성 에디터 윈도우
@@ -47,6 +47,12 @@ public class IconCaptureEditorWindow : EditorWindow
     private int _iconResolution = DEFAULT_RESOLUTION;
     private bool _useIconPrefix = true;
     private bool _overwriteIcons = false;
+
+    // 카메라 설정
+    private bool _useCustomCameraOffset = false;
+    private Vector3 _customCameraOffset = new Vector3(0, 0.2f, 1.5f);
+    private float _customSizeMultiplier = 0.7f;
+    private float _customDefaultOrthoSize = 0.5f;
 
     // SO 연결 설정
     private string _soFolderPath = "";
@@ -102,6 +108,9 @@ public class IconCaptureEditorWindow : EditorWindow
 
         EditorGUILayout.Space(10);
         DrawIconSettings();
+
+        EditorGUILayout.Space(10);
+        DrawCameraSettings();
 
         EditorGUILayout.Space(10);
         DrawCaptureButtons();
@@ -264,6 +273,60 @@ public class IconCaptureEditorWindow : EditorWindow
     }
 
     // ========================================
+    // UI 그리기 - 카메라 설정
+    // ========================================
+
+    private void DrawCameraSettings()
+    {
+        EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+        EditorGUILayout.LabelField("카메라 설정", EditorStyles.boldLabel);
+        EditorGUILayout.Space(5);
+
+        _useCustomCameraOffset = EditorGUILayout.Toggle("커스텀 각도 사용", _useCustomCameraOffset);
+
+        if (_useCustomCameraOffset)
+        {
+            EditorGUI.indentLevel++;
+
+            // 타입 기본값 불러오기 버튼
+            if (GUILayout.Button("현재 타입 기본값 불러오기", GUILayout.Height(20)))
+            {
+                LoadDefaultOffsetForCurrentType();
+            }
+
+            EditorGUILayout.Space(3);
+
+            // 카메라 오프셋 (위치)
+            EditorGUILayout.LabelField("카메라 오프셋 (타겟 기준 상대 위치)", EditorStyles.miniLabel);
+            _customCameraOffset.x = EditorGUILayout.Slider("좌/우 (X)", _customCameraOffset.x, -3f, 360f);
+            _customCameraOffset.y = EditorGUILayout.Slider("상/하 (Y)", _customCameraOffset.y, -2f, 5f);
+            _customCameraOffset.z = EditorGUILayout.Slider("거리 (Z)", _customCameraOffset.z, 0.3f, 10f);
+
+            EditorGUILayout.Space(3);
+
+            // 크기 설정
+            _customSizeMultiplier = EditorGUILayout.Slider("크기 배율", _customSizeMultiplier, 0.1f, 5f);
+            _customDefaultOrthoSize = EditorGUILayout.Slider("기본 OrthoSize", _customDefaultOrthoSize, 0.1f, 3f);
+
+            EditorGUI.indentLevel--;
+        }
+
+        EditorGUILayout.EndVertical();
+    }
+
+    /// <summary>
+    /// 현재 선택된 타입의 기본 카메라 오프셋을 슬라이더에 로드
+    /// </summary>
+    private void LoadDefaultOffsetForCurrentType()
+    {
+        var tempController = new IconCaptureCameraController(256);
+        var defaultOffset = tempController.GetDefaultOffsetForType(_filterType);
+        _customCameraOffset = defaultOffset.cameraOffset;
+        _customSizeMultiplier = defaultOffset.sizeMultiplier;
+        _customDefaultOrthoSize = defaultOffset.defaultOrthoSize;
+    }
+
+    // ========================================
     // UI 그리기 - 캡처 버튼
     // ========================================
 
@@ -416,7 +479,10 @@ public class IconCaptureEditorWindow : EditorWindow
         if (_useTypeFilter)
         {
             string typeFolderName = GetFolderNameForType(_filterType);
-            searchPath = Path.Combine(_prefabFolderPath, typeFolderName).Replace("\\", "/");
+            if (_filterType != CustomizingType.None)
+            {
+                searchPath = Path.Combine(_prefabFolderPath, typeFolderName).Replace("\\", "/");
+            }
         }
 
         // 프리팹 검색
@@ -482,12 +548,7 @@ public class IconCaptureEditorWindow : EditorWindow
         }
 
         // 캡처 프로세서 실행
-        var processor = new IconCaptureProcessor(
-            _iconResolution,
-            GetAbsolutePath(_iconOutputPath),
-            _useIconPrefix,
-            _overwriteIcons);
-
+        var processor = CreateProcessor();
         processor.ProcessAll(captureInfos);
 
         // Sprite 임포트 설정 적용
@@ -541,12 +602,7 @@ public class IconCaptureEditorWindow : EditorWindow
         }
 
         // 캡처 프로세서 실행
-        var processor = new IconCaptureProcessor(
-            _iconResolution,
-            GetAbsolutePath(_iconOutputPath),
-            _useIconPrefix,
-            _overwriteIcons);
-
+        var processor = CreateProcessor();
         processor.ProcessAll(allCaptureInfos);
 
         // Sprite 임포트 설정 적용
@@ -630,6 +686,34 @@ public class IconCaptureEditorWindow : EditorWindow
 
             ShowResult(message, MessageType.Warning);
         }
+    }
+
+    // ========================================
+    // 프로세서 생성
+    // ========================================
+
+    /// <summary>
+    /// 현재 설정에 맞는 캡처 프로세서 생성
+    /// </summary>
+    private IconCaptureProcessor CreateProcessor()
+    {
+        var processor = new IconCaptureProcessor(
+            _iconResolution,
+            GetAbsolutePath(_iconOutputPath),
+            _useIconPrefix,
+            _overwriteIcons);
+
+        if (_useCustomCameraOffset)
+        {
+            processor.SetCustomCameraOffset(new IconCaptureCameraController.CameraOffset
+            {
+                cameraOffset = _customCameraOffset,
+                sizeMultiplier = _customSizeMultiplier,
+                defaultOrthoSize = _customDefaultOrthoSize
+            });
+        }
+
+        return processor;
     }
 
     // ========================================
