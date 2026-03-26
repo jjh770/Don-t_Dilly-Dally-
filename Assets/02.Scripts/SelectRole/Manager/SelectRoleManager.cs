@@ -6,6 +6,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
+[RequireComponent(typeof(PhotonView))]
 public class SelectRoleManager : MonoBehaviourPunCallbacks
 {
     public static SelectRoleManager Instance { get; private set; }
