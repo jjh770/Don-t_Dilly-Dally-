@@ -5,26 +5,25 @@ using UnityEngine.Networking;
 
 public class TTSManager : MonoBehaviour
 {
-    private const string ApiUrl = "https://texttospeech.googleapis.com/v1/text:synthesize";
-    private const int SampleRate = 24000;
+    private const string ApiUrl = "https://api.elevenlabs.io/v1/text-to-speech";
 
     [Header("API Settings")]
     [SerializeField] private KeyConfig _apiKeyConfig;
 
     [Header("Voice Settings")]
-    [SerializeField] private string _languageCode = "ko-KR";
-    [SerializeField] private string _voiceName = "ko-KR-Wavenet-A";
-    [SerializeField] private float _speakingRate = 1.0f;
-    [SerializeField] private float _pitch = 0f;
+    [SerializeField] private string _voiceId = "21m00Tcm4TlvDq8ikWAM";
+    [SerializeField] private string _modelId = "eleven_multilingual_v2";
+    [SerializeField] private float _stability = 0.5f;
+    [SerializeField] private float _similarityBoost = 0.75f;
 
     [Header("Request Settings")]
     [SerializeField] private float _timeout = 15f;
 
     public async Awaitable<AudioClip> GenerateSpeech(string text)
     {
-        if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.GoogleCloudApiKey))
+        if (_apiKeyConfig == null || string.IsNullOrEmpty(_apiKeyConfig.ElevenLabsApiKey))
         {
-            Debug.LogError("[TTSManager] Google Cloud API 키가 없습니다.");
+            Debug.LogError("[TTSManager] ElevenLabs API 키가 없습니다.");
             return null;
         }
 
@@ -34,7 +33,7 @@ public class TTSManager : MonoBehaviour
             return null;
         }
 
-        string url = $"{ApiUrl}?key={_apiKeyConfig.GoogleCloudApiKey}";
+        string url = $"{ApiUrl}/{_voiceId}";
         string requestBody = BuildRequestBody(text);
 
         using UnityWebRequest request = new UnityWebRequest(url, "POST");
@@ -42,6 +41,8 @@ public class TTSManager : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
+        request.SetRequestHeader("xi-api-key", _apiKeyConfig.ElevenLabsApiKey);
+        request.SetRequestHeader("Accept", "audio/mpeg");
         request.timeout = (int)_timeout;
 
         try
@@ -54,8 +55,8 @@ public class TTSManager : MonoBehaviour
                 return null;
             }
 
-            string response = request.downloadHandler.text;
-            return ParseResponseToAudioClip(response);
+            byte[] audioData = request.downloadHandler.data;
+            return await ConvertMp3ToAudioClip(audioData);
         }
         catch (Exception e)
         {
@@ -67,59 +68,47 @@ public class TTSManager : MonoBehaviour
     private string BuildRequestBody(string text)
     {
         return $@"{{
-            ""input"": {{
-                ""text"": ""{EscapeJson(text)}""
-            }},
-            ""voice"": {{
-                ""languageCode"": ""{_languageCode}"",
-                ""name"": ""{_voiceName}""
-            }},
-            ""audioConfig"": {{
-                ""audioEncoding"": ""LINEAR16"",
-                ""sampleRateHertz"": {SampleRate},
-                ""speakingRate"": {_speakingRate.ToString(System.Globalization.CultureInfo.InvariantCulture)},
-                ""pitch"": {_pitch.ToString(System.Globalization.CultureInfo.InvariantCulture)}
+            ""text"": ""{EscapeJson(text)}"",
+            ""model_id"": ""{_modelId}"",
+            ""voice_settings"": {{
+                ""stability"": {_stability.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                ""similarity_boost"": {_similarityBoost.ToString(System.Globalization.CultureInfo.InvariantCulture)}
             }}
         }}";
     }
 
-    private AudioClip ParseResponseToAudioClip(string json)
+    private async Awaitable<AudioClip> ConvertMp3ToAudioClip(byte[] mp3Data)
     {
+        string tempPath = System.IO.Path.Combine(Application.temporaryCachePath, $"tts_{Guid.NewGuid()}.mp3");
+
         try
         {
-            TTSResponse response = JsonUtility.FromJson<TTSResponse>(json);
-            if (string.IsNullOrEmpty(response?.audioContent))
+            await System.IO.File.WriteAllBytesAsync(tempPath, mp3Data);
+
+            using UnityWebRequest request = UnityWebRequestMultimedia.GetAudioClip("file://" + tempPath, AudioType.MPEG);
+            await request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError("[TTSManager] 음성 데이터가 없음");
+                Debug.LogError($"[TTSManager] MP3 로드 실패: {request.error}");
                 return null;
             }
 
-            byte[] audioBytes = Convert.FromBase64String(response.audioContent);
-            float[] samples = ConvertBytesToFloats(audioBytes);
-
-            AudioClip clip = AudioClip.Create("TTS", samples.Length, 1, SampleRate, false);
-            clip.SetData(samples, 0);
+            AudioClip clip = DownloadHandlerAudioClip.GetContent(request);
             return clip;
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TTSManager] 응답 파싱 실패: {e.Message}");
+            Debug.LogError($"[TTSManager] MP3 변환 실패: {e.Message}");
             return null;
         }
-    }
-
-    private float[] ConvertBytesToFloats(byte[] bytes)
-    {
-        int sampleCount = bytes.Length / 2;
-        float[] samples = new float[sampleCount];
-
-        for (int i = 0; i < sampleCount; i++)
+        finally
         {
-            short sample = BitConverter.ToInt16(bytes, i * 2);
-            samples[i] = sample / 32768f;
+            if (System.IO.File.Exists(tempPath))
+            {
+                System.IO.File.Delete(tempPath);
+            }
         }
-
-        return samples;
     }
 
     private string EscapeJson(string text)
@@ -132,11 +121,5 @@ public class TTSManager : MonoBehaviour
             .Replace("\n", "\\n")
             .Replace("\r", "\\r")
             .Replace("\t", "\\t");
-    }
-
-    [Serializable]
-    private class TTSResponse
-    {
-        public string audioContent;
     }
 }
