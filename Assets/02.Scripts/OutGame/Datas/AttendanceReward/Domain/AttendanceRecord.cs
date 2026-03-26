@@ -1,11 +1,12 @@
 using System;
-using UnityEngine;
 
 public class AttendanceRecord
 {
     public string PlayerId { get; }
     public int TotalDays { get; private set; }
     public string LastCheckedDate { get; private set; }
+
+    private const string DateFormat = "yyyy-MM-dd";
 
     public AttendanceRecord(string playerId)
     {
@@ -21,7 +22,7 @@ public class AttendanceRecord
 
     public bool CanCheckToday()
     {
-        return LastCheckedDate != DateTime.Now.ToString("yyyy-MM-dd");
+        return LastCheckedDate != DateTime.Now.ToString(DateFormat);
     }
 
 
@@ -31,6 +32,6 @@ public class AttendanceRecord
             throw new InvalidOperationException("오늘 이미 출석 체크를 완료했습니다.");
 
         TotalDays++;
-        LastCheckedDate = DateTime.Now.ToString("yyyy-MM-dd");
+        LastCheckedDate = DateTime.Now.ToString(DateFormat);
     }
 }

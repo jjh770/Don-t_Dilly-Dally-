@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static UnityEditor.Progress;
+
 [CreateAssetMenu(fileName = "AttendanceRewardTable",
                  menuName = "Attendance/RewardTable")]
 public class AttendanceRewardSO : ScriptableObject, IRewardRepository
@@ -9,12 +9,11 @@ public class AttendanceRewardSO : ScriptableObject, IRewardRepository
     [Serializable]
     public class RewardEntry
     {
-        public string ItemId;
+        [field: SerializeField] public string ItemId {  get; set; }
     }
 
     [SerializeField] private List<RewardEntry> _rewards;
 
-    // 최대 초과 시 마지막 보상 반복
     public AttendanceReward GetReward(int day)
     {
         int index = day - 1;
@@ -28,7 +27,7 @@ public class AttendanceRewardSO : ScriptableObject, IRewardRepository
         }
         var entry = _rewards[index];
 
-        return new AttendanceReward(index, entry.ItemId); 
+        return new AttendanceReward(day, entry.ItemId); 
     }
 
     public bool RewardComplete(int day)

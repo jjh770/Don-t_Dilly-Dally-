@@ -8,18 +8,17 @@ public class AttendanceManager : MonoBehaviour
     private AttendanceDomainService _domainService;
     private string _playerID;
 
-    private bool isCheckedToday = false;
+    private bool _isCheckedToday = false;
 
     public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, string playerID)
     {
         _attendanceRepo = attendanceRepo;
         _rewardRepo = rewardRepo;
         _playerID = playerID;
-        AttendanceDomainService domainService = new AttendanceDomainService(rewardRepo);
 
         _domainService = new AttendanceDomainService(rewardRepo);
 
-        if (isCheckedToday) return;
+        if (_isCheckedToday) return;
 
         CheckAttendanceAsync().Forget();
     }
@@ -34,7 +33,7 @@ public class AttendanceManager : MonoBehaviour
             Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
         }
 
-        isCheckedToday = true;
+        _isCheckedToday = true;
 
         if (!record.CanCheckToday())
         {

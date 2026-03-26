@@ -1,14 +1,12 @@
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
-using UnityEditor.Overlays;
 using UnityEngine;
 
 public class FirebaseAttendanceRepository : IAttendanceRepository
 {
     private readonly FirebaseFirestore _db;
 
-    private string COLLECTION_NAME = "AttendanceRecord";
+    private static string COLLECTION_NAME = "AttendanceRecord";
     public FirebaseAttendanceRepository(FirebaseFirestore db)
     {
         _db = db;
