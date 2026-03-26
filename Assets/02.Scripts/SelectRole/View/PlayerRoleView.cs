@@ -163,7 +163,14 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     private void ApplyIndicatorMaterial(Material material)
     {
         if (_indicatorRenderer == null || material == null) return;
-        _indicatorRenderer.material = material;
+
+        // 모든 머티리얼 슬롯을 동일한 머티리얼로 변경
+        var materials = _indicatorRenderer.materials;
+        for (int i = 0; i < materials.Length; i++)
+        {
+            materials[i] = material;
+        }
+        _indicatorRenderer.materials = materials;
     }
 
     private void ApplyNicknameColor(Color color)
