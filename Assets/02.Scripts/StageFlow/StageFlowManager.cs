@@ -313,7 +313,7 @@ namespace DontDillyDally.StageFlow
                 }
                 else
                 {
-                    Debug.LogWarning($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) — 재전송");
+                    Debug.LogWarning($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) — 재전송. 미응답 Actor: {string.Join(", ", pendingActors)}");
                     broadcast();
                     await UniTask.Delay(2000, cancellationToken: ct);
                 }

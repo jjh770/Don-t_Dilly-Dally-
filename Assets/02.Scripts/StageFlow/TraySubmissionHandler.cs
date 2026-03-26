@@ -1,8 +1,8 @@
-using System;
-using System.Threading;
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
 using Photon.Pun;
+using System;
+using System.Threading;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
@@ -40,6 +40,7 @@ namespace DontDillyDally.StageFlow
 
         public async UniTask<SubmittedTray> WaitForSubmission(CancellationToken ct)
         {
+            _traySubmissionTcs?.TrySetCanceled();
             _traySubmissionTcs = new UniTaskCompletionSource<SubmittedTray>();
 
             using (ct.Register(() => _traySubmissionTcs.TrySetCanceled()))
