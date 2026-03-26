@@ -66,7 +66,6 @@ public class LobbyPreviewController : MonoBehaviour
     {
         await PreloadAllItems();
         ApplyCustomizing();
-        SetupPreviewCamera();
         _isInitialized = true;
     }
 
@@ -123,10 +122,5 @@ public class LobbyPreviewController : MonoBehaviour
         _view.ApplyAll(type => manager.GetEquipped(type));
 
         Debug.Log("[LobbyPreviewController] 커스터마이징 적용 완료");
-    }
-
-    private void SetupPreviewCamera()
-    {
-        CharacterPreviewCamera.SetLocalPlayerTarget(transform);
     }
 }

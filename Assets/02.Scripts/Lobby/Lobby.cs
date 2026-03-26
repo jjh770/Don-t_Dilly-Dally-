@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,7 @@ public class Lobby : MonoBehaviour
     private GameObject _previewCharacter;
     private CustomizingUIViewModel _viewModel;
     private LobbyPreviewAnimator _previewAnimator;
+
 
     private void Start()
     {
@@ -50,6 +52,8 @@ public class Lobby : MonoBehaviour
         Quaternion rotation = Quaternion.identity;
 
         _previewCharacter = Instantiate(_previewCharacterPrefab, position, rotation);
+
+        CharacterPreviewCameraForLobby.Instance.SetTransform(_previewCharacter.transform);
 
         var photonController = _previewCharacter.GetComponent<CustomizingCharacterController>();
         if (photonController != null)
