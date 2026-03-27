@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2945d30cda2d78e4caf92afb1352155a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnManager
-  _spawnPoint: {fileID: 9225075}
+  _spawnPoints: []
   _playerPrefab: {fileID: 6536501996314029870, guid: 4594ae68b9d26d342ad7fd7371ac4fdd, type: 3}
 --- !u!4 &9225075
 Transform:
@@ -724,6 +724,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: CommentarySystem
       objectReference: {fileID: 0}
+    - target: {fileID: 1977176301120194141, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
+      propertyPath: _ttsManager
+      value: 
+      objectReference: {fileID: 270361056}
     - target: {fileID: 3241995776377645875, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
       propertyPath: _voiceId
       value: UmYoqGlufKxhJ6NCx5Mv
@@ -773,6 +777,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
+--- !u!114 &270361056 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3241995776377645875, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
+  m_PrefabInstance: {fileID: 270361055}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f85a2d3809d15c4ba54b498d3b027f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TTSManager
 --- !u!1001 &276815687
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3587,7 +3602,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -0.000024630983, y: 0}
+  m_AnchoredPosition: {x: -0.0010054612, y: 0}
   m_SizeDelta: {x: 0, y: 200}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1898351497

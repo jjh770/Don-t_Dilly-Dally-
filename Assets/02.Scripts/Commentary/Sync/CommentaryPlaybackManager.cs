@@ -67,44 +67,73 @@ public class CommentaryPlaybackManager : MonoBehaviour
     {
         AudioClip clip = null;
 
+        Debug.Log($"[CommentaryPlaybackManager] 재생 시작 - UsePreGenerated: {syncData.UsePreGeneratedVoice}, TtsKey: {syncData.TtsAudioKey}, Text: {syncData.FinalText?.Substring(0, Mathf.Min(20, syncData.FinalText?.Length ?? 0))}");
+
         // 1. 사전 생성된 음성 (고정형)
         if (syncData.UsePreGeneratedVoice)
         {
             clip = GetClip(syncData.PreGeneratedClipId);
+            Debug.Log($"[CommentaryPlaybackManager] 고정형 클립 로드: {(clip != null ? "성공" : "실패")}");
         }
         // 2. TTS 캐시 확인 (템플릿형/동적형)
         else if (!string.IsNullOrEmpty(syncData.TtsAudioKey))
         {
             clip = GetCachedClip(syncData.TtsAudioKey);
+            Debug.Log($"[CommentaryPlaybackManager] 캐시 확인: {(clip != null ? "있음" : "없음")}");
         }
 
-        // 3. 캐시에 없으면 로컬에서 TTS 생성 (원격 클라이언트용)
-        if (clip == null && _generateTtsOnRemote && _ttsManager != null && !string.IsNullOrEmpty(syncData.FinalText))
+        // 3. 캐시에 없으면 로컬에서 TTS 생성 (템플릿형/동적형 - 모든 클라이언트)
+        if (clip == null && !syncData.UsePreGeneratedVoice && !string.IsNullOrEmpty(syncData.FinalText))
         {
-            Debug.Log($"[CommentaryPlaybackManager] 로컬 TTS 생성 시작: {syncData.FinalText.Substring(0, Mathf.Min(20, syncData.FinalText.Length))}...");
-            try
+            if (_ttsManager == null)
             {
-                clip = await _ttsManager.GenerateSpeech(syncData.FinalText);
-                if (clip != null && !string.IsNullOrEmpty(syncData.TtsAudioKey))
-                {
-                    CacheClip(syncData.TtsAudioKey, clip);
-                }
+                Debug.LogError("[CommentaryPlaybackManager] TTSManager가 할당되지 않았습니다! Inspector에서 연결해주세요.");
             }
-            catch (Exception e)
+            else if (!_generateTtsOnRemote)
             {
-                Debug.LogWarning($"[CommentaryPlaybackManager] 로컬 TTS 생성 실패: {e.Message}");
+                Debug.LogWarning("[CommentaryPlaybackManager] _generateTtsOnRemote가 비활성화되어 있습니다.");
+            }
+            else
+            {
+                Debug.Log($"[CommentaryPlaybackManager] 로컬 TTS 생성 시작: {syncData.FinalText.Substring(0, Mathf.Min(20, syncData.FinalText.Length))}...");
+                try
+                {
+                    clip = await _ttsManager.GenerateSpeech(syncData.FinalText);
+                    if (clip != null)
+                    {
+                        Debug.Log("[CommentaryPlaybackManager] TTS 생성 성공");
+                        if (!string.IsNullOrEmpty(syncData.TtsAudioKey))
+                        {
+                            CacheClip(syncData.TtsAudioKey, clip);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[CommentaryPlaybackManager] TTS 생성 결과가 null입니다.");
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[CommentaryPlaybackManager] 로컬 TTS 생성 실패: {e.Message}");
+                }
             }
         }
 
         // 재생 중인 상태 확인 (비동기 중 StopPlayback이 호출됐을 수 있음)
-        if (!IsPlaying || _currentData != syncData) return;
+        if (!IsPlaying || _currentData != syncData)
+        {
+            Debug.Log("[CommentaryPlaybackManager] 재생 상태 변경됨, 중단");
+            return;
+        }
 
         if (clip != null)
         {
+            Debug.Log("[CommentaryPlaybackManager] 오디오 재생 시작");
             PlayAudioClip(clip);
         }
         else
         {
+            Debug.LogWarning($"[CommentaryPlaybackManager] 클립 없음, 텍스트만 표시 (duration: {syncData.EstimatedDuration}s)");
             float duration = syncData.EstimatedDuration > 0 ? syncData.EstimatedDuration : _defaultDuration;
             _playbackCoroutine = StartCoroutine(WaitForDuration(duration));
         }
