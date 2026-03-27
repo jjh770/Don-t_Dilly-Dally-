@@ -10,20 +10,74 @@ using UnityEngine.Playables;
 
 // 컷씬 씬의 자립형 매니저
 // 씬 로드 시 자동 시작 → 커스터마이징 적용 → Timeline 재생 → GameScene 전환
-public class CutsceneManager : MonoBehaviour
+[RequireComponent(typeof(PhotonView))]
+public class CutsceneManager : MonoBehaviourPunCallbacks
 {
+    [Header("컷씬")]
     [SerializeField] private PlayableDirector _director;
     [SerializeField] private CutsceneCharacterSlot[] _characterSlots;
     [SerializeField] private float _customizingTimeoutSec = 10f;
-
     [SerializeField] private float _managerWaitTimeoutSec = 5f;
 
+    [Header("스킵")]
+    [SerializeField] private CutsceneSkipUI _skipUI;
+
     private CancellationTokenSource _cts;
+    private bool _isPlaying;
+    private bool _isSkipped;
 
     private void Start()
     {
         _cts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
         RunCutsceneFlow(_cts.Token).Forget();
+    }
+
+    private void Update()
+    {
+        if (!_isPlaying || _isSkipped) return;
+        if (!PhotonNetwork.IsMasterClient) return;
+        if (!Input.GetKeyDown(KeyCode.Escape)) return;
+
+        if (_skipUI == null) return;
+
+        if (!_skipUI.IsVisible)
+        {
+            _skipUI.Show();
+        }
+        else
+        {
+            SkipCutscene();
+        }
+    }
+
+    private void SkipCutscene()
+    {
+        photonView.RPC(nameof(RPC_SkipCutscene), RpcTarget.All);
+    }
+
+    [PunRPC]
+    private void RPC_SkipCutscene()
+    {
+        if (_isSkipped) return;
+        _isSkipped = true;
+
+        Debug.Log("[CutsceneManager] 컷씬 스킵");
+
+        // Timeline 정지
+        if (_director != null)
+        {
+            _director.Stop();
+        }
+
+        // 스킵 UI 숨김
+        if (_skipUI != null)
+        {
+            _skipUI.Hide();
+        }
+
+        // 비동기 플로우 취소 → LoadGameScene은 별도 호출
+        _cts?.Cancel();
+        LoadGameScene();
     }
 
     private async UniTaskVoid RunCutsceneFlow(CancellationToken ct)
@@ -49,11 +103,16 @@ public class CutsceneManager : MonoBehaviour
         }
 
         // 4. Timeline 재생 및 완료 대기
+        _isPlaying = true;
         if (_director != null)
         {
             _director.Play();
             await WaitForDirectorFinish(ct);
         }
+        _isPlaying = false;
+
+        // 스킵으로 취소된 경우 여기서 중단 (RPC_SkipCutscene이 LoadGameScene 처리)
+        if (_isSkipped) return;
 
         Debug.Log("[CutsceneManager] 컷씬 완료 → GameScene 전환");
 
