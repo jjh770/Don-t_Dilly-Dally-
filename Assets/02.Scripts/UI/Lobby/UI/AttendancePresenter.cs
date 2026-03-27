@@ -18,14 +18,23 @@ public class AttendancePresenter
         _attendanceManager.OnAttendanceRecordLoaded += OnDataLoaded;
         _attendanceManager.OnAttendanceChecked += OnAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady += OnAttendanceManagerReady;
+ 
+        if (_attendanceManager.IsReady)
+        {
+            OnAttendanceManagerReady();
+        }
 
         SetName(_playerDataManager.PlayerID);
-        if (_attendanceManager.IsReady) OnAttendanceManagerReady();
     }
 
     public void OnPopupShow()
     {
         _attendanceManager.CheckAttendance();
+    }
+
+    public void OnPopupClose()
+    {
+        _attendanceManager.CancelAll();
     }
 
     private void OnAttendanceManagerReady()
@@ -55,5 +64,6 @@ public class AttendancePresenter
         _attendanceManager.OnAttendanceRecordLoaded -= OnDataLoaded;
         _attendanceManager.OnAttendanceChecked -= OnAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady -= OnAttendanceManagerReady;
+        _attendanceManager.CancelAll();
     }
 }

@@ -29,6 +29,7 @@ public class AttendanceView : UIPopupBase
     private void PopupClose()
     {
         Hide();
+        _presenter.OnPopupClose();
     }
 
     public void Init(AttendancePresenter presenter)
@@ -70,5 +71,6 @@ public class AttendanceView : UIPopupBase
     public void OnDisable()
     {
         _closeButton.onClick.RemoveListener(PopupClose);
+        _presenter.Dispose();
     }
 }

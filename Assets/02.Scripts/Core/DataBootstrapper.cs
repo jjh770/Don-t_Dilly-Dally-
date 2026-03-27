@@ -14,6 +14,12 @@ public class DataBootstrapper : MonoBehaviour
         FirebaseInitializer.OnFirebaseInitialized += OnFirebaseSetComplete;
 
         _rewardRepository = _rewardSO;
+
+        if (FirebaseInitializer.Instance.IsFirebaseInitialized)
+        {
+            IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database);
+            _attendanceManager.Initialize(attendanceRepository, _rewardRepository, PlayerDataManager.Instance.PlayerID);
+        }
     }
 
     private void OnFirebaseSetComplete()

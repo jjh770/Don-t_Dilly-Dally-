@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -18,6 +19,10 @@ public class AttendanceManager : MonoBehaviour
     public static event Action OnAttendanceManagerReady;
 
     public bool IsReady { get; private set; }
+
+    // ✅ 추가
+    private CancellationTokenSource _cts;
+
     public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, string playerID)
     {
         _attendanceRepo = attendanceRepo;
@@ -25,25 +30,46 @@ public class AttendanceManager : MonoBehaviour
         _rewardRepo = rewardRepo;
 
         _domainService = new AttendanceDomainService(_rewardRepo);
+
+        // ✅ 초기화 시 토큰 생성
+        _cts = new CancellationTokenSource();
+
         OnAttendanceManagerReady?.Invoke();
+  
         IsReady = true;
+    }
+
+    // ✅ 외부에서 호출 (Popup 닫힐 때)
+    public void CancelAll()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = new CancellationTokenSource(); // 다시 쓸 수 있게 재생성
+    }
+
+    private void OnDestroy()
+    {
+        CancelAll();
     }
 
     public void CheckAttendance()
     {
         if (_isCheckedToday) return;
 
-        CheckAttendanceAsync().Forget();
+        CheckAttendanceAsync(_cts.Token).Forget(Debug.LogException);
     }
 
     public void LoadAttendance()
     {
-        LoadAttendanceAsync().Forget();
+        LoadAttendanceAsync(_cts.Token).Forget(Debug.LogException);
     }
 
-    private async UniTask<AttendanceRecord> LoadAttendanceAsync()
+    private async UniTask<AttendanceRecord> LoadAttendanceAsync(CancellationToken token)
     {
-        var record = await _attendanceRepo.LoadAsync(_playerId);
+        var record = await _attendanceRepo.LoadAsync(_playerId)
+            .AttachExternalCancellation(token);
+
+        if (token.IsCancellationRequested) return null;
 
         if (record == null)
         {
@@ -55,9 +81,12 @@ public class AttendanceManager : MonoBehaviour
         return record;
     }
 
-    private async UniTask CheckAttendanceAsync()
+    private async UniTask CheckAttendanceAsync(CancellationToken token)
     {
-        var record = await _attendanceRepo.LoadAsync(_playerId);
+        var record = await _attendanceRepo.LoadAsync(_playerId)
+            .AttachExternalCancellation(token);
+
+        if (token.IsCancellationRequested) return;
 
         if (record == null)
         {
@@ -69,24 +98,22 @@ public class AttendanceManager : MonoBehaviour
 
         if (!record.CanCheckToday())
         {
-            //_ui.ShowAlreadyChecked();
             Debug.Log($"{record.TotalDays}일차 출석 이미 완료");
             return;
         }
 
         if (_domainService.RewardComplete(record))
         {
-            // 모든 보상을 전부 수령
             Debug.Log($"모든 보상을 수령 완료");
             return;
         }
+
         var reward = _domainService.CheckAndGetReward(record);
         Debug.Log($"{record.TotalDays}일차 출석 : {reward.ItemId} 수령");
+
         OnAttendanceChecked?.Invoke(record.TotalDays);
 
-        await _attendanceRepo.SaveAsync(_playerId, record);
-    
-       // PlayerDataManager.Instance.ApplyReward(reward);
-        //_ui.ShowRewardPopup(reward);
+        await _attendanceRepo.SaveAsync(_playerId, record)
+            .AttachExternalCancellation(token);
     }
 }
