@@ -68,19 +68,6 @@ public static class PlayerRegistry
         return false;
     }
 
-    public static bool TryGetLocalMovementAbility(out PlayerMovementAbility movementAbility)
-    {
-        movementAbility = null;
-
-        if (!TryGetLocalPlayer(out PlayerController player) || player == null)
-        {
-            return false;
-        }
-
-        movementAbility = player.MovementAbility;
-        return movementAbility != null;
-    }
-
     public static IEnumerable<PlayerController> GetAllPlayers()
     {
         return Players.Values;

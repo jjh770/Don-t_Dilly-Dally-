@@ -155,9 +155,12 @@ namespace DontDillyDally.MiniGame
 
         private static PlayerMovementAbility ResolveLocalMovementAbility()
         {
-            return PlayerRegistry.TryGetLocalMovementAbility(out PlayerMovementAbility movementAbility)
-                ? movementAbility
-                : null;
+            if (!PlayerRegistry.TryGetLocalPlayer(out PlayerController player) || player == null)
+            {
+                return null;
+            }
+
+            return player.MovementAbility;
         }
     }
 }

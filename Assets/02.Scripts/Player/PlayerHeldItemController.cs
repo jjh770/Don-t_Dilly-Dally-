@@ -5,7 +5,6 @@ using System.Collections;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-[RequireComponent(typeof(PlayerInteractionAbility))]
 public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 {
     [Header("들기 설정")]
