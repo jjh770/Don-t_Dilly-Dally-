@@ -35,10 +35,16 @@ public class PlayerInteractionAbility : MonoBehaviour
     public Transform HoldPoint => _holdPoint;
     public ItemObject CurrentHeldItem => _currentHeldItem;
 
+    [Header("아웃라인 설정")]
+    [SerializeField] private Color _outlineColor = Color.white;
+    [SerializeField] private float _outlineWidth = 2f;
+    [SerializeField] private Outline.Mode _outlineMode = Outline.Mode.OutlineVisible;
+
     private IInteractable _currentInteractable;
     // 들고있는 아이템 판별
     private ItemObject _currentHeldItem;
     private IInteractable _nearestInteractable;
+    private IInteractable _previousNearestInteractable;
 
     private PlayerController _playerController;
     private PlayerAnimator _playerAnimator;
@@ -123,6 +129,37 @@ public class PlayerInteractionAbility : MonoBehaviour
                 }
             }
         }
+
+        UpdateOutline();
+    }
+
+    private void UpdateOutline()
+    {
+        if (_nearestInteractable == _previousNearestInteractable)
+            return;
+
+        SetOutlineEnabled(_previousNearestInteractable, false);
+        SetOutlineEnabled(_nearestInteractable, true);
+        _previousNearestInteractable = _nearestInteractable;
+    }
+
+    private void SetOutlineEnabled(IInteractable interactable, bool enabled)
+    {
+        if (interactable is not Component component)
+            return;
+
+        if (!component.TryGetComponent(out Outline outline))
+        {
+            if (!enabled)
+                return;
+
+            outline = component.gameObject.AddComponent<Outline>();
+        }
+
+        outline.OutlineMode = _outlineMode;
+        outline.OutlineColor = _outlineColor;
+        outline.OutlineWidth = _outlineWidth;
+        outline.enabled = enabled;
     }
 
     private IInteractable TryResolvePriorityInteractable(Collider col)
