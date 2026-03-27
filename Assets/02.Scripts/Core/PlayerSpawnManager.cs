@@ -42,8 +42,9 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
             return;
         }
 
-        int randomIndex = UnityEngine.Random.Range(0, _spawnPoints.Length);
-        Vector3 spawnPosition = _spawnPoints[randomIndex].position;
+        //int randomIndex = UnityEngine.Random.Range(0, _spawnPoints.Length);
+        int Index = PhotonServerManager.Instance.CountOfPlayers;
+        Vector3 spawnPosition = _spawnPoints[Index].position;
 
         // 리소스 폴더에서 "Player" 이름을 가진 프리팹을 생성하고, 서버에 등록함
         // 리소스 폴더는 좋지 않음 => 다른 방법을 찾아보자
@@ -56,5 +57,6 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         }
 
         OnPlayerSpawned?.Invoke(_player);
+        PlayerProperty.SetReadyState(false);
     }
 }

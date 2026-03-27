@@ -5,7 +5,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class PotionMixingMachineInteractable : MonoBehaviourPun, IInteractable
+    public class PotionMixingMachineInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
         private const int MaxSlots = 3;
@@ -116,6 +116,24 @@ namespace DontDillyDally.Data
 
         public void StopInteract()
         {
+        }
+
+        public bool CanAcceptItem(ItemObject item)
+        {
+            if (_potionMixingMachine == null)
+                return false;
+
+            if (_actionTimer != null && _actionTimer.IsRunning)
+                return false;
+
+            if (_storedOutputItem != null)
+                return false;
+
+            if (GetFirstAvailableSlotIndex() < 0)
+                return false;
+
+            return _potionMixingMachine.TryResolvePotionInput(item, out ToolType potionToolType)
+                && _potionMixingMachine.CanInsertPotion(GetLoadedPotionToolTypes(), potionToolType);
         }
 
         #region Interaction Handlers

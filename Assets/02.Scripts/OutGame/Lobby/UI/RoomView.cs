@@ -8,7 +8,6 @@ public class RoomView : MonoBehaviour
 {
     [SerializeField] private Button _enterHospitalButton;
     [SerializeField] private Button _createHospitalButton;
-    [SerializeField] private Button _listOpenButton;
 
     [SerializeField] private UI_HospitalList _myHospitalList;
 
@@ -35,7 +34,6 @@ public class RoomView : MonoBehaviour
         _enterHospitalButton.onClick.AddListener(OnEnterButtonClick);
         _createHospitalButton.onClick.AddListener(OnCreateButtonClick);
         _nickNameInputField.onDeselect.AddListener(OnNickNameInputDeselect);
-        _listOpenButton.onClick.AddListener(_myHospitalList.OpenToggle);
 
         _myHospitalList.OnSelected += OnMyHospitalSelected;
         _myHospitalList.OnDeleteOption += OnMyHospitalDeleted;
@@ -107,7 +105,6 @@ public class RoomView : MonoBehaviour
     {
         _enterHospitalButton.onClick.RemoveListener(OnEnterButtonClick);
         _createHospitalButton.onClick.RemoveListener(OnCreateButtonClick);
-        _listOpenButton.onClick.RemoveListener(_myHospitalList.OpenToggle);
         _nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
         _myHospitalList.OnSelected -= OnMyHospitalSelected;
         _myHospitalList.OnDeleteOption -= OnMyHospitalDeleted;
