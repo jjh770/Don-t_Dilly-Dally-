@@ -259,7 +259,7 @@ namespace DontDillyDally.StageFlow
         [PunRPC]
         private void RPC_TriggerEmergency()
         {
-            CommentaryEventPublisher.Instance?.OnEmergencyEvent();
+            EventManager.Instance?.OnEmergencyEvent();
         }
 
         [PunRPC]

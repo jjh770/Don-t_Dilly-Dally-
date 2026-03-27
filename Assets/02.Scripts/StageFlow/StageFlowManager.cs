@@ -215,6 +215,7 @@ namespace DontDillyDally.StageFlow
                 // Phase 3: 게임 루프
                 Debug.Log("[StageFlow] ▶ Phase 3: Playing 진입 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
+                EventManager.Instance?.OnGameStart();
                 await RunGameLoop(ct);
                 Debug.Log("[StageFlow] ✓ Phase 3: Playing 완료 (모든 환자 치료 성공)");
 
@@ -225,7 +226,7 @@ namespace DontDillyDally.StageFlow
                 SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
                 OnStageClear?.Invoke();
-                EventManager.Instance?.Publish(EventType.SurgerySuccess, "모든 환자 치료 완료!");
+                EventManager.Instance?.OnSurgerySuccess();
 
                 // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
@@ -378,7 +379,7 @@ namespace DontDillyDally.StageFlow
         private async UniTask RunCutscenePhase(CancellationToken ct)
         {
             Debug.Log("[StageFlow]   컷씬 재생 시작 (3초 대기)");
-            EventManager.Instance?.Publish(EventType.GameStart, "수술을 시작합니다!");
+            EventManager.Instance?.OnGameStart();
 
             // TODO: 실제 컷씬 시스템 연동 시 교체
             await UniTask.Delay(TimeSpan.FromSeconds(CUTSCENE_DELAY_SEC), cancellationToken: ct);
@@ -456,7 +457,7 @@ namespace DontDillyDally.StageFlow
                 if (result.Success)
                 {
                     Debug.Log($"[StageFlow]     ✓ 레시피 {recipeIndex + 1} 성공! (ID: {result.CompletedRecipeId}) | 질병완치={result.DiseaseCured}");
-                    EventManager.Instance?.Publish(EventType.SurgerySuccess, $"레시피 {result.CompletedRecipeId} 성공!");
+                    EventManager.Instance?.OnSurgerySuccess();
 
                     // 집도의에게만 레시피 성공 후 수술 미니게임 권한을 부여합니다.
                     await RunRecipeMiniGame(ct);
@@ -474,7 +475,7 @@ namespace DontDillyDally.StageFlow
                     float newHealth = ApplyPatientDamage(disease.FailHealthPenalty);
                     Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{disease.FailHealthPenalty} → 현재 체력: {newHealth}");
 
-                    EventManager.Instance?.Publish(EventType.SurgeryFail, "잘못된 조합물!");
+                    EventManager.Instance?.OnSurgeryFail();
 
                     if (_isGameOver)
                     {
@@ -727,7 +728,7 @@ namespace DontDillyDally.StageFlow
         // 응급 이벤트를 발생시키고 전용 미니게임 결과를 반영합니다.
         private async UniTask HandleEmergencyEvent(CancellationToken ct)
         {
-            EventManager.Instance?.Publish(EventType.PatientCritical, "긴급 처치가 필요합니다!");
+            EventManager.Instance?.OnPatientCritical("긴급 처치가 필요합니다!");
             _rpc.BroadcastEmergency();
 
             float healthPenalty;
@@ -767,15 +768,17 @@ namespace DontDillyDally.StageFlow
 
             OnGameOver?.Invoke(reason);
 
-            string message = reason switch
+            // 코멘터리 발행
+            if (reason == EGameOverReason.PatientDeath)
             {
-                EGameOverReason.PatientDeath => "환자가 사망했습니다...",
-                EGameOverReason.TimeExpired => "제한 시간이 초과되었습니다!",
-                _ => "게임 오버"
-            };
+                EventManager.Instance?.OnPatientDeath();
+            }
+            else
+            {
+                EventManager.Instance?.OnGameOver();
+            }
 
-            Debug.Log($"[StageFlow] {message} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀");
-            EventManager.Instance?.Publish(EventType.GameOver, message);
+            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀");
 
             // 역할 시각 표시 초기화
             SelectRoleManager.Instance?.ClearRoles();

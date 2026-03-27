@@ -2,10 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// 코멘터리 재생 및 오디오 캐싱 담당
-/// - 원격 클라이언트도 로컬 TTS 생성 지원
-/// </summary>
 public class CommentaryPlaybackManager : MonoBehaviour
 {
     public event Action OnPlaybackCompleted;
