@@ -2,15 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
-using Photon.Realtime;
 
-/// <summary>
-/// Photon 네트워크 기반 코멘터리 동기화 매니저
-/// - 호스트에게 이벤트 전달
-/// - 호스트가 확정한 코멘터리 브로드캐스트
-/// - 수신 패킷 역직렬화
-/// - 재생 예약 처리
-/// </summary>
 public class CommentarySyncManager : MonoBehaviourPunCallbacks
 {
     public static CommentarySyncManager Instance { get; private set; }
@@ -51,9 +43,6 @@ public class CommentarySyncManager : MonoBehaviourPunCallbacks
         PhotonNetwork.NetworkingClient.EventReceived -= OnPhotonEventReceived;
     }
 
-    /// <summary>
-    /// 클라이언트가 호스트에게 이벤트를 전달
-    /// </summary>
     public void SendEventToHost(GameEvent gameEvent)
     {
         if (!PhotonNetwork.IsConnected || !PhotonNetwork.InRoom)
@@ -79,9 +68,6 @@ public class CommentarySyncManager : MonoBehaviourPunCallbacks
         PhotonNetwork.RaiseEvent(GAME_EVENT_TO_HOST_CODE, eventData, raiseEventOptions, ExitGames.Client.Photon.SendOptions.SendReliable);
     }
 
-    /// <summary>
-    /// 호스트가 모든 클라이언트에게 코멘터리 브로드캐스트
-    /// </summary>
     public void BroadcastCommentary(CommentarySyncData syncData)
     {
         if (!IsHost)
@@ -155,8 +141,6 @@ public class CommentarySyncManager : MonoBehaviourPunCallbacks
         CommentaryController.Instance?.HandleEventAsHost(gameEvent);
     }
 
-    #region Serialization
-
     private byte[] SerializeSyncData(CommentarySyncData data)
     {
         string json = JsonUtility.ToJson(data);
@@ -214,21 +198,5 @@ public class CommentarySyncManager : MonoBehaviourPunCallbacks
         public int Type;
         public int Priority;
         public string Description;
-    }
-
-    #endregion
-
-    /// <summary>
-    /// 처리된 코멘터리 ID 캐시 초기화 (씬 전환 등)
-    /// </summary>
-    public void ClearProcessedCache()
-    {
-        _processedCommentaryIds.Clear();
-        _lastReceivedSequence = -1;
-    }
-
-    public override void OnMasterClientSwitched(Player newMasterClient)
-    {
-        // 호스트 변경 시 필요한 처리
     }
 }

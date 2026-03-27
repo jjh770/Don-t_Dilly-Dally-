@@ -2,15 +2,6 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-/// <summary>
-/// 코멘터리 전체 흐름 제어
-/// - 이벤트 수신
-/// - 큐 관리
-/// - 현재 재생 상태 관리
-/// - 호스트 여부에 따른 분기
-/// - 브로드캐스트 명령 송신
-/// - 수신된 코멘터리 재생 시작
-/// </summary>
 public class CommentaryController : MonoBehaviour
 {
     public static CommentaryController Instance { get; private set; }
@@ -43,14 +34,6 @@ public class CommentaryController : MonoBehaviour
             return;
         }
         Instance = this;
-    }
-
-    private async void Start()
-    {
-        if (_generator != null)
-        {
-            await _generator.PreGenerateFixedVoices();
-        }
     }
 
     private void OnEnable()
@@ -86,18 +69,12 @@ public class CommentaryController : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// 로컬에서 이벤트가 발생했을 때 (EventManager에서 호출)
-    /// </summary>
     private void OnEventPublished(GameEvent gameEvent)
     {
         // 호스트에게 이벤트 전달
         _syncManager.SendEventToHost(gameEvent);
     }
 
-    /// <summary>
-    /// 호스트로서 이벤트를 처리 (SyncManager에서 호출)
-    /// </summary>
     public void HandleEventAsHost(GameEvent gameEvent)
     {
         if (!IsHost) return;
@@ -169,14 +146,13 @@ public class CommentaryController : MonoBehaviour
             return;
         }
 
-        // SyncData 생성
+        // SyncData 생성 (TTS는 PlaybackManager에서 생성)
         var syncData = CommentarySyncData.CreateFromEvent(
             gameEvent,
             ++_sequenceCounter,
             generatedData.Text,
             _syncManager.NetworkTime,
-            generatedData.EstimatedDuration,
-            generatedData.TtsAudioKey
+            generatedData.EstimatedDuration
         );
 
         _currentCommentary = syncData;
@@ -185,9 +161,6 @@ public class CommentaryController : MonoBehaviour
         _syncManager.BroadcastCommentary(syncData);
     }
 
-    /// <summary>
-    /// 코멘터리 수신 시 (모든 클라이언트)
-    /// </summary>
     private void OnCommentaryReceived(CommentarySyncData syncData)
     {
         _currentCommentary = syncData;
@@ -212,18 +185,6 @@ public class CommentaryController : MonoBehaviour
 
     private void OnPlaybackCompleted()
     {
-        _isProcessing = false;
-        _currentCommentary = null;
-    }
-
-    /// <summary>
-    /// 상태 초기화 (씬 전환 등)
-    /// </summary>
-    public void Reset()
-    {
-        _eventQueue.Clear();
-        _lastEventTimes.Clear();
-        _sequenceCounter = 0;
         _isProcessing = false;
         _currentCommentary = null;
     }

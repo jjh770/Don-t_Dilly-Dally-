@@ -6,7 +6,6 @@ using UnityEngine;
 public class GeneratedCommentaryData
 {
     public string Text;
-    public string TtsAudioKey;
     public float EstimatedDuration;
 }
 
@@ -18,15 +17,12 @@ public class CommentaryGenerator : MonoBehaviour
 {
     [Header("참조")]
     [SerializeField] private LLMService _llmService;
-    [SerializeField] private TTSManager _ttsManager;
-    [SerializeField] private CommentaryPlaybackManager _playbackManager;
 
     [Header("프롬프트")]
     [SerializeField] private TextAsset _systemPromptFile;
 
     [Header("설정")]
     [SerializeField] private int _recentEventCount = 5;
-    [SerializeField] private bool _generateTtsForDynamic = true;
 
     // 고정형 텍스트
     private static readonly Dictionary<EventType, string> FixedTexts = new()
@@ -92,11 +88,6 @@ public class CommentaryGenerator : MonoBehaviour
         {
             result.Text = templates[UnityEngine.Random.Range(0, templates.Length)];
             result.EstimatedDuration = EstimateDuration(result.Text);
-
-            if (_generateTtsForDynamic)
-            {
-                result.TtsAudioKey = await GenerateAndCacheTts(result.Text);
-            }
             return result;
         }
 
@@ -133,12 +124,6 @@ public class CommentaryGenerator : MonoBehaviour
         }
 
         result.EstimatedDuration = EstimateDuration(result.Text);
-
-        if (_generateTtsForDynamic)
-        {
-            result.TtsAudioKey = await GenerateAndCacheTts(result.Text);
-        }
-
         return result;
     }
 
@@ -162,27 +147,6 @@ public class CommentaryGenerator : MonoBehaviour
 
         sb.AppendLine("위 상황을 반말로, 한 문장으로 중계해라.");
         return sb.ToString();
-    }
-
-    private async Awaitable<string> GenerateAndCacheTts(string text)
-    {
-        if (_ttsManager == null || _playbackManager == null) return null;
-
-        try
-        {
-            AudioClip clip = await _ttsManager.GenerateSpeech(text);
-            if (clip != null)
-            {
-                string cacheKey = Guid.NewGuid().ToString();
-                _playbackManager.CacheClip(cacheKey, clip);
-                return cacheKey;
-            }
-        }
-        catch (Exception e)
-        {
-            Debug.LogWarning($"[CommentaryGenerator] TTS 생성 실패: {e.Message}");
-        }
-        return null;
     }
 
     // 동적형 fallback 텍스트 (LLM 실패 시 랜덤 선택)
@@ -215,20 +179,4 @@ public class CommentaryGenerator : MonoBehaviour
         return Mathf.Clamp(text.Length / 4.5f, 1.5f, 10f);
     }
 
-    public async Awaitable PreGenerateFixedVoices()
-    {
-        if (_ttsManager == null || _playbackManager == null) return;
-
-        foreach (var kvp in FixedTexts)
-        {
-            string clipId = kvp.Key.ToString();
-            if (_playbackManager.HasCachedClip(clipId)) continue;
-
-            AudioClip clip = await _ttsManager.GenerateSpeech(kvp.Value);
-            if (clip != null)
-            {
-                _playbackManager.CacheClip(clipId, clip);
-            }
-        }
-    }
 }

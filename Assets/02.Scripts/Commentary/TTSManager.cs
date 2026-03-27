@@ -11,7 +11,6 @@ public class TTSManager : MonoBehaviour
     [SerializeField] private KeyConfig _apiKeyConfig;
 
     [Header("Voice Settings")]
-    [SerializeField] private string _voiceId = "21m00Tcm4TlvDq8ikWAM";
     [SerializeField] private string _modelId = "eleven_multilingual_v2";
     [SerializeField] private float _stability = 0.5f;
     [SerializeField] private float _similarityBoost = 0.75f;
@@ -27,13 +26,19 @@ public class TTSManager : MonoBehaviour
             return null;
         }
 
+        if (string.IsNullOrEmpty(_apiKeyConfig.ElevenLabsVoiceId))
+        {
+            Debug.LogError("[TTSManager] ElevenLabs Voice ID가 없습니다.");
+            return null;
+        }
+
         if (string.IsNullOrEmpty(text))
         {
             Debug.LogWarning("[TTSManager] 텍스트가 비어있습니다.");
             return null;
         }
 
-        string url = $"{ApiUrl}/{_voiceId}";
+        string url = $"{ApiUrl}/{_apiKeyConfig.ElevenLabsVoiceId}";
         string requestBody = BuildRequestBody(text);
 
         using UnityWebRequest request = new UnityWebRequest(url, "POST");

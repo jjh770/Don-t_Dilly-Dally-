@@ -12,9 +12,6 @@ public class CommentarySyncData
     public EventType EventType;
     public EventPriority Priority;
     public string FinalText;
-    public bool UsePreGeneratedVoice;
-    public string PreGeneratedClipId;
-    public string TtsAudioKey;
     public double ScheduledNetworkTime;
     public float EstimatedDuration;
 
@@ -26,9 +23,6 @@ public class CommentarySyncData
         EventType eventType,
         EventPriority priority,
         string finalText,
-        bool usePreGeneratedVoice,
-        string preGeneratedClipId,
-        string ttsAudioKey,
         double scheduledNetworkTime,
         float estimatedDuration)
     {
@@ -37,9 +31,6 @@ public class CommentarySyncData
         EventType = eventType;
         Priority = priority;
         FinalText = finalText;
-        UsePreGeneratedVoice = usePreGeneratedVoice;
-        PreGeneratedClipId = preGeneratedClipId;
-        TtsAudioKey = ttsAudioKey;
         ScheduledNetworkTime = scheduledNetworkTime;
         EstimatedDuration = estimatedDuration;
     }
@@ -49,8 +40,7 @@ public class CommentarySyncData
         int sequence,
         string finalText,
         double scheduledNetworkTime,
-        float estimatedDuration,
-        string ttsAudioKey = null)
+        float estimatedDuration)
     {
         return new CommentarySyncData(
             commentaryId: Guid.NewGuid().ToString(),
@@ -58,9 +48,6 @@ public class CommentarySyncData
             eventType: gameEvent.Type,
             priority: gameEvent.Priority,
             finalText: finalText,
-            usePreGeneratedVoice: gameEvent.UsePreGeneratedVoice,
-            preGeneratedClipId: gameEvent.UsePreGeneratedVoice ? gameEvent.Type.ToString() : null,
-            ttsAudioKey: ttsAudioKey,
             scheduledNetworkTime: scheduledNetworkTime,
             estimatedDuration: estimatedDuration
         );
