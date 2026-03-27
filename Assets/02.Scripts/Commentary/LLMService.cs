@@ -28,11 +28,7 @@ public class LLMService : MonoBehaviour
         }
 
         string apiUrl = string.Format(ApiUrlFormat, _model, _apiKeyConfig.GeminiApiKey);
-        string requestBody = BuildRequestBody(systemPrompt, userPrompt); // JSON 형식으로 변환
-
-        // 요청 정보 로그
-        Debug.Log($"[LLMService] 요청 URL: {string.Format(ApiUrlFormat, _model, "***API_KEY***")}");
-        Debug.Log($"[LLMService] 모델: {_model}");
+        string requestBody = BuildRequestBody(systemPrompt, userPrompt);
 
         using UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);

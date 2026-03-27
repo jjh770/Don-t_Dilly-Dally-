@@ -54,7 +54,6 @@ public class UI_Commentary : MonoBehaviour
         {
             CommentaryController.Instance.OnNarrationGenerated += ShowNarration;
             _isSubscribed = true;
-            Debug.Log("[UI_Commentary] 코멘터리 이벤트 구독 완료");
         }
         else
         {
@@ -82,7 +81,6 @@ public class UI_Commentary : MonoBehaviour
         {
             CommentaryController.Instance.OnNarrationGenerated += ShowNarration;
             _isSubscribed = true;
-            Debug.Log("[UI_Commentary] 코멘터리 이벤트 구독 완료 (재시도)");
         }
     }
 

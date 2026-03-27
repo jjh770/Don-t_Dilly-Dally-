@@ -229,7 +229,6 @@ public class CommentarySyncManager : MonoBehaviourPunCallbacks
 
     public override void OnMasterClientSwitched(Player newMasterClient)
     {
-        Debug.Log($"[CommentarySyncManager] 호스트 변경: {newMasterClient.NickName}");
         // 호스트 변경 시 필요한 처리
     }
 }

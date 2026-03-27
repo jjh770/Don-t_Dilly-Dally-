@@ -36,7 +36,6 @@ public class EventManager : MonoBehaviour
             _eventLog.RemoveAt(0);
         }
 
-        Debug.Log($"[EventManager] 이벤트 발행: {gameEvent.Type} - {gameEvent.Description}");
         OnEventPublished?.Invoke(gameEvent);
     }
 

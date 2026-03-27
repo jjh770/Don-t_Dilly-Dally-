@@ -103,11 +103,7 @@ public class CommentaryController : MonoBehaviour
         if (!IsHost) return;
 
         // 중복 이벤트 필터링
-        if (IsDuplicateEvent(gameEvent))
-        {
-            Debug.Log($"[CommentaryController] 중복 이벤트 무시: {gameEvent.Type}");
-            return;
-        }
+        if (IsDuplicateEvent(gameEvent)) return;
 
         // 우선순위 기반 처리
         if (_isProcessing && _currentCommentary != null)
