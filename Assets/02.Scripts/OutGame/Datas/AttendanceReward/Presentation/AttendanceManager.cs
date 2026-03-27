@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -5,18 +6,26 @@ public class AttendanceManager : MonoBehaviour
 {
     private IAttendanceRepository _attendanceRepo;
     private AttendanceDomainService _domainService;
+    private IRewardRepository _rewardRepo;
     private string _playerId;
 
     private bool _isCheckedToday = false;
+    public IRewardRepository RewardRepo => _rewardRepo;
 
+    public event Action<AttendanceRecord> OnAttendanceRecordLoaded;
+
+    public static event Action OnAttendanceManagerReady;
+
+    public bool IsReady { get; private set; }
     public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, string playerID)
     {
         _attendanceRepo = attendanceRepo;
         _playerId = playerID;
+        _rewardRepo = rewardRepo;
 
-        _domainService = new AttendanceDomainService(rewardRepo);
-
-        CheckAttendance();
+        _domainService = new AttendanceDomainService(_rewardRepo);
+        OnAttendanceManagerReady?.Invoke();
+        IsReady = true;
     }
 
     public void CheckAttendance()
@@ -24,6 +33,25 @@ public class AttendanceManager : MonoBehaviour
         if (_isCheckedToday) return;
 
         CheckAttendanceAsync().Forget();
+    }
+
+    public void LoadAttendance()
+    {
+        LoadAttendanceAsync().Forget();
+    }
+
+    private async UniTask<AttendanceRecord> LoadAttendanceAsync()
+    {
+        var record = await _attendanceRepo.LoadAsync(_playerId);
+
+        if (record == null)
+        {
+            record = new AttendanceRecord(_playerId);
+            Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
+        }
+
+        OnAttendanceRecordLoaded?.Invoke(record);
+        return record;
     }
 
     private async UniTask CheckAttendanceAsync()
