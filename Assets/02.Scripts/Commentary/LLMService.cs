@@ -30,6 +30,10 @@ public class LLMService : MonoBehaviour
         string apiUrl = string.Format(ApiUrlFormat, _model, _apiKeyConfig.GeminiApiKey);
         string requestBody = BuildRequestBody(systemPrompt, userPrompt); // JSON 형식으로 변환
 
+        // 요청 정보 로그
+        Debug.Log($"[LLMService] 요청 URL: {string.Format(ApiUrlFormat, _model, "***API_KEY***")}");
+        Debug.Log($"[LLMService] 모델: {_model}");
+
         using UnityWebRequest request = new UnityWebRequest(apiUrl, "POST");
         byte[] bodyRaw = Encoding.UTF8.GetBytes(requestBody);
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -44,6 +48,19 @@ public class LLMService : MonoBehaviour
             if (request.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"[LLMService] 요청 실패: {request.error}");
+                Debug.LogError($"[LLMService] 응답 코드: {request.responseCode}");
+                Debug.LogError($"[LLMService] 응답 본문: {request.downloadHandler.text}");
+                Debug.LogError($"[LLMService] 요청 모델: {_model}");
+
+                // 403 오류 시 가능한 원인 안내
+                if (request.responseCode == 403)
+                {
+                    Debug.LogError("[LLMService] 403 Forbidden - 가능한 원인:");
+                    Debug.LogError("  1. API Key가 유효하지 않거나 만료됨");
+                    Debug.LogError("  2. API Key에 해당 모델 사용 권한이 없음");
+                    Debug.LogError("  3. 프로젝트에서 Generative Language API가 활성화되지 않음");
+                    Debug.LogError("  4. 요청 할당량(쿼터) 초과");
+                }
                 return null;
             }
 

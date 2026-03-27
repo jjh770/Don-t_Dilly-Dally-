@@ -4,6 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// 코멘터리 재생 및 오디오 캐싱 담당
+/// - 원격 클라이언트도 로컬 TTS 생성 지원
 /// </summary>
 public class CommentaryPlaybackManager : MonoBehaviour
 {
@@ -13,8 +14,12 @@ public class CommentaryPlaybackManager : MonoBehaviour
     [Header("오디오")]
     [SerializeField] private AudioSource _audioSource;
 
+    [Header("TTS")]
+    [SerializeField] private TTSManager _ttsManager;
+
     [Header("설정")]
     [SerializeField] private float _defaultDuration = 3f;
+    [SerializeField] private bool _generateTtsOnRemote = true;
 
     public bool IsPlaying { get; private set; }
 
@@ -54,16 +59,45 @@ public class CommentaryPlaybackManager : MonoBehaviour
 
         OnSubtitleChanged?.Invoke(syncData.FinalText);
 
+        // 비동기로 오디오 재생 시작
+        _ = PlayCommentaryAsync(syncData);
+    }
+
+    private async Awaitable PlayCommentaryAsync(CommentarySyncData syncData)
+    {
         AudioClip clip = null;
 
+        // 1. 사전 생성된 음성 (고정형)
         if (syncData.UsePreGeneratedVoice)
         {
             clip = GetClip(syncData.PreGeneratedClipId);
         }
+        // 2. TTS 캐시 확인 (템플릿형/동적형)
         else if (!string.IsNullOrEmpty(syncData.TtsAudioKey))
         {
             clip = GetCachedClip(syncData.TtsAudioKey);
         }
+
+        // 3. 캐시에 없으면 로컬에서 TTS 생성 (원격 클라이언트용)
+        if (clip == null && _generateTtsOnRemote && _ttsManager != null && !string.IsNullOrEmpty(syncData.FinalText))
+        {
+            Debug.Log($"[CommentaryPlaybackManager] 로컬 TTS 생성 시작: {syncData.FinalText.Substring(0, Mathf.Min(20, syncData.FinalText.Length))}...");
+            try
+            {
+                clip = await _ttsManager.GenerateSpeech(syncData.FinalText);
+                if (clip != null && !string.IsNullOrEmpty(syncData.TtsAudioKey))
+                {
+                    CacheClip(syncData.TtsAudioKey, clip);
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[CommentaryPlaybackManager] 로컬 TTS 생성 실패: {e.Message}");
+            }
+        }
+
+        // 재생 중인 상태 확인 (비동기 중 StopPlayback이 호출됐을 수 있음)
+        if (!IsPlaying || _currentData != syncData) return;
 
         if (clip != null)
         {

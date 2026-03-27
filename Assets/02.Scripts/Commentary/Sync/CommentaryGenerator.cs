@@ -112,6 +112,7 @@ public class CommentaryGenerator : MonoBehaviour
 
         if (_llmService == null)
         {
+            Debug.LogWarning("[CommentaryGenerator] LLMService가 없습니다. Fallback 텍스트 사용.");
             result.Text = GetFallbackText(gameEvent);
             result.EstimatedDuration = EstimateDuration(result.Text);
             return result;
@@ -122,7 +123,17 @@ public class CommentaryGenerator : MonoBehaviour
         string systemPrompt = _systemPromptFile != null ? _systemPromptFile.text : "";
 
         string generatedText = await _llmService.SendRequest(systemPrompt, prompt);
-        result.Text = string.IsNullOrEmpty(generatedText) ? GetFallbackText(gameEvent) : generatedText;
+
+        if (string.IsNullOrEmpty(generatedText))
+        {
+            Debug.LogWarning($"[CommentaryGenerator] LLM 생성 실패. Fallback 텍스트 사용: {gameEvent.Type}");
+            result.Text = GetFallbackText(gameEvent);
+        }
+        else
+        {
+            result.Text = generatedText;
+        }
+
         result.EstimatedDuration = EstimateDuration(result.Text);
 
         if (_generateTtsForDynamic)
@@ -176,21 +187,28 @@ public class CommentaryGenerator : MonoBehaviour
         return null;
     }
 
+    // 동적형 fallback 텍스트 (LLM 실패 시 랜덤 선택)
+    private static readonly Dictionary<EventType, string[]> DynamicFallbackTexts = new()
+    {
+        { EventType.NewPatientAppeared, new[] { "새로운 환자가 도착했다!", "환자가 들어왔어! 준비해!", "새 환자야, 집중!" } },
+        { EventType.MaterialDeliveredLate, new[] { "재료 전달이 늦어지고 있어!", "재료가 늦어! 서둘러!", "전달이 지연되고 있다!" } },
+        { EventType.EmergencyPrevented, new[] { "위기를 잘 넘겼어!", "훌륭해, 위기 대응 성공!", "잘 막았어!" } },
+        { EventType.WrongMaterialUsed, new[] { "잘못된 재료를 사용했어!", "재료가 틀렸어! 확인해!", "그건 아니야!" } },
+        { EventType.RepairTimeout, new[] { "수리 시간을 초과했어!", "수리 실패! 시간 초과!", "늦었어..." } },
+        { EventType.RepairCompletedFast, new[] { "빠른 수리였어!", "수리 완료! 빨랐어!", "훌륭한 속도야!" } },
+        { EventType.RepairCompletedLate, new[] { "수리가 늦어졌지만 완료했어.", "어쨌든 고쳤어.", "늦었지만 성공이야." } },
+        { EventType.ChainAccident, new[] { "사고가 연속으로 발생하고 있어!", "연속 사고! 정신 차려!", "또 사고야!" } },
+        { EventType.ChainCooperation, new[] { "팀워크가 훌륭해!", "연속 협동! 잘하고 있어!", "호흡이 좋아!" } }
+    };
+
     private string GetFallbackText(GameEvent gameEvent)
     {
-        return gameEvent.Type switch
+        if (DynamicFallbackTexts.TryGetValue(gameEvent.Type, out string[] texts))
         {
-            EventType.NewPatientAppeared => "새로운 환자가 도착했다!",
-            EventType.MaterialDeliveredLate => "재료 전달이 늦어지고 있어!",
-            EventType.EmergencyPrevented => "위기를 잘 넘겼어!",
-            EventType.WrongMaterialUsed => "잘못된 재료를 사용했어!",
-            EventType.RepairTimeout => "수리 시간을 초과했어!",
-            EventType.RepairCompletedFast => "빠른 수리였어!",
-            EventType.RepairCompletedLate => "수리가 늦어졌지만 완료했어.",
-            EventType.ChainAccident => "사고가 연속으로 발생하고 있어!",
-            EventType.ChainCooperation => "팀워크가 훌륭해!",
-            _ => gameEvent.Description ?? "상황이 발생했습니다."
-        };
+            return texts[UnityEngine.Random.Range(0, texts.Length)];
+        }
+
+        return gameEvent.Description ?? "상황이 발생했습니다.";
     }
 
     private float EstimateDuration(string text)

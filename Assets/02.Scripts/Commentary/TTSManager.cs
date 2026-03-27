@@ -41,7 +41,7 @@ public class TTSManager : MonoBehaviour
         request.uploadHandler = new UploadHandlerRaw(bodyRaw);
         request.downloadHandler = new DownloadHandlerBuffer();
         request.SetRequestHeader("Content-Type", "application/json");
-        request.SetRequestHeader("xi-api-key", _apiKeyConfig.ElevenLabsApiKey);
+        request.SetRequestHeader("xi-api-key", _apiKeyConfig.ElevenLabsApiKey.Trim());
         request.SetRequestHeader("Accept", "audio/mpeg");
         request.timeout = (int)_timeout;
 
@@ -52,6 +52,8 @@ public class TTSManager : MonoBehaviour
             if (request.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError($"[TTSManager] 응답 실패: {request.error}");
+                Debug.LogError($"[TTSManager] 응답 코드: {request.responseCode}");
+                Debug.LogError($"[TTSManager] 응답 본문: {request.downloadHandler.text}");
                 return null;
             }
 
