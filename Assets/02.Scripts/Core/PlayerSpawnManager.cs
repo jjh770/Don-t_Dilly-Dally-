@@ -6,6 +6,8 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 {
     [SerializeField] private Transform[] _spawnPoints;
 
+    [SerializeField] private Collider _spawnArrange;
+
     [SerializeField] private GameObject _playerPrefab;
 
     private GameObject _player;
@@ -44,11 +46,14 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
         //int randomIndex = UnityEngine.Random.Range(0, _spawnPoints.Length);
         int Index = PhotonServerManager.Instance.CountOfPlayers;
-        Vector3 spawnPosition = _spawnPoints[Index].position;
+        Vector3 spawnPosition = GetRandomPointInBoxCollider();
 
         // 리소스 폴더에서 "Player" 이름을 가진 프리팹을 생성하고, 서버에 등록함
         // 리소스 폴더는 좋지 않음 => 다른 방법을 찾아보자
-        _player = PhotonNetwork.Instantiate(_playerPrefab.name, spawnPosition, Quaternion.identity);
+        Quaternion backwardRotation = Quaternion.Euler(0, 180f, 0);
+        _player = PhotonNetwork.Instantiate(_playerPrefab.name, spawnPosition, backwardRotation);
+
+        
 
         if (_player == null)
         {
@@ -58,5 +63,16 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
         OnPlayerSpawned?.Invoke(_player);
         PlayerProperty.SetReadyState(false);
+    }
+
+    public Vector3 GetRandomPointInBoxCollider()
+    {
+        Vector3 center = _spawnArrange.bounds.center;
+        Vector3 size = _spawnArrange.bounds.size;
+
+        float randomX = UnityEngine.Random.Range(center.x - size.x / 2f, center.x + size.x / 2f);
+        float randomZ = UnityEngine.Random.Range(center.z - size.z / 2f, center.z + size.z / 2f);
+
+        return new Vector3(randomX, 0f, randomZ);
     }
 }
