@@ -2,11 +2,9 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(CanvasGroup))]
 public class UI_HospitalList : MonoBehaviour
 {
     [SerializeField] private UI_HospitalItem _listTemplate;
-    [SerializeField] private float _alphaFadeTime;
 
     private List<UI_HospitalItem> _items = new List<UI_HospitalItem>();
 

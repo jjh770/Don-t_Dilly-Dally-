@@ -1,9 +1,7 @@
-using System;
 using DG.Tweening;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using static UnityEngine.GraphicsBuffer;
+
 
 
 public class UI_HoverSlidePanel : MonoBehaviour, IPointerExitHandler, IPointerEnterHandler
@@ -18,9 +16,8 @@ public class UI_HoverSlidePanel : MonoBehaviour, IPointerExitHandler, IPointerEn
 
     private bool _isOpened = false;
 
-    void Start()
+    void Awake()
     {
-
         if (_targetUI == null) _targetUI = GetComponent<RectTransform>();
 
         _originalPosition = _targetUI.anchoredPosition;
@@ -31,6 +28,7 @@ public class UI_HoverSlidePanel : MonoBehaviour, IPointerExitHandler, IPointerEn
     public void OnPointerEnter(PointerEventData eventData)
     {
         if (_isOpened) return;
+        _isOpened = true;
         _targetUI.DOKill(); 
 
         _targetUI.DOAnchorPos(_targetPosition, _duration).SetEase(Ease.OutCubic);
@@ -44,7 +42,7 @@ public class UI_HoverSlidePanel : MonoBehaviour, IPointerExitHandler, IPointerEn
         );
 
 
-        if (isMouseInMenu == true) return;
+        if (isMouseInMenu) return;
         _isOpened = false;
 
         _targetUI.DOKill();
