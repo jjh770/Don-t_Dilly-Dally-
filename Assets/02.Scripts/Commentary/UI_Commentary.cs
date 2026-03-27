@@ -9,9 +9,10 @@ public class UI_Commentary : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _narrationText;
 
     [Header("Settings")]
-    [SerializeField] private float _displayDuration = 4f;
+    [SerializeField] private float _displayDuration = 1f;
     [SerializeField] private float _fadeInDuration = 0.3f;
     [SerializeField] private float _fadeOutDuration = 0.5f;
+    [SerializeField] private float _typingSpeed = 0.03f;
 
     [Header("Animation")]
     [SerializeField] private CanvasGroup _canvasGroup;
@@ -98,22 +99,32 @@ public class UI_Commentary : MonoBehaviour
 
     private IEnumerator DisplayNarrationCoroutine(string text)
     {
-        _narrationText.text = text;
+        _narrationText.text = "";
         _narrationPanel.SetActive(true);
 
-        // 페이드 인
+        // 타이핑 중에는 반투명하게 표시
         if (_canvasGroup != null)
         {
-            _canvasGroup.alpha = 0f;
-            float elapsed = 0f;
+            _canvasGroup.alpha = 0.6f;
+        }
 
+        // 타이핑 효과
+        for (int i = 0; i < text.Length; i++)
+        {
+            _narrationText.text = text.Substring(0, i + 1);
+            yield return new WaitForSeconds(_typingSpeed);
+        }
+
+        // 타이핑 완료 후 페이드 인
+        if (_canvasGroup != null)
+        {
+            float elapsed = 0f;
             while (elapsed < _fadeInDuration)
             {
                 elapsed += Time.deltaTime;
-                _canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / _fadeInDuration);
+                _canvasGroup.alpha = Mathf.Lerp(0.6f, 1f, elapsed / _fadeInDuration);
                 yield return null;
             }
-
             _canvasGroup.alpha = 1f;
         }
 
