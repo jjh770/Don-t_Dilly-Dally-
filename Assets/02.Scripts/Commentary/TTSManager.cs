@@ -7,15 +7,15 @@ public class TTSManager : MonoBehaviour
 {
     private const string ApiUrl = "https://api.elevenlabs.io/v1/text-to-speech";
 
-    [Header("API Settings")]
+    [Header("API 세팅")]
     [SerializeField] private KeyConfig _apiKeyConfig;
 
-    [Header("Voice Settings")]
-    [SerializeField] private string _modelId = "eleven_multilingual_v2";
+    [Header("음성 세팅")]
+    [SerializeField] private string _modelId = "eleven_flash_v2_5";
     [SerializeField] private float _stability = 0.5f;
     [SerializeField] private float _similarityBoost = 0.75f;
 
-    [Header("Request Settings")]
+    [Header("요청 세팅")]
     [SerializeField] private float _timeout = 15f;
 
     public async Awaitable<AudioClip> GenerateSpeech(string text)

@@ -17,6 +17,7 @@ GameObject:
   - component: {fileID: 6266976512121888385}
   - component: {fileID: 1572009220914191406}
   - component: {fileID: 3241995776377645875}
+  - component: {fileID: 142084644921686818}
   m_Layer: 0
   m_Name: CommentarySystem
   m_TagString: Untagged
@@ -166,11 +167,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CommentaryGenerator
   _llmService: {fileID: 1572009220914191406}
-  _ttsManager: {fileID: 3241995776377645875}
-  _playbackManager: {fileID: 1977176301120194141}
   _systemPromptFile: {fileID: 4900000, guid: bc8627771d32926438d7accc95f5366f, type: 3}
   _recentEventCount: 5
-  _generateTtsForDynamic: 1
 --- !u!114 &1977176301120194141
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -184,9 +182,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CommentaryPlaybackManager
   _audioSource: {fileID: 4918364566836233242}
-  _ttsManager: {fileID: 0}
+  _ttsManager: {fileID: 3241995776377645875}
   _defaultDuration: 3
-  _generateTtsOnRemote: 1
 --- !u!114 &2154776202298399559
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -243,7 +240,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TTSManager
   _apiKeyConfig: {fileID: 11400000, guid: 6652b3279f2fbc54cabf438d19791776, type: 2}
-  _modelId: eleven_multilingual_v2
+  _modelId: eleven_flash_v2_5
   _stability: 0.5
   _similarityBoost: 0.75
   _timeout: 15
+--- !u!114 &142084644921686818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c89c266f743dce488d124a143191629, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommentarySystemTest

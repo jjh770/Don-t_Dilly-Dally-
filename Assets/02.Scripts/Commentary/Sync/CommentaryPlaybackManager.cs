@@ -66,7 +66,7 @@ public class CommentaryPlaybackManager : MonoBehaviour
         string cacheKey = syncData.FinalText.GetHashCode().ToString();
         AudioClip clip = GetCachedClip(cacheKey);
 
-        // 캐시에 없으면 TTS 생성 (모든 타입 동일 처리)
+        // 캐시에 없으면 TTS 생성
         if (clip == null && _ttsManager != null)
         {
             try

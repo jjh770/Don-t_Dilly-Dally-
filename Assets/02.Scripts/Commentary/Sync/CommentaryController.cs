@@ -78,8 +78,6 @@ public class CommentaryController : MonoBehaviour
     public void HandleEventAsHost(GameEvent gameEvent)
     {
         if (!IsHost) return;
-
-        // 중복 이벤트 필터링
         if (IsDuplicateEvent(gameEvent)) return;
 
         // 우선순위 기반 처리
@@ -146,7 +144,7 @@ public class CommentaryController : MonoBehaviour
             return;
         }
 
-        // SyncData 생성 (TTS는 PlaybackManager에서 생성)
+        // SyncData 생성
         var syncData = CommentarySyncData.CreateFromEvent(
             gameEvent,
             ++_sequenceCounter,

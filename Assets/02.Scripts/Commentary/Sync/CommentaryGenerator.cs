@@ -10,9 +10,6 @@ public class GeneratedCommentaryData
 }
 
 // 코멘터리 문장 생성 담당 (호스트 전용)
-// - 고정형: 사전 정의 텍스트
-// - 템플릿형: 랜덤 선택
-// - 동적형: LLM으로 생성
 public class CommentaryGenerator : MonoBehaviour
 {
     [Header("참조")]
@@ -71,6 +68,7 @@ public class CommentaryGenerator : MonoBehaviour
         }
     };
 
+    // 타입에 따라 최종 텍스트를 생성
     public async Awaitable<GeneratedCommentaryData> GenerateCommentary(GameEvent gameEvent)
     {
         var result = new GeneratedCommentaryData();

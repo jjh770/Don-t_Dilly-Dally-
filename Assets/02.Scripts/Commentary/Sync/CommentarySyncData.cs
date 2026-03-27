@@ -1,9 +1,6 @@
 using System;
 
-/// <summary>
-/// 네트워크 전송용 코멘터리 데이터 DTO
-/// 호스트가 확정한 코멘터리 정보를 클라이언트에게 전송할 때 사용
-/// </summary>
+// 네트워크 전송용 코멘터리 데이터 DTO
 [Serializable]
 public class CommentarySyncData
 {
