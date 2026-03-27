@@ -81,6 +81,7 @@ public class LobbyCustomizingTransition : MonoBehaviour
         // Lobby 메인 패널 페이드 아웃 + 슬라이드
         if (_lobbyMainCanvasGroup != null)
         {
+            _lobbyMainCanvasGroup.blocksRaycasts = false;
             _currentSequence.Join(
                 _lobbyMainCanvasGroup.DOFade(0f, _transitionDuration).SetEase(_easeType)
             );
@@ -117,10 +118,7 @@ public class LobbyCustomizingTransition : MonoBehaviour
         _currentSequence.OnComplete(() =>
         {
             _isInCustomizingMode = true;
-            if (_lobbyMainPanel != null)
-            {
-                _lobbyMainPanel.gameObject.SetActive(false);
-            }
+  
             OnTransitionToCustomizingComplete?.Invoke();
         });
     }
@@ -132,15 +130,10 @@ public class LobbyCustomizingTransition : MonoBehaviour
         _currentSequence?.Kill();
         _currentSequence = DOTween.Sequence();
 
-        // Lobby 메인 패널 활성화
-        if (_lobbyMainPanel != null)
-        {
-            _lobbyMainPanel.gameObject.SetActive(true);
-        }
-
         // Lobby 메인 패널 페이드 인 + 슬라이드
         if (_lobbyMainCanvasGroup != null)
         {
+            _lobbyMainCanvasGroup.blocksRaycasts = true;
             _currentSequence.Join(
                 _lobbyMainCanvasGroup.DOFade(1f, _transitionDuration).SetEase(_easeType)
             );

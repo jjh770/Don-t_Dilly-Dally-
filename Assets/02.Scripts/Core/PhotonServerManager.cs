@@ -29,6 +29,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
     public string RoomCode => PhotonNetwork.InRoom? PhotonNetwork.CurrentRoom.Name : null;
+    public int CountOfPlayers => PhotonNetwork.CountOfPlayers;
 
 
     public event Action<string> OnFailedToJoinRoom;
@@ -85,12 +86,15 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
-        Debug.LogError($"[PhotonServerManager] Failed to join room: {message}");
+        Debug.LogWarning($"[PhotonServerManager] Failed to join room: {message}");
 
         switch (returnCode)
         {
             case ErrorCode.GameDoesNotExist:
                 OnFailedToJoinRoom?.Invoke("방이 존재하지 않습니다.");
+                break;
+            case ErrorCode.GameClosed:
+                OnFailedToJoinRoom?.Invoke("게임이 시작되었습니다.");
                 break;
             case ErrorCode.GameFull:
                 OnFailedToJoinRoom?.Invoke("방이 가득 찼습니다.");
