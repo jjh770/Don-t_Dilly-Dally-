@@ -317,11 +317,7 @@ namespace DontDillyDally.Data
 
             trayItem.transform.SetParent(_traySlotPoint, true);
 
-            PhotonView pv = trayItem.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
-            {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
-            }
+            NetworkItemOwnership.ReturnOwnershipToMaster(trayItem.GetComponent<PhotonView>());
         }
 
         private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)

@@ -18,6 +18,12 @@ namespace DontDillyDally.Data
         private bool _isOwnershipRequestPending;
         private int _grantedOwnerActorNumber = NoActorNumber;
 
+        private Action _onOwnershipAcquired;
+        private Action _onOwnershipFailed;
+        private float _pendingTimeout;
+        private float _pendingElapsed;
+        private bool _hasPendingCallback;
+
         public event Action<NetworkItemOwnership> OwnershipAcquiredLocally;
 
         public bool HasLeftSource => _itemState != null && _itemState.HasLeftSource;
@@ -46,6 +52,19 @@ namespace DontDillyDally.Data
         private void OnDisable()
         {
             PhotonNetwork.RemoveCallbackTarget(this);
+            CancelPendingRequest();
+        }
+
+        private void Update()
+        {
+            if (!_hasPendingCallback)
+                return;
+
+            _pendingElapsed += Time.deltaTime;
+            if (_pendingElapsed >= _pendingTimeout)
+            {
+                InvokePendingFailed();
+            }
         }
 
         /// <summary>
@@ -74,6 +93,64 @@ namespace DontDillyDally.Data
             {
                 _grantedOwnerActorNumber = NoActorNumber;
             }
+        }
+
+        /// <summary>
+        /// 아이템의 소유권을 MasterClient에게 반환합니다.
+        /// 모든 안전 검사를 포함하므로 어디서든 안전하게 호출할 수 있습니다.
+        /// </summary>
+        public static bool ReturnOwnershipToMaster(PhotonView photonView)
+        {
+            if (photonView == null)
+                return false;
+            if (!PhotonNetwork.InRoom)
+                return false;
+            if (!photonView.IsMine)
+                return false;
+            if (PhotonNetwork.MasterClient == null)
+                return false;
+            if (PhotonNetwork.IsMasterClient)
+                return false;
+
+            photonView.TransferOwnership(PhotonNetwork.MasterClient);
+            return true;
+        }
+
+        /// <summary>
+        /// 소유권을 요청하고, 결과를 콜백으로 받습니다.
+        /// 이미 소유 중이면 즉시 onAcquired를 호출합니다.
+        /// </summary>
+        public void RequestOwnershipWithCallback(Action onAcquired, Action onFailed, float timeout = 2f)
+        {
+            CancelPendingRequest();
+
+            if (IsOwnedLocally)
+            {
+                onAcquired?.Invoke();
+                return;
+            }
+
+            _onOwnershipAcquired = onAcquired;
+            _onOwnershipFailed = onFailed;
+            _pendingTimeout = timeout;
+            _pendingElapsed = 0f;
+            _hasPendingCallback = true;
+
+            TryAcquireOrRequestOwnership();
+        }
+
+        /// <summary>
+        /// 진행 중인 콜백 기반 소유권 요청을 취소합니다.
+        /// 콜백은 호출되지 않습니다.
+        /// </summary>
+        public void CancelPendingRequest()
+        {
+            _isOwnershipRequestPending = false;
+            _onOwnershipAcquired = null;
+            _onOwnershipFailed = null;
+            _hasPendingCallback = false;
+            _pendingElapsed = 0f;
+            _pendingTimeout = 0f;
         }
 
         public bool TryAcquireOrRequestOwnership()
@@ -179,7 +256,14 @@ namespace DontDillyDally.Data
             }
 
             if (_photonView.IsMine)
+            {
+                // 소유권 이전 시점에 직렬화 패킷 순서 역전으로 인한
+                // 콜라이더/IsKinematic 상태 고착 방지
+                _holdableItem?.EnsureIdlePhysicsState();
+
+                InvokePendingAcquired();
                 OwnershipAcquiredLocally?.Invoke(this);
+            }
         }
 
         public void OnOwnershipTransferFailed(PhotonView targetView, Player senderOfFailedRequest)
@@ -192,7 +276,28 @@ namespace DontDillyDally.Data
                 senderOfFailedRequest.ActorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
             {
                 _isOwnershipRequestPending = false;
+                InvokePendingFailed();
             }
+        }
+
+        private void InvokePendingAcquired()
+        {
+            if (!_hasPendingCallback)
+                return;
+
+            Action callback = _onOwnershipAcquired;
+            CancelPendingRequest();
+            callback?.Invoke();
+        }
+
+        private void InvokePendingFailed()
+        {
+            if (!_hasPendingCallback)
+                return;
+
+            Action callback = _onOwnershipFailed;
+            CancelPendingRequest();
+            callback?.Invoke();
         }
     }
 }

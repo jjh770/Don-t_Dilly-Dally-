@@ -7,7 +7,6 @@ namespace DontDillyDally.Data
     public class SyringeFillTarget : MonoBehaviour, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
-        private const float PendingOwnershipTimeout = 2f;
         private const ToolType FillInputMask = ToolType.Syringe | ToolType.AnestheticFluid | ToolType.SedativeFluid;
 
         [Header("주사기 주입 설정")]
@@ -22,9 +21,6 @@ namespace DontDillyDally.Data
         private PlayerInteractionAbility _pendingInteractionAbility;
         private ItemObject _pendingHeldItem;
         private FillResult _pendingFillResult;
-        private float _pendingOwnershipElapsed;
-        private bool _isAwaitingOwnership;
-        private bool _hasOutstandingFillOwnershipRequest;
 
         private PlayerInteractionAbility _activeInteractionAbility;
         private ItemObject _activeHeldItem;
@@ -45,35 +41,10 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void OnEnable()
-        {
-            if (_networkOwnership != null)
-            {
-                _networkOwnership.OwnershipAcquiredLocally += HandleOwnershipAcquiredLocally;
-            }
-        }
-
         private void OnDisable()
         {
-            if (_networkOwnership != null)
-            {
-                _networkOwnership.OwnershipAcquiredLocally -= HandleOwnershipAcquiredLocally;
-            }
-
+            _networkOwnership?.CancelPendingRequest();
             AbortCurrentInteraction(returnOwnershipToMaster: false);
-        }
-
-        private void Update()
-        {
-            if (!_isAwaitingOwnership)
-                return;
-
-            _pendingOwnershipElapsed += Time.deltaTime;
-            if (_pendingOwnershipElapsed >= PendingOwnershipTimeout)
-            {
-                ClearPendingState();
-                ReleaseOwnershipToMasterIfNeeded();
-            }
         }
 
         public bool CanInteractWith(ItemObject heldItem)
@@ -113,8 +84,18 @@ namespace DontDillyDally.Data
 
             if (_networkOwnership != null && !_networkOwnership.IsOwnedLocally)
             {
-                BeginPendingOwnershipRequest(interactionAbility, heldItem, fillResult);
-                _networkOwnership.TryAcquireOrRequestOwnership();
+                _pendingInteractionAbility = interactionAbility;
+                _pendingHeldItem = heldItem;
+                _pendingFillResult = fillResult;
+
+                _networkOwnership.RequestOwnershipWithCallback(
+                    onAcquired: () => StartFill(_pendingInteractionAbility, _pendingHeldItem, _pendingFillResult),
+                    onFailed: () =>
+                    {
+                        ClearPendingState();
+                        ReleaseOwnershipToMasterIfNeeded();
+                    }
+                );
                 return;
             }
 
@@ -123,33 +104,6 @@ namespace DontDillyDally.Data
 
         public void StopInteract()
         {
-        }
-
-        private void HandleOwnershipAcquiredLocally(NetworkItemOwnership ownership)
-        {
-            if (ownership != _networkOwnership)
-            {
-                return;
-            }
-
-            if (!_hasOutstandingFillOwnershipRequest)
-            {
-                return;
-            }
-
-            if (!_isAwaitingOwnership || _pendingInteractionAbility == null || _pendingHeldItem == null)
-            {
-                if (!_isFillInProgress)
-                {
-                    _hasOutstandingFillOwnershipRequest = false;
-                    ReleaseOwnershipToMasterIfNeeded();
-                }
-
-                return;
-            }
-
-            _hasOutstandingFillOwnershipRequest = false;
-            StartFill(_pendingInteractionAbility, _pendingHeldItem, _pendingFillResult);
         }
 
         private FillResult ResolveFill(ItemObject heldItem)
@@ -296,25 +250,10 @@ namespace DontDillyDally.Data
 
         private void ClearPendingState()
         {
-            _isAwaitingOwnership = false;
-            _hasOutstandingFillOwnershipRequest = false;
+            _networkOwnership?.CancelPendingRequest();
             _pendingInteractionAbility = null;
             _pendingHeldItem = null;
             _pendingFillResult = FillResult.Failure();
-            _pendingOwnershipElapsed = 0f;
-        }
-
-        private void BeginPendingOwnershipRequest(
-            PlayerInteractionAbility interactionAbility,
-            ItemObject heldItem,
-            FillResult fillResult)
-        {
-            _isAwaitingOwnership = true;
-            _hasOutstandingFillOwnershipRequest = true;
-            _pendingInteractionAbility = interactionAbility;
-            _pendingHeldItem = heldItem;
-            _pendingFillResult = fillResult;
-            _pendingOwnershipElapsed = 0f;
         }
 
         private void FinishCurrentInteraction(bool returnOwnershipToMaster = true)
@@ -362,28 +301,10 @@ namespace DontDillyDally.Data
 
         private void ReleaseOwnershipToMasterIfNeeded()
         {
-            if (!PhotonNetwork.InRoom || _networkOwnership == null || !_networkOwnership.IsOwnedLocally)
-            {
+            if (_networkOwnership == null)
                 return;
-            }
 
-            if (PhotonNetwork.MasterClient == null)
-            {
-                return;
-            }
-
-            if (PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
-            PhotonView photonView = _networkOwnership.PhotonView;
-            if (photonView == null)
-            {
-                return;
-            }
-
-            photonView.TransferOwnership(PhotonNetwork.MasterClient);
+            NetworkItemOwnership.ReturnOwnershipToMaster(_networkOwnership.PhotonView);
         }
 
         private static bool IsSupportedFillInput(ToolType toolType)

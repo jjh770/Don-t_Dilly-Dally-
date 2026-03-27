@@ -630,11 +630,7 @@ namespace DontDillyDally.Data
 
             itemObject.transform.SetParent(slotTransform, true);
 
-            PhotonView pv = itemObject.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
-            {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
-            }
+            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.GetComponent<PhotonView>());
         }
 
         private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)

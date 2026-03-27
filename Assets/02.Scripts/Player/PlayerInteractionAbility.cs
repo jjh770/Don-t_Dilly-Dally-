@@ -9,7 +9,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private const float HalfAngleMultiplier = 0.5f;
     private const float MinMoveSqrMagnitude = 0.01f;
     private const float DefaultSpeedMultiplier = 1f;
-    private const float PendingOwnershipTimeout = 2f;
+
     private const int GizmoSegments = 20;
     private const int MaxDetectionColliders = 10;
 
@@ -55,7 +55,6 @@ public class PlayerInteractionAbility : MonoBehaviour
     private IInteractable _pendingHoldInteractable;
     private ItemObject _pendingHeldItem;
     private NetworkItemOwnership _pendingOwnership;
-    private float _pendingOwnershipElapsed;
     private Action _onPendingHoldFailed;
     private bool _isExternalInteractionLocked;
 
@@ -75,8 +74,6 @@ public class PlayerInteractionAbility : MonoBehaviour
         {
             return;
         }
-
-        TryCompletePendingHold();
 
         if (_isExternalInteractionLocked)
         {
@@ -253,19 +250,25 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (ownership == null)
             return false;
 
-        if (ownership.IsOwnedLocally)
-        {
-            BeginHold(interactable, holdable, itemObject);
-            return true;
-        }
-
         _pendingHoldInteractable = interactable;
         _pendingHeldItem = itemObject;
         _pendingOwnership = ownership;
-        _pendingOwnershipElapsed = 0f;
 
-        ownership.TryAcquireOrRequestOwnership();
-        return false;
+        ownership.RequestOwnershipWithCallback(
+            onAcquired: () =>
+            {
+                if (_pendingHoldInteractable is IHoldable pendingHoldable && _pendingHeldItem != null)
+                    BeginHold(_pendingHoldInteractable, pendingHoldable, _pendingHeldItem);
+            },
+            onFailed: () =>
+            {
+                Action failedCallback = _onPendingHoldFailed;
+                ClearPendingHold();
+                failedCallback?.Invoke();
+            }
+        );
+
+        return ownership.IsOwnedLocally;
     }
 
     private void BeginHold(IInteractable interactable, IHoldable holdable, ItemObject itemObject)
@@ -293,35 +296,12 @@ public class PlayerInteractionAbility : MonoBehaviour
         return itemObject != null;
     }
 
-    private void TryCompletePendingHold()
-    {
-        if (_pendingHoldInteractable is not IHoldable holdable)
-            return;
-
-        if (_pendingHeldItem == null || _pendingOwnership == null)
-            return;
-
-        _pendingOwnershipElapsed += Time.deltaTime;
-        if (_pendingOwnershipElapsed >= PendingOwnershipTimeout)
-        {
-            Action failedCallback = _onPendingHoldFailed;
-            ClearPendingHold();
-            failedCallback?.Invoke();
-            return;
-        }
-
-        if (!_pendingOwnership.IsOwnedLocally)
-            return;
-
-        BeginHold(_pendingHoldInteractable, holdable, _pendingHeldItem);
-    }
-
     private void ClearPendingHold()
     {
+        _pendingOwnership?.CancelPendingRequest();
         _pendingHoldInteractable = null;
         _pendingHeldItem = null;
         _pendingOwnership = null;
-        _pendingOwnershipElapsed = 0f;
         _onPendingHoldFailed = null;
     }
 
