@@ -52,8 +52,6 @@ public class CommentaryPlaybackManager : MonoBehaviour
         _currentData = syncData;
         IsPlaying = true;
 
-        OnSubtitleChanged?.Invoke(syncData.FinalText);
-
         // 비동기로 오디오 재생 시작
         _ = PlayCommentaryAsync(syncData);
     }
@@ -85,6 +83,9 @@ public class CommentaryPlaybackManager : MonoBehaviour
 
         // 재생 중인 상태 확인 (비동기 중 StopPlayback이 호출됐을 수 있음)
         if (!IsPlaying || _currentData != syncData) return;
+
+        // 음성 재생 시작과 동시에 자막 표시
+        OnSubtitleChanged?.Invoke(syncData.FinalText);
 
         if (clip != null)
         {

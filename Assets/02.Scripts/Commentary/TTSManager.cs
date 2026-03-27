@@ -11,7 +11,7 @@ public class TTSManager : MonoBehaviour
     [SerializeField] private KeyConfig _apiKeyConfig;
 
     [Header("음성 세팅")]
-    [SerializeField] private string _modelId = "eleven_flash_v2_5";
+    [SerializeField] private string _modelId = "eleven_multilingual_v2";
     [SerializeField] private float _stability = 0.5f;
     [SerializeField] private float _similarityBoost = 0.75f;
 
