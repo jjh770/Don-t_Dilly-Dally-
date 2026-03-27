@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using DG.Tweening;
 using UnityEngine;
 
 [RequireComponent(typeof(CanvasGroup))]
@@ -11,8 +9,6 @@ public class UI_HospitalList : MonoBehaviour
     [SerializeField] private float _alphaFadeTime;
 
     private List<UI_HospitalItem> _items = new List<UI_HospitalItem>();
-    private CanvasGroup _canvasGroup;
-    private bool _isOpened = false;
 
     public event Action<string> OnDeleteOption;
     public event Action<string> OnSelected;
@@ -20,39 +16,6 @@ public class UI_HospitalList : MonoBehaviour
     private void Start()
     {
         _listTemplate.gameObject.SetActive(false);
-        _canvasGroup = GetComponent<CanvasGroup>();
-
-        _canvasGroup.alpha = 0;
-        _canvasGroup.blocksRaycasts = false;
-        _isOpened = false;
-    }
-
-    public void OpenToggle()
-    {
-        if (_isOpened)
-        {
-            Hide();
-        }
-        else
-        {
-            Show();
-        }
-    }
-
-    public void Show()
-    {
-        _canvasGroup.DOKill();
-        _canvasGroup.DOFade(1, _alphaFadeTime);
-        _canvasGroup.blocksRaycasts = true;
-        _isOpened = true;
-    }
-
-    public void Hide()
-    {
-        _canvasGroup.DOKill();
-        _canvasGroup.DOFade(0, _alphaFadeTime);
-        _canvasGroup.blocksRaycasts = false;
-        _isOpened = false;
     }
 
     public void SetOptions(IEnumerable<MyHospital> hospitals)
@@ -61,7 +24,7 @@ public class UI_HospitalList : MonoBehaviour
 
         foreach (var hospital in hospitals)
         {
-            string dateString = $"최근 접속 : {hospital.Time.ToLocalTime():yy.MM.dd HH:mm}";
+            string dateString = $"마지막 출근 :\n{hospital.Time.ToLocalTime():yy.MM.dd HH:mm}";
             AddItem(hospital.Name, dateString);
         }
     }
