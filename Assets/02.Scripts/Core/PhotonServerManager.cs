@@ -212,7 +212,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
             }
         }
         PhotonNetwork.CurrentRoom.IsOpen = false;
-        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Gameplay);
+        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Cutscene);
         message = string.Empty;
         return true;
     }
