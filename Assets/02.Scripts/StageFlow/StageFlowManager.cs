@@ -379,7 +379,6 @@ namespace DontDillyDally.StageFlow
         private async UniTask RunCutscenePhase(CancellationToken ct)
         {
             Debug.Log("[StageFlow]   컷씬 재생 시작 (3초 대기)");
-            EventManager.Instance?.OnGameStart();
 
             // TODO: 실제 컷씬 시스템 연동 시 교체
             await UniTask.Delay(TimeSpan.FromSeconds(CUTSCENE_DELAY_SEC), cancellationToken: ct);
