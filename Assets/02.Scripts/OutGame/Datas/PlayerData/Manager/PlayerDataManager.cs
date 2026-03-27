@@ -13,6 +13,8 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     [SerializeField] private string _playerID = "Player";
 
+    public string PlayerID => _playerID;
+
     public PlayerInformation PlayerInformation => _playerInformation;
 
     public event Action OnDataManagerReady;

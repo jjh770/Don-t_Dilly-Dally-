@@ -1,5 +1,6 @@
 using DontDillyDally.Data;
 using Photon.Pun;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -51,6 +52,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private ItemObject _pendingHeldItem;
     private NetworkItemOwnership _pendingOwnership;
     private float _pendingOwnershipElapsed;
+    private Action _onPendingHoldFailed;
     private bool _isExternalInteractionLocked;
 
     private void Awake()
@@ -264,7 +266,9 @@ public class PlayerInteractionAbility : MonoBehaviour
         _pendingOwnershipElapsed += Time.deltaTime;
         if (_pendingOwnershipElapsed >= PendingOwnershipTimeout)
         {
+            Action failedCallback = _onPendingHoldFailed;
             ClearPendingHold();
+            failedCallback?.Invoke();
             return;
         }
 
@@ -280,6 +284,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         _pendingHeldItem = null;
         _pendingOwnership = null;
         _pendingOwnershipElapsed = 0f;
+        _onPendingHoldFailed = null;
     }
 
     private void StopInteract()
@@ -354,7 +359,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         return true;
     }
 
-    public bool TryStartHoldFromExternal(IInteractable interactable)
+    public bool TryStartHoldFromExternal(IInteractable interactable, Action onPendingHoldFailed = null)
     {
         if (interactable == null)
         {
@@ -371,6 +376,7 @@ public class PlayerInteractionAbility : MonoBehaviour
             return false;
         }
 
+        _onPendingHoldFailed = onPendingHoldFailed;
         return TryStartHold(interactable);
     }
 
