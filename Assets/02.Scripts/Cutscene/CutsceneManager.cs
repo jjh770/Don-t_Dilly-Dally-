@@ -173,7 +173,7 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
     {
         var applyTasks = _characterSlots
             .Where(s => s.IsAssigned)
-            .Select(s => s.ApplyCustomizingAsync())
+            .Select(s => s.ApplyCustomizingAsync(ct))
             .ToArray();
 
         if (applyTasks.Length == 0) return;

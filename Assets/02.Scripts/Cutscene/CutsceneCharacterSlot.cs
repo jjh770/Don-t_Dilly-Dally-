@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using Photon.Realtime;
 using UnityEngine;
@@ -28,7 +29,7 @@ public class CutsceneCharacterSlot : MonoBehaviour
     }
 
     // 할당된 플레이어의 Photon CustomProperties에서 커스터마이징 데이터를 읽어 적용
-    public async UniTask ApplyCustomizingAsync()
+    public async UniTask ApplyCustomizingAsync(CancellationToken ct = default)
     {
         if (!IsAssigned) return;
 
@@ -61,7 +62,7 @@ public class CutsceneCharacterSlot : MonoBehaviour
 
         if (tasks.Count > 0)
         {
-            await UniTask.WhenAll(tasks);
+            await UniTask.WhenAll(tasks).AttachExternalCancellation(ct);
         }
     }
 
