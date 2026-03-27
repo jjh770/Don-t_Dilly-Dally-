@@ -5,6 +5,7 @@ using UnityEngine;
 public static class PlayerRegistry
 {
     private static readonly Dictionary<int, PlayerController> Players = new();
+    private static PlayerController _localPlayer;
 
     public static event Action<PlayerController> OnPlayerRegistered;
 
@@ -14,6 +15,16 @@ public static class PlayerRegistry
             return;
 
         Players[actorNumber] = player;
+        CacheLocalPlayerIfNeeded(player);
+        OnPlayerRegistered?.Invoke(player);
+    }
+
+    public static void RegisterLocal(PlayerController player)
+    {
+        if (player == null)
+            return;
+
+        _localPlayer = player;
         OnPlayerRegistered?.Invoke(player);
     }
 
@@ -26,6 +37,12 @@ public static class PlayerRegistry
             return;
 
         Players.Remove(actorNumber);
+        ClearLocalPlayerIfMatched(player);
+    }
+
+    public static void UnregisterLocal(PlayerController player)
+    {
+        ClearLocalPlayerIfMatched(player);
     }
 
     public static bool TryGetPlayer(int actorNumber, out PlayerController player)
@@ -35,33 +52,10 @@ public static class PlayerRegistry
 
     public static bool TryGetLocalPlayer(out PlayerController player)
     {
-        foreach (PlayerController candidate in Players.Values)
+        if (_localPlayer != null)
         {
-            if (candidate == null)
-            {
-                continue;
-            }
-
-            if (candidate.PhotonView == null || candidate.PhotonView.IsMine)
-            {
-                player = candidate;
-                return true;
-            }
-        }
-
-        PlayerController[] players = UnityEngine.Object.FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
-        foreach (PlayerController candidate in players)
-        {
-            if (candidate == null)
-            {
-                continue;
-            }
-
-            if (candidate.PhotonView == null || candidate.PhotonView.IsMine)
-            {
-                player = candidate;
-                return true;
-            }
+            player = _localPlayer;
+            return true;
         }
 
         player = null;
@@ -71,5 +65,23 @@ public static class PlayerRegistry
     public static IEnumerable<PlayerController> GetAllPlayers()
     {
         return Players.Values;
+    }
+
+    private static void CacheLocalPlayerIfNeeded(PlayerController player)
+    {
+        if (player == null || player.PhotonView == null || !player.PhotonView.IsMine)
+        {
+            return;
+        }
+
+        _localPlayer = player;
+    }
+
+    private static void ClearLocalPlayerIfMatched(PlayerController player)
+    {
+        if (_localPlayer == player)
+        {
+            _localPlayer = null;
+        }
     }
 }

@@ -30,10 +30,13 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_photonView?.Owner == null)
+        if (_photonView?.Owner != null)
+        {
+            PlayerRegistry.Unregister(_photonView.Owner.ActorNumber, this);
             return;
+        }
 
-        PlayerRegistry.Unregister(_photonView.Owner.ActorNumber, this);
+        PlayerRegistry.UnregisterLocal(this);
     }
 
     public Transform GetHoldPoint()
@@ -43,9 +46,15 @@ public class PlayerController : MonoBehaviour
 
     private void RegisterSelf()
     {
-        if (_photonView?.Owner == null)
+        if (_photonView?.Owner != null)
+        {
+            PlayerRegistry.Register(_photonView.Owner.ActorNumber, this);
             return;
+        }
 
-        PlayerRegistry.Register(_photonView.Owner.ActorNumber, this);
+        if (_photonView == null || _photonView.IsMine)
+        {
+            PlayerRegistry.RegisterLocal(this);
+        }
     }
 }

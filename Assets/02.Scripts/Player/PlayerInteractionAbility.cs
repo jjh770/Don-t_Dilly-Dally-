@@ -47,28 +47,18 @@ public class PlayerInteractionAbility : MonoBehaviour
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerMovement = GetComponent<PlayerMovementAbility>();
         _heldItemController = GetComponent<PlayerHeldItemController>();
-        if (_heldItemController == null)
-        {
-            _heldItemController = gameObject.AddComponent<PlayerHeldItemController>();
-        }
 
         _detectionAngleCos = Mathf.Cos(_detectionAngle * HalfAngleMultiplier * Mathf.Deg2Rad);
     }
 
     private void OnEnable()
     {
-        if (_heldItemController != null)
-        {
-            _heldItemController.HeldItemChanged += HandleHeldItemChanged;
-        }
+        _heldItemController.HeldItemChanged += HandleHeldItemChanged;
     }
 
     private void OnDisable()
     {
-        if (_heldItemController != null)
-        {
-            _heldItemController.HeldItemChanged -= HandleHeldItemChanged;
-        }
+        _heldItemController.HeldItemChanged -= HandleHeldItemChanged;
     }
 
     private void Update()
