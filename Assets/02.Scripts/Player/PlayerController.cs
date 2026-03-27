@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     private PhotonView _photonView;
-    private PlayerInteractionAbility _playerInteractionAbility;
+    private PlayerHeldItemController _heldItemController;
     private PlayerMovementAbility _movementAbility;
 
     public PhotonView PhotonView => _photonView;
@@ -14,7 +14,7 @@ public class PlayerController : MonoBehaviour
     private void Awake()
     {
         _photonView = GetComponent<PhotonView>();
-        _playerInteractionAbility = GetComponent<PlayerInteractionAbility>();
+        _heldItemController = GetComponent<PlayerHeldItemController>();
         _movementAbility = GetComponent<PlayerMovementAbility>();
     }
 
@@ -30,22 +30,31 @@ public class PlayerController : MonoBehaviour
 
     private void OnDisable()
     {
-        if (_photonView?.Owner == null)
+        if (_photonView?.Owner != null)
+        {
+            PlayerRegistry.Unregister(_photonView.Owner.ActorNumber, this);
             return;
+        }
 
-        PlayerRegistry.Unregister(_photonView.Owner.ActorNumber, this);
+        PlayerRegistry.UnregisterLocal(this);
     }
 
     public Transform GetHoldPoint()
     {
-        return _playerInteractionAbility != null ? _playerInteractionAbility.HoldPoint : null;
+        return _heldItemController != null ? _heldItemController.HoldPoint : null;
     }
 
     private void RegisterSelf()
     {
-        if (_photonView?.Owner == null)
+        if (_photonView?.Owner != null)
+        {
+            PlayerRegistry.Register(_photonView.Owner.ActorNumber, this);
             return;
+        }
 
-        PlayerRegistry.Register(_photonView.Owner.ActorNumber, this);
+        if (_photonView == null || _photonView.IsMine)
+        {
+            PlayerRegistry.RegisterLocal(this);
+        }
     }
 }

@@ -9,14 +9,15 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7223633189095976347}
-  - component: {fileID: 4964606833192628174}
-  - component: {fileID: 7875456608863318856}
-  - component: {fileID: 2693064677236881780}
-  - component: {fileID: 564289462170466119}
-  - component: {fileID: 8587728338667649636}
-  - component: {fileID: 4336998783441835300}
-  - component: {fileID: 6667023301189440432}
   - component: {fileID: 4918364566836233242}
+  - component: {fileID: 6820107001280207005}
+  - component: {fileID: 3543297119185888692}
+  - component: {fileID: 1977176301120194141}
+  - component: {fileID: 2154776202298399559}
+  - component: {fileID: 6266976512121888385}
+  - component: {fileID: 1572009220914191406}
+  - component: {fileID: 3241995776377645875}
+  - component: {fileID: 142084644921686818}
   m_Layer: 0
   m_Name: CommentarySystem
   m_TagString: Untagged
@@ -39,118 +40,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4964606833192628174
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e81e8fb276ee2c246906cca44c3336a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CommentaryAudioManager
-  _voiceSource: {fileID: 4918364566836233242}
-  _preGeneratedClips: []
---- !u!114 &7875456608863318856
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 805c3b54583ac91429c7d14231891635, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CommentaryManager
-  _eventManager: {fileID: 564289462170466119}
-  _narrationGenerator: {fileID: 6667023301189440432}
-  _ttsManager: {fileID: 4336998783441835300}
-  _audioManager: {fileID: 4964606833192628174}
-  _narrationUI: {fileID: 0}
-  _commentaryCooldown: 2
-  _recentEventCount: 5
---- !u!114 &2693064677236881780
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c89c266f743dce488d124a143191629, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CommentarySystemTest
-  _eventManager: {fileID: 564289462170466119}
---- !u!114 &564289462170466119
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 39cd4f075ab41e64ba8ff0f7db537a99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EventManager
-  _maxEventLogCount: 20
---- !u!114 &8587728338667649636
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73898e7de459ccf4eb6438a5d8937e24, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::LLMService
-  _apiKeyConfig: {fileID: 11400000, guid: 762ebe104081a1f479a21d4beaa264ac, type: 2}
-  _model: gemini-3.1-flash-lite-preview
-  _maxTokens: 100
-  _temperature: 0.7
-  _timeout: 10
---- !u!114 &4336998783441835300
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3f85a2d3809d15c4ba54b498d3b027f9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TTSManager
-  _apiKeyConfig: {fileID: 11400000, guid: 762ebe104081a1f479a21d4beaa264ac, type: 2}
-  _languageCode: ko-KR
-  _voiceName: ko-KR-Wavenet-A
-  _speakingRate: 1
-  _pitch: 0
-  _timeout: 15
---- !u!114 &6667023301189440432
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56930bf454567d148bce38dcd8e923a1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NarrationGenerator
-  _llmService: {fileID: 8587728338667649636}
-  _systemPrompt: "\uB2F9\uC2E0\uC740 \uAE34\uBC15\uD55C \uC218\uC220 \uAC8C\uC784\uC758
-    NPC \uC911\uACC4\uC790\uC785\uB2C8\uB2E4. \uAC8C\uC784 \uC0C1\uD669\uC744 \uC9E7\uACE0
-    \uAE34\uBC15\uD558\uAC8C \uC911\uACC4\uD574\uC8FC\uC138\uC694. \uD55C \uBB38\uC7A5\uC73C\uB85C
-    \uB2F5\uBCC0\uD558\uACE0, \uB290\uB08C\uD45C\uB97C \uC801\uADF9\uC801\uC73C\uB85C
-    \uC0AC\uC6A9\uD558\uC138\uC694."
 --- !u!82 &4918364566836233242
 AudioSource:
   m_ObjectHideFlags: 0
@@ -248,3 +137,122 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &6820107001280207005
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c820916e6b20fe43bbf2b8c65626bea, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommentaryController
+  _syncManager: {fileID: 2154776202298399559}
+  _playbackManager: {fileID: 1977176301120194141}
+  _generator: {fileID: 3543297119185888692}
+  _duplicateEventCooldown: 1
+  _maxQueueSize: 5
+--- !u!114 &3543297119185888692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0f624a373177f0045b5b6c74287a7a77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommentaryGenerator
+  _llmService: {fileID: 1572009220914191406}
+  _systemPromptFile: {fileID: 4900000, guid: bc8627771d32926438d7accc95f5366f, type: 3}
+  _recentEventCount: 5
+--- !u!114 &1977176301120194141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c848fde5220dcd049a78e0c2ad901ae6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommentaryPlaybackManager
+  _audioSource: {fileID: 4918364566836233242}
+  _ttsManager: {fileID: 3241995776377645875}
+  _defaultDuration: 3
+--- !u!114 &2154776202298399559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61ac3fb3da22c9f4bbe5f136ad61d43e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommentarySyncManager
+  _playbackDelaySeconds: 0.3
+--- !u!114 &6266976512121888385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 39cd4f075ab41e64ba8ff0f7db537a99, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::EventManager
+  _maxEventLogCount: 20
+--- !u!114 &1572009220914191406
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73898e7de459ccf4eb6438a5d8937e24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LLMService
+  _apiKeyConfig: {fileID: 11400000, guid: 6652b3279f2fbc54cabf438d19791776, type: 2}
+  _model: gemini-3.1-flash-lite-preview
+  _maxTokens: 100
+  _temperature: 0.7
+  _timeout: 10
+--- !u!114 &3241995776377645875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3f85a2d3809d15c4ba54b498d3b027f9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TTSManager
+  _apiKeyConfig: {fileID: 11400000, guid: 6652b3279f2fbc54cabf438d19791776, type: 2}
+  _modelId: eleven_flash_v2_5
+  _stability: 0.5
+  _similarityBoost: 0.75
+  _timeout: 15
+--- !u!114 &142084644921686818
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1308071506904521794}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c89c266f743dce488d124a143191629, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CommentarySystemTest

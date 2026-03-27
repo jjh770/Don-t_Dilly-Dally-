@@ -18,6 +18,8 @@ public class UI_Commentary : MonoBehaviour
 
     private Coroutine _displayCoroutine;
 
+    private bool _isSubscribed = false;
+
     private void Awake()
     {
         if (_canvasGroup == null && _narrationPanel != null)
@@ -28,19 +30,57 @@ public class UI_Commentary : MonoBehaviour
         HideImmediate();
     }
 
+    private void Start()
+    {
+        // Start에서 다시 구독 시도 (초기화 순서 문제 해결)
+        TrySubscribe();
+    }
+
     private void OnEnable()
     {
-        if (CommentaryManager.Instance != null)
-        {
-            CommentaryManager.Instance.OnNarrationGenerated += ShowNarration;
-        }
+        TrySubscribe();
     }
 
     private void OnDisable()
     {
-        if (CommentaryManager.Instance != null)
+        TryUnsubscribe();
+    }
+
+    private void TrySubscribe()
+    {
+        if (_isSubscribed) return;
+
+        if (CommentaryController.Instance != null)
         {
-            CommentaryManager.Instance.OnNarrationGenerated -= ShowNarration;
+            CommentaryController.Instance.OnNarrationGenerated += ShowNarration;
+            _isSubscribed = true;
+        }
+        else
+        {
+            // Instance가 아직 없으면 다음 프레임에 재시도
+            StartCoroutine(RetrySubscribe());
+        }
+    }
+
+    private void TryUnsubscribe()
+    {
+        if (!_isSubscribed) return;
+
+        if (CommentaryController.Instance != null)
+        {
+            CommentaryController.Instance.OnNarrationGenerated -= ShowNarration;
+        }
+        _isSubscribed = false;
+    }
+
+    private System.Collections.IEnumerator RetrySubscribe()
+    {
+        yield return null; // 다음 프레임 대기
+
+        if (!_isSubscribed && CommentaryController.Instance != null)
+        {
+            CommentaryController.Instance.OnNarrationGenerated += ShowNarration;
+            _isSubscribed = true;
         }
     }
 

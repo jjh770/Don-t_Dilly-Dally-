@@ -82,8 +82,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
-            if (interactionAbility == null)
+            IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+            if (heldItemInteractor == null)
             {
                 return;
             }
@@ -94,9 +94,9 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (interactionAbility.CurrentHeldItem == null)
+            if (heldItemInteractor.CurrentHeldItem == null)
             {
-                HandleOpenDoorEmptyHandInteraction(interactionAbility);
+                HandleOpenDoorEmptyHandInteraction(heldItemInteractor);
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            TryInsertPotion(interactionAbility, interactionAbility.CurrentHeldItem, availableSlotIndex);
+            TryInsertPotion(heldItemInteractor, heldItemInteractor.CurrentHeldItem, availableSlotIndex);
         }
 
         public void StopInteract()
@@ -156,11 +156,11 @@ namespace DontDillyDally.Data
             OpenDoorAndSync();
         }
 
-        private void HandleOpenDoorEmptyHandInteraction(PlayerInteractionAbility interactionAbility)
+        private void HandleOpenDoorEmptyHandInteraction(IHeldItemInteractor heldItemInteractor)
         {
             if (_storedOutputItem != null)
             {
-                TryTakeOutput(interactionAbility);
+                TryTakeOutput(heldItemInteractor);
                 return;
             }
 
@@ -179,10 +179,10 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            TryTakeStoredInput(interactionAbility);
+            TryTakeStoredInput(heldItemInteractor);
         }
 
-        private void TryInsertPotion(PlayerInteractionAbility interactionAbility, ItemObject itemObject, int slotIndex)
+        private void TryInsertPotion(IHeldItemInteractor heldItemInteractor, ItemObject itemObject, int slotIndex)
         {
             if (!_potionMixingMachine.TryResolvePotionInput(itemObject, out ToolType potionToolType))
             {
@@ -194,7 +194,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(itemObject))
+            if (!heldItemInteractor.TryReleaseHeldItem(itemObject))
             {
                 return;
             }
@@ -303,7 +303,7 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void TryTakeStoredInput(PlayerInteractionAbility interactionAbility)
+        private void TryTakeStoredInput(IHeldItemInteractor heldItemInteractor)
         {
             int slotIndex = GetFirstOccupiedSlotIndex();
             if (slotIndex < 0)
@@ -328,13 +328,13 @@ namespace DontDillyDally.Data
             // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
             // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
             ItemObject itemToRestore = storedItem;
-            interactionAbility.TryStartHoldFromExternal(interactable, () =>
+            heldItemInteractor.TryPickupInteractable(interactable, () =>
             {
                 SetStoredItemInteractionEnabled(itemToRestore, true);
             });
         }
 
-        private void TryTakeOutput(PlayerInteractionAbility interactionAbility)
+        private void TryTakeOutput(IHeldItemInteractor heldItemInteractor)
         {
             if (_storedOutputItem == null || !_storedOutputItem.TryGetComponent(out IInteractable interactable))
             {
@@ -353,7 +353,7 @@ namespace DontDillyDally.Data
 
             // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
             // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
-            interactionAbility.TryStartHoldFromExternal(interactable, () =>
+            heldItemInteractor.TryPickupInteractable(interactable, () =>
             {
                 SetStoredItemInteractionEnabled(itemToRestore, true);
             });
@@ -630,11 +630,7 @@ namespace DontDillyDally.Data
 
             itemObject.transform.SetParent(slotTransform, true);
 
-            PhotonView pv = itemObject.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
-            {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
-            }
+            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.GetComponent<PhotonView>());
         }
 
         private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)

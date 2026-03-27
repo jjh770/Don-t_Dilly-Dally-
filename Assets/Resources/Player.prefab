@@ -321,6 +321,7 @@ GameObject:
   - component: {fileID: 2460008741056850297}
   - component: {fileID: 2809619115966644710}
   - component: {fileID: 3286292822046303028}
+  - component: {fileID: 2795253002928112685}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -463,11 +464,6 @@ MonoBehaviour:
   _detectionHeightOffset: 0.5
   _pushSpeedMultiplier: 0.5
   _pushRotationMultiplier: 0.1
-  _throwForce: 8
-  _throwRotationSpeed: 20
-  _throwDelay: 0.2
-  _rotationAngleThreshold: 5
-  _holdPoint: {fileID: 1418133846914244361}
   _interactableLayer:
     serializedVersion: 2
     m_Bits: 320
@@ -639,6 +635,23 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRoleView
   _indicatorRenderer: {fileID: 3233333596537894041}
+--- !u!114 &2795253002928112685
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6536501996314029870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4ac03efd84d8c1439fe10a4f478b6df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerHeldItemController
+  _holdPoint: {fileID: 1418133846914244361}
+  _throwForce: 5
+  _throwRotationSpeed: 20
+  _throwDelay: 0.2
+  _rotationAngleThreshold: 5
 --- !u!1 &8082944421811993182
 GameObject:
   m_ObjectHideFlags: 0

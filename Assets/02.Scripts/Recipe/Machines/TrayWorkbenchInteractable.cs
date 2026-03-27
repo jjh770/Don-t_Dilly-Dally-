@@ -32,22 +32,22 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
-            if (interactionAbility == null)
+            IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+            if (heldItemInteractor == null)
             {
                 return;
             }
 
-            ItemObject heldItem = interactionAbility.CurrentHeldItem;
+            ItemObject heldItem = heldItemInteractor.CurrentHeldItem;
             if (heldItem == null)
             {
-                TryTakeTray(interactionAbility);
+                TryTakeTray(heldItemInteractor);
                 return;
             }
 
             if (heldItem is TrayItem trayItem)
             {
-                TryPlaceTray(interactionAbility, trayItem);
+                TryPlaceTray(heldItemInteractor, trayItem);
                 return;
             }
 
@@ -58,13 +58,13 @@ namespace DontDillyDally.Data
 
             if (heldItem is BasicMaterialItem basicMaterialItem)
             {
-                TryPlaceBasicMaterial(interactionAbility, basicMaterialItem);
+                TryPlaceBasicMaterial(heldItemInteractor, basicMaterialItem);
                 return;
             }
 
             if (heldItem is MixToolItem mixToolItem)
             {
-                TryPlaceMixToolItem(interactionAbility, mixToolItem);
+                TryPlaceMixToolItem(heldItemInteractor, mixToolItem);
             }
         }
 
@@ -98,14 +98,14 @@ namespace DontDillyDally.Data
 
         #region Interaction Handlers
 
-        private void TryPlaceTray(PlayerInteractionAbility interactionAbility, TrayItem trayItem)
+        private void TryPlaceTray(IHeldItemInteractor heldItemInteractor, TrayItem trayItem)
         {
             if (!_trayWorkbench.CanPlaceTrayItem(trayItem))
             {
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(trayItem))
+            if (!heldItemInteractor.TryReleaseHeldItem(trayItem))
             {
                 return;
             }
@@ -121,7 +121,7 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void TryPlaceBasicMaterial(PlayerInteractionAbility interactionAbility, BasicMaterialItem basicMaterialItem)
+        private void TryPlaceBasicMaterial(IHeldItemInteractor heldItemInteractor, BasicMaterialItem basicMaterialItem)
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem == null || trayItem.Slots == null)
@@ -140,7 +140,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(basicMaterialItem))
+            if (!heldItemInteractor.TryReleaseHeldItem(basicMaterialItem))
             {
                 return;
             }
@@ -162,7 +162,7 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void TryPlaceMixToolItem(PlayerInteractionAbility interactionAbility, MixToolItem mixToolItem)
+        private void TryPlaceMixToolItem(IHeldItemInteractor heldItemInteractor, MixToolItem mixToolItem)
         {
             CraftedMaterialType materialType = ResolveMixToolMaterialType(mixToolItem.ToolType);
             if (materialType == CraftedMaterialType.None)
@@ -187,7 +187,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(mixToolItem))
+            if (!heldItemInteractor.TryReleaseHeldItem(mixToolItem))
             {
                 return;
             }
@@ -220,7 +220,7 @@ namespace DontDillyDally.Data
             };
         }
 
-        private void TryTakeTray(PlayerInteractionAbility interactionAbility)
+        private void TryTakeTray(IHeldItemInteractor heldItemInteractor)
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem == null)
@@ -244,7 +244,7 @@ namespace DontDillyDally.Data
             }
 
             // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            interactionAbility.TryStartHoldFromExternal(holdable);
+            heldItemInteractor.TryPickupInteractable(holdable);
         }
 
         #endregion
@@ -317,11 +317,7 @@ namespace DontDillyDally.Data
 
             trayItem.transform.SetParent(_traySlotPoint, true);
 
-            PhotonView pv = trayItem.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
-            {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
-            }
+            NetworkItemOwnership.ReturnOwnershipToMaster(trayItem.GetComponent<PhotonView>());
         }
 
         private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)
