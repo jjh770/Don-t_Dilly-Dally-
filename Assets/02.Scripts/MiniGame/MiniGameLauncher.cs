@@ -21,16 +21,25 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private MiniGameUIController _uiController;
 
         [Header("결과 연출")]
-        [Tooltip("성공/실패 후 UI가 유지되는 시간 (초)")]
+        [Tooltip("성공/실패 UI가 유지되는 시간(초)")]
         [SerializeField] private float _resultDisplayDuration = 0.5f;
 
         private IMiniGame _activeMiniGame;
         private IInputProvider _inputProvider;
         private Coroutine _resultCoroutine;
+        private PlayerMovementAbility _lockedMovementAbility;
+
+        public bool IsPlaying =>
+            _activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing;
 
         private void Awake()
         {
             _inputProvider = new UnityInputProvider();
+        }
+
+        private void OnDisable()
+        {
+            UnlockLocalPlayerMovement();
         }
 
         // 외부에서 미니게임 실행을 요청하는 단일 진입점.
@@ -41,6 +50,8 @@ namespace DontDillyDally.MiniGame
                 Debug.LogWarning("[MiniGameLauncher] 이미 진행 중인 미니게임이 있음");
                 return;
             }
+
+            LockLocalPlayerMovement();
 
             IMiniGame game = CreateMiniGame(type);
             MiniGameConfig config = GetConfig(type);
@@ -60,6 +71,7 @@ namespace DontDillyDally.MiniGame
             {
                 _uiController.HideMiniGameUI();
                 _activeMiniGame = null;
+                UnlockLocalPlayerMovement();
             }
         }
 
@@ -74,9 +86,6 @@ namespace DontDillyDally.MiniGame
 
             _activeMiniGame?.Abort();
         }
-
-        public bool IsPlaying =>
-            _activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing;
 
         private void Update()
         {
@@ -106,6 +115,7 @@ namespace DontDillyDally.MiniGame
             _uiController.HideMiniGameUI();
             _activeMiniGame = null;
             _resultCoroutine = null;
+            UnlockLocalPlayerMovement();
             onComplete?.Invoke(result);
         }
 
@@ -118,6 +128,36 @@ namespace DontDillyDally.MiniGame
                 MiniGameType.PrecisionStop => _precisionStopConfig,
                 _ => throw new ArgumentOutOfRangeException(nameof(type))
             };
+        }
+
+        private void LockLocalPlayerMovement()
+        {
+            if (_lockedMovementAbility != null)
+            {
+                _lockedMovementAbility.SetMovementLocked(true);
+                return;
+            }
+
+            _lockedMovementAbility = ResolveLocalMovementAbility();
+            _lockedMovementAbility?.SetMovementLocked(true);
+        }
+
+        private void UnlockLocalPlayerMovement()
+        {
+            if (_lockedMovementAbility == null)
+            {
+                return;
+            }
+
+            _lockedMovementAbility.SetMovementLocked(false);
+            _lockedMovementAbility = null;
+        }
+
+        private static PlayerMovementAbility ResolveLocalMovementAbility()
+        {
+            return PlayerRegistry.TryGetLocalMovementAbility(out PlayerMovementAbility movementAbility)
+                ? movementAbility
+                : null;
         }
     }
 }

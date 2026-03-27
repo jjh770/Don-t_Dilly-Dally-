@@ -18,11 +18,11 @@ namespace DontDillyDally.Data
         private NetworkItemOwnership _networkOwnership;
         private bool _isInteractionLocked;
 
-        private PlayerInteractionAbility _pendingInteractionAbility;
+        private IHeldItemInteractor _pendingHeldItemInteractor;
         private ItemObject _pendingHeldItem;
         private FillResult _pendingFillResult;
 
-        private PlayerInteractionAbility _activeInteractionAbility;
+        private IHeldItemInteractor _activeHeldItemInteractor;
         private ItemObject _activeHeldItem;
         private bool _isFillInProgress;
         private bool _isPlayerInteractionLocked;
@@ -69,13 +69,13 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
-            if (interactionAbility == null)
+            IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+            if (heldItemInteractor == null)
             {
                 return;
             }
 
-            ItemObject heldItem = interactionAbility.CurrentHeldItem;
+            ItemObject heldItem = heldItemInteractor.CurrentHeldItem;
             FillResult fillResult = ResolveFill(heldItem);
             if (!fillResult.Success)
             {
@@ -84,12 +84,12 @@ namespace DontDillyDally.Data
 
             if (_networkOwnership != null && !_networkOwnership.IsOwnedLocally)
             {
-                _pendingInteractionAbility = interactionAbility;
+                _pendingHeldItemInteractor = heldItemInteractor;
                 _pendingHeldItem = heldItem;
                 _pendingFillResult = fillResult;
 
                 _networkOwnership.RequestOwnershipWithCallback(
-                    onAcquired: () => StartFill(_pendingInteractionAbility, _pendingHeldItem, _pendingFillResult),
+                    onAcquired: () => StartFill(_pendingHeldItemInteractor, _pendingHeldItem, _pendingFillResult),
                     onFailed: () =>
                     {
                         ClearPendingState();
@@ -99,7 +99,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            StartFill(interactionAbility, heldItem, fillResult);
+            StartFill(heldItemInteractor, heldItem, fillResult);
         }
 
         public void StopInteract()
@@ -148,14 +148,14 @@ namespace DontDillyDally.Data
             return FillResult.Succeed(usedToolsMask, rule.ResultMaterial, rule.CraftingDuration);
         }
 
-        private void StartFill(PlayerInteractionAbility interactionAbility, ItemObject heldItem, FillResult fillResult)
+        private void StartFill(IHeldItemInteractor heldItemInteractor, ItemObject heldItem, FillResult fillResult)
         {
             if (_isInteractionLocked)
             {
                 return;
             }
 
-            if (interactionAbility == null || heldItem == null)
+            if (heldItemInteractor == null || heldItem == null)
             {
                 AbortCurrentInteraction();
                 return;
@@ -163,7 +163,7 @@ namespace DontDillyDally.Data
 
             ClearPendingState();
 
-            if (!interactionAbility.TryBeginExternalInteractionLock(heldItem))
+            if (!heldItemInteractor.TryBeginHeldItemInteractionLock(heldItem))
             {
                 AbortCurrentInteraction();
                 return;
@@ -172,7 +172,7 @@ namespace DontDillyDally.Data
             _isInteractionLocked = true;
             _isFillInProgress = true;
             _isPlayerInteractionLocked = true;
-            _activeInteractionAbility = interactionAbility;
+            _activeHeldItemInteractor = heldItemInteractor;
             _activeHeldItem = heldItem;
 
             _networkOwnership?.LockOwnershipOnController();
@@ -198,10 +198,10 @@ namespace DontDillyDally.Data
 
             _isInteractionLocked = false;
 
-            PlayerInteractionAbility interactionAbility = _activeInteractionAbility;
+            IHeldItemInteractor heldItemInteractor = _activeHeldItemInteractor;
             ItemObject heldItem = _activeHeldItem;
 
-            if (interactionAbility == null || heldItem == null)
+            if (heldItemInteractor == null || heldItem == null)
             {
                 FinishCurrentInteraction();
                 return;
@@ -209,7 +209,7 @@ namespace DontDillyDally.Data
 
             ReleaseInteractionLockIfNeeded();
 
-            if (!interactionAbility.TryConsumeHeldItem(heldItem))
+            if (!heldItemInteractor.TryConsumeHeldItem(heldItem))
             {
                 FinishCurrentInteraction();
                 return;
@@ -221,7 +221,7 @@ namespace DontDillyDally.Data
             GameObject spawnedObject = SpawnResult(resultMaterial, spawnPosition, spawnRotation);
             if (spawnedObject != null && spawnedObject.TryGetComponent(out IInteractable interactable))
             {
-                interactionAbility.TryStartHoldFromExternal(interactable);
+                heldItemInteractor.TryPickupInteractable(interactable);
             }
 
             FinishCurrentInteraction();
@@ -251,7 +251,7 @@ namespace DontDillyDally.Data
         private void ClearPendingState()
         {
             _networkOwnership?.CancelPendingRequest();
-            _pendingInteractionAbility = null;
+            _pendingHeldItemInteractor = null;
             _pendingHeldItem = null;
             _pendingFillResult = FillResult.Failure();
         }
@@ -282,7 +282,7 @@ namespace DontDillyDally.Data
 
         private void ClearActiveFillState()
         {
-            _activeInteractionAbility = null;
+            _activeHeldItemInteractor = null;
             _activeHeldItem = null;
             _isFillInProgress = false;
             _isPlayerInteractionLocked = false;
@@ -295,7 +295,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            _activeInteractionAbility?.EndExternalInteractionLock();
+            _activeHeldItemInteractor?.EndHeldItemInteractionLock();
             _isPlayerInteractionLocked = false;
         }
 

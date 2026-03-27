@@ -1,9 +1,8 @@
 using DontDillyDally.Data;
-using Photon.Pun;
 using System;
-using System.Collections;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerHeldItemController))]
 public class PlayerInteractionAbility : MonoBehaviour
 {
     private const float HalfAngleMultiplier = 0.5f;
@@ -15,7 +14,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     private readonly Collider[] _detectionColliders = new Collider[MaxDetectionColliders];
 
-    [Header("아이템 탐지 설정")]
+    [Header("아이템 감지 설정")]
     [SerializeField] private float _detectionRadius = 2f;
     [SerializeField] private float _detectionAngle = 60f;
     [SerializeField] private float _detectionHeight = 1f;
@@ -25,19 +24,11 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private float _pushSpeedMultiplier = 0.5f;
     [SerializeField] private float _pushRotationMultiplier = 0.2f;
 
-    [Header("던지기 설정")]
-    [SerializeField] private float _throwForce = 5f;
-    [SerializeField] private float _throwRotationSpeed = 20f;
-    [SerializeField] private float _throwDelay = 0.2f;
-    [SerializeField] private float _rotationAngleThreshold = 5f;
-    [SerializeField] private Transform _holdPoint;
     [SerializeField] private LayerMask _interactableLayer;
-    public Transform HoldPoint => _holdPoint;
-    public ItemObject CurrentHeldItem => _currentHeldItem;
 
-    private IInteractable _currentInteractable;
-    // 들고있는 아이템 판별
-    private ItemObject _currentHeldItem;
+    public ItemObject CurrentHeldItem => _heldItemController != null ? _heldItemController.CurrentHeldItem : null;
+
+    private IInteractable _currentPushInteractable;
     private IInteractable _nearestInteractable;
     private IInteractable _previousNearestInteractable;
 
@@ -47,25 +38,37 @@ public class PlayerInteractionAbility : MonoBehaviour
     private PlayerController _playerController;
     private PlayerAnimator _playerAnimator;
     private PlayerMovementAbility _playerMovement;
-    private Camera _camera;
-    private bool _isThrowing;
+    private PlayerHeldItemController _heldItemController;
     private float _detectionAngleCos;
-    private Collider[] _playerColliders;
-
-    private IInteractable _pendingHoldInteractable;
-    private ItemObject _pendingHeldItem;
-    private NetworkItemOwnership _pendingOwnership;
-    private Action _onPendingHoldFailed;
-    private bool _isExternalInteractionLocked;
 
     private void Awake()
     {
         _playerController = GetComponent<PlayerController>();
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerMovement = GetComponent<PlayerMovementAbility>();
-        _camera = Camera.main;
+        _heldItemController = GetComponent<PlayerHeldItemController>();
+        if (_heldItemController == null)
+        {
+            _heldItemController = gameObject.AddComponent<PlayerHeldItemController>();
+        }
+
         _detectionAngleCos = Mathf.Cos(_detectionAngle * HalfAngleMultiplier * Mathf.Deg2Rad);
-        _playerColliders = GetComponentsInChildren<Collider>();
+    }
+
+    private void OnEnable()
+    {
+        if (_heldItemController != null)
+        {
+            _heldItemController.HeldItemChanged += HandleHeldItemChanged;
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (_heldItemController != null)
+        {
+            _heldItemController.HeldItemChanged -= HandleHeldItemChanged;
+        }
     }
 
     private void Update()
@@ -75,7 +78,7 @@ public class PlayerInteractionAbility : MonoBehaviour
             return;
         }
 
-        if (_isExternalInteractionLocked)
+        if (_heldItemController != null && _heldItemController.IsExternalInteractionLocked)
         {
             return;
         }
@@ -103,7 +106,6 @@ public class PlayerInteractionAbility : MonoBehaviour
                 continue;
             }
 
-            // 높이 체크
             float detectionCenterY = transform.position.y + _detectionHeightOffset;
             float heightDiff = Mathf.Abs(col.transform.position.y - detectionCenterY);
             if (heightDiff > _detectionHeight)
@@ -111,7 +113,6 @@ public class PlayerInteractionAbility : MonoBehaviour
                 continue;
             }
 
-            // 시야각 체크
             Vector3 directionToItem = col.transform.position - transform.position;
             directionToItem.y = 0;
             float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
@@ -123,9 +124,9 @@ public class PlayerInteractionAbility : MonoBehaviour
 
             float sqrDistance = (col.transform.position - transform.position).sqrMagnitude;
 
-            bool isCompatible = _currentHeldItem != null
+            bool isCompatible = CurrentHeldItem != null
                 && interactable is IItemAcceptor acceptor
-                && acceptor.CanAcceptItem(_currentHeldItem);
+                && acceptor.CanAcceptItem(CurrentHeldItem);
 
             if (isCompatible && sqrDistance < compatibleSqrDist)
             {
@@ -144,19 +145,12 @@ public class PlayerInteractionAbility : MonoBehaviour
         NotifyNearestInteractableChanged();
     }
 
-    private void SetCurrentHeldItem(ItemObject newItem)
-    {
-        if (_currentHeldItem == newItem)
-            return;
-
-        _currentHeldItem = newItem;
-        OnHeldItemChanged?.Invoke(_currentHeldItem);
-    }
-
     private void NotifyNearestInteractableChanged()
     {
         if (_nearestInteractable == _previousNearestInteractable)
+        {
             return;
+        }
 
         OnNearestInteractableChanged?.Invoke(_previousNearestInteractable, _nearestInteractable);
         _previousNearestInteractable = _nearestInteractable;
@@ -169,7 +163,9 @@ public class PlayerInteractionAbility : MonoBehaviour
             return null;
         }
 
-        if (_currentHeldItem != null && col.TryGetComponent(out IItemAcceptor acceptor) && acceptor is IInteractable acceptorInteractable)
+        if (CurrentHeldItem != null &&
+            col.TryGetComponent(out IItemAcceptor acceptor) &&
+            acceptor is IInteractable acceptorInteractable)
         {
             return acceptorInteractable;
         }
@@ -186,16 +182,26 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (_currentInteractable is IHoldable &&
+            if (_heldItemController != null && _heldItemController.IsThrowing)
+            {
+                return;
+            }
+
+            if (_heldItemController != null &&
+                _heldItemController.IsHoldingHoldable &&
                 _nearestInteractable != null &&
-                _nearestInteractable != _currentInteractable &&
+                _nearestInteractable != _heldItemController.CurrentHeldInteractable &&
                 _nearestInteractable is not IHoldable)
             {
                 StartInteract(_nearestInteractable);
                 return;
             }
 
-            if (_currentInteractable != null)
+            if (_heldItemController != null && _heldItemController.IsHoldingHoldable)
+            {
+                _heldItemController.TryReleaseHeldItem();
+            }
+            else if (_currentPushInteractable != null)
             {
                 StopInteract();
             }
@@ -205,31 +211,29 @@ public class PlayerInteractionAbility : MonoBehaviour
             }
         }
 
-        // Holdable 전용: 던지기
         if (Input.GetMouseButtonDown(0))
         {
-            if (_currentInteractable is not IHoldable) return;
-            if (_isThrowing) return;
-
-            StartCoroutine(ThrowItemCoroutine());
+            _heldItemController?.TryBeginThrow();
         }
     }
 
     private void StartInteract(IInteractable interactable)
     {
-        if (_currentInteractable is IHoldable && interactable is IHoldable)
+        if (_heldItemController != null && _heldItemController.IsHoldingHoldable && interactable is IHoldable)
+        {
             return;
+        }
 
         if (interactable is IHoldable)
         {
-            TryStartHold(interactable);
+            _heldItemController?.TryPickupInteractable(interactable);
             return;
         }
 
         if (interactable is IPushable)
         {
             interactable.Interact(transform);
-            _currentInteractable = interactable;
+            _currentPushInteractable = interactable;
             _playerAnimator.PlayGrabAnimation(true);
             _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);
             return;
@@ -238,252 +242,40 @@ public class PlayerInteractionAbility : MonoBehaviour
         interactable.Interact(transform);
     }
 
-    private bool TryStartHold(IInteractable interactable)
-    {
-        if (interactable is not IHoldable holdable)
-            return false;
-
-        if (!TryResolveHeldItem(interactable, out ItemObject itemObject))
-            return false;
-
-        NetworkItemOwnership ownership = itemObject.NetworkOwnership;
-        if (ownership == null)
-            return false;
-
-        _pendingHoldInteractable = interactable;
-        _pendingHeldItem = itemObject;
-        _pendingOwnership = ownership;
-
-        ownership.RequestOwnershipWithCallback(
-            onAcquired: () =>
-            {
-                if (_pendingHoldInteractable is IHoldable pendingHoldable && _pendingHeldItem != null)
-                    BeginHold(_pendingHoldInteractable, pendingHoldable, _pendingHeldItem);
-            },
-            onFailed: () =>
-            {
-                Action failedCallback = _onPendingHoldFailed;
-                ClearPendingHold();
-                failedCallback?.Invoke();
-            }
-        );
-
-        return ownership.IsOwnedLocally;
-    }
-
-    private void BeginHold(IInteractable interactable, IHoldable holdable, ItemObject itemObject)
-    {
-        holdable.Interact(_holdPoint, PhotonNetwork.LocalPlayer.ActorNumber);
-        itemObject.NetworkOwnership?.NotifyHoldStarted();
-        itemObject.NotifyLeftSource();
-
-        _currentInteractable = interactable;
-        SetCurrentHeldItem(itemObject);
-
-        ClearPendingHold();
-
-        _playerAnimator.PlayHoldAnimation(true);
-    }
-
-    private bool TryResolveHeldItem(IInteractable interactable, out ItemObject itemObject)
-    {
-        itemObject = null;
-
-        if (interactable is not Component component)
-            return false;
-
-        itemObject = component.GetComponent<ItemObject>();
-        return itemObject != null;
-    }
-
-    private void ClearPendingHold()
-    {
-        _pendingOwnership?.CancelPendingRequest();
-        _pendingHoldInteractable = null;
-        _pendingHeldItem = null;
-        _pendingOwnership = null;
-        _onPendingHoldFailed = null;
-    }
-
     private void StopInteract()
     {
-        if (_currentInteractable is IHoldable holdable)
+        if (_heldItemController != null && _heldItemController.IsHoldingHoldable)
         {
-            holdable.StopInteract();
-
-            _playerAnimator.PlayHoldAnimation(false);
-            _currentInteractable = null;
-            SetCurrentHeldItem(null);
+            _heldItemController.TryReleaseHeldItem();
             return;
         }
 
-        if (_currentInteractable is IPushable)
+        if (_currentPushInteractable is IPushable)
         {
-            _currentInteractable.StopInteract();
+            _currentPushInteractable.StopInteract();
             _playerAnimator.PlayGrabAnimation(false);
             _playerAnimator.PlayPushAnimation(false);
             _playerMovement.SetSpeedMultiplier(DefaultSpeedMultiplier, DefaultSpeedMultiplier);
         }
 
-        _currentInteractable = null;
-    }
-
-    public bool TryConsumeHeldItem(ItemObject expectedItem = null)
-    {
-        if (_currentHeldItem == null)
-            return false;
-
-        if (expectedItem != null && _currentHeldItem != expectedItem)
-            return false;
-
-        if (_currentInteractable is not IHoldable holdable)
-            return false;
-
-        ItemObject heldItem = _currentHeldItem;
-        holdable.StopInteract();
-
-        _playerAnimator.PlayHoldAnimation(false);
-        _currentInteractable = null;
-        SetCurrentHeldItem(null);
-
-        if (PhotonNetwork.InRoom)
-        {
-            PhotonNetwork.Destroy(heldItem.gameObject);
-        }
-        else
-        {
-            Destroy(heldItem.gameObject);
-        }
-
-        return true;
-    }
-
-    public bool TryReleaseHeldItem(ItemObject expectedItem = null)
-    {
-        if (_currentHeldItem == null)
-            return false;
-
-        if (expectedItem != null && _currentHeldItem != expectedItem)
-            return false;
-
-        if (_currentInteractable is not IHoldable holdable)
-            return false;
-
-        holdable.StopInteract();
-
-        _playerAnimator.PlayHoldAnimation(false);
-        _currentInteractable = null;
-        SetCurrentHeldItem(null);
-        return true;
-    }
-
-    public bool TryStartHoldFromExternal(IInteractable interactable, Action onPendingHoldFailed = null)
-    {
-        if (interactable == null)
-        {
-            return false;
-        }
-
-        if (_currentInteractable != null || _currentHeldItem != null)
-        {
-            return false;
-        }
-
-        if (interactable is not IHoldable)
-        {
-            return false;
-        }
-
-        _onPendingHoldFailed = onPendingHoldFailed;
-        return TryStartHold(interactable);
-    }
-
-    public bool TryBeginExternalInteractionLock(ItemObject expectedHeldItem)
-    {
-        if (_isExternalInteractionLocked)
-        {
-            return false;
-        }
-
-        if (_currentHeldItem == null || _currentHeldItem != expectedHeldItem)
-        {
-            return false;
-        }
-
-        if (_currentInteractable is not IHoldable)
-        {
-            return false;
-        }
-
-        _isExternalInteractionLocked = true;
-        _playerMovement.SetMovementLocked(true);
-        return true;
-    }
-
-    public void EndExternalInteractionLock()
-    {
-        _isExternalInteractionLocked = false;
-        _playerMovement.SetMovementLocked(false);
+        _currentPushInteractable = null;
     }
 
     private void HandlePushableMovement()
     {
-        if (_currentInteractable is not IPushable) return;
+        if (_currentPushInteractable is not IPushable)
+        {
+            return;
+        }
 
         Vector3 moveDirection = _playerMovement.MoveDirection;
         bool isMoving = moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
         _playerAnimator.PlayPushAnimation(isMoving);
     }
 
-    private IEnumerator ThrowItemCoroutine()
+    private void HandleHeldItemChanged(ItemObject heldItem)
     {
-        _isThrowing = true;
-
-        Vector3 throwDirection = GetMouseWorldDirection();
-        Quaternion targetRotation = Quaternion.LookRotation(throwDirection);
-
-        // 캐릭터 회전
-        while (Quaternion.Angle(transform.rotation, targetRotation) > _rotationAngleThreshold)
-        {
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _throwRotationSpeed * Time.deltaTime);
-            yield return null;
-        }
-        transform.rotation = targetRotation;
-
-        // 던지기
-        if (_currentInteractable is not IHoldable holdable)
-        {
-            _isThrowing = false;
-            yield break;
-        }
-
-        _playerAnimator.PlayThrowAnimation();
-        yield return new WaitForSeconds(_throwDelay);
-        holdable.Throw(throwDirection, _throwForce, _playerColliders);
-
-        _currentInteractable = null;
-        SetCurrentHeldItem(null);
-
-        // 잡는 애니메이션 취소
-        _playerAnimator.ResetThrowAnimation();
-        _playerAnimator.PlayHoldAnimation(false);
-
-        _isThrowing = false;
-    }
-
-    private Vector3 GetMouseWorldDirection()
-    {
-        Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-        Plane groundPlane = new Plane(Vector3.up, transform.position);
-
-        if (groundPlane.Raycast(ray, out float distance))
-        {
-            Vector3 hitPoint = ray.GetPoint(distance);
-            Vector3 direction = (hitPoint - transform.position).normalized;
-            return direction;
-        }
-
-        return transform.forward;
+        OnHeldItemChanged?.Invoke(heldItem);
     }
 
     private void OnDrawGizmosSelected()
@@ -498,11 +290,9 @@ public class PlayerInteractionAbility : MonoBehaviour
         Vector3 bottomOffset = centerOffset + Vector3.down * _detectionHeight;
         Vector3 topOffset = centerOffset + Vector3.up * _detectionHeight;
 
-        // 상단/하단 시야각 경계선
         DrawFanAtHeight(topOffset, leftDir, rightDir, halfAngle);
         DrawFanAtHeight(bottomOffset, leftDir, rightDir, halfAngle);
 
-        // 수직 경계선
         Gizmos.DrawLine(transform.position + topOffset, transform.position + bottomOffset);
         Gizmos.DrawLine(transform.position + leftDir * _detectionRadius + topOffset, transform.position + leftDir * _detectionRadius + bottomOffset);
         Gizmos.DrawLine(transform.position + rightDir * _detectionRadius + topOffset, transform.position + rightDir * _detectionRadius + bottomOffset);
@@ -515,11 +305,10 @@ public class PlayerInteractionAbility : MonoBehaviour
         Gizmos.DrawLine(origin, origin + leftDir * _detectionRadius);
         Gizmos.DrawLine(origin, origin + rightDir * _detectionRadius);
 
-        int segments = GizmoSegments;
-        float angleStep = _detectionAngle / segments;
+        float angleStep = _detectionAngle / GizmoSegments;
         Vector3 prevPoint = origin + leftDir * _detectionRadius;
 
-        for (int i = 1; i <= segments; i++)
+        for (int i = 1; i <= GizmoSegments; i++)
         {
             float angle = -halfAngle + angleStep * i;
             Vector3 dir = Quaternion.Euler(0, angle, 0) * transform.forward;
