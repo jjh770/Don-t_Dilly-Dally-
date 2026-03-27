@@ -4,10 +4,9 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(MixToolItem))]
-    public class SyringeFillTarget : MonoBehaviour, IInteractable
+    public class SyringeFillTarget : MonoBehaviour, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
-        private const float PendingOwnershipTimeout = 2f;
         private const ToolType FillInputMask = ToolType.Syringe | ToolType.AnestheticFluid | ToolType.SedativeFluid;
 
         [Header("주사기 주입 설정")]
@@ -19,14 +18,11 @@ namespace DontDillyDally.Data
         private NetworkItemOwnership _networkOwnership;
         private bool _isInteractionLocked;
 
-        private PlayerInteractionAbility _pendingInteractionAbility;
+        private IHeldItemInteractor _pendingHeldItemInteractor;
         private ItemObject _pendingHeldItem;
         private FillResult _pendingFillResult;
-        private float _pendingOwnershipElapsed;
-        private bool _isAwaitingOwnership;
-        private bool _hasOutstandingFillOwnershipRequest;
 
-        private PlayerInteractionAbility _activeInteractionAbility;
+        private IHeldItemInteractor _activeHeldItemInteractor;
         private ItemObject _activeHeldItem;
         private bool _isFillInProgress;
         private bool _isPlayerInteractionLocked;
@@ -45,40 +41,20 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void OnEnable()
-        {
-            if (_networkOwnership != null)
-            {
-                _networkOwnership.OwnershipAcquiredLocally += HandleOwnershipAcquiredLocally;
-            }
-        }
-
         private void OnDisable()
         {
-            if (_networkOwnership != null)
-            {
-                _networkOwnership.OwnershipAcquiredLocally -= HandleOwnershipAcquiredLocally;
-            }
-
+            _networkOwnership?.CancelPendingRequest();
             AbortCurrentInteraction(returnOwnershipToMaster: false);
-        }
-
-        private void Update()
-        {
-            if (!_isAwaitingOwnership)
-                return;
-
-            _pendingOwnershipElapsed += Time.deltaTime;
-            if (_pendingOwnershipElapsed >= PendingOwnershipTimeout)
-            {
-                ClearPendingState();
-                ReleaseOwnershipToMasterIfNeeded();
-            }
         }
 
         public bool CanInteractWith(ItemObject heldItem)
         {
             return ResolveFill(heldItem).Success;
+        }
+
+        public bool CanAcceptItem(ItemObject item)
+        {
+            return CanInteractWith(item);
         }
 
         public void Interact(Transform interactor)
@@ -93,13 +69,13 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
-            if (interactionAbility == null)
+            IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+            if (heldItemInteractor == null)
             {
                 return;
             }
 
-            ItemObject heldItem = interactionAbility.CurrentHeldItem;
+            ItemObject heldItem = heldItemInteractor.CurrentHeldItem;
             FillResult fillResult = ResolveFill(heldItem);
             if (!fillResult.Success)
             {
@@ -108,43 +84,26 @@ namespace DontDillyDally.Data
 
             if (_networkOwnership != null && !_networkOwnership.IsOwnedLocally)
             {
-                BeginPendingOwnershipRequest(interactionAbility, heldItem, fillResult);
-                _networkOwnership.TryAcquireOrRequestOwnership();
+                _pendingHeldItemInteractor = heldItemInteractor;
+                _pendingHeldItem = heldItem;
+                _pendingFillResult = fillResult;
+
+                _networkOwnership.RequestOwnershipWithCallback(
+                    onAcquired: () => StartFill(_pendingHeldItemInteractor, _pendingHeldItem, _pendingFillResult),
+                    onFailed: () =>
+                    {
+                        ClearPendingState();
+                        ReleaseOwnershipToMasterIfNeeded();
+                    }
+                );
                 return;
             }
 
-            StartFill(interactionAbility, heldItem, fillResult);
+            StartFill(heldItemInteractor, heldItem, fillResult);
         }
 
         public void StopInteract()
         {
-        }
-
-        private void HandleOwnershipAcquiredLocally(NetworkItemOwnership ownership)
-        {
-            if (ownership != _networkOwnership)
-            {
-                return;
-            }
-
-            if (!_hasOutstandingFillOwnershipRequest)
-            {
-                return;
-            }
-
-            if (!_isAwaitingOwnership || _pendingInteractionAbility == null || _pendingHeldItem == null)
-            {
-                if (!_isFillInProgress)
-                {
-                    _hasOutstandingFillOwnershipRequest = false;
-                    ReleaseOwnershipToMasterIfNeeded();
-                }
-
-                return;
-            }
-
-            _hasOutstandingFillOwnershipRequest = false;
-            StartFill(_pendingInteractionAbility, _pendingHeldItem, _pendingFillResult);
         }
 
         private FillResult ResolveFill(ItemObject heldItem)
@@ -189,14 +148,14 @@ namespace DontDillyDally.Data
             return FillResult.Succeed(usedToolsMask, rule.ResultMaterial, rule.CraftingDuration);
         }
 
-        private void StartFill(PlayerInteractionAbility interactionAbility, ItemObject heldItem, FillResult fillResult)
+        private void StartFill(IHeldItemInteractor heldItemInteractor, ItemObject heldItem, FillResult fillResult)
         {
             if (_isInteractionLocked)
             {
                 return;
             }
 
-            if (interactionAbility == null || heldItem == null)
+            if (heldItemInteractor == null || heldItem == null)
             {
                 AbortCurrentInteraction();
                 return;
@@ -204,7 +163,7 @@ namespace DontDillyDally.Data
 
             ClearPendingState();
 
-            if (!interactionAbility.TryBeginExternalInteractionLock(heldItem))
+            if (!heldItemInteractor.TryBeginHeldItemInteractionLock(heldItem))
             {
                 AbortCurrentInteraction();
                 return;
@@ -213,7 +172,7 @@ namespace DontDillyDally.Data
             _isInteractionLocked = true;
             _isFillInProgress = true;
             _isPlayerInteractionLocked = true;
-            _activeInteractionAbility = interactionAbility;
+            _activeHeldItemInteractor = heldItemInteractor;
             _activeHeldItem = heldItem;
 
             _networkOwnership?.LockOwnershipOnController();
@@ -239,10 +198,10 @@ namespace DontDillyDally.Data
 
             _isInteractionLocked = false;
 
-            PlayerInteractionAbility interactionAbility = _activeInteractionAbility;
+            IHeldItemInteractor heldItemInteractor = _activeHeldItemInteractor;
             ItemObject heldItem = _activeHeldItem;
 
-            if (interactionAbility == null || heldItem == null)
+            if (heldItemInteractor == null || heldItem == null)
             {
                 FinishCurrentInteraction();
                 return;
@@ -250,7 +209,7 @@ namespace DontDillyDally.Data
 
             ReleaseInteractionLockIfNeeded();
 
-            if (!interactionAbility.TryConsumeHeldItem(heldItem))
+            if (!heldItemInteractor.TryConsumeHeldItem(heldItem))
             {
                 FinishCurrentInteraction();
                 return;
@@ -262,7 +221,7 @@ namespace DontDillyDally.Data
             GameObject spawnedObject = SpawnResult(resultMaterial, spawnPosition, spawnRotation);
             if (spawnedObject != null && spawnedObject.TryGetComponent(out IInteractable interactable))
             {
-                interactionAbility.TryStartHoldFromExternal(interactable);
+                heldItemInteractor.TryPickupInteractable(interactable);
             }
 
             FinishCurrentInteraction();
@@ -291,25 +250,10 @@ namespace DontDillyDally.Data
 
         private void ClearPendingState()
         {
-            _isAwaitingOwnership = false;
-            _hasOutstandingFillOwnershipRequest = false;
-            _pendingInteractionAbility = null;
+            _networkOwnership?.CancelPendingRequest();
+            _pendingHeldItemInteractor = null;
             _pendingHeldItem = null;
             _pendingFillResult = FillResult.Failure();
-            _pendingOwnershipElapsed = 0f;
-        }
-
-        private void BeginPendingOwnershipRequest(
-            PlayerInteractionAbility interactionAbility,
-            ItemObject heldItem,
-            FillResult fillResult)
-        {
-            _isAwaitingOwnership = true;
-            _hasOutstandingFillOwnershipRequest = true;
-            _pendingInteractionAbility = interactionAbility;
-            _pendingHeldItem = heldItem;
-            _pendingFillResult = fillResult;
-            _pendingOwnershipElapsed = 0f;
         }
 
         private void FinishCurrentInteraction(bool returnOwnershipToMaster = true)
@@ -338,7 +282,7 @@ namespace DontDillyDally.Data
 
         private void ClearActiveFillState()
         {
-            _activeInteractionAbility = null;
+            _activeHeldItemInteractor = null;
             _activeHeldItem = null;
             _isFillInProgress = false;
             _isPlayerInteractionLocked = false;
@@ -351,34 +295,16 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            _activeInteractionAbility?.EndExternalInteractionLock();
+            _activeHeldItemInteractor?.EndHeldItemInteractionLock();
             _isPlayerInteractionLocked = false;
         }
 
         private void ReleaseOwnershipToMasterIfNeeded()
         {
-            if (!PhotonNetwork.InRoom || _networkOwnership == null || !_networkOwnership.IsOwnedLocally)
-            {
+            if (_networkOwnership == null)
                 return;
-            }
 
-            if (PhotonNetwork.MasterClient == null)
-            {
-                return;
-            }
-
-            if (PhotonNetwork.IsMasterClient)
-            {
-                return;
-            }
-
-            PhotonView photonView = _networkOwnership.PhotonView;
-            if (photonView == null)
-            {
-                return;
-            }
-
-            photonView.TransferOwnership(PhotonNetwork.MasterClient);
+            NetworkItemOwnership.ReturnOwnershipToMaster(_networkOwnership.PhotonView);
         }
 
         private static bool IsSupportedFillInput(ToolType toolType)

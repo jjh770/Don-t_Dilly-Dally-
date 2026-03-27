@@ -5,6 +5,7 @@ public enum ESceneType
     Lobby,
     WaitingRoom,
     Loading,
+    Cutscene,
 }
 
 public enum ESceneLoadMode

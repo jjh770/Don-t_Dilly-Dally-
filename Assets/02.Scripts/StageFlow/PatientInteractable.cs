@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.StageFlow
 {
     [RequireComponent(typeof(Collider))]
-    public class PatientInteractable : MonoBehaviour, IInteractable
+    public class PatientInteractable : MonoBehaviour, IInteractable, IItemAcceptor
     {
         [Header("환자 설정")]
         [SerializeField] private int _patientIndex;
@@ -72,6 +72,25 @@ namespace DontDillyDally.StageFlow
 
         public void StopInteract()
         {
+        }
+
+        public bool CanAcceptItem(ItemObject item)
+        {
+            if (item is not TrayItem)
+                return false;
+
+            StageFlowManager stageFlowManager = StageFlowManager.Instance;
+            if (stageFlowManager == null || !stageFlowManager.CanLocalInteractWithPatient)
+                return false;
+
+            if (_surgeonOnly && !stageFlowManager.IsLocalSurgeon)
+                return false;
+
+            if (_allowOnlyCurrentPatient &&
+                stageFlowManager.CurrentPatientIndex.Value != _patientIndex)
+                return false;
+
+            return true;
         }
     }
 }

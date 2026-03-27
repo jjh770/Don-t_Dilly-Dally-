@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class SterilizationMachineInteractable : MonoBehaviourPun, IInteractable
+    public class SterilizationMachineInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string SterilizedResultPrefabName = "BasicMaterialItem";
         private const int MaxSlots = 4;
@@ -79,8 +79,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PlayerInteractionAbility interactionAbility = interactor.GetComponent<PlayerInteractionAbility>();
-            if (interactionAbility == null)
+            IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+            if (heldItemInteractor == null)
             {
                 return;
             }
@@ -91,9 +91,9 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (interactionAbility.CurrentHeldItem == null)
+            if (heldItemInteractor.CurrentHeldItem == null)
             {
-                HandleOpenDoorEmptyHandInteraction(interactionAbility);
+                HandleOpenDoorEmptyHandInteraction(heldItemInteractor);
                 return;
             }
 
@@ -108,16 +108,43 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            TryInsertItem(interactionAbility, interactionAbility.CurrentHeldItem, availableSlotIndex);
+            TryInsertItem(heldItemInteractor, heldItemInteractor.CurrentHeldItem, availableSlotIndex);
         }
 
         public void StopInteract()
         {
         }
 
+        public bool CanAcceptItem(ItemObject item)
+        {
+            if (_sterilizationMachine == null)
+                return false;
+
+            if (_actionTimer != null && _actionTimer.IsRunning)
+                return false;
+
+            if (_isBatchCompleted)
+                return false;
+
+            if (GetFirstAvailableSlotIndex() < 0)
+                return false;
+
+            if (item is TrayItem trayItem)
+                return _sterilizationMachine.CanSterilizeTray(trayItem);
+
+            if (item is MixToolItem mixToolItem)
+            {
+                int playerId = Photon.Pun.PhotonNetwork.LocalPlayer != null
+                    ? Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber : 0;
+                return _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId).Success;
+            }
+
+            return false;
+        }
+
         #region Interaction Handlers
 
-        private void TryInsertItem(PlayerInteractionAbility interactionAbility, ItemObject itemObject, int slotIndex)
+        private void TryInsertItem(IHeldItemInteractor heldItemInteractor, ItemObject itemObject, int slotIndex)
         {
             if (itemObject == null)
             {
@@ -150,7 +177,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!interactionAbility.TryReleaseHeldItem(itemObject))
+            if (!heldItemInteractor.TryReleaseHeldItem(itemObject))
             {
                 return;
             }
@@ -272,7 +299,7 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void TryTakeCompletedItem(PlayerInteractionAbility interactionAbility)
+        private void TryTakeCompletedItem(IHeldItemInteractor heldItemInteractor)
         {
             int slotIndex = GetFirstOccupiedSlotIndex();
             if (slotIndex < 0)
@@ -308,17 +335,17 @@ namespace DontDillyDally.Data
             // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
             // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
             ItemObject itemToRestore = storedItem;
-            interactionAbility.TryStartHoldFromExternal(interactable, () =>
+            heldItemInteractor.TryPickupInteractable(interactable, () =>
             {
                 SetStoredItemInteractionEnabled(itemToRestore, true);
             });
         }
 
-        private void HandleOpenDoorEmptyHandInteraction(PlayerInteractionAbility interactionAbility)
+        private void HandleOpenDoorEmptyHandInteraction(IHeldItemInteractor heldItemInteractor)
         {
             if (_isBatchCompleted)
             {
-                TryTakeCompletedItem(interactionAbility);
+                TryTakeCompletedItem(heldItemInteractor);
                 return;
             }
 
@@ -563,11 +590,7 @@ namespace DontDillyDally.Data
 
             itemObject.transform.SetParent(slotTransform, true);
 
-            PhotonView pv = itemObject.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
-            {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
-            }
+            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.GetComponent<PhotonView>());
         }
 
         private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)

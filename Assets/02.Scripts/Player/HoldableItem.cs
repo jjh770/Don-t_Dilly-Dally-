@@ -1,3 +1,4 @@
+using DontDillyDally.Data;
 using Photon.Pun;
 using System.Collections;
 using UnityEngine;
@@ -119,7 +120,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
             {
                 _isWaitingForOwnershipReturn = false;
                 _settledTime = 0f;
-                _photonView.TransferOwnership(PhotonNetwork.MasterClient);
+                NetworkItemOwnership.ReturnOwnershipToMaster(_photonView);
             }
         }
         else
@@ -304,6 +305,20 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
     {
         _networkSync?.Serialize(stream, info);
+    }
+
+    /// <summary>
+    /// 소유권 이전 후 물리 상태 보정.
+    /// 원격에서 isHeld=true 직렬화를 마지막으로 받은 상태에서 소유권이 넘어오면
+    /// 콜라이더가 꺼진 채로 고착되는 문제를 방지합니다.
+    /// </summary>
+    public void EnsureIdlePhysicsState()
+    {
+        if (IsInteracting || IsStoredInContainer)
+            return;
+
+        _collider.enabled = true;
+        _rigidbody.isKinematic = true;
     }
 
     public void ApplyNetworkHoldState(bool isHeld, int holderActorNumber)

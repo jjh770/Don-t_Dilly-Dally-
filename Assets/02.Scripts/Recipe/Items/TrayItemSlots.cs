@@ -170,11 +170,7 @@ namespace DontDillyDally.Data
             }
             itemObject.transform.localPosition = localPosition;
 
-            PhotonView pv = itemObject.GetComponent<PhotonView>();
-            if (pv != null && pv.IsMine && PhotonNetwork.MasterClient != null)
-            {
-                pv.TransferOwnership(PhotonNetwork.MasterClient);
-            }
+            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.GetComponent<PhotonView>());
         }
     }
 }
