@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(MixToolItem))]
-    public class SyringeFillTarget : MonoBehaviour, IInteractable
+    public class SyringeFillTarget : MonoBehaviour, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
         private const float PendingOwnershipTimeout = 2f;
@@ -79,6 +79,11 @@ namespace DontDillyDally.Data
         public bool CanInteractWith(ItemObject heldItem)
         {
             return ResolveFill(heldItem).Success;
+        }
+
+        public bool CanAcceptItem(ItemObject item)
+        {
+            return CanInteractWith(item);
         }
 
         public void Interact(Transform interactor)

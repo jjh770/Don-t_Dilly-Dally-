@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class TrayWorkbenchInteractable : MonoBehaviourPun, IInteractable
+    public class TrayWorkbenchInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         [SerializeField] private TrayWorkbench _trayWorkbench;
         [SerializeField] private Transform _traySlotPoint;
@@ -70,6 +70,30 @@ namespace DontDillyDally.Data
 
         public void StopInteract()
         {
+        }
+
+        public bool CanAcceptItem(ItemObject item)
+        {
+            if (_trayWorkbench == null)
+                return false;
+
+            if (item is TrayItem trayItem)
+                return _trayWorkbench.CanPlaceTrayItem(trayItem);
+
+            if (!_trayWorkbench.HasTray)
+                return false;
+
+            if (item is BasicMaterialItem basicMaterialItem)
+                return _trayWorkbench.CanPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType);
+
+            if (item is MixToolItem mixToolItem)
+            {
+                CraftedMaterialType materialType = ResolveMixToolMaterialType(mixToolItem.ToolType);
+                return materialType != CraftedMaterialType.None
+                    && _trayWorkbench.CanPlaceBasicMaterialOnTray(materialType);
+            }
+
+            return false;
         }
 
         #region Interaction Handlers
