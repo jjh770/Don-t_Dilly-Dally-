@@ -9,12 +9,18 @@ public class KeyConfig : ScriptableObject
     [Header("Google Cloud")]
     [SerializeField] private string _googleCloudApiKey;
 
+    [Header("ElevenLabs")]
+    [SerializeField] private string _elevenLabsApiKey;
+    [SerializeField] private string _elevenLabsVoiceId;
+
     [Header("Google Cloud")]
     [SerializeField] private string _clientId;
     [SerializeField] private string _clientSecret;
 
     public string GeminiApiKey => _geminiApiKey;
     public string GoogleCloudApiKey => _googleCloudApiKey;
+    public string ElevenLabsApiKey => _elevenLabsApiKey;
+    public string ElevenLabsVoiceId => _elevenLabsVoiceId;
 
     public string CLIENT_ID => _clientId;
     public string CLIENT_SECRET => _clientSecret;
