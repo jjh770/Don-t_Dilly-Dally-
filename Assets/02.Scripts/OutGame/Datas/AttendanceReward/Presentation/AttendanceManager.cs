@@ -13,6 +13,7 @@ public class AttendanceManager : MonoBehaviour
     public IRewardRepository RewardRepo => _rewardRepo;
 
     public event Action<AttendanceRecord> OnAttendanceRecordLoaded;
+    public event Action<int> OnAttendanceChecked;
 
     public static event Action OnAttendanceManagerReady;
 
@@ -81,8 +82,10 @@ public class AttendanceManager : MonoBehaviour
         }
         var reward = _domainService.CheckAndGetReward(record);
         Debug.Log($"{record.TotalDays}일차 출석 : {reward.ItemId} 수령");
+        OnAttendanceChecked?.Invoke(record.TotalDays);
 
         await _attendanceRepo.SaveAsync(_playerId, record);
+    
        // PlayerDataManager.Instance.ApplyReward(reward);
         //_ui.ShowRewardPopup(reward);
     }

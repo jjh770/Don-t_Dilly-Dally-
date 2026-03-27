@@ -4,18 +4,28 @@ using UnityEngine;
 public class AttendancePresenter
 {
     private AttendanceManager _attendanceManager;
+    private PlayerDataManager _playerDataManager;
     private AttendanceView _view;
     private IRewardRepository _rewardRepository;
 
-    public AttendancePresenter(AttendanceManager attendanceManager, AttendanceView view)
+    public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view)
     {
         _attendanceManager = attendanceManager;
-        
+        _playerDataManager = dataManager;
+
         _view = view;
 
         _attendanceManager.OnAttendanceRecordLoaded += OnDataLoaded;
+        _attendanceManager.OnAttendanceChecked += OnAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady += OnAttendanceManagerReady;
+
+        SetName(_playerDataManager.PlayerID);
         if (_attendanceManager.IsReady) OnAttendanceManagerReady();
+    }
+
+    public void OnPopupShow()
+    {
+        _attendanceManager.CheckAttendance();
     }
 
     private void OnAttendanceManagerReady()
@@ -29,9 +39,21 @@ public class AttendancePresenter
         _view.SetDayList(record.TotalDays, _rewardRepository);
     }
 
+    private void OnAttendanceChecked(int totalDays)
+    {
+        _view.SetComplete(totalDays);
+    }
+
+    private void SetName(string name)
+    {
+        _view.SetName(name);
+    }
+
+
     public void Dispose()
     {
         _attendanceManager.OnAttendanceRecordLoaded -= OnDataLoaded;
+        _attendanceManager.OnAttendanceChecked -= OnAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady -= OnAttendanceManagerReady;
     }
 }

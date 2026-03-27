@@ -14,7 +14,7 @@ public class RobbyBootstrapper : MonoBehaviour
 
         // 2. Presenter 생성
         RoomPresenter roomPresenter = new RoomPresenter(_roomView);
-        AttendancePresenter attendancePresenter = new AttendancePresenter(_attendanceManager, _attendanceView);
+        AttendancePresenter attendancePresenter = new AttendancePresenter(_attendanceManager,  PlayerDataManager.Instance,_attendanceView);
 
         // 3. View 초기화
         _roomView.Init(roomPresenter);
