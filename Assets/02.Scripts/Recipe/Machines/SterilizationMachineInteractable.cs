@@ -4,7 +4,7 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     [RequireComponent(typeof(Collider))]
-    public class SterilizationMachineInteractable : MonoBehaviourPun, IInteractable
+    public class SterilizationMachineInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string SterilizedResultPrefabName = "BasicMaterialItem";
         private const int MaxSlots = 4;
@@ -113,6 +113,33 @@ namespace DontDillyDally.Data
 
         public void StopInteract()
         {
+        }
+
+        public bool CanAcceptItem(ItemObject item)
+        {
+            if (_sterilizationMachine == null)
+                return false;
+
+            if (_actionTimer != null && _actionTimer.IsRunning)
+                return false;
+
+            if (_isBatchCompleted)
+                return false;
+
+            if (GetFirstAvailableSlotIndex() < 0)
+                return false;
+
+            if (item is TrayItem trayItem)
+                return _sterilizationMachine.CanSterilizeTray(trayItem);
+
+            if (item is MixToolItem mixToolItem)
+            {
+                int playerId = Photon.Pun.PhotonNetwork.LocalPlayer != null
+                    ? Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber : 0;
+                return _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId).Success;
+            }
+
+            return false;
         }
 
         #region Interaction Handlers

@@ -312,6 +312,7 @@ GameObject:
   - component: {fileID: 8770724901871495475}
   - component: {fileID: 2175109114607489061}
   - component: {fileID: 8957677483026851650}
+  - component: {fileID: 4779951589030148736}
   - component: {fileID: 7848335931649404909}
   - component: {fileID: 3265358218038435176}
   - component: {fileID: 2730377794116614648}
@@ -470,7 +471,21 @@ MonoBehaviour:
   _interactableLayer:
     serializedVersion: 2
     m_Bits: 320
-  _outlineColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &4779951589030148736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6536501996314029870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bcc5f2647f423014bae37fd70ee140ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerInteractableOutlineHandler
+  _defaultOutlineColor: {r: 1, g: 1, b: 1, a: 1}
+  _compatibleOutlineColor: {r: 0.2971698, g: 1, b: 0.2971698, a: 1}
+  _incompatibleOutlineColor: {r: 1, g: 0.2971698, b: 0.2971698, a: 1}
   _outlineWidth: 5
   _outlineMode: 1
 --- !u!114 &7848335931649404909

@@ -35,16 +35,14 @@ public class PlayerInteractionAbility : MonoBehaviour
     public Transform HoldPoint => _holdPoint;
     public ItemObject CurrentHeldItem => _currentHeldItem;
 
-    [Header("아웃라인 설정")]
-    [SerializeField] private Color _outlineColor = Color.white;
-    [SerializeField] private float _outlineWidth = 2f;
-    [SerializeField] private Outline.Mode _outlineMode = Outline.Mode.OutlineVisible;
-
     private IInteractable _currentInteractable;
     // 들고있는 아이템 판별
     private ItemObject _currentHeldItem;
     private IInteractable _nearestInteractable;
     private IInteractable _previousNearestInteractable;
+
+    public event Action<IInteractable, IInteractable> OnNearestInteractableChanged;
+    public event Action<ItemObject> OnHeldItemChanged;
 
     private PlayerController _playerController;
     private PlayerAnimator _playerAnimator;
@@ -94,86 +92,89 @@ public class PlayerInteractionAbility : MonoBehaviour
     {
         int count = Physics.OverlapSphereNonAlloc(transform.position, _detectionRadius, _detectionColliders, _interactableLayer);
 
-        _nearestInteractable = null;
-        float nearestSqrDistance = float.MaxValue;
+        IInteractable nearestCompatible = null;
+        IInteractable nearestGeneral = null;
+        float compatibleSqrDist = float.MaxValue;
+        float generalSqrDist = float.MaxValue;
 
         for (int i = 0; i < count; i++)
         {
             Collider col = _detectionColliders[i];
-            IInteractable interactable = TryResolvePriorityInteractable(col);
-            if (interactable != null && !interactable.IsInteracting)
+            IInteractable interactable = TryResolveInteractable(col);
+            if (interactable == null || interactable.IsInteracting)
             {
-                // 높이 체크
-                float detectionCenterY = transform.position.y + _detectionHeightOffset;
-                float heightDiff = Mathf.Abs(col.transform.position.y - detectionCenterY);
-                if (heightDiff > _detectionHeight)
-                {
-                    continue;
-                }
+                continue;
+            }
 
-                // 시야각 체크
-                Vector3 directionToItem = col.transform.position - transform.position;
-                directionToItem.y = 0;
-                float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
+            // 높이 체크
+            float detectionCenterY = transform.position.y + _detectionHeightOffset;
+            float heightDiff = Mathf.Abs(col.transform.position.y - detectionCenterY);
+            if (heightDiff > _detectionHeight)
+            {
+                continue;
+            }
 
-                if (dot < _detectionAngleCos)
-                {
-                    continue;
-                }
+            // 시야각 체크
+            Vector3 directionToItem = col.transform.position - transform.position;
+            directionToItem.y = 0;
+            float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
 
-                float sqrDistance = (col.transform.position - transform.position).sqrMagnitude;
-                if (sqrDistance < nearestSqrDistance)
-                {
-                    nearestSqrDistance = sqrDistance;
-                    _nearestInteractable = interactable;
-                }
+            if (dot < _detectionAngleCos)
+            {
+                continue;
+            }
+
+            float sqrDistance = (col.transform.position - transform.position).sqrMagnitude;
+
+            bool isCompatible = _currentHeldItem != null
+                && interactable is IItemAcceptor acceptor
+                && acceptor.CanAcceptItem(_currentHeldItem);
+
+            if (isCompatible && sqrDistance < compatibleSqrDist)
+            {
+                compatibleSqrDist = sqrDistance;
+                nearestCompatible = interactable;
+            }
+
+            if (sqrDistance < generalSqrDist)
+            {
+                generalSqrDist = sqrDistance;
+                nearestGeneral = interactable;
             }
         }
 
-        UpdateOutline();
+        _nearestInteractable = nearestCompatible ?? nearestGeneral;
+        NotifyNearestInteractableChanged();
     }
 
-    private void UpdateOutline()
+    private void SetCurrentHeldItem(ItemObject newItem)
+    {
+        if (_currentHeldItem == newItem)
+            return;
+
+        _currentHeldItem = newItem;
+        OnHeldItemChanged?.Invoke(_currentHeldItem);
+    }
+
+    private void NotifyNearestInteractableChanged()
     {
         if (_nearestInteractable == _previousNearestInteractable)
             return;
 
-        SetOutlineEnabled(_previousNearestInteractable, false);
-        SetOutlineEnabled(_nearestInteractable, true);
+        OnNearestInteractableChanged?.Invoke(_previousNearestInteractable, _nearestInteractable);
         _previousNearestInteractable = _nearestInteractable;
     }
 
-    private void SetOutlineEnabled(IInteractable interactable, bool enabled)
-    {
-        if (interactable is not Component component)
-            return;
-
-        if (!component.TryGetComponent(out Outline outline))
-        {
-            if (!enabled)
-                return;
-
-            outline = component.gameObject.AddComponent<Outline>();
-        }
-
-        outline.OutlineMode = _outlineMode;
-        outline.OutlineColor = _outlineColor;
-        outline.OutlineWidth = _outlineWidth;
-        outline.enabled = enabled;
-    }
-
-    private IInteractable TryResolvePriorityInteractable(Collider col)
+    private IInteractable TryResolveInteractable(Collider col)
     {
         if (col == null)
         {
             return null;
         }
 
-        if (_currentHeldItem != null &&
-            col.TryGetComponent(out SyringeFillTarget syringeFillTarget) &&
-            syringeFillTarget.CanInteractWith(_currentHeldItem))
+        if (_currentHeldItem != null && col.TryGetComponent(out IItemAcceptor acceptor) && acceptor is IInteractable acceptorInteractable)
         {
-            return syringeFillTarget;
+            return acceptorInteractable;
         }
 
         if (col.TryGetComponent(out IInteractable interactable))
@@ -274,7 +275,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         itemObject.NotifyLeftSource();
 
         _currentInteractable = interactable;
-        _currentHeldItem = itemObject;
+        SetCurrentHeldItem(itemObject);
 
         ClearPendingHold();
 
@@ -332,7 +333,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
             _playerAnimator.PlayHoldAnimation(false);
             _currentInteractable = null;
-            _currentHeldItem = null;
+            SetCurrentHeldItem(null);
             return;
         }
 
@@ -363,7 +364,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         _playerAnimator.PlayHoldAnimation(false);
         _currentInteractable = null;
-        _currentHeldItem = null;
+        SetCurrentHeldItem(null);
 
         if (PhotonNetwork.InRoom)
         {
@@ -392,7 +393,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
         _playerAnimator.PlayHoldAnimation(false);
         _currentInteractable = null;
-        _currentHeldItem = null;
+        SetCurrentHeldItem(null);
         return true;
     }
 
@@ -481,7 +482,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         holdable.Throw(throwDirection, _throwForce, _playerColliders);
 
         _currentInteractable = null;
-        _currentHeldItem = null;
+        SetCurrentHeldItem(null);
 
         // 잡는 애니메이션 취소
         _playerAnimator.ResetThrowAnimation();
