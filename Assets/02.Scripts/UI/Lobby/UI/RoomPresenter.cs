@@ -57,11 +57,6 @@ public class RoomPresenter
         _view.SetDropdown(hospitals);
     }
 
-    public void AttendancePopupOpen()
-    {
-        _attendancePopup.Show();
-    }
-
 
     public void OnMyHospitalDeleted(string code)
     {

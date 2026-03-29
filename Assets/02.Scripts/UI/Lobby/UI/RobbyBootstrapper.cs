@@ -23,11 +23,14 @@ public class RobbyBootstrapper : MonoBehaviour
         // 3. View 초기화
         _roomView.Init(_roomPresenter);
         _attendanceView.Init(_attendancePresenter);
+
+        _roomView.AttendancePopupButton.onClick.AddListener(_attendancePresenter.AttendancePopupOpen);
     }
 
     private void OnDestroy()
     {
         _roomPresenter.Dispose();
         _attendancePresenter.Dispose();
+        _roomView.AttendancePopupButton.onClick.RemoveListener(_attendancePresenter.AttendancePopupOpen);
     }
 }

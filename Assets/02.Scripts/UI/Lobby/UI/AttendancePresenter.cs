@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using System;
 using System.Threading;
 using UnityEngine;
 
@@ -95,7 +94,7 @@ public class AttendancePresenter
         _cts = null;
     }
 
-    private void AttendancePopupOpen()
+    public void AttendancePopupOpen()
     {
         _attendancePopup.Show();
     }
