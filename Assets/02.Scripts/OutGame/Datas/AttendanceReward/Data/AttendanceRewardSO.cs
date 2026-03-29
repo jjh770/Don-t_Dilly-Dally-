@@ -33,5 +33,10 @@ public class AttendanceRewardSO : ScriptableObject, IRewardRepository
     public bool RewardComplete(int day)
     {
         return _rewards.Count <= day;
-    }  
+    }
+
+    public int GetRewardCount()
+    {
+        return _rewards.Count;
+    }
 }
