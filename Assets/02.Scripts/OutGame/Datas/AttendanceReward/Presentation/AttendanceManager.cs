@@ -1,6 +1,7 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Threading;
-using Cysharp.Threading.Tasks;
+using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 
 public class AttendanceManager : MonoBehaviour
@@ -20,9 +21,6 @@ public class AttendanceManager : MonoBehaviour
 
     public bool IsReady { get; private set; }
 
-    // ✅ 추가
-    private CancellationTokenSource _cts;
-
     public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, string playerID)
     {
         _attendanceRepo = attendanceRepo;
@@ -31,37 +29,21 @@ public class AttendanceManager : MonoBehaviour
 
         _domainService = new AttendanceDomainService(_rewardRepo);
 
-        // ✅ 초기화 시 토큰 생성
-        _cts = new CancellationTokenSource();
-
         OnAttendanceManagerReady?.Invoke();
   
         IsReady = true;
     }
 
-    // ✅ 외부에서 호출 (Popup 닫힐 때)
-    public void CancelAll()
-    {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = new CancellationTokenSource(); // 다시 쓸 수 있게 재생성
-    }
-
-    private void OnDestroy()
-    {
-        CancelAll();
-    }
-
-    public void CheckAttendance()
+    public void CheckAttendance(CancellationToken token)
     {
         if (_isCheckedToday) return;
 
-        CheckAttendanceAsync(_cts.Token).Forget(Debug.LogException);
+        CheckAttendanceAsync(token).Forget(Debug.LogException);
     }
 
-    public void LoadAttendance()
+    public void LoadAttendance(CancellationToken token)
     {
-        LoadAttendanceAsync(_cts.Token).Forget(Debug.LogException);
+        LoadAttendanceAsync(token).Forget(Debug.LogException);
     }
 
     private async UniTask<AttendanceRecord> LoadAttendanceAsync(CancellationToken token)

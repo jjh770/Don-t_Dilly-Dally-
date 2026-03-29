@@ -47,7 +47,7 @@ public class AttendanceView : UIPopupBase
             bool isComplete = totalDay >= i;
 
             item.gameObject.SetActive(true);   
-            item.SetItem(i, null, isComplete);
+            item.Initialize(i, null, isComplete);
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_listRectTransform);
@@ -55,7 +55,7 @@ public class AttendanceView : UIPopupBase
     public void SetComplete(int totalDays)
     {
         var index = totalDays - 1;
-        _dayListItems[index].SetComplete();
+        _dayListItems[index].PlayCompleteAnimation();
     }
 
     protected override void OnShow()
@@ -71,6 +71,5 @@ public class AttendanceView : UIPopupBase
     public void OnDisable()
     {
         _closeButton.onClick.RemoveListener(PopupClose);
-        _presenter.Dispose();
     }
 }

@@ -8,42 +8,49 @@ public class UI_DayListItem : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _dayText;
     [SerializeField] private Image _itemImage;
     [SerializeField] private Image _completeImage;
+    [SerializeField] private float _animationDelay = 0.5f;
 
-    public void SetItem(int day, Sprite itemSprite, bool isComplete)
+    public void Initialize(int day, Sprite itemSprite, bool isComplete)
     {
-        ResetComplete();
+        ClearComplete();
         _dayText.text = $"{day}";
         _itemImage.sprite = itemSprite;
 
         if (isComplete)
         {
-            ShowComplete();
+            MarkComplete();
         }
     }
 
-    public void ShowComplete()
+    public void MarkComplete()
     {
         _completeImage.enabled = true;
     }
 
-    public void SetComplete()
+    public void PlayCompleteAnimation()
     {
-        _completeImage.enabled = true;
-
+       
         var t = _completeImage.transform;
         t.DOKill();
 
-        t.localScale = Vector3.zero;
+        t.localScale = Vector3.one * 5f;
 
-        t.DOScale(1.2f, 0.15f)
-            .SetEase(Ease.OutQuad)
-            .OnComplete(() =>
-            {
-                t.DOScale(1f, 0.1f).SetEase(Ease.InQuad);
-            });
+        Sequence seq = DOTween.Sequence();
+
+        seq.AppendInterval(_animationDelay)
+             .AppendCallback(() => _completeImage.enabled = true)
+
+            .Append(t.DOScale(0.8f, 0.08f)
+            .SetEase(Ease.InQuad))         
+
+           .Append(t.DOScale(1.15f, 0.12f)
+            .SetEase(Ease.OutBack))       
+
+           .Append(t.DOScale(1f, 0.08f)
+            .SetEase(Ease.OutQuad));       
     }
 
-    public void ResetComplete()
+    public void ClearComplete()
     {
         _completeImage.enabled = false;
     }

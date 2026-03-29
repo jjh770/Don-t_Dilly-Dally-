@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using UnityEngine;
 
 public class AttendancePresenter
@@ -7,6 +8,8 @@ public class AttendancePresenter
     private PlayerDataManager _playerDataManager;
     private AttendanceView _view;
     private IRewardRepository _rewardRepository;
+
+    private CancellationTokenSource _cts;
 
     public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view)
     {
@@ -29,22 +32,27 @@ public class AttendancePresenter
 
     public void OnPopupShow()
     {
-        _attendanceManager.CheckAttendance();
+        _cts = new CancellationTokenSource();
+        _attendanceManager.CheckAttendance(_cts.Token);
     }
 
     public void OnPopupClose()
     {
-        _attendanceManager.CancelAll();
+        ResetCTS();
     }
 
     private void OnAttendanceManagerReady()
     {
-        _attendanceManager.LoadAttendance();
+        _cts = new CancellationTokenSource();
+
+        _attendanceManager.LoadAttendance(_cts.Token);
         _rewardRepository = _attendanceManager.RewardRepo;
     }
 
     private void OnDataLoaded(AttendanceRecord record)
     {
+        ResetCTS();
+
         _view.SetDayList(record.TotalDays, _rewardRepository);
     }
 
@@ -58,12 +66,19 @@ public class AttendancePresenter
         _view.SetName(name);
     }
 
+    private void ResetCTS()
+    {
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = null;
+    }
+
 
     public void Dispose()
     {
         _attendanceManager.OnAttendanceRecordLoaded -= OnDataLoaded;
         _attendanceManager.OnAttendanceChecked -= OnAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady -= OnAttendanceManagerReady;
-        _attendanceManager.CancelAll();
+        ResetCTS();
     }
 }
