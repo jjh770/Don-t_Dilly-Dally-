@@ -11,7 +11,6 @@ public class RoomView : MonoBehaviour
     [SerializeField] private Button _createHospitalButton;
     [SerializeField] private Button _attendancePopupButton;
 
-    [SerializeField] private UIPopupBase _attendancePopup;
     [SerializeField] private UI_HospitalList _myHospitalList;
 
     [SerializeField] private TMP_InputField _roomCodeInputField;
@@ -45,7 +44,7 @@ public class RoomView : MonoBehaviour
 
     private void OnAttendanceButtonClick()
     {
-        _attendancePopup.Show();
+        _presenter.AttendancePopupOpen();
     }
 
     private void OnMyHospitalSelected(string name)

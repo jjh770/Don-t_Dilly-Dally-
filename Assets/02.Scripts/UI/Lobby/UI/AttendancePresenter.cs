@@ -10,16 +10,20 @@ public class AttendancePresenter
     private ICustomizingManager _customizingManager;
     private AttendanceView _view;
     private IRewardRepository _rewardRepository;
+    private UIPopupBase _attendancePopup;
+
 
     private CancellationTokenSource _cts;
 
-    public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view, ICustomizingManager customizingManager)
+    public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view, ICustomizingManager customizingManager, UIPopupBase attendancePopup)
     {
         _attendanceManager = attendanceManager;
         _playerDataManager = dataManager;
         _customizingManager = customizingManager;
 
         _view = view;
+
+        _attendancePopup = attendancePopup;
 
         _attendanceManager.OnAttendanceRecordLoaded += OnDataLoaded;
         _attendanceManager.OnAttendanceChecked += OnAttendanceChecked;
@@ -67,6 +71,11 @@ public class AttendancePresenter
         }
 
         _view.SetDayList(record.TotalDays, _rewardRepository.GetRewardCount(), itemSprites);
+
+        if (record.CanCheckToday())
+        {
+            AttendancePopupOpen();
+        }
     }
 
     private void OnAttendanceChecked(int totalDays)
@@ -84,6 +93,11 @@ public class AttendancePresenter
         _cts?.Cancel();
         _cts?.Dispose();
         _cts = null;
+    }
+
+    private void AttendancePopupOpen()
+    {
+        _attendancePopup.Show();
     }
 
 
