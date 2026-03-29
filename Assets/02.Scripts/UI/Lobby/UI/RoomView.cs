@@ -11,7 +11,6 @@ public class RoomView : MonoBehaviour
     [SerializeField] private Button _createHospitalButton;
     [SerializeField] private Button _attendancePopupButton;
 
-    [SerializeField] private UIPopupBase _attendancePopup;
     [SerializeField] private UI_HospitalList _myHospitalList;
 
     [SerializeField] private TMP_InputField _roomCodeInputField;
@@ -21,6 +20,8 @@ public class RoomView : MonoBehaviour
     [SerializeField] private float _errorFadeDuration = 0.25f;
 
     [SerializeField] private float _errorVisibleDuration = 1.5f;
+
+    public Button AttendancePopupButton => _attendancePopupButton;
 
 
     private Tween _errorTween;
@@ -37,15 +38,9 @@ public class RoomView : MonoBehaviour
         _enterHospitalButton.onClick.AddListener(OnEnterButtonClick);
         _createHospitalButton.onClick.AddListener(OnCreateButtonClick);
         _nickNameInputField.onDeselect.AddListener(OnNickNameInputDeselect);
-        _attendancePopupButton.onClick.AddListener(OnAttendanceButtonClick);
 
         _myHospitalList.OnSelected += OnMyHospitalSelected;
         _myHospitalList.OnDeleteOption += OnMyHospitalDeleted;
-    }
-
-    private void OnAttendanceButtonClick()
-    {
-        _attendancePopup.Show();
     }
 
     private void OnMyHospitalSelected(string name)

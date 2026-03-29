@@ -19,6 +19,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action OnDataManagerReady;
 
+    public event Action OnReady;
     public bool IsReady { get; private set; }
     public void Initialized(IPlayerInformationRepository playerRoomRepository)
     {
@@ -31,6 +32,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     {
         await LoadPlayerInformation(_playerID);
         IsReady = true;
+        OnReady?.Invoke();
         OnDataManagerReady?.Invoke();   
     }
 

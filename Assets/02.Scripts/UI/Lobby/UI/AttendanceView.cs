@@ -37,17 +37,15 @@ public class AttendanceView : UIPopupBase
         _presenter = presenter;
     }
 
-    public void SetDayList(int totalDay, IRewardRepository rewardRepository)
+    public void SetDayList(int currentDay, int totalRewardCount, Sprite[] rewardIcons)
     {
-        int totalRewardCount = rewardRepository.GetRewardCount();
-
         for (int i = 1; i <= totalRewardCount; i++)
         {
             var item = _dayListItems[i-1];
-            bool isComplete = totalDay >= i;
+            bool isComplete = currentDay >= i;
 
             item.gameObject.SetActive(true);   
-            item.Initialize(i, null, isComplete);
+            item.Initialize(i, rewardIcons[i-1], isComplete);
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(_listRectTransform);

@@ -16,6 +16,7 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
     protected override void Awake()
     {
         base.Awake();
+        IsFirebaseInitialized = false;
 
         if (Instance != this) return;
 
