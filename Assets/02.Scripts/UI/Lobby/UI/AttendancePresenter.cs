@@ -1,3 +1,4 @@
+using NUnit.Framework;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -6,15 +7,17 @@ public class AttendancePresenter
 {
     private AttendanceManager _attendanceManager;
     private PlayerDataManager _playerDataManager;
+    private ICustomizingManager _customizingManager;
     private AttendanceView _view;
     private IRewardRepository _rewardRepository;
 
     private CancellationTokenSource _cts;
 
-    public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view)
+    public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view, ICustomizingManager customizingManager)
     {
         _attendanceManager = attendanceManager;
         _playerDataManager = dataManager;
+        _customizingManager = customizingManager;
 
         _view = view;
 
@@ -53,7 +56,17 @@ public class AttendancePresenter
     {
         ResetCTS();
 
-        _view.SetDayList(record.TotalDays, _rewardRepository);
+        int totalRewardCount = _rewardRepository.GetRewardCount();
+
+
+        Sprite[] itemSprites = new Sprite[totalRewardCount]; 
+
+        for (int i = 0; i < totalRewardCount; i++)
+        {
+            itemSprites[i] = _customizingManager.GetItemById(_rewardRepository.GetReward(i+1).ItemId).PreviewIcon;
+        }
+
+        _view.SetDayList(record.TotalDays, _rewardRepository.GetRewardCount(), itemSprites);
     }
 
     private void OnAttendanceChecked(int totalDays)
