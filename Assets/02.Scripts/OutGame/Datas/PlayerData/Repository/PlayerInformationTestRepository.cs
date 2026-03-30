@@ -20,10 +20,10 @@ public class PlayerInformationTestRepository : IPlayerInformationRepository
             var result = await _db.Collection(COLLECTION_NAME).Document(account).GetSnapshotAsync();
 
             PlayerInformationDTO dto = result.ConvertTo<PlayerInformationDTO>();
-            Debug.LogFormat("[PlayerInformationFirebaseRepository] 불러오기 성공");
+            Debug.LogFormat("[PlayerInformationTestRepository] 불러오기 성공");
             if (dto == null)
             {
-                Debug.LogWarning("[PlayerInformationFirebaseRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
+                Debug.LogWarning("[PlayerInformationTestRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
                 return null;
             }
 
@@ -33,7 +33,7 @@ public class PlayerInformationTestRepository : IPlayerInformationRepository
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning("[PlayerInformationFirebaseRepository] 불러오기 실패, null을 반환합니다. :" + e);
+            Debug.LogWarning("[PlayerInformationTestRepository] 불러오기 실패, null을 반환합니다. :" + e);
             return null;
         }
     }
@@ -45,11 +45,11 @@ public class PlayerInformationTestRepository : IPlayerInformationRepository
             var dto = PlayerInformationDTO.FromDomain(saveData);
             PlayerPrefs.SetString($"{account}.nickname", dto.Nickname);
             await _db.Collection(COLLECTION_NAME).Document(account).SetAsync(dto);
-            Debug.Log("[PlayerInformationFirebaseRepository] 저장 성공");
+            Debug.Log("[PlayerInformationTestRepository] 저장 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[PlayerInformationFirebaseRepository] 저장 실패: " + e);
+            Debug.LogError("[PlayerInformationTestRepository] 저장 실패: " + e);
         }
     }
 
