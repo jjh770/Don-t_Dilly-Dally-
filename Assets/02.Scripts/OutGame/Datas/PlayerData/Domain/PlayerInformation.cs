@@ -5,32 +5,32 @@ using System.Linq;
 
 public class PlayerInformation
 {
-    private string _name;
+    private string _nickname;
 
     private readonly List<MyHospital> _hospitals;
 
     private const int DefaultMaxHospitalCount = 5;
 
     private int _maxHospitals;
-    public string Name => _name;
+    public string Nickname => _nickname;
 
     private PlayerInformation()
     {
         _hospitals = new List<MyHospital>();
-        _name = "Player";
+        _nickname = "Player";
         _maxHospitals = DefaultMaxHospitalCount;
     }
 
     public PlayerInformation(string name,IEnumerable<MyHospital> hospitals)
     {
-        _name = name;
+        _nickname = name;
         _hospitals = hospitals.ToList<MyHospital>();
         _maxHospitals = DefaultMaxHospitalCount;
     }
 
     public static PlayerInformation Default => new PlayerInformation();
 
-    public string name => _name;
+    public string name => _nickname;
 
     public bool CanAdd(string name)
     {
@@ -38,7 +38,7 @@ public class PlayerInformation
     }
     public void SetName(string name)
     {
-        _name = name;
+        _nickname = name;
     }
     public MyHospital[] MyHospitals => _hospitals.ToArray();
     public void TryAddHospital(MyHospital hospital)

@@ -58,6 +58,11 @@ public class RoomView : MonoBehaviour
         _presenter = presenter;
     }
 
+    public void InitializeNicknameField(string nickName)
+    {
+        _nickNameInputField.text = nickName;
+    }
+
     public void OnEnterButtonClick()
     {
         _presenter.EnterRoom(_roomCodeInputField.text);
