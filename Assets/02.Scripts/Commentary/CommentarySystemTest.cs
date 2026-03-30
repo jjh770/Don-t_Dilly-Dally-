@@ -10,9 +10,6 @@ public class CommentarySystemTest : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha2))
             EventManager.Instance.OnSurgerySuccess();
 
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-            EventManager.Instance.OnSurgeryFail();
-
         if (Input.GetKeyDown(KeyCode.Alpha4))
             EventManager.Instance.OnPatientDeath();
 
