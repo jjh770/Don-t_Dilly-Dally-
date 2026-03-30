@@ -8,6 +8,7 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
     private readonly GameObject _characterPrefab;
     private readonly ICustomizingManager _customizingManager;
     private readonly ICustomizingAssetLoader _assetLoader;
+    private readonly SemaphoreSlim _renderLock = new SemaphoreSlim(1, 1);
     private RuntimeFacePortraitCaptureRig _rig;
 
     public RuntimeFacePortraitRenderer(GameObject characterPrefab, ICustomizingManager customizingManager)
@@ -37,9 +38,17 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
             return null;
         }
 
-        await _rig.ApplyAppearanceAsync(request.Snapshot, _customizingManager, _assetLoader, cancellationToken);
-        cancellationToken.ThrowIfCancellationRequested();
-        return _rig.Capture(request);
+        await _renderLock.WaitAsync(cancellationToken);
+        try
+        {
+            await _rig.ApplyAppearanceAsync(request.Snapshot, _customizingManager, _assetLoader, cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            return _rig.Capture(request);
+        }
+        finally
+        {
+            _renderLock.Release();
+        }
     }
 
     public void Dispose()
@@ -51,6 +60,7 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
         }
 
         (_assetLoader as IDisposable)?.Dispose();
+        _renderLock.Dispose();
     }
 
     private void EnsureRig()
