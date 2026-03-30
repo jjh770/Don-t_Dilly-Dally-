@@ -35,7 +35,7 @@ public class DataBootstrapper : MonoBehaviour
     {
         // Repository 생성
         IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository(FirebaseInitializer.Instance.Database);
-        IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository(FirebaseInitializer.Instance.Database);
+        IPlayerInformationRepository playerRepository = new PlayerInformationTestRepository(FirebaseInitializer.Instance.Database);
 
         RoomDataManager.Instance.Initialized(roomDataRepository);
 
