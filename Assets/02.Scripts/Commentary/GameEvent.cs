@@ -14,15 +14,14 @@ public enum EventType
     // - 일관성 있고
     // - 자주 나오고
     // - 즉시 필요한 것
-    GameStart,              // 게임 시작할 때
-    GameOver,               // 게임 끝날 때
-    SurgerySuccess,         // 수술에 성공했을 때
-    SurgeryFail,            // 수술에 실패했을 때
+    TimeOut,                // 타임아웃 됐을 때
     PatientDeath,           // 환자가 죽었을 때
+    NewPatientAppeared,     // 새로운 환자가 등장했을 때
 
     // 템플릿형
     // - 여러 개 만들어서 랜덤 재생
     // - 매번 멘트가 같으면 심심한 것
+    SurgerySuccess,         // 수술에 성공했을 때
     EquipmentAccident,      // 장비가 고장났을 때 (사고)
     PatientCritical,        // 환자가 응급 상황일 때 (피가 낮을 때)
     EmergencyEvent,         // 긴급 이벤트 발생
@@ -30,7 +29,7 @@ public enum EventType
 
     // 완전 동적형
     // - 최근 이벤트의 문맥을 반영해야 자연스러운 것
-    NewPatientAppeared,     // 새로운 환자가 등장했을 때
+    SurgeryFail,            // 수술에 실패했을 때 (사고)
     MaterialDeliveredLate,  // 재료를 늦게 전달할 때 (사고)
     EmergencyPrevented,     // 긴급 이벤트를 막아냈을 때 (협동)
     WrongMaterialUsed,      // 잘못된 재료를 사용했을 때 (사고)
@@ -73,20 +72,19 @@ public class GameEvent
         return type switch
         {
             // 완전 고정형
-            EventType.GameStart => EventPriority.Critical,
-            EventType.GameOver => EventPriority.Critical,
-            EventType.SurgerySuccess => EventPriority.Critical,
-            EventType.SurgeryFail => EventPriority.Critical,
+            EventType.TimeOut => EventPriority.Critical,
             EventType.PatientDeath => EventPriority.Critical,
+            EventType.NewPatientAppeared => EventPriority.Critical,
 
             // 템플릿형
+            EventType.SurgerySuccess => EventPriority.Critical,
+            EventType.SurgeryFail => EventPriority.Critical,
             EventType.EquipmentAccident => EventPriority.High,
             EventType.PatientCritical => EventPriority.High,
             EventType.EmergencyEvent => EventPriority.High,
             EventType.MachineBroken => EventPriority.High,
 
             // 완전 동적형
-            EventType.NewPatientAppeared => EventPriority.Critical,
             EventType.MaterialDeliveredLate => EventPriority.Normal,
             EventType.EmergencyPrevented => EventPriority.High,
             EventType.WrongMaterialUsed => EventPriority.High,
@@ -105,11 +103,9 @@ public class GameEvent
     {
         return type switch
         {
-            EventType.GameStart => true,
-            EventType.GameOver => true,
-            EventType.SurgerySuccess => true,
-            EventType.SurgeryFail => true,
+            EventType.TimeOut => true,
             EventType.PatientDeath => true,
+            EventType.NewPatientAppeared => true,
             _ => false
         };
     }

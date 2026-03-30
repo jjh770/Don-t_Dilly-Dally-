@@ -25,7 +25,6 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     private bool _hasSpawnedLocalPlayer;
     private bool _isSpawnRequestPending;
 
-    public event Action OnRespawn;
     public event Action<GameObject> OnPlayerSpawned;
 
     public override void OnJoinedRoom()

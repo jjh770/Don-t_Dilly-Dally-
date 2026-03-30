@@ -1,3 +1,4 @@
+using DontDillyDally.Data;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -27,14 +28,9 @@ public class EventManager : MonoBehaviour
 
     // ========== 이벤트 발행 메서드 ==========
 
-    public void OnGameStart()
+    public void OnNewPatientAppeared(string patientName, string diseaseName)
     {
-        Publish(EventType.GameStart, "게임이 시작되었습니다.");
-    }
-
-    public void OnGameOver()
-    {
-        Publish(EventType.GameOver, "게임이 종료되었습니다.");
+        Publish(EventType.NewPatientAppeared, $"새로운 환자 '{patientName}'이(가) 등장했습니다. 병명: {diseaseName}");
     }
 
     public void OnSurgerySuccess()
@@ -42,9 +38,15 @@ public class EventManager : MonoBehaviour
         Publish(EventType.SurgerySuccess, "수술이 성공적으로 완료되었습니다.");
     }
 
-    public void OnSurgeryFail()
+    public void OnSurgeryFail(SurgeryFailureReason reason)
     {
-        Publish(EventType.SurgeryFail, "수술에 실패했습니다.");
+        string description = reason switch
+        {
+            SurgeryFailureReason.RecipeMismatch => "잘못된 재료를 사용했습니다.",
+            SurgeryFailureReason.MiniGameFailure => "수술 미니게임에 실패했습니다.",
+            _ => "수술에 실패했습니다."
+        };
+        Publish(EventType.SurgeryFail, description);
     }
 
     public void OnPatientDeath()
@@ -52,21 +54,30 @@ public class EventManager : MonoBehaviour
         Publish(EventType.PatientDeath, "환자가 사망했습니다.");
     }
 
+    public void OnTimeOut()
+    {
+        Publish(EventType.TimeOut, "시간이 다 되어서 게임이 끝났습니다.");
+    }
+
     public void OnEquipmentAccident(string equipmentName)
     {
         Publish(EventType.EquipmentAccident, $"{equipmentName} 장비에 사고가 발생했습니다.");
     }
 
-    public void OnPatientCritical(string detail = null)
+    public void OnPatientCritical()
     {
-        string description = string.IsNullOrEmpty(detail)
-            ? "환자의 상태가 위험합니다."
-            : $"환자의 상태가 위험합니다. {detail}";
-        Publish(EventType.PatientCritical, description);
+        Publish(EventType.PatientCritical, "환자의 상태가 위험합니다.");
+    }
+
+    public void OnPatientCritical(string detail)
+    {
+        Publish(EventType.PatientCritical, $"환자의 상태가 위험합니다. {detail}");
     }
 
     public void OnEmergencyEvent()
     {
+        // 임시.
+        // 나중에 긴급 상황 타입이 생기면 삭제할 것.
         Publish(EventType.EmergencyEvent, "긴급 상황 발생");
     }
 
@@ -80,11 +91,6 @@ public class EventManager : MonoBehaviour
         Publish(EventType.MachineBroken, $"{machineName} 기계가 고장났습니다.");
     }
 
-    public void OnNewPatientAppeared(string patientInfo)
-    {
-        Publish(EventType.NewPatientAppeared, $"새로운 환자가 등장했습니다. {patientInfo}");
-    }
-
     public void OnMaterialDeliveredLate(string materialName)
     {
         Publish(EventType.MaterialDeliveredLate, $"{materialName} 재료가 늦게 전달되었습니다.");
@@ -93,11 +99,6 @@ public class EventManager : MonoBehaviour
     public void OnEmergencyPrevented(string emergencyDetail)
     {
         Publish(EventType.EmergencyPrevented, $"긴급 이벤트를 막아냈습니다. {emergencyDetail}");
-    }
-
-    public void OnWrongMaterialUsed(string materialName)
-    {
-        Publish(EventType.WrongMaterialUsed, $"잘못된 재료를 사용했습니다: {materialName}");
     }
 
     public void OnRepairTimeout(string machineName)

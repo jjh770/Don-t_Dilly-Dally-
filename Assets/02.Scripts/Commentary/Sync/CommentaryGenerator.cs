@@ -1,6 +1,9 @@
+using Cysharp.Threading.Tasks;
+using DontDillyDally.Data;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 using UnityEngine;
 
 public class GeneratedCommentaryData
@@ -24,46 +27,52 @@ public class CommentaryGenerator : MonoBehaviour
     // 고정형 텍스트
     private static readonly Dictionary<EventType, string> FixedTexts = new()
     {
-        { EventType.GameStart, "좋아, 수술 시작이다. 집중해!" },
-        { EventType.GameOver, "여기까지다. 수고했어." },
-        { EventType.SurgerySuccess, "해냈군. 완벽한 수술이었어." },
-        { EventType.SurgeryFail, "끝났어... 이번엔 실패다." },
-        { EventType.PatientDeath, "환자를 잃었다... 다음엔 놓치지 마." }
+        { EventType.TimeOut, "이번 수술은 여기까지다. 수고했어." },
+        { EventType.PatientDeath, "환자 상태가 끝내 무너졌다..." }
     };
 
     // 템플릿형 텍스트
     private static readonly Dictionary<EventType, string[]> TemplateTexts = new()
     {
+         {
+            EventType.SurgerySuccess, new[]
+            {
+                "좋아, 처치가 제대로 들어갔어.",
+                "수술 실력이 훌륭해. 환자 상태가 안정된다.",
+                "좋아, 정확한 수술로 한고비 넘겼어."
+            }
+        },
         {
+
             EventType.EquipmentAccident, new[]
             {
-                "이런, 장비에 문제가 생겼어!",
-                "장비 사고다! 빨리 대처해!",
+                "이런, 장비에 문제가 생겼어.",
+                "장비 사고다. 빨리 대처해.",
                 "장비가 말썽이야. 침착하게 처리해."
             }
         },
         {
             EventType.PatientCritical, new[]
             {
-                "환자 상태가 위험해! 서둘러!",
-                "위급 상황이다! 집중해!",
-                "환자가 위험해, 빨리 조치를 취해!"
+                "환자 상태가 위험해. 서둘러.",
+                "위급 상황이다. 집중해.",
+                "환자가 위험해. 빨리 조치를 취해."
             }
         },
         {
             EventType.EmergencyEvent, new[]
             {
-                "긴급 상황 발생! 모두 주목!",
-                "비상이다! 대응 준비!",
-                "긴급 이벤트! 빠른 판단이 필요해!"
+                "긴급 상황 발생. 모두 주목!",
+                "비상이다! 대응 준비.",
+                "긴급 이벤트. 빠른 판단이 필요해!"
             }
         },
         {
             EventType.MachineBroken, new[]
             {
-                "기계가 고장났어! 수리가 필요해!",
+                "기계가 고장났어. 수리가 필요해!",
                 "장비 고장! 대체 장비를 준비해!",
-                "기계 문제 발생! 빨리 해결해야 해!"
+                "기계 문제 발생. 빨리 해결해야 해!"
             }
         }
     };
@@ -177,4 +186,45 @@ public class CommentaryGenerator : MonoBehaviour
         return Mathf.Clamp(text.Length / 4.5f, 1.5f, 10f);
     }
 
+    // ========== 환자 소개 텍스트 생성 ==========
+
+    public async Awaitable<GeneratedCommentaryData> GeneratePatientIntro(string patientName, string diseaseName)
+    {
+        var result = new GeneratedCommentaryData();
+
+        if (_llmService == null)
+        {
+            result.Text = GetPatientIntroFallback(patientName, diseaseName);
+            result.EstimatedDuration = EstimateDuration(result.Text);
+            return result;
+        }
+
+        string systemPrompt = _systemPromptFile != null ? _systemPromptFile.text : "";
+        string userPrompt = $"환자 이름: {patientName}\n병명: {diseaseName}\n\n이 환자를 짧게 소개해.";
+        string generatedText = await _llmService.SendRequest(systemPrompt, userPrompt);
+
+        if (string.IsNullOrEmpty(generatedText))
+        {
+            result.Text = GetPatientIntroFallback(patientName, diseaseName);
+        }
+        else
+        {
+            result.Text = generatedText;
+        }
+
+        result.EstimatedDuration = EstimateDuration(result.Text);
+        return result;
+    }
+
+    private string GetPatientIntroFallback(string patientName, string diseaseName)
+    {
+        string[] fallbacks = new[]
+        {
+            $"새 환자다. {patientName}, {diseaseName}. 준비해.",
+            $"{patientName} 환자, {diseaseName}으로 입원했어.",
+            $"다음 환자 {patientName}. {diseaseName}이야."
+        };
+
+        return fallbacks[UnityEngine.Random.Range(0, fallbacks.Length)];
+    }
 }
