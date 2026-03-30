@@ -5,7 +5,6 @@ using UnityEngine;
 public class AttendancePresenter
 {
     private AttendanceManager _attendanceManager;
-    private PlayerDataManager _playerDataManager;
     private ICustomizingManager _customizingManager;
     private AttendanceView _view;
     private IRewardRepository _rewardRepository;
@@ -14,10 +13,9 @@ public class AttendancePresenter
 
     private CancellationTokenSource _cts;
 
-    public AttendancePresenter(AttendanceManager attendanceManager,PlayerDataManager dataManager, AttendanceView view, ICustomizingManager customizingManager, UIPopupBase attendancePopup)
+    public AttendancePresenter(AttendanceManager attendanceManager, AttendanceView view, ICustomizingManager customizingManager, UIPopupBase attendancePopup)
     {
         _attendanceManager = attendanceManager;
-        _playerDataManager = dataManager;
         _customizingManager = customizingManager;
 
         _view = view;
@@ -33,7 +31,7 @@ public class AttendancePresenter
             OnAttendanceManagerReady();
         }
 
-        SetName(_playerDataManager.PlayerID);
+        SetName(PlayerDataManager.Instance.PlayerID);
     }
 
     public void OnPopupShow()

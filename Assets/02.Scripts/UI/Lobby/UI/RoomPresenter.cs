@@ -15,7 +15,11 @@ public class RoomPresenter
 
         PhotonServerManager.Instance.OnFailedToJoinRoom += OnFailedToJoinRoom;
         PlayerDataManager.Instance.OnDataManagerReady += OnDataManagerSet;
-        SetDropdown();
+
+        if (PlayerDataManager.Instance.IsReady)
+        {
+            OnDataManagerSet();
+        }
     }
 
     public void EnterRoom(string code)
@@ -30,7 +34,7 @@ public class RoomPresenter
 
     public void SetNickName(string name)
     {
-        PhotonServerManager.Instance.SetNickname(name);
+        PlayerDataManager.Instance.ChangeNickname(name);
     }
 
     public void SelectMyHospital(string code)
@@ -46,6 +50,7 @@ public class RoomPresenter
     public void OnDataManagerSet()
     {
         SetDropdown();
+        _view.InitializeNicknameField(PlayerDataManager.Instance.PlayerNickname);
     }
 
    

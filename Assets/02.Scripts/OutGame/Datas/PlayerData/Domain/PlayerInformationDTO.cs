@@ -6,7 +6,7 @@ using Firebase.Firestore;
 public class PlayerInformationDTO 
 {
     [FirestoreProperty]
-    public string Name { get; set; }
+    public string Nickname { get; set; }
 
     [FirestoreProperty]
     public string[] Hospital { get; set; }
@@ -16,7 +16,7 @@ public class PlayerInformationDTO
 
     // DTO → Domain
     public PlayerInformation ToDomain() => new PlayerInformation
-    (   Name,
+    (   Nickname,
         Hospital.Zip(Time, (hospital, time) =>
             new MyHospital(hospital, time))
         .ToArray()
@@ -26,7 +26,7 @@ public class PlayerInformationDTO
     // Domain → DTO
     public static PlayerInformationDTO FromDomain(PlayerInformation information) => new PlayerInformationDTO
     {
-        Name = information.Name,
+        Nickname = information.Nickname,
         Hospital = information
         .MyHospitals.Select(hospital => hospital.Name).ToArray(),
         Time = information
