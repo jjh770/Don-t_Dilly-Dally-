@@ -1,22 +1,21 @@
 using Photon.Pun;
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PhotonView))]
 public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 {
     [SerializeField] private Transform[] _spawnPoints;
-
-    [SerializeField] private Collider _spawnArrange;
-
     [SerializeField] private GameObject _playerPrefab;
 
     private GameObject _player;
-
-    public event Action OnRespawn;
-
     private bool _hasSpawnedLocalPlayer;
 
+    private Dictionary<int, int> _usedSpawnPoints = new Dictionary<int, int>();
+
     public event Action<GameObject> OnPlayerSpawned;
+
     public override void OnJoinedRoom()
     {
         TrySpawnLocalPlayer();
@@ -32,32 +31,72 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         if (!PhotonNetwork.InRoom) return;
         if (_hasSpawnedLocalPlayer) return;
 
-        Spawn();
-        _hasSpawnedLocalPlayer = _player != null;
+        _hasSpawnedLocalPlayer = true;
+        photonView.RPC(nameof(RPC_RequestSpawnPoint), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
     }
 
-    public void Spawn()
+    [PunRPC]
+    private void RPC_RequestSpawnPoint(int actorNumber)
     {
-        if (_spawnPoints == null || _spawnPoints.Length == 0)
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        int spawnIndex = GetAvailableSpawnPointIndex();
+        if (spawnIndex < 0)
         {
-            Debug.LogWarning("등록된 스폰 포인트가 없습니다.");
+            Debug.LogError($"[PlayerSpawnManager] 플레이어 {actorNumber}에게 할당할 스폰 포인트가 없습니다.");
             return;
         }
 
-        //int randomIndex = UnityEngine.Random.Range(0, _spawnPoints.Length);
-        int Index = PhotonServerManager.Instance.CountOfPlayers;
-        Vector3 spawnPosition = GetRandomPointInBoxCollider();
+        _usedSpawnPoints[actorNumber] = spawnIndex;
+        photonView.RPC(nameof(RPC_AssignAndSpawn), RpcTarget.All, actorNumber, spawnIndex);
+    }
 
-        // 리소스 폴더에서 "Player" 이름을 가진 프리팹을 생성하고, 서버에 등록함
-        // 리소스 폴더는 좋지 않음 => 다른 방법을 찾아보자
+    [PunRPC]
+    private void RPC_AssignAndSpawn(int actorNumber, int spawnIndex)
+    {
+        _usedSpawnPoints[actorNumber] = spawnIndex;
+
+        if (actorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
+        {
+            SpawnAt(spawnIndex);
+        }
+    }
+
+    private int GetAvailableSpawnPointIndex()
+    {
+        if (_spawnPoints == null || _spawnPoints.Length == 0)
+        {
+            Debug.LogError("[PlayerSpawnManager] 스폰 포인트가 설정되지 않았습니다.");
+            return -1;
+        }
+
+        List<int> availableIndices = new List<int>();
+        for (int i = 0; i < _spawnPoints.Length; i++)
+        {
+            if (!_usedSpawnPoints.ContainsValue(i))
+            {
+                availableIndices.Add(i);
+            }
+        }
+
+        if (availableIndices.Count == 0)
+        {
+            return -1;
+        }
+
+        return availableIndices[UnityEngine.Random.Range(0, availableIndices.Count)];
+    }
+
+    private void SpawnAt(int spawnIndex)
+    {
+        Vector3 spawnPosition = _spawnPoints[spawnIndex].position;
         Quaternion backwardRotation = Quaternion.Euler(0, 180f, 0);
-        _player = PhotonNetwork.Instantiate(_playerPrefab.name, spawnPosition, backwardRotation);
 
-        
+        _player = PhotonNetwork.Instantiate(_playerPrefab.name, spawnPosition, backwardRotation);
 
         if (_player == null)
         {
-            Debug.LogWarning("플레이어 프리팹을 생성하는 데 실패했습니다. 'Player' 프리팹이 Resources 폴더에 있는지 확인하세요.");
+            Debug.LogError("[PlayerSpawnManager] 플레이어 프리팹 생성 실패. Resources 폴더에 프리팹이 있는지 확인하세요.");
             return;
         }
 
@@ -65,14 +104,8 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         PlayerProperty.SetReadyState(false);
     }
 
-    public Vector3 GetRandomPointInBoxCollider()
+    public void Spawn()
     {
-        Vector3 center = _spawnArrange.bounds.center;
-        Vector3 size = _spawnArrange.bounds.size;
-
-        float randomX = UnityEngine.Random.Range(center.x - size.x / 2f, center.x + size.x / 2f);
-        float randomZ = UnityEngine.Random.Range(center.z - size.z / 2f, center.z + size.z / 2f);
-
-        return new Vector3(randomX, 0f, randomZ);
+        TrySpawnLocalPlayer();
     }
 }
