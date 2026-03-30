@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6389356742231247693}
   m_Layer: 0
-  m_Name: TrayPoint
+  m_Name: TraySlotPoint
   m_TagString: Untagged
   m_Icon: {fileID: 7866945982896999795, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -89,7 +89,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: b2ae8058695a039439cc5cf67581714d, type: 2}
     - target: {fileID: 919132149155446097, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
       propertyPath: m_Name
-      value: kitchen_table_016
+      value: TrayWorkBench_A
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -100,7 +100,16 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -9137049154695594333}
+      addedObject: {fileID: 8576478576778525447}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 70390245401474469}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -8918114002254464947}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: -7544411073049911870}
   m_SourcePrefab: {fileID: 100100000, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
 --- !u!4 &550393791941372544 stripped
 Transform:
@@ -112,8 +121,8 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
   m_PrefabInstance: {fileID: 11783748131720555}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &-9137049154695594333
-MeshCollider:
+--- !u!65 &8576478576778525447
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -130,7 +139,56 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 1364662499612553574, guid: 5a147007a61cac64a8863805fc48a0e0, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 1.0542724, y: 0.5588458, z: 0.8151739}
+  m_Center: {x: 0.000007659197, y: 0.27942273, z: -0.0000005364418}
+--- !u!114 &70390245401474469
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 930191854921494586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &-8918114002254464947
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 930191854921494586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71a7a0c9c8bde8645b52bc10eca10c8b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbench
+  CurrentTrayItem: {fileID: 0}
+  _ruleDatabase: {fileID: 11400000, guid: 7a0f9504b66c78245b742d78d4728327, type: 2}
+--- !u!114 &-7544411073049911870
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 930191854921494586}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6bc338a286657ec42a63e376b09166d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbenchInteractable
+  _trayWorkbench: {fileID: -8918114002254464947}
+  _traySlotPoint: {fileID: 6389356742231247693}
