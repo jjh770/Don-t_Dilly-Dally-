@@ -11,15 +11,15 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9f3758f8f58fdef43803eb9be1df0608, type: 3}
   m_Name: PhotonServerSettings
-  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.ServerSettings
+  m_EditorClassIdentifier: 
   AppSettings:
-    AppIdRealtime: aa448f87-b9c6-457f-abe6-a3990d9064ff
+    AppIdRealtime: 
     AppIdFusion: 
     AppIdChat: 
     AppIdVoice: 
     AppVersion: 
     UseNameServer: 1
-    FixedRegion: kr
+    FixedRegion: 
     Server: 
     Port: 0
     ProxyServer: 
@@ -28,64 +28,17 @@ MonoBehaviour:
     AuthMode: 0
     EnableLobbyStatistics: 0
     NetworkLogging: 1
-  DevRegion: kr
+  DevRegion: 
   PunLogging: 0
   EnableSupportLogger: 0
   RunInBackground: 1
   StartInOfflineMode: 0
   RpcList:
+  - CantHearYou
+  - ChangeColour
   - ClickRpc
   - DestroyRpc
-  - DestroySpaceship
-  - Fire
-  - RespawnSpaceship
-  - TrySceneTransition
-  - SetNickname
-  - SetReadyState
-  - RPC_MarkLeftSource
-  - RPC_NotifyMiniGameResult
-  - RPC_NotifyMiniGameStarted
-  - RPC_SetAsInteractableItem
-  - RPC_SetTrayKind
-  - RPC_GameOver
-  - RPC_ReceiveStageData
-  - RPC_SetPhase
-  - RPC_SetSurgeon
-  - RPC_SyncHealth
-  - RPC_SyncPatientIndex
-  - RPC_SyncTimer
-  - RPC_TriggerEmergency
-  - RPC_SubmitTray
-  - RPC_ResetTrayData
-  - RPC_SyncRecipeIndex
-  - RPC_MiniGameResult
-  - RPC_RequestMiniGame
-  - RPC_StageDataAck
-  - RPC_GameOverAck
-  - RPC_SurgeonAck
-  - RPC_DoorSetState
-  - RPC_PotionCloseDoor
-  - RPC_PotionCompleteMixing
-  - RPC_PotionInsert
-  - RPC_PotionOpenDoor
-  - RPC_PotionStartMixing
-  - RPC_PotionTakeInput
-  - RPC_PotionTakeOutput
-  - RPC_SterilCloseDoor
-  - RPC_SterilCompleteBatch
-  - RPC_SterilInsert
-  - RPC_SterilOpenDoor
-  - RPC_SterilStartBatch
-  - RPC_SterilTakeItem
-  - RPC_WorkbenchPlaceMaterial
-  - RPC_WorkbenchPlaceTray
-  - RPC_WorkbenchTakeTray
-  - RPC_PotionRequestCompletion
-  - RPC_SterilRequestCompletion
-  - RPC_RequestDestroyItems
-  - RPC_AssignRoles
-  - RPC_ClearRoles
-  - RPC_SkipCutscene
+  - HeresWhy
   DisableAutoOpenWizard: 1
-  ShowSettings: 1
-  DevRegionSetOnce: 1
+  ShowSettings: 0
+  DevRegionSetOnce: 0
