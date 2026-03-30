@@ -33,26 +33,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         if (_hasSpawnedLocalPlayer) return;
 
         _hasSpawnedLocalPlayer = true;
-
-        if (PhotonNetwork.IsMasterClient)
-        {
-            int spawnIndex = GetAvailableSpawnPointIndex();
-            if (spawnIndex < 0)
-            {
-                Debug.LogError("[PlayerSpawnManager] 사용 가능한 스폰 포인트가 없습니다.");
-                return;
-            }
-
-            int actorNumber = PhotonNetwork.LocalPlayer.ActorNumber;
-            _usedSpawnPoints[actorNumber] = spawnIndex;
-
-            photonView.RPC(nameof(RPC_SyncSpawnPoint), RpcTarget.Others, actorNumber, spawnIndex);
-            SpawnAt(spawnIndex);
-        }
-        else
-        {
-            photonView.RPC(nameof(RPC_RequestSpawnPoint), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
-        }
+        photonView.RPC(nameof(RPC_RequestSpawnPoint), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
     }
 
     [PunRPC]
@@ -68,17 +49,11 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         }
 
         _usedSpawnPoints[actorNumber] = spawnIndex;
-        photonView.RPC(nameof(RPC_AssignSpawnPoint), RpcTarget.All, actorNumber, spawnIndex);
+        photonView.RPC(nameof(RPC_AssignAndSpawn), RpcTarget.All, actorNumber, spawnIndex);
     }
 
     [PunRPC]
-    private void RPC_SyncSpawnPoint(int actorNumber, int spawnIndex)
-    {
-        _usedSpawnPoints[actorNumber] = spawnIndex;
-    }
-
-    [PunRPC]
-    private void RPC_AssignSpawnPoint(int actorNumber, int spawnIndex)
+    private void RPC_AssignAndSpawn(int actorNumber, int spawnIndex)
     {
         _usedSpawnPoints[actorNumber] = spawnIndex;
 
