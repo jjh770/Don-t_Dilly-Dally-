@@ -7,17 +7,103 @@ using UnityEngine;
 
 // 컷씬 캐릭터 슬롯에 할당된 플레이어의 커스터마이징을 적용하는 컴포넌트
 // CustomizingCharacterController의 컷씬 전용 경량 버전
+[ExecuteAlways]
 [RequireComponent(typeof(CustomizingCharacterView))]
 public class CutsceneCharacterSlot : MonoBehaviour
 {
+    [Header("에디터 미리보기")]
+    [Tooltip("에디터에서 미리 볼 바디 프리팹 (예: Body_01). 플레이 시 자동으로 숨겨집니다.")]
+    [SerializeField] private GameObject _previewPrefab;
+
+#if UNITY_EDITOR
+    private GameObject _previewInstance;
+#endif
+
     private CustomizingCharacterView _view;
     private ICustomizingAssetLoader _assetLoader;
     private Player _assignedPlayer;
 
     public bool IsAssigned => _assignedPlayer != null;
 
+#if UNITY_EDITOR
+    private void OnValidate()
+    {
+        if (Application.isPlaying) return;
+        UnityEditor.EditorApplication.delayCall += RefreshPreview;
+    }
+
+    private void RefreshPreview()
+    {
+        if (this == null) return;
+        if (Application.isPlaying) return;
+
+        // 기존 미리보기 제거
+        if (_previewInstance != null)
+        {
+            DestroyImmediate(_previewInstance);
+            _previewInstance = null;
+        }
+
+        if (_previewPrefab == null) return;
+
+        // 프리팹 에셋 자체(persistent)일 때는 Instantiate 불가 → 프리팹 편집 모드에서만 실행
+        if (UnityEditor.EditorUtility.IsPersistent(gameObject)) return;
+
+        // 미리보기 인스턴스 생성
+        _previewInstance = Instantiate(_previewPrefab, transform);
+        _previewInstance.name = "[Preview] " + _previewPrefab.name;
+        _previewInstance.hideFlags = HideFlags.DontSaveInEditor | HideFlags.NotEditable;
+        _previewInstance.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.identity);
+        _previewInstance.transform.localScale = Vector3.one;
+
+        // 스켈레톤 루트 찾기 (Base_Model 하위의 Skeleton)
+        Transform skeletonRoot = FindSkeletonRootInHierarchy();
+        if (skeletonRoot == null)
+        {
+            Debug.LogWarning("[CutsceneCharacterSlot] 스켈레톤 루트를 찾지 못했습니다.");
+            return;
+        }
+
+        // SkinnedMeshBoneRemapper로 본 리매핑 (Timeline 에디터에서 애니메이션 미리보기 가능)
+        var remapper = _previewInstance.GetComponentInChildren<SkinnedMeshBoneRemapper>();
+        if (remapper != null)
+        {
+            remapper.RemapBonesTo(skeletonRoot);
+        }
+    }
+
+    private Transform FindSkeletonRootInHierarchy()
+    {
+        // Base_Model 하위에서 스켈레톤 루트 탐색 (프리뷰 인스턴스 제외)
+        string[] candidates = { "Skeleton", "Armature", "Root" };
+        foreach (Transform child in GetComponentsInChildren<Transform>(true))
+        {
+            // 프리뷰 인스턴스 하위는 제외
+            if (_previewInstance != null && child.IsChildOf(_previewInstance.transform)) continue;
+
+            foreach (string name in candidates)
+            {
+                if (child.name == name) return child;
+            }
+        }
+        return null;
+    }
+
+#endif
+
     private void Awake()
     {
+        if (!Application.isPlaying) return;
+
+#if UNITY_EDITOR
+        // 플레이 진입 시 미리보기 제거
+        if (_previewInstance != null)
+        {
+            DestroyImmediate(_previewInstance);
+            _previewInstance = null;
+        }
+#endif
+
         _view = GetComponent<CustomizingCharacterView>();
         _assetLoader = new AddressableAssetLoader();
         _view.Initialize(_assetLoader);
@@ -111,6 +197,14 @@ public class CutsceneCharacterSlot : MonoBehaviour
 
     private void OnDestroy()
     {
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            if (_previewInstance != null)
+                DestroyImmediate(_previewInstance);
+            return;
+        }
+#endif
         (_assetLoader as IDisposable)?.Dispose();
     }
 }
