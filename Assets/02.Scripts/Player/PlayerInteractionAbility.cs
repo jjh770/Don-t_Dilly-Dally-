@@ -96,23 +96,28 @@ public class PlayerInteractionAbility : MonoBehaviour
                 continue;
             }
 
+            Vector3 closestPoint = col.ClosestPoint(transform.position);
+
             float detectionCenterY = transform.position.y + _detectionHeightOffset;
-            float heightDiff = Mathf.Abs(col.transform.position.y - detectionCenterY);
+            float heightDiff = Mathf.Abs(closestPoint.y - detectionCenterY);
             if (heightDiff > _detectionHeight)
             {
                 continue;
             }
 
-            Vector3 directionToItem = col.transform.position - transform.position;
+            Vector3 directionToItem = closestPoint - transform.position;
             directionToItem.y = 0;
-            float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
 
-            if (dot < _detectionAngleCos)
+            if (directionToItem.sqrMagnitude > 0.001f)
             {
-                continue;
+                float dot = Vector3.Dot(transform.forward, directionToItem.normalized);
+                if (dot < _detectionAngleCos)
+                {
+                    continue;
+                }
             }
 
-            float sqrDistance = (col.transform.position - transform.position).sqrMagnitude;
+            float sqrDistance = (closestPoint - transform.position).sqrMagnitude;
 
             bool isCompatible = CurrentHeldItem != null
                 && interactable is IItemAcceptor acceptor
