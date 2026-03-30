@@ -43,6 +43,17 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         _roomDataRepository.Save(_currentRoomCode, _roomWallet);
     }
 
+    public StageReward ApplyReward(string stageId, StageResult result)
+    {
+        StageStars previousStars = _roomWallet.GetStageStars(stageId);
+        StageReward reward = StageRewardCalculator.Calculate(result, previousStars);
+
+        _roomWallet = _roomWallet.ApplyReward(stageId, reward);
+
+        SaveData();
+        return reward;
+    }
+
     public async UniTask<bool> IsRoomDataExist(string roomCode)
     {
         if (_roomDataRepository == null) return false;

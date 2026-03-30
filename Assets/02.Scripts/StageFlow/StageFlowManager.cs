@@ -130,6 +130,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 미니게임 결과 대기 ──────────────────────────────────────
         private UniTaskCompletionSource<bool> _miniGameResultTcs;
+        private UniTaskCompletionSource<bool> _forcePatientSuccessTcs;
 
         // ── 캐시된 델리게이트 (구독 해제용) ─────────────────────────
         private Action _onTimerExpired;
@@ -231,7 +232,11 @@ namespace DontDillyDally.StageFlow
                 // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
 
+                // 보상 처리
+                ApplyReward();
+
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
+
                 Debug.Log("[StageFlow] 대기실로 복귀합니다.");
                 PhotonServerManager.Instance.ReturnWaitingRoom();
             }
@@ -430,10 +435,19 @@ namespace DontDillyDally.StageFlow
             _recipeJudge.SetDisease(disease);
             InitializePatientHealth();
             _emergencyPolicy.ResetTimer();
+            _forcePatientSuccessTcs = new UniTaskCompletionSource<bool>();
 
-            await RunRecipeLoop(disease, ct);
+            try
+            {
+                await RunRecipeLoop(disease, ct);
+            }
+            finally
+            {
+                _forcePatientSuccessTcs = null;
+            }
 
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{_stageData.Patients.Count} 치료 완료! | 병명: {disease.DiseaseName} | 남은 체력: {_rpc.PatientHealth.Value}");
+            _stageData.SavedCount += 1;
         }
 
         // 한 환자의 레시피를 순서대로 제출받고 판정합니다.
@@ -448,7 +462,17 @@ namespace DontDillyDally.StageFlow
                 _rpc.SetRecipeIndex(recipeIndex);
                 Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 대기 중... (트레이 제출 대기)");
 
-                SubmittedTray tray = await _trayHandler.WaitForSubmission(ct);
+                UniTask<SubmittedTray> waitForTrayTask = _trayHandler.WaitForSubmission(ct);
+                UniTask<bool> forceSuccessTask = _forcePatientSuccessTcs != null
+                    ? _forcePatientSuccessTcs.Task
+                    : UniTask.Never<bool>(ct);
+
+                var (completedTaskIndex, tray, _) = await UniTask.WhenAny(waitForTrayTask, forceSuccessTask);
+                if (completedTaskIndex == 1)
+                {
+                    Debug.Log("[StageFlow]     디버그 요청으로 현재 환자를 성공 처리합니다.");
+                    return;
+                }
                 Debug.Log("[StageFlow]     트레이 제출됨 → 판정 중...");
 
                 TreatmentJudgeResult result = _recipeJudge.JudgeNextRecipe(tray, _rpc.PatientHealth.Value);
@@ -507,6 +531,37 @@ namespace DontDillyDally.StageFlow
         public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
         {
             return _trayHandler.RequestSubmission(tray, trayViewId);
+        }
+
+        [ContextMenu("Debug/Force Complete Current Patient")]
+        public void ForceCompleteCurrentPatient()
+        {
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                Debug.LogWarning("[StageFlow] 마스터 클라이언트만 현재 환자를 강제 성공 처리할 수 있습니다.");
+                return;
+            }
+
+            if (_isGameOver || _stageData == null)
+            {
+                Debug.LogWarning("[StageFlow] 현재 상태에서는 환자 강제 성공 처리를 실행할 수 없습니다.");
+                return;
+            }
+
+            if (_rpc == null || _rpc.CurrentPhase.Value != EStagePhase.Playing)
+            {
+                Debug.LogWarning("[StageFlow] Playing 페이즈에서만 환자 강제 성공 처리를 실행할 수 있습니다.");
+                return;
+            }
+
+            if (_forcePatientSuccessTcs == null)
+            {
+                Debug.LogWarning("[StageFlow] 현재 진행 중인 환자 루프가 없어 강제 성공 처리할 수 없습니다.");
+                return;
+            }
+
+            Debug.Log("[StageFlow] 현재 환자를 강제로 성공 처리하고 다음 환자로 넘깁니다.");
+            _forcePatientSuccessTcs.TrySetResult(true);
         }
 
         // ── 타이머 동기화 ─────────────────────────────────────────────
@@ -805,6 +860,9 @@ namespace DontDillyDally.StageFlow
                 Debug.LogWarning("[StageFlow] 게임 오버 ACK 대기 중 타임아웃");
             }
 
+            // 보상을 처리합니다.
+            ApplyReward();
+
             await ReturnToWaitingRoomDelayed();
         }
 
@@ -850,6 +908,21 @@ namespace DontDillyDally.StageFlow
                     player.MovementAbility.SetMovementLocked(locked);
                 }
             }
+        }
+
+        // 결과에 따른 보상을 처리합니다.
+        private void ApplyReward()
+        {
+            var result = new StageResult(
+                savedCount: _stageData.SavedCount,
+                patientCount: _stageData.PatientCount,
+                difficulty: _stageData.Difficulty
+            );
+
+            StageReward reward = RoomDataManager.Instance.ApplyReward(_stageData.StageId, result);
+
+            Debug.Log($"별: {reward.Stars} / 돈: {reward.Money} / 신기록: {reward.IsNewBest}");
+            // → UI 연출로 넘기기
         }
 
         // ── Update ──────────────────────────────────────────────────
