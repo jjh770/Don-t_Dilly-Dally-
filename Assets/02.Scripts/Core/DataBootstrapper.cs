@@ -13,7 +13,22 @@ public class DataBootstrapper : MonoBehaviour
     {
         FirebaseInitializer.OnFirebaseInitialized += OnFirebaseSetComplete;
 
-        _rewardRepository = _rewardSO;
+        _rewardRepository = _rewardSO;    
+    }
+
+    private void Start()
+    {
+        if (FirebaseInitializer.Instance.IsFirebaseInitialized)
+        {
+            if (!PlayerDataManager.Instance.IsReady)
+            {
+                OnFirebaseSetComplete();
+            }
+            else
+            {
+                InitializedAttendance();
+            }                
+        }
     }
 
     private void OnFirebaseSetComplete()
@@ -21,17 +36,25 @@ public class DataBootstrapper : MonoBehaviour
         // Repository 생성
         IRoomCurrencyRepository roomDataRepository = new RoomCurrencyFirebaseRepository(FirebaseInitializer.Instance.Database);
         IPlayerInformationRepository playerRepository = new PlayerInformationFirebaseRepository(FirebaseInitializer.Instance.Database);
-        IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database);
 
         RoomDataManager.Instance.Initialized(roomDataRepository);
+
+        // PlayerData 준비 완료 후 AttendanceManager 초기화
+        PlayerDataManager.Instance.OnReady += InitializedAttendance;
         PlayerDataManager.Instance.Initialized(playerRepository);
-        _attendanceManager.Initialize(attendanceRepository, _rewardRepository, PlayerDataManager.Instance.PlayerID);
 
         Debug.Log("[DataBootstrapper] Data 조회 가능");
+    }
+
+    private void InitializedAttendance()
+    {
+        IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database);
+        _attendanceManager.Initialize(attendanceRepository, _rewardRepository, PlayerDataManager.Instance.PlayerID);
     }
 
     private void OnDestroy()
     {
         FirebaseInitializer.OnFirebaseInitialized -= OnFirebaseSetComplete;
+        PlayerDataManager.Instance.OnReady -= InitializedAttendance;
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
@@ -8,6 +9,7 @@ public class RoomView : MonoBehaviour
 {
     [SerializeField] private Button _enterHospitalButton;
     [SerializeField] private Button _createHospitalButton;
+    [SerializeField] private Button _attendancePopupButton;
 
     [SerializeField] private UI_HospitalList _myHospitalList;
 
@@ -18,6 +20,8 @@ public class RoomView : MonoBehaviour
     [SerializeField] private float _errorFadeDuration = 0.25f;
 
     [SerializeField] private float _errorVisibleDuration = 1.5f;
+
+    public Button AttendancePopupButton => _attendancePopupButton;
 
 
     private Tween _errorTween;
@@ -108,7 +112,5 @@ public class RoomView : MonoBehaviour
         _nickNameInputField.onDeselect.RemoveListener(OnNickNameInputDeselect);
         _myHospitalList.OnSelected -= OnMyHospitalSelected;
         _myHospitalList.OnDeleteOption -= OnMyHospitalDeleted;
-
-        _presenter.Dispose(); 
     }
 }

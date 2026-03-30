@@ -12,9 +12,11 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
 
     public static event Action OnFirebaseInitialized;
 
+    public bool IsFirebaseInitialized { get; private set; }
     protected override void Awake()
     {
         base.Awake();
+        IsFirebaseInitialized = false;
 
         if (Instance != this) return;
 
@@ -46,6 +48,7 @@ public class FirebaseInitializer : PersistentSingleton<FirebaseInitializer>
             Debug.Log(FirebaseApp.DefaultInstance.Options.StorageBucket);
 
             OnFirebaseInitialized?.Invoke();
+            IsFirebaseInitialized = true;
         }
         else
         {

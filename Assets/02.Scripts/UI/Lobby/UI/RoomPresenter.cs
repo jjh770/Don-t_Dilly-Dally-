@@ -1,13 +1,18 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class RoomPresenter
 {
     private RoomView _view;
+    private UIPopupBase _attendancePopup;
 
-    public RoomPresenter(RoomView view)
+
+    public RoomPresenter(RoomView view, UIPopupBase attendancePopup)
     {
         _view = view;
+        _attendancePopup = attendancePopup;
+
         PhotonServerManager.Instance.OnFailedToJoinRoom += OnFailedToJoinRoom;
         PlayerDataManager.Instance.OnDataManagerReady += OnDataManagerSet;
         SetDropdown();
@@ -43,6 +48,7 @@ public class RoomPresenter
         SetDropdown();
     }
 
+   
     public void SetDropdown()
     {
         if (!PlayerDataManager.Instance.IsReady) return;
@@ -50,6 +56,7 @@ public class RoomPresenter
 
         _view.SetDropdown(hospitals);
     }
+
 
     public void OnMyHospitalDeleted(string code)
     {
