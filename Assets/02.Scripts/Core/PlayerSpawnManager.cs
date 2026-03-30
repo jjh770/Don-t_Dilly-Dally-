@@ -14,7 +14,6 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private Dictionary<int, int> _usedSpawnPoints = new Dictionary<int, int>();
 
-    public event Action OnRespawn;
     public event Action<GameObject> OnPlayerSpawned;
 
     public override void OnJoinedRoom()

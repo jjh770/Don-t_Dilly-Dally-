@@ -362,8 +362,8 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 1254901158261317061}
   - {fileID: 7028956119548657072}
+  - {fileID: 1254901158261317061}
   m_Father: {fileID: 1823481532304728364}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -503,15 +503,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 40
-  m_fontSizeBase: 40
+  m_fontSize: 30
+  m_fontSizeBase: 30
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -574,18 +574,18 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4724940823418021063}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0.0016002657, y: 0.004408282, z: -0.08966827, w: -0.9959607}
+  m_LocalPosition: {x: 0, y: 0, z: -0.6248566}
   m_LocalScale: {x: 0.7, y: 0.7, z: 0.7}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4673135840638023947}
   m_Father: {fileID: 8802489735008520971}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0.228, y: -0.487, z: -349.712}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 63.71}
-  m_SizeDelta: {x: 302.9, y: 150}
+  m_AnchoredPosition: {x: 8, y: 21.972015}
+  m_SizeDelta: {x: 220, y: 87.46}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &3873186767285087291
 CanvasRenderer:
@@ -833,10 +833,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UI_Commentary
   _narrationPanel: {fileID: 8793346597027693642}
   _narrationText: {fileID: 8973748268670571383}
-  _displayDuration: 7
+  _playbackManager: {fileID: 0}
   _fadeInDuration: 0.3
   _fadeOutDuration: 0.5
-  _typingSpeed: 0.03
   _canvasGroup: {fileID: 2077836381172167348}
 --- !u!1 &8793346597027693642
 GameObject:
