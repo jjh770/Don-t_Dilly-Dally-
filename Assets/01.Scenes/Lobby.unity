@@ -1524,6 +1524,7 @@ GameObject:
   m_Component:
   - component: {fileID: 415259356}
   - component: {fileID: 415259355}
+  - component: {fileID: 415259357}
   m_Layer: 0
   m_Name: PortraitManager
   m_TagString: Untagged
@@ -1567,6 +1568,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &415259357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 415259354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fdee27ae6f6eb3a4e822f90ffd4f0213, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDestroyOnLoad
 --- !u!1 &437672993
 GameObject:
   m_ObjectHideFlags: 0
@@ -2574,9 +2587,7 @@ MonoBehaviour:
   _myHospitalList: {fileID: 1430548989753335554}
   _roomCodeInputField: {fileID: 4723803772908620830}
   _nickNameInputField: {fileID: 1912950664}
-  _errorMessageText: {fileID: 0}
-  _errorFadeDuration: 0.25
-  _errorVisibleDuration: 1.5
+  _errorMessage: {fileID: 0}
 --- !u!222 &684927659
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2912,6 +2923,7 @@ MonoBehaviour:
   _errorMessageText: {fileID: 124444168}
   _errorFadeDuration: 0.25
   _errorVisibleDuration: 1.5
+  _panel: {fileID: 0}
 --- !u!1001 &830347311
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3740,7 +3752,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 91175dcc15224463780e01a8a98b1b60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PhotonVoice::Photon.Voice.Unity.Recorder
-  voiceDetection: 0
+  voiceDetection: 1
   voiceDetectionThreshold: 0.01
   voiceDetectionDelayMs: 500
   interestGroup: 0
@@ -3753,10 +3765,10 @@ MonoBehaviour:
   samplingRate: 24000
   frameDuration: 40000
   bitrate: 30000
-  sourceType: 1
+  sourceType: 0
   microphoneType: 0
-  audioClip: {fileID: 8300000, guid: 510d27edb606aa044820bd945ec68f40, type: 3}
-  loopAudioClip: 1
+  audioClip: {fileID: 0}
+  loopAudioClip: 0
   recordingEnabled: 1
   audioSessionParameters:
     Category: 4

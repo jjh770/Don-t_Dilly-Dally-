@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -16,7 +17,7 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
         _assetLoader = new AddressableAssetLoader();
     }
 
-    public async UniTask<Sprite> RenderAsync(FacePortraitCaptureRequest request)
+    public async UniTask<Sprite> RenderAsync(FacePortraitCaptureRequest request, CancellationToken cancellationToken = default)
     {
         if (_characterPrefab == null)
         {
@@ -36,7 +37,8 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
             return null;
         }
 
-        await _rig.ApplyAppearanceAsync(request.Snapshot, _customizingManager, _assetLoader);
+        await _rig.ApplyAppearanceAsync(request.Snapshot, _customizingManager, _assetLoader, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         return _rig.Capture(request);
     }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -21,7 +22,8 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
     public async UniTask ApplyAppearanceAsync(
         PlayerAppearanceSnapshot snapshot,
         ICustomizingManager customizingManager,
-        ICustomizingAssetLoader assetLoader)
+        ICustomizingAssetLoader assetLoader,
+        CancellationToken cancellationToken = default)
     {
         if (snapshot == null || customizingManager == null || _characterView == null || assetLoader == null)
         {
@@ -38,6 +40,8 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
 
         foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             if (!snapshot.EquippedItemIds.TryGetValue(type, out string itemId) || string.IsNullOrEmpty(itemId))
             {
                 _characterView.ClearSlot(type);
@@ -54,7 +58,7 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
             await _characterView.ApplyItemAsync(type, item);
         }
 
-        await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate);
+        await UniTask.Yield(PlayerLoopTiming.LastPostLateUpdate, cancellationToken);
     }
 
     public Sprite Capture(FacePortraitCaptureRequest request)
@@ -149,7 +153,7 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
         _characterInstance.transform.localRotation = Quaternion.identity;
         _characterInstance.transform.localScale = Vector3.one;
 
-        foreach (Behaviour behaviour in _characterInstance.GetComponents<Behaviour>())
+        foreach (Behaviour behaviour in _characterInstance.GetComponentsInChildren<Behaviour>(true))
         {
             if (behaviour is Animator || behaviour is CustomizingCharacterView)
             {
@@ -159,9 +163,14 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
             behaviour.enabled = false;
         }
 
-        foreach (Collider collider in _characterInstance.GetComponents<Collider>())
+        foreach (Collider collider in _characterInstance.GetComponentsInChildren<Collider>(true))
         {
             collider.enabled = false;
+        }
+
+        foreach (Rigidbody rigidbody in _characterInstance.GetComponentsInChildren<Rigidbody>(true))
+        {
+            rigidbody.isKinematic = true;
         }
 
         _characterView = _characterInstance.GetComponent<CustomizingCharacterView>();

@@ -2304,7 +2304,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2945d30cda2d78e4caf92afb1352155a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnManager
-  _spawnArrange: {fileID: 0}
+  _spawnPoints:
+  - {fileID: 1264631776}
   _playerPrefab: {fileID: 6536501996314029870, guid: 4594ae68b9d26d342ad7fd7371ac4fdd, type: 3}
 --- !u!4 &829805307
 Transform:
@@ -2340,7 +2341,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3

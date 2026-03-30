@@ -1,8 +1,9 @@
+using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
-using System;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -21,6 +22,7 @@ public class PortraitManager : MonoBehaviourPunCallbacks
     private CustomizingManager _boundCustomizingManager;
     private IPlayerAppearanceSource _appearanceSource;
     private PlayerPortraitService _portraitService;
+    private CancellationTokenSource _portraitCts;
 
     private void Awake()
     {
@@ -56,7 +58,10 @@ public class PortraitManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        BindCustomizingManager();
+        if (_boundCustomizingManager == null)
+        {
+            BindCustomizingManager();
+        }
     }
 
     public override void OnDisable()
@@ -212,6 +217,10 @@ public class PortraitManager : MonoBehaviourPunCallbacks
 
     private void DisposePortraitService()
     {
+        _portraitCts?.Cancel();
+        _portraitCts?.Dispose();
+        _portraitCts = null;
+
         if (_portraitService == null)
         {
             return;
@@ -219,6 +228,7 @@ public class PortraitManager : MonoBehaviourPunCallbacks
 
         _portraitService.ClearRoomCache();
         _portraitService = null;
+        _appearanceSource = null;
     }
 
     private async UniTaskVoid PreloadAllPortraits()
@@ -254,7 +264,18 @@ public class PortraitManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        Sprite portrait = await portraitService.GetOrCreateAsync(snapshot);
+        _portraitCts ??= new CancellationTokenSource();
+
+        Sprite portrait;
+        try
+        {
+            portrait = await portraitService.GetOrCreateAsync(snapshot, _portraitCts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
         if (portrait == null)
         {
             return;

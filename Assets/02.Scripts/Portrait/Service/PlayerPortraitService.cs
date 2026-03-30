@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
 using Photon.Realtime;
@@ -34,7 +35,7 @@ public sealed class PlayerPortraitService : IPlayerPortraitService
         return _appearanceSource?.Create(player);
     }
 
-    public UniTask<Sprite> GetOrCreateAsync(PlayerAppearanceSnapshot snapshot)
+    public UniTask<Sprite> GetOrCreateAsync(PlayerAppearanceSnapshot snapshot, CancellationToken cancellationToken = default)
     {
         if (snapshot == null)
         {
@@ -54,7 +55,7 @@ public sealed class PlayerPortraitService : IPlayerPortraitService
             return pendingTask.AsUniTask();
         }
 
-        Task<Sprite> newTask = CreatePortraitTaskAsync(snapshot, cacheKey);
+        Task<Sprite> newTask = CreatePortraitTaskAsync(snapshot, cacheKey, cancellationToken);
         _pendingTasks[cacheKey] = newTask;
         return newTask.AsUniTask();
     }
@@ -103,12 +104,19 @@ public sealed class PlayerPortraitService : IPlayerPortraitService
         _renderer?.Dispose();
     }
 
-    private async Task<Sprite> CreatePortraitTaskAsync(PlayerAppearanceSnapshot snapshot, string cacheKey)
+    private async Task<Sprite> CreatePortraitTaskAsync(PlayerAppearanceSnapshot snapshot, string cacheKey, CancellationToken cancellationToken)
     {
         try
         {
+            if (_renderer == null)
+            {
+                return null;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+
             FacePortraitCaptureRequest request = new FacePortraitCaptureRequest(snapshot, _profile, _resolution, _captureLayer);
-            Sprite sprite = await _renderer.RenderAsync(request);
+            Sprite sprite = await _renderer.RenderAsync(request, cancellationToken);
 
             if (sprite == null)
             {
