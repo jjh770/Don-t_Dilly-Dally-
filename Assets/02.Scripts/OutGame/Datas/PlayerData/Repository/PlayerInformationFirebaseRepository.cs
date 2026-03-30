@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
-using Photon.Pun.Demo.Asteroids;
 using UnityEngine;
 
 public class PlayerInformationFirebaseRepository : IPlayerInformationRepository
