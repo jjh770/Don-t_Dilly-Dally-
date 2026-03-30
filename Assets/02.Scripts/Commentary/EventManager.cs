@@ -27,11 +27,6 @@ public class EventManager : MonoBehaviour
 
     // ========== 이벤트 발행 메서드 ==========
 
-    public void OnGameStart()
-    {
-        Publish(EventType.GameStart, "게임이 시작되었습니다.");
-    }
-
     public void OnGameOver()
     {
         Publish(EventType.GameOver, "게임이 종료되었습니다.");
@@ -80,9 +75,9 @@ public class EventManager : MonoBehaviour
         Publish(EventType.MachineBroken, $"{machineName} 기계가 고장났습니다.");
     }
 
-    public void OnNewPatientAppeared(string patientInfo)
+    public void OnNewPatientAppeared(string patientName, string diseaseName)
     {
-        Publish(EventType.NewPatientAppeared, $"새로운 환자가 등장했습니다. {patientInfo}");
+        Publish(EventType.NewPatientAppeared, $"새로운 환자 '{patientName}'이(가) 등장했습니다. 병명: {diseaseName}");
     }
 
     public void OnMaterialDeliveredLate(string materialName)

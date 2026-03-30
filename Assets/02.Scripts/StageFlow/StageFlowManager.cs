@@ -215,7 +215,6 @@ namespace DontDillyDally.StageFlow
                 // Phase 3: 게임 루프
                 Debug.Log("[StageFlow] ▶ Phase 3: Playing 진입 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
-                EventManager.Instance?.OnGameStart();
                 await RunGameLoop(ct);
                 Debug.Log("[StageFlow] ✓ Phase 3: Playing 완료 (모든 환자 치료 성공)");
 
@@ -226,7 +225,6 @@ namespace DontDillyDally.StageFlow
                 SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
                 OnStageClear?.Invoke();
-                EventManager.Instance?.OnSurgerySuccess();
 
                 // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
@@ -426,6 +424,8 @@ namespace DontDillyDally.StageFlow
         {
             DiseaseData disease = _stageData.Patients[patientIndex];
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{_stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {_stageData.MaxPatientHealth}");
+
+            EventManager.Instance?.OnNewPatientAppeared(disease.PatientName, disease.DiseaseName);
 
             _recipeJudge.SetDisease(disease);
             InitializePatientHealth();

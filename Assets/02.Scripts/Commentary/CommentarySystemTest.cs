@@ -7,9 +7,6 @@ public class CommentarySystemTest : MonoBehaviour
         if (EventManager.Instance == null) return;
 
         // 완전 고정형
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-            EventManager.Instance.OnGameStart();
-
         if (Input.GetKeyDown(KeyCode.Alpha2))
             EventManager.Instance.OnSurgerySuccess();
 
@@ -31,7 +28,7 @@ public class CommentarySystemTest : MonoBehaviour
 
         // 완전 동적형
         if (Input.GetKeyDown(KeyCode.Alpha8))
-            EventManager.Instance.OnNewPatientAppeared("중증 외상 환자입니다.");
+            EventManager.Instance.OnNewPatientAppeared("김철수", "급성 맹장염");
 
         if (Input.GetKeyDown(KeyCode.Alpha9))
             EventManager.Instance.OnChainAccident("연속으로 장비 고장과 재료 지연이 발생했습니다.");
