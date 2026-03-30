@@ -119,7 +119,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         int spawnIndex = GetAvailableSpawnPointIndex();
         if (spawnIndex < 0)
         {
-            Debug.LogError($"[PlayerSpawnManager] Player {actorNumber} could not be assigned a spawn point.");
+            Debug.LogError($"[PlayerSpawnManager] 플레이어 {actorNumber}에게 스폰 포인트를 할당할 수 없습니다.");
 
             if (PhotonNetwork.LocalPlayer != null && actorNumber == PhotonNetwork.LocalPlayer.ActorNumber)
             {
@@ -137,7 +137,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     {
         if (_spawnPoints == null || _spawnPoints.Length == 0)
         {
-            Debug.LogError("[PlayerSpawnManager] Spawn points are not configured.");
+            Debug.LogError("[PlayerSpawnManager] 스폰 포인트가 설정되지 않았습니다.");
             return -1;
         }
 
@@ -162,7 +162,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     {
         if (_spawnArrange == null)
         {
-            Debug.LogWarning("[PlayerSpawnManager] Spawn arrange collider is not assigned.");
+            Debug.LogWarning("[PlayerSpawnManager] 스폰 영역 콜라이더가 할당되지 않았습니다.");
             return;
         }
 
@@ -173,7 +173,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     {
         if (_spawnPoints == null || spawnIndex < 0 || spawnIndex >= _spawnPoints.Length || _spawnPoints[spawnIndex] == null)
         {
-            Debug.LogError($"[PlayerSpawnManager] Invalid spawn index: {spawnIndex}.");
+            Debug.LogError($"[PlayerSpawnManager] 잘못된 스폰 인덱스입니다: {spawnIndex}.");
             _isSpawnRequestPending = false;
             return;
         }
@@ -185,7 +185,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     {
         if (_playerPrefab == null)
         {
-            Debug.LogError("[PlayerSpawnManager] Player prefab is not assigned.");
+            Debug.LogError("[PlayerSpawnManager] 플레이어 프리팹이 할당되지 않았습니다.");
             _isSpawnRequestPending = false;
             return;
         }
@@ -195,7 +195,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
         if (_player == null)
         {
-            Debug.LogError("[PlayerSpawnManager] Failed to instantiate the player prefab.");
+            Debug.LogError("[PlayerSpawnManager] 플레이어 프리팹 생성에 실패했습니다.");
             _isSpawnRequestPending = false;
             return;
         }
