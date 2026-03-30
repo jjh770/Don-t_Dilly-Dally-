@@ -20,8 +20,6 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     private readonly string _gameVersion = "1.0";
 
-    private string _nickName = "Player";
-
     private string _roomCode;
 
     private readonly System.Random _random = new System.Random();
@@ -40,22 +38,23 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     private void Start()
     {
         Connect();
+        PlayerDataManager.Instance.OnNicknameChanged += HandleNicknameChanged;
     }
 
     public override void OnEnable()
     {
         base.OnEnable();
-        PhotonNetwork.AddCallbackTarget(this);
+        PhotonNetwork.AddCallbackTarget(this);     
     }
 
     public override void OnDisable()
     {
         PhotonNetwork.RemoveCallbackTarget(this);
+        PlayerDataManager.Instance.OnNicknameChanged -= HandleNicknameChanged;
     }
     private void Connect()
     {
         PhotonNetwork.GameVersion = _gameVersion;
-        PhotonNetwork.NickName = _nickName;
 
         PhotonNetwork.EnableCloseConnection = true;
         PhotonNetwork.AutomaticallySyncScene = true;
@@ -137,6 +136,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         if (!CanAddRoom(roomCode)) return;
 
+        SetNickname(PlayerDataManager.Instance.PlayerNickname);
         PhotonNetwork.CreateRoom(roomCode, GetRoomOptions());
     }
 
@@ -169,6 +169,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
             if (!CanAddRoom(roomCode)) return;
 
+            SetNickname(PlayerDataManager.Instance.PlayerNickname);
             PhotonNetwork.JoinOrCreateRoom(_roomCode, GetRoomOptions(), TypedLobby.Default);
         }
         else
@@ -191,11 +192,15 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         return true;
     }
 
+    public void HandleNicknameChanged(string nickname)
+    {
+        SetNickname(nickname);
+    }
+
     public void SetNickname(string nickname)
     {
-        _nickName = nickname;
-        PhotonNetwork.NickName = _nickName;
-        PlayerProperty.SetNickname(_nickName);
+        PhotonNetwork.NickName = nickname;
+        PlayerProperty.SetNickname(nickname);
     }
 
     public bool TryStartStage(out string message)

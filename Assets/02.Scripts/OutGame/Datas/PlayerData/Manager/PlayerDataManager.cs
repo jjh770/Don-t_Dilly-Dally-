@@ -12,6 +12,8 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     private string _currentAccount;
 
     [SerializeField] private string _playerID = "Player";
+    
+    public string PlayerNickname => _playerInformation.Nickname;
 
     public string PlayerID => _playerID;
 
@@ -19,7 +21,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action OnDataManagerReady;
 
-    public event Action OnReady;
+    public event Action<string> OnNicknameChanged;
     public bool IsReady { get; private set; }
     public void Initialized(IPlayerInformationRepository playerRoomRepository)
     {
@@ -32,7 +34,6 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     {
         await LoadPlayerInformation(_playerID);
         IsReady = true;
-        OnReady?.Invoke();
         OnDataManagerReady?.Invoke();   
     }
 
@@ -56,7 +57,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         _playerInformation = information;
 
         Debug.Log("[PlayerDataManager] " +
-            "MyName : " + _playerInformation.Name + "\n" +
+            "MyName : " + _playerInformation.Nickname + "\n" +
             "MyHospitals : " +
                 string.Join(", ",
                 _playerInformation.MyHospitals
@@ -95,6 +96,13 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     public void SetPlayerID(string id)
     {
         _playerID = id;
+    }
+
+    public void ChangeNickname(string nickname)
+    {
+        _playerInformation.SetName(nickname);
+        SaveData();
+        OnNicknameChanged?.Invoke(nickname);
     }
 
     public override void OnJoinedRoom()

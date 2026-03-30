@@ -15,23 +15,12 @@ public class RoomView : MonoBehaviour
 
     [SerializeField] private TMP_InputField _roomCodeInputField;
     [SerializeField] private TMP_InputField _nickNameInputField;
-    [SerializeField] private TextMeshProUGUI _errorMessageText;
-
-    [SerializeField] private float _errorFadeDuration = 0.25f;
-
-    [SerializeField] private float _errorVisibleDuration = 1.5f;
+    [SerializeField] private UI_Message _errorMessage;
 
     public Button AttendancePopupButton => _attendancePopupButton;
 
 
-    private Tween _errorTween;
-
     private RoomPresenter _presenter;
-
-    private void Start()
-    {
-        SetErrorAlpha(0f);
-    }
 
     private void OnEnable ()
     {
@@ -58,6 +47,11 @@ public class RoomView : MonoBehaviour
         _presenter = presenter;
     }
 
+    public void InitializeNicknameField(string nickName)
+    {
+        _nickNameInputField.text = nickName;
+    }
+
     public void OnEnterButtonClick()
     {
         _presenter.EnterRoom(_roomCodeInputField.text);
@@ -75,25 +69,9 @@ public class RoomView : MonoBehaviour
 
     public void ShowErrorMessage(string message)
     {
-        if (_errorMessageText == null) return;
+        if (_errorMessage == null) return;
 
-        _errorTween?.Kill();
-        _errorMessageText.text = message;
-        SetErrorAlpha(0f);
-
-        _errorTween = DOTween.Sequence()
-            .Append(_errorMessageText.DOFade(1f, _errorFadeDuration))
-            .AppendInterval(_errorVisibleDuration)
-            .Append(_errorMessageText.DOFade(0f, _errorFadeDuration));
-    }
-
-    private void SetErrorAlpha(float alpha)
-    {
-        if (_errorMessageText == null) return;
-
-        Color color = _errorMessageText.color;
-        color.a = alpha;
-        _errorMessageText.color = color;
+        _errorMessage.Show(message);
     }
 
     public void SetCodeInputField(string code)
