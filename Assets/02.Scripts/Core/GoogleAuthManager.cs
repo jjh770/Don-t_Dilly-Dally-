@@ -168,7 +168,7 @@ public class GoogleAuthManager : MonoBehaviour
 
     private void OnLoginSuccess(GoogleUserInfo userInfo)
     {
-        PlayerDataManager.Instance.SetPlayerID(userInfo.id);
+        PlayerDataManager.Instance.SetPlayerID(userInfo.email);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
     }
 

@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
+using NUnit.Framework;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
@@ -12,7 +14,16 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     private string _currentAccount;
 
     [SerializeField] private string _playerID = "Player";
-    
+    [SerializeField] private List<string> _defaultNickNameList = new List<string>
+    {
+        "김진료",
+        "박처방",
+        "이수술",
+        "최진단",
+        "정회복",
+        "한응급"
+    };
+
     public string PlayerNickname => _playerInformation.Nickname;
 
     public string PlayerID => _playerID;
@@ -49,7 +60,8 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         if (information == null)
         {
             Debug.Log("[PlayerDataManager] 새로운 데이터를 생성합니다.");
-            _playerInformation = PlayerInformation.Default;
+            string nickName = _defaultNickNameList[UnityEngine.Random.Range(0, _defaultNickNameList.Count)];
+            _playerInformation = new PlayerInformation(nickName);
 
             SaveData();
             return;
