@@ -13,6 +13,6 @@ public class StageBootstrapper : MonoBehaviour
 
     private void OnDestroy()
     {
-        _rewardPresenter.Dispose();
+        _rewardPresenter?.Dispose();
     }
 }
