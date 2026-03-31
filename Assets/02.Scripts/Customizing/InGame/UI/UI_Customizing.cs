@@ -11,7 +11,8 @@ public class UI_Customizing : MonoBehaviour
     [SerializeField] private RectTransform _tabSelectionIndicator;
 
     [Header("아이템 리스트")]
-    [SerializeField] private UI_CustomizingItem _itemPrefab;
+    [SerializeField] private UI_CustomizingItem _itemSlotButton;
+    [SerializeField] private UI_CustomizingItem _itemSlotLockButton;
     [SerializeField] private Transform _itemListParent;
     [SerializeField] private ScrollRect _scrollRect;
 
@@ -22,6 +23,11 @@ public class UI_Customizing : MonoBehaviour
 
     [Header("정보 표시")]
     [SerializeField] private TextMeshProUGUI _selectedItemNameText;
+
+    [Header("경고 UI")]
+    [SerializeField] private GameObject _warningPanel;
+    [SerializeField] private TextMeshProUGUI _warningText;
+    [SerializeField] private float _warningDuration = 2f;
 
     [Header("탭 색상")]
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
@@ -138,8 +144,40 @@ public class UI_Customizing : MonoBehaviour
 
     private void OnSaveClicked()
     {
-        _viewModel?.Save();
-        OnSaved?.Invoke();
+        if (_viewModel == null) return;
+
+        if (_viewModel.TrySave())
+        {
+            OnSaved?.Invoke();
+        }
+        else
+        {
+            ShowWarning("출석체크를 해야 획득할 수 있는 아이템입니다.");
+        }
+    }
+
+    private void ShowWarning(string message)
+    {
+        if (_warningPanel != null)
+        {
+            _warningPanel.SetActive(true);
+
+            if (_warningText != null)
+                _warningText.text = message;
+
+            CancelInvoke(nameof(HideWarning));
+            Invoke(nameof(HideWarning), _warningDuration);
+        }
+        else
+        {
+            Debug.LogWarning($"[UI_Customizing] {message}");
+        }
+    }
+
+    private void HideWarning()
+    {
+        if (_warningPanel != null)
+            _warningPanel.SetActive(false);
     }
 
     private void OnResetClicked()
@@ -176,9 +214,13 @@ public class UI_Customizing : MonoBehaviour
 
     private UI_CustomizingItem CreateItemButton(CustomizingItemViewData viewData)
     {
-        if (_itemPrefab == null || _itemListParent == null) return null;
+        if (_itemListParent == null) return null;
 
-        var buttonObj = Instantiate(_itemPrefab.gameObject, _itemListParent);
+        // 잠금 상태에 따라 다른 프리팹 사용
+        var prefab = viewData.IsLocked ? _itemSlotLockButton : _itemSlotButton;
+        if (prefab == null) return null;
+
+        var buttonObj = Instantiate(prefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
 
         button.Setup(viewData, () => OnItemClicked(viewData.ItemId));

@@ -63,11 +63,10 @@ public class Customizing
         return _state.ToSaveData();
     }
 
-    // 장착 가능 여부 검사
+    // 장착 가능 여부 검사 (미리보기 착용 허용 - 잠금 체크는 Save 시점에 수행)
     public EEquipResult CanEquip(ICustomizingItemSpec item)
     {
         if (item == null) return EEquipResult.InvalidItem;
-        if (item.IsLocked) return EEquipResult.Locked;
         if (_state.IsEquippedItem(item.Category, item.ItemId)) return EEquipResult.AlreadyEquipped;
         return EEquipResult.Equipped;
     }
@@ -94,11 +93,10 @@ public class Customizing
         return EEquipResult.Equipped;
     }
 
-    // 재클릭 시 해제
+    // 재클릭 시 해제 (미리보기 착용 허용 - 잠금 체크는 Save 시점에 수행)
     public EEquipResult ToggleEquip(ICustomizingItemSpec item)
     {
         if (item == null) return EEquipResult.InvalidItem;
-        if (item.IsLocked) return EEquipResult.Locked;
 
         if (_state.IsEquippedItem(item.Category, item.ItemId))
         {

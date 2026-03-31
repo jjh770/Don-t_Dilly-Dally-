@@ -32,13 +32,13 @@ public class UI_CustomizingItem : MonoBehaviour
         if (_iconImage != null && viewData.Icon != null)
         {
             _iconImage.sprite = viewData.Icon;
-            _iconImage.color = viewData.IsLocked ? Color.gray : _normalColor;
+            _iconImage.color = _normalColor;
         }
 
         SetSelected(viewData.IsSelected);
 
         if (_button != null)
-            _button.interactable = !viewData.IsLocked;
+            _button.interactable = true;
     }
 
     public void Setup(CustomizingItemSO item, Action onClickCallback)

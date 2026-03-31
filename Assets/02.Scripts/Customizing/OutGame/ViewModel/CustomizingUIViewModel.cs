@@ -76,6 +76,20 @@ public class CustomizingUIViewModel
         _manager.Save();
     }
 
+    /// <summary>
+    /// 저장 시도. 잠금 아이템이 장착되어 있으면 false 반환
+    /// </summary>
+    public bool TrySave()
+    {
+        if (_manager.HasLockedEquippedItems())
+        {
+            return false;
+        }
+
+        _manager.Save();
+        return true;
+    }
+
     public void Cancel()
     {
         _manager.CloseCustomizingUI();
@@ -126,12 +140,15 @@ public class CustomizingUIViewModel
     {
         _visibleItems.Clear();
 
-        var items = _manager.GetUnlockedItemsByType(_currentCategory);
+        // 모든 아이템 표시 (잠금 아이템 포함)
+        var items = _manager.GetAllItemsByType(_currentCategory);
         var equippedItem = _manager.GetEquipped(_currentCategory);
 
         foreach (var item in items)
         {
             bool isEquipped = equippedItem != null && equippedItem.ItemId == item.ItemId;
+            // 실제 잠금 상태 = 기본 잠금 && 미해금
+            bool isLocked = _manager.IsItemLocked(item.ItemId);
 
             var viewData = new CustomizingItemViewData(
                 itemId: item.ItemId,
@@ -139,7 +156,7 @@ public class CustomizingUIViewModel
                 icon: item.PreviewIcon,
                 isSelected: isEquipped,
                 isEquipped: isEquipped,
-                isLocked: item.IsLocked,
+                isLocked: isLocked,
                 canUnequip: true
             );
 

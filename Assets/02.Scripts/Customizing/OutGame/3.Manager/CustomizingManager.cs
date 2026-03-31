@@ -18,11 +18,13 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     private Customizing _domain;
     private ICustomizingRepository _repository;
     private CustomizingState _savedState;
+    private CustomizingSaveData _currentSaveData;
 
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
     public event Action OnSaved;
     public event Action OnLoaded;
+    public event Action<string> OnItemUnlocked;
 
     public bool IsInitialized => _domain != null;
 
@@ -83,16 +85,16 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
             return;
         }
 
-        var saveData = await _repository.Load();
+        _currentSaveData = await _repository.Load();
 
-        if (saveData != null && saveData.SelectedItems.Count > 0)
-            _domain.RestoreFromSaveData(saveData);
+        if (_currentSaveData != null && _currentSaveData.SelectedItems.Count > 0)
+            _domain.RestoreFromSaveData(_currentSaveData);
         else
             _domain.InitializeWithDefaults();
 
         _savedState.CopyFrom(_domain.State);
 
-        Debug.Log("[CustomizingManager] 로드 완료");
+        Debug.Log($"[CustomizingManager] 로드 완료. 해금된 아이템 수: {_currentSaveData?.UnlockedItems?.Count ?? 0}");
         OnLoaded?.Invoke();
     }
 
@@ -108,6 +110,17 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         var saveData = _domain.ToSaveData();
         saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
+
+        // 기존 해금 데이터 유지
+        if (_currentSaveData != null)
+        {
+            foreach (var itemId in _currentSaveData.UnlockedItems)
+            {
+                saveData.UnlockedItems.Add(itemId);
+            }
+        }
+
+        _currentSaveData = saveData;
         _repository.Save(saveData).Forget();
 
         Debug.Log("[CustomizingManager] 저장 완료");
@@ -228,6 +241,82 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     public List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type)
     {
         return _catalog?.GetUnlockedItemsByType(type) ?? new List<CustomizingItemSO>();
+    }
+
+    public List<CustomizingItemSO> GetAllItemsByType(CustomizingType type)
+    {
+        return _catalog?.GetItemsByType(type) ?? new List<CustomizingItemSO>();
+    }
+
+    // ========== 해금 API ==========
+
+    /// <summary>
+    /// 아이템이 실제로 잠금 상태인지 확인
+    /// 기본 잠금 아이템이고 아직 해금되지 않았으면 true
+    /// </summary>
+    public bool IsItemLocked(string itemId)
+    {
+        var item = _catalog?.GetItemById(itemId);
+        if (item == null) return true;
+
+        // 기본 잠금 아이템이 아니면 잠금 아님
+        if (!item.IsLocked) return false;
+
+        // 기본 잠금 아이템이지만 해금되었으면 잠금 아님
+        return !(_currentSaveData?.IsUnlocked(itemId) ?? false);
+    }
+
+    /// <summary>
+    /// 아이템 해금 처리 (중복 요청 안전)
+    /// </summary>
+    public void UnlockItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+        {
+            Debug.LogWarning("[CustomizingManager] 빈 ItemId로 해금 시도");
+            return;
+        }
+
+        if (_currentSaveData == null)
+        {
+            _currentSaveData = CustomizingSaveData.Default;
+        }
+
+        if (_currentSaveData.IsUnlocked(itemId))
+        {
+            Debug.Log($"[CustomizingManager] 이미 해금된 아이템: {itemId}");
+            return;
+        }
+
+        var item = _catalog?.GetItemById(itemId);
+        if (item == null)
+        {
+            Debug.LogWarning($"[CustomizingManager] 카탈로그에 없는 아이템: {itemId}");
+            return;
+        }
+
+        _currentSaveData.TryUnlock(itemId);
+        _currentSaveData.LastSavedAt = DateTime.UtcNow.ToString("o");
+        _repository.Save(_currentSaveData).Forget();
+
+        Debug.Log($"[CustomizingManager] 아이템 해금 완료: {itemId}");
+        OnItemUnlocked?.Invoke(itemId);
+    }
+
+    /// <summary>
+    /// 현재 장착 중인 아이템 중 잠금 상태인 것이 있는지 확인
+    /// </summary>
+    public bool HasLockedEquippedItems()
+    {
+        if (_domain?.State == null) return false;
+
+        foreach (var kvp in _domain.State.GetAll())
+        {
+            if (IsItemLocked(kvp.Value))
+                return true;
+        }
+
+        return false;
     }
 
     private void OnDestroy()

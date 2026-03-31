@@ -35,6 +35,7 @@ public class LocalCustomizingRepository : ICustomizingRepository
     {
         public int[] types;
         public string[] itemIds;
+        public string[] unlockedItemIds;
         public string lastSavedAt;
 
         public SerializableSaveData() { }
@@ -54,6 +55,13 @@ public class LocalCustomizingRepository : ICustomizingRepository
                 itemIds[i] = kvp.Value;
                 i++;
             }
+
+            unlockedItemIds = new string[data.UnlockedItems.Count];
+            int j = 0;
+            foreach (var id in data.UnlockedItems)
+            {
+                unlockedItemIds[j++] = id;
+            }
         }
 
         public CustomizingSaveData ToSaveData()
@@ -67,6 +75,15 @@ public class LocalCustomizingRepository : ICustomizingRepository
                 for (int i = 0; i < count; i++)
                 {
                     data.SelectedItems[types[i]] = itemIds[i];
+                }
+            }
+
+            if (unlockedItemIds != null)
+            {
+                foreach (var id in unlockedItemIds)
+                {
+                    if (!string.IsNullOrEmpty(id))
+                        data.UnlockedItems.Add(id);
                 }
             }
 
