@@ -224,6 +224,11 @@ public class CustomizingCharacterView : MonoBehaviour
             RemapBones(instance);
         }
 
+        foreach (var smr in instance.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+        {
+            smr.updateWhenOffscreen = true;
+        }
+
         return instance;
     }
     private void DestroyInstance(GameObject instance)
