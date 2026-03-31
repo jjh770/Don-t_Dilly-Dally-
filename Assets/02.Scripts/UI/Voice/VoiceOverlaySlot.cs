@@ -1,20 +1,16 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UIOutline = UnityEngine.UI.Outline;
 
 public class VoiceOverlaySlot : MonoBehaviour
 {
     [SerializeField] private Image _iconImage;
     [SerializeField] private TextMeshProUGUI _nicknameText;
-    [SerializeField] private UIOutline _iconOutline;
     [SerializeField] private Image _muteImage;
 
     [Header("State Visuals")]
     [SerializeField, Range(0f, 1f)] private float _idleAlpha = 0.45f;
     [SerializeField, Range(0f, 1f)] private float _speakingAlpha = 1f;
-    [SerializeField] private Color _iconOutlineColor = Color.white;
-    [SerializeField] private Vector2 _iconOutlineDistance = new Vector2(2f, -2f);
 
     private bool _isInitialized;
     private Color _iconBaseColor = Color.white;
@@ -67,11 +63,6 @@ public class VoiceOverlaySlot : MonoBehaviour
         float alpha = isSpeaking ? _speakingAlpha : _idleAlpha;
         _nicknameText.color = WithAlpha(textColor, alpha);
         _iconImage.color = WithAlpha(_iconBaseColor, alpha);
-
-        _iconOutline.enabled = isSpeaking;
-        _iconOutline.effectColor = _iconOutlineColor;
-        _iconOutline.effectDistance = _iconOutlineDistance;
-        _iconOutline.useGraphicAlpha = true;
     }
 
     private void ApplyMuteVisuals(bool isMuted)
