@@ -1,5 +1,7 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class CommentaryController : MonoBehaviour
@@ -19,6 +21,14 @@ public class CommentaryController : MonoBehaviour
 
     private readonly Queue<GameEvent> _eventQueue = new();
     private readonly Dictionary<EventType, float> _lastEventTimes = new();
+    private readonly Dictionary<int, PreGeneratedIntro> _preGeneratedIntros = new();
+    private int _currentPatientIndex = -1;
+
+    private class PreGeneratedIntro
+    {
+        public string Text;
+        public float EstimatedDuration;
+    }
 
     private int _sequenceCounter = 0;
     private bool _isProcessing = false;
@@ -134,8 +144,22 @@ public class CommentaryController : MonoBehaviour
     {
         _isProcessing = true;
 
-        // 코멘터리 생성 (호스트만)
-        var generatedData = await _generator.GenerateCommentary(gameEvent);
+        GeneratedCommentaryData generatedData;
+
+        // 사전 생성된 환자 소개가 있으면 사용
+        if (gameEvent.Type == EventType.NewPatientAppeared && TryGetCurrentPatientIntro(out var introText, out var introDuration))
+        {
+            generatedData = new GeneratedCommentaryData
+            {
+                Text = introText,
+                EstimatedDuration = introDuration
+            };
+        }
+        else
+        {
+            // 코멘터리 생성 (호스트만)
+            generatedData = await _generator.GenerateCommentary(gameEvent);
+        }
 
         if (generatedData == null)
         {
@@ -185,5 +209,90 @@ public class CommentaryController : MonoBehaviour
     {
         _isProcessing = false;
         _currentCommentary = null;
+    }
+
+    // ========== 환자 소개 사전 생성 ==========
+
+    public async UniTask PreGeneratePatientIntros(List<(string patientName, string diseaseName)> patients, CancellationToken ct)
+    {
+        if (patients == null || patients.Count == 0) return;
+
+        Debug.Log($"[CommentaryController] 환자 소개 사전 생성 시작: {patients.Count}명");
+
+        var tasks = new List<UniTask>();
+        for (int i = 0; i < patients.Count; i++)
+        {
+            int index = i;
+            tasks.Add(PreGeneratePatientIntroAsync(index, patients[index].patientName, patients[index].diseaseName, ct));
+        }
+
+        await UniTask.WhenAll(tasks);
+
+        Debug.Log($"[CommentaryController] 환자 소개 사전 생성 완료: {_preGeneratedIntros.Count}개");
+    }
+
+    private async UniTask PreGeneratePatientIntroAsync(int patientIndex, string patientName, string diseaseName, CancellationToken ct)
+    {
+        try
+        {
+            // 1. 텍스트 생성
+            var generatedData = await _generator.GeneratePatientIntro(patientName, diseaseName);
+
+            if (ct.IsCancellationRequested) return;
+
+            if (generatedData == null || string.IsNullOrEmpty(generatedData.Text))
+            {
+                Debug.LogWarning($"[CommentaryController] 환자 {patientIndex + 1} 텍스트 생성 실패");
+                return;
+            }
+
+            // 2. TTS 음성 사전 생성 및 캐싱
+            await _playbackManager.PreGenerateAndCache(generatedData.Text);
+
+            if (ct.IsCancellationRequested) return;
+
+            // 3. 저장
+            _preGeneratedIntros[patientIndex] = new PreGeneratedIntro
+            {
+                Text = generatedData.Text,
+                EstimatedDuration = generatedData.EstimatedDuration
+            };
+
+            Debug.Log($"[CommentaryController] 환자 {patientIndex + 1} 사전 생성 완료: {generatedData.Text}");
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[CommentaryController] 환자 {patientIndex + 1} 사전 생성 실패: {e.Message}");
+        }
+    }
+
+    public bool TryGetPreGeneratedIntro(int patientIndex, out string text, out float duration)
+    {
+        if (_preGeneratedIntros.TryGetValue(patientIndex, out var intro))
+        {
+            text = intro.Text;
+            duration = intro.EstimatedDuration;
+            return true;
+        }
+
+        text = null;
+        duration = 0f;
+        return false;
+    }
+
+    private bool TryGetCurrentPatientIntro(out string text, out float duration)
+    {
+        return TryGetPreGeneratedIntro(_currentPatientIndex, out text, out duration);
+    }
+
+    public void SetCurrentPatientIndex(int patientIndex)
+    {
+        _currentPatientIndex = patientIndex;
+    }
+
+    public void ClearPreGeneratedIntros()
+    {
+        _preGeneratedIntros.Clear();
+        _currentPatientIndex = -1;
     }
 }

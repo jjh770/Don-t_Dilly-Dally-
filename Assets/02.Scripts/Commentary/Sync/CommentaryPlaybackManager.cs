@@ -154,4 +154,32 @@ public class CommentaryPlaybackManager : MonoBehaviour
     }
 
     public CommentarySyncData GetCurrentCommentary() => _currentData;
+
+    // 텍스트로 TTS 음성을 미리 생성하고 캐싱
+    public async Awaitable<AudioClip> PreGenerateAndCache(string text)
+    {
+        if (string.IsNullOrEmpty(text) || _ttsManager == null) return null;
+
+        string cacheKey = text.GetHashCode().ToString();
+
+        if (HasCachedClip(cacheKey))
+        {
+            return GetCachedClip(cacheKey);
+        }
+
+        try
+        {
+            AudioClip clip = await _ttsManager.GenerateSpeech(text);
+            if (clip != null)
+            {
+                CacheClip(cacheKey, clip);
+            }
+            return clip;
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[CommentaryPlaybackManager] 사전 생성 실패: {e.Message}");
+            return null;
+        }
+    }
 }

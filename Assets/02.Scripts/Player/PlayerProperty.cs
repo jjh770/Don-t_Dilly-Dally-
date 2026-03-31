@@ -1,5 +1,3 @@
-
-using System.Globalization;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -8,6 +6,8 @@ public static class PlayerProperty
 {
     public const string NicknameKey = "Nickname";
     public const string IsReadyKey = "IsReady";
+    public const string IsVoiceSpeakingKey = "IsVoiceSpeaking";
+    public const string IsVoiceMutedKey = "IsVoiceMuted";
 
     public static void EnsureProperties()
     {
@@ -28,6 +28,16 @@ public static class PlayerProperty
             props[IsReadyKey] = false;
         }
 
+        if (!PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey(IsVoiceSpeakingKey))
+        {
+            props[IsVoiceSpeakingKey] = false;
+        }
+
+        if (!PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey(IsVoiceMutedKey))
+        {
+            props[IsVoiceMutedKey] = false;
+        }
+
         if (props.Count > 0)
         {
             PhotonNetwork.LocalPlayer.SetCustomProperties(props);
@@ -38,7 +48,7 @@ public static class PlayerProperty
     {
         Hashtable props = new Hashtable
         {
-            { PlayerProperty.NicknameKey, nickname },
+            { NicknameKey, nickname },
         };
 
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
@@ -48,32 +58,105 @@ public static class PlayerProperty
     {
         Hashtable props = new Hashtable
         {
-            { PlayerProperty.IsReadyKey, isReady },
+            { IsReadyKey, isReady },
         };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public static void SetVoiceSpeaking(bool isSpeaking)
+    {
+        if (PhotonNetwork.LocalPlayer == null)
+        {
+            return;
+        }
+
+        Hashtable props = new Hashtable
+        {
+            { IsVoiceSpeakingKey, isSpeaking },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public static void SetVoiceMuted(bool isMuted)
+    {
+        if (PhotonNetwork.LocalPlayer == null)
+        {
+            return;
+        }
+
+        Hashtable props = new Hashtable
+        {
+            { IsVoiceMutedKey, isMuted },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
+    public static void SetVoiceState(bool isMuted, bool isSpeaking)
+    {
+        if (PhotonNetwork.LocalPlayer == null)
+        {
+            return;
+        }
+
+        Hashtable props = new Hashtable
+        {
+            { IsVoiceMutedKey, isMuted },
+            { IsVoiceSpeakingKey, isSpeaking },
+        };
+
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
     }
 
     public static string GetNickname(Player player)
     {
+        if (player == null)
+        {
+            return "Unknown";
+        }
+
         if (player.CustomProperties.TryGetValue(NicknameKey, out object value) && value is string name)
         {
             return name;
         }
-        else
+
+        if (!string.IsNullOrWhiteSpace(player.NickName))
         {
-            return "Unknown";
+            return player.NickName;
         }
+
+        return "Unknown";
     }
 
     public static bool GetReadyState(Player player)
     {
-        if (player.CustomProperties.TryGetValue(IsReadyKey, out object value) && value is bool isReady)
+        if (player != null && player.CustomProperties.TryGetValue(IsReadyKey, out object value) && value is bool isReady)
         {
             return isReady;
         }
-        else
+
+        return false;
+    }
+
+    public static bool GetVoiceSpeaking(Player player)
+    {
+        if (player != null && player.CustomProperties.TryGetValue(IsVoiceSpeakingKey, out object value) && value is bool isSpeaking)
         {
-            return false;
+            return isSpeaking;
         }
+
+        return false;
+    }
+
+    public static bool GetVoiceMuted(Player player)
+    {
+        if (player != null && player.CustomProperties.TryGetValue(IsVoiceMutedKey, out object value) && value is bool isMuted)
+        {
+            return isMuted;
+        }
+
+        return false;
     }
 }

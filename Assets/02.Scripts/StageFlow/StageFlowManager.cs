@@ -120,7 +120,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 내부 상태 ────────────────────────────────────────────────
         private StageRuntimeData _stageData;
-        private TreatmentRecipeJudge _recipeJudge;
+        private SurgeryRecipeJudge _recipeJudge;
         private PatientHealthController _patientHealthController;
         private CancellationTokenSource _flowCts;
         private bool _isGameOver;
@@ -154,7 +154,7 @@ namespace DontDillyDally.StageFlow
         {
             _stageData = stageData;
             OnStageDataChanged?.Invoke(_stageData);
-            _recipeJudge = new TreatmentRecipeJudge();
+            _recipeJudge = new SurgeryRecipeJudge();
             _trayHandler = new TraySubmissionHandler(_rpc, () => _isGameOver);
             _patientHealthController = new PatientHealthController();
 
@@ -220,7 +220,6 @@ namespace DontDillyDally.StageFlow
                 // Phase 3: 게임 루프
                 Debug.Log("[StageFlow] ▶ Phase 3: Playing 진입 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
-                EventManager.Instance?.OnGameStart();
                 await RunGameLoop(ct);
                 Debug.Log("[StageFlow] ✓ Phase 3: Playing 완료 (모든 환자 치료 성공)");
 
@@ -231,7 +230,6 @@ namespace DontDillyDally.StageFlow
                 SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
                 OnStageClear?.Invoke();
-                EventManager.Instance?.OnSurgerySuccess();
 
                 // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
@@ -271,12 +269,25 @@ namespace DontDillyDally.StageFlow
                 ACK_TIMEOUT_MS, ct);                                 // 타임아웃 대기, 취소 토큰 전달
 
             // 2. 질병 데이터 생성
-            Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
+            Debug.Log($"[StageFlow]   (2/4) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
             await GenerateAllDiseases(ct);
-            Debug.Log($"[StageFlow]   (2/3) 질병 데이터 생성 완료: {_stageData.Patients.Count}개");
+            Debug.Log($"[StageFlow]   (2/4) 질병 데이터 생성 완료: {_stageData.Patients.Count}개");
 
-            // 3. 스테이지 데이터를 클라이언트에 전송 + ACK 대기
-            Debug.Log("[StageFlow]   (3/3) 스테이지 데이터 클라이언트 전송");
+            // 3. 환자 소개 음성 사전 생성
+            Debug.Log("[StageFlow]   (3/4) 환자 소개 음성 사전 생성 중...");
+            if (CommentaryController.Instance != null)
+            {
+                var patientInfos = new List<(string, string)>();
+                foreach (var patient in _stageData.Patients)
+                {
+                    patientInfos.Add((patient.PatientName, patient.DiseaseName));
+                }
+                await CommentaryController.Instance.PreGeneratePatientIntros(patientInfos, ct);
+            }
+            Debug.Log("[StageFlow]   (3/4) 환자 소개 음성 사전 생성 완료");
+
+            // 4. 스테이지 데이터를 클라이언트에 전송 + ACK 대기
+            Debug.Log("[StageFlow]   (4/4) 스테이지 데이터 클라이언트 전송");
             string json = JsonUtility.ToJson(_stageData);
             await BroadcastAndWaitAck(
                 () => _rpc.BroadcastStageData(json),               // 스테이지 데이터 전달 RPC 호출
@@ -436,6 +447,9 @@ namespace DontDillyDally.StageFlow
             DiseaseData disease = _stageData.Patients[patientIndex];
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{_stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {_stageData.MaxPatientHealth}");
 
+            CommentaryController.Instance?.SetCurrentPatientIndex(patientIndex);
+            EventManager.Instance?.OnNewPatientAppeared(disease.PatientName, disease.DiseaseName);
+
             _recipeJudge.SetDisease(disease);
             InitializePatientHealth();
             _emergencyPolicy.ResetTimer();
@@ -479,14 +493,14 @@ namespace DontDillyDally.StageFlow
                 }
                 Debug.Log("[StageFlow]     트레이 제출됨 → 판정 중...");
 
-                TreatmentJudgeResult result = _recipeJudge.JudgeNextRecipe(tray, _rpc.PatientHealth.Value);
+                SurgeryJudgeResult result = _recipeJudge.JudgeNextRecipe(tray, _rpc.PatientHealth.Value);
 
                 if (result.Success)
                 {
                     Debug.Log($"[StageFlow]     ✓ 레시피 {recipeIndex + 1} 성공! (ID: {result.CompletedRecipeId}) | 질병완치={result.DiseaseCured}");
-                    EventManager.Instance?.OnSurgerySuccess();
 
                     // 집도의에게만 레시피 성공 후 수술 미니게임 권한을 부여합니다.
+                    // OnSurgerySuccess/OnSurgeryFail은 RunRecipeMiniGame 내부에서 미니게임 결과에 따라 호출됩니다.
                     await RunRecipeMiniGame(ct);
 
                     if (result.DiseaseCured)
@@ -497,12 +511,11 @@ namespace DontDillyDally.StageFlow
 
                     recipeIndex++;
                 }
-                else if (result.FailureReason == TreatmentFailureReason.RecipeMismatch)
+                else if (result.SurgeryFailure == SurgeryFailureReason.RecipeMismatch)
                 {
                     float newHealth = ApplyPatientDamage(disease.FailHealthPenalty);
                     Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{disease.FailHealthPenalty} → 현재 체력: {newHealth}");
-
-                    EventManager.Instance?.OnSurgeryFail();
+                    EventManager.Instance?.OnSurgeryFail(result.SurgeryFailure);
 
                     if (_isGameOver)
                     {
@@ -650,11 +663,13 @@ namespace DontDillyDally.StageFlow
             {
                 float recoveredHealth = RecoverPatientHealth(_miniGameSuccessHeal);
                 Debug.Log($"[StageFlow]     미니게임 성공! 체력 +{_miniGameSuccessHeal} → 현재 체력: {recoveredHealth}");
+                EventManager.Instance?.OnSurgerySuccess();
                 return;
             }
 
             float newHealth = ApplyPatientDamage(_miniGameFailPenalty);
             Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} → 현재 체력: {newHealth}");
+            EventManager.Instance?.OnSurgeryFail(SurgeryFailureReason.MiniGameFailure);
 
             if (_isGameOver)
             {
@@ -831,9 +846,9 @@ namespace DontDillyDally.StageFlow
             {
                 EventManager.Instance?.OnPatientDeath();
             }
-            else
+            else if (reason == EGameOverReason.TimeExpired)
             {
-                EventManager.Instance?.OnGameOver();
+                EventManager.Instance?.OnTimeOut();
             }
 
             Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀 가능");

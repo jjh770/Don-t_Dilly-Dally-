@@ -273,7 +273,8 @@ namespace DontDillyDally.StageFlow
         [PunRPC]
         private void RPC_TriggerEmergency()
         {
-            EventManager.Instance?.OnEmergencyEvent();
+            // 코멘터리는 마스터에서만 발행 (HandleEmergencyEvent에서 OnPatientCritical 호출)
+            // 여기서는 클라이언트 측 게임플레이 로직만 처리
         }
 
         [PunRPC]
