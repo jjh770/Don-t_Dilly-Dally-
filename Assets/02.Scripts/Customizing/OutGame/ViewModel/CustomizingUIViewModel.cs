@@ -34,6 +34,7 @@ public class CustomizingUIViewModel
         _manager.OnLoaded += HandleLoaded;
         _manager.OnItemChanged += HandleItemChanged;
         _manager.OnSaved += HandleSaved;
+        _manager.OnItemUnlocked += HandleItemUnlocked;
     }
 
     private void UnsubscribeFromManager()
@@ -41,6 +42,7 @@ public class CustomizingUIViewModel
         _manager.OnLoaded -= HandleLoaded;
         _manager.OnItemChanged -= HandleItemChanged;
         _manager.OnSaved -= HandleSaved;
+        _manager.OnItemUnlocked -= HandleItemUnlocked;
     }
 
     public void SelectCategory(CustomizingType type)
@@ -130,6 +132,12 @@ public class CustomizingUIViewModel
 
     private void HandleSaved()
     {
+        OnStateChanged?.Invoke();
+    }
+
+    private void HandleItemUnlocked(string itemId)
+    {
+        RefreshVisibleItems();
         OnStateChanged?.Invoke();
     }
 

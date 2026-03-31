@@ -210,10 +210,19 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public Dictionary<CustomizingType, string> GetEquippedItemIds()
     {
-        if (_domain?.State == null)
-            return new Dictionary<CustomizingType, string>();
+        var result = new Dictionary<CustomizingType, string>();
+        if (_domain == null) return result;
 
-        return new Dictionary<CustomizingType, string>(_domain.State.GetAll());
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        {
+            if (type == CustomizingType.None) continue;
+
+            var item = _domain.GetEquipped(type);
+            if (item != null)
+                result[type] = item.ItemId;
+        }
+
+        return result;
     }
 
     public CustomizingItemSO GetItemById(string itemId)
@@ -298,11 +307,14 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     // 현재 장착 중인 아이템 중 잠금 상태인 것이 있는지 확인
     public bool HasLockedEquippedItems()
     {
-        if (_domain?.State == null) return false;
+        if (_domain == null) return false;
 
-        foreach (var kvp in _domain.State.GetAll())
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
-            if (IsItemLocked(kvp.Value))
+            if (type == CustomizingType.None) continue;
+
+            var item = _domain.GetEquipped(type);
+            if (item != null && IsItemLocked(item.ItemId))
                 return true;
         }
 
@@ -311,18 +323,18 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public bool HasUnsavedChanges()
     {
-        if (_domain?.State == null || _savedState == null) return false;
+        if (_domain == null || _savedState == null) return false;
 
-        var currentState = _domain.State.GetAll();
-        var savedState = _savedState.GetAll();
-
-        if (currentState.Count != savedState.Count) return true;
-
-        foreach (var kvp in currentState)
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
-            if (!savedState.TryGetValue(kvp.Key, out var savedValue))
-                return true;
-            if (kvp.Value != savedValue)
+            if (type == CustomizingType.None) continue;
+
+            var currentItem = _domain.GetEquipped(type);
+            var savedItemId = _savedState.GetEquippedId(type);
+
+            string currentItemId = currentItem?.ItemId;
+
+            if (currentItemId != savedItemId)
                 return true;
         }
 

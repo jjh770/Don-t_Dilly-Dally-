@@ -93,7 +93,6 @@ public class AttendanceManager : MonoBehaviour
         var reward = _domainService.CheckAndGetReward(record);
         Debug.Log($"{record.TotalDays}일차 출석 : {reward.ItemId} 수령");
 
-        // 커스터마이징 아이템 해금 처리
         if (!string.IsNullOrEmpty(reward.ItemId) && CustomizingManager.Instance != null)
         {
             CustomizingManager.Instance.UnlockItem(reward.ItemId);
