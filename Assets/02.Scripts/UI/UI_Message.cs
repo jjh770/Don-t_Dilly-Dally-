@@ -19,10 +19,7 @@ public class UI_Message : MonoBehaviour
     {
         _canvasGroup = GetComponent<CanvasGroup>();
         SetErrorAlpha(0f);
-    }
 
-    private void Start()
-    {
         if (_panel == null)
         {
             _panel = GetComponent<RectTransform>();

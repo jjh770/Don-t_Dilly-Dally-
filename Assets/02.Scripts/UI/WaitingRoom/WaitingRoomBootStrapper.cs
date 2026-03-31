@@ -32,7 +32,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _presenter.Initialize();
 
         _defaultView.Initialized(_presenter);
-        _popupView.Initialized(_presenter);
+        _popupView.SetPresenter(_presenter);
 
         _clickManager.Initialized(_presenter);
     }

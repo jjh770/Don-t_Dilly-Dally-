@@ -16,16 +16,18 @@ public class VoiceOverlayView : MonoBehaviour
     {
         _canvasGroup = GetComponent<CanvasGroup>();
         _slotParent ??= transform as RectTransform;
+        _canvasGroup.interactable = false;
+        _canvasGroup.blocksRaycasts = false;
     }
 
-    public void Initialize(int slotCount, Sprite iconSprite)
+    public void Initialize(int slotCount)
     {
         if (_isInitialized)
         {
             return;
         }
 
-        EnsureSlots(slotCount, iconSprite);
+        EnsureSlots(slotCount);
         HideAll();
         _isInitialized = true;
     }
@@ -35,18 +37,36 @@ public class VoiceOverlayView : MonoBehaviour
         _canvasGroup ??= GetComponent<CanvasGroup>();
 
         _canvasGroup.alpha = isVisible ? 1f : 0f;
-        _canvasGroup.interactable = false;
-        _canvasGroup.blocksRaycasts = false;
     }
 
-    public void SetSlot(int index, string nickname, Color textColor, bool isSpeaking, Sprite iconSprite)
+    public void SetSlotIdentityContent(int index, string nickname, Sprite iconSprite)
     {
         if (!IsValidIndex(index))
         {
             return;
         }
 
-        _slots[index].SetState(nickname, textColor, isSpeaking, iconSprite);
+        _slots[index].SetIdentityContent(nickname, iconSprite);
+    }
+
+    public void SetSlotTextColor(int index, Color textColor)
+    {
+        if (!IsValidIndex(index))
+        {
+            return;
+        }
+
+        _slots[index].SetTextColor(textColor);
+    }
+
+    public void SetSlotVoiceState(int index, bool isSpeaking, bool isMuted)
+    {
+        if (!IsValidIndex(index))
+        {
+            return;
+        }
+
+        _slots[index].SetVoiceState(isSpeaking, isMuted);
     }
 
     public void HideSlot(int index)
@@ -70,7 +90,7 @@ public class VoiceOverlayView : MonoBehaviour
         }
     }
 
-    private void EnsureSlots(int slotCount, Sprite iconSprite)
+    private void EnsureSlots(int slotCount)
     {
         List<VoiceOverlaySlot> resolvedSlots = CollectExistingSlots();
         for (int i = 0; i < slotCount && i < _slots.Length; i++)
@@ -83,7 +103,7 @@ public class VoiceOverlayView : MonoBehaviour
 
             if (_slots[i] != null)
             {
-                _slots[i].Initialize(iconSprite);
+                _slots[i].Initialize();
                 _slots[i].SetVisible(false);
             }
         }

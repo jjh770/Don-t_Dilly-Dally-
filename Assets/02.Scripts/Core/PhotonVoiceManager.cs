@@ -3,15 +3,12 @@ using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
 using System;
-using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 {
     private const int MaxOverlaySlots = 4;
-
     public static PhotonVoiceManager Instance { get; private set; }
 
     [Header("Voice Overlay Visuals")]
@@ -26,8 +23,10 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private Recorder _recorder;
     private bool _lastLocalSpeakingState;
+    private bool _lastLocalMutedState;
     private bool _isShuttingDown;
     private SelectRoleManager _boundRoleManager;
+    private SceneLoadManager _sceneLoadManager;
 
     private void Awake()
     {
@@ -44,16 +43,14 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     public override void OnEnable()
     {
         base.OnEnable();
-        SceneManager.sceneLoaded += HandleSceneLoaded;
+        BindSceneLoadManager();
         CacheRecorder();
         BindRoleManager();
     }
 
     private void Start()
     {
-        CacheRecorder();
-        BindRoleManager();
-        SyncLocalSpeakingState(forceUpdate: true);
+        SyncLocalVoiceStates(forceUpdate: true);
         NotifyOverlayStateChanged();
     }
 
@@ -66,12 +63,12 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
         CacheRecorder();
         BindRoleManager();
-        SyncLocalSpeakingState();
+        SyncLocalVoiceStates();
     }
 
     public override void OnDisable()
     {
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        UnbindSceneLoadManager();
         UnbindRoleManager();
         base.OnDisable();
     }
@@ -88,8 +85,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
-
+        UnbindSceneLoadManager();
         if (!_isShuttingDown)
         {
             ResetLocalSpeakingState();
@@ -101,9 +97,8 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        _lastLocalSpeakingState = false;
         ResetLocalSpeakingState();
-        SyncLocalSpeakingState(forceUpdate: true);
+        SyncLocalVoiceStates(forceUpdate: true);
         NotifyOverlayStateChanged();
     }
 
@@ -133,10 +128,17 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         NotifyOverlayStateChanged();
     }
 
-    private void HandleSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+    private void HandleSceneLoadComplete(ESceneType _)
     {
         BindRoleManager();
         NotifyOverlayStateChanged();
+    }
+
+    private ESceneType GetCurrentSceneType()
+    {
+        return SceneLoadManager.Instance != null
+            ? SceneLoadManager.Instance.CurrentSceneType
+            : default;
     }
 
     public bool ShouldDisplayOverlay()
@@ -146,28 +148,45 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return false;
         }
 
-        string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName.IndexOf("Lobby", StringComparison.OrdinalIgnoreCase) < 0;
+        return GetCurrentSceneType() != ESceneType.Lobby;
     }
 
     public bool ShouldUseWhiteOverlayText()
     {
-        string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName.IndexOf("Game", StringComparison.OrdinalIgnoreCase) < 0;
+        return GetCurrentSceneType() != ESceneType.Gameplay;
     }
 
-    public Player[] GetOverlayPlayers()
+    public int FillOverlayPlayers(Player[] buffer)
     {
-        if (!PhotonNetwork.InRoom)
+        if (buffer == null)
         {
-            return Array.Empty<Player>();
+            throw new ArgumentNullException(nameof(buffer));
         }
 
-        return PhotonNetwork.PlayerList
-            .OrderBy(player => player.IsMasterClient ? 0 : 1)
-            .ThenBy(player => player.ActorNumber)
-            .Take(MaxOverlaySlots)
-            .ToArray();
+        int maxCount = Math.Min(buffer.Length, MaxOverlaySlots);
+        if (!PhotonNetwork.InRoom || maxCount == 0)
+        {
+            return 0;
+        }
+
+        Room currentRoom = PhotonNetwork.CurrentRoom;
+        if (currentRoom == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        foreach (Player player in currentRoom.Players.Values)
+        {
+            if (player == null)
+            {
+                continue;
+            }
+
+            InsertOverlayPlayer(buffer, ref count, maxCount, player);
+        }
+
+        return count;
     }
 
     public Color GetOverlayTextColor(Player player)
@@ -213,6 +232,45 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         return RoleProperties.GetPlayerRole(player);
     }
 
+    private static void InsertOverlayPlayer(Player[] buffer, ref int count, int maxCount, Player candidate)
+    {
+        int insertIndex = 0;
+        while (insertIndex < count && CompareOverlayPlayers(buffer[insertIndex], candidate) <= 0)
+        {
+            insertIndex++;
+        }
+
+        if (insertIndex >= maxCount)
+        {
+            return;
+        }
+
+        if (count < maxCount)
+        {
+            count++;
+        }
+
+        for (int i = count - 1; i > insertIndex; i--)
+        {
+            buffer[i] = buffer[i - 1];
+        }
+
+        buffer[insertIndex] = candidate;
+    }
+
+    private static int CompareOverlayPlayers(Player left, Player right)
+    {
+        int leftPriority = left.IsMasterClient ? 0 : 1;
+        int rightPriority = right.IsMasterClient ? 0 : 1;
+        int priorityComparison = leftPriority.CompareTo(rightPriority);
+        if (priorityComparison != 0)
+        {
+            return priorityComparison;
+        }
+
+        return left.ActorNumber.CompareTo(right.ActorNumber);
+    }
+
     private void CacheRecorder()
     {
         if (_recorder != null)
@@ -243,6 +301,34 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         _boundRoleManager.OnRolesCleared += HandleRolesCleared;
     }
 
+    private void BindSceneLoadManager()
+    {
+        SceneLoadManager manager = SceneLoadManager.Instance;
+        if (_sceneLoadManager == manager)
+        {
+            return;
+        }
+
+        UnbindSceneLoadManager();
+        _sceneLoadManager = manager;
+
+        if (_sceneLoadManager != null)
+        {
+            _sceneLoadManager.OnSceneLoadComplete += HandleSceneLoadComplete;
+        }
+    }
+
+    private void UnbindSceneLoadManager()
+    {
+        if (_sceneLoadManager == null)
+        {
+            return;
+        }
+
+        _sceneLoadManager.OnSceneLoadComplete -= HandleSceneLoadComplete;
+        _sceneLoadManager = null;
+    }
+
     private void UnbindRoleManager()
     {
         if (_boundRoleManager == null)
@@ -265,11 +351,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         NotifyOverlayStateChanged();
     }
 
-    private void SyncLocalSpeakingState(bool forceUpdate = false)
+    private void SyncLocalVoiceStates(bool forceUpdate = false)
     {
         if (PhotonNetwork.LocalPlayer == null || !PhotonNetwork.InRoom)
         {
-            if (forceUpdate || _lastLocalSpeakingState)
+            if (forceUpdate || _lastLocalSpeakingState || _lastLocalMutedState)
             {
                 ResetLocalSpeakingState();
             }
@@ -279,7 +365,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
         if (_recorder == null)
         {
-            if (forceUpdate || _lastLocalSpeakingState)
+            if (forceUpdate || _lastLocalSpeakingState || _lastLocalMutedState)
             {
                 ResetLocalSpeakingState();
                 NotifyOverlayStateChanged();
@@ -288,13 +374,15 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return;
         }
 
+        bool isMuted = !_recorder.TransmitEnabled;
         bool isSpeaking = _recorder.TransmitEnabled && _recorder.IsCurrentlyTransmitting;
-        if (!forceUpdate && isSpeaking == _lastLocalSpeakingState)
+        if (!forceUpdate && isSpeaking == _lastLocalSpeakingState && isMuted == _lastLocalMutedState)
         {
             return;
         }
 
-        PlayerProperty.SetVoiceSpeaking(isSpeaking);
+        PlayerProperty.SetVoiceState(isMuted, isSpeaking);
+        _lastLocalMutedState = isMuted;
         _lastLocalSpeakingState = isSpeaking;
         NotifyOverlayStateChanged();
     }
@@ -303,9 +391,10 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.LocalPlayer != null)
         {
-            PlayerProperty.SetVoiceSpeaking(false);
+            PlayerProperty.SetVoiceState(false, false);
         }
 
+        _lastLocalMutedState = false;
         _lastLocalSpeakingState = false;
     }
 

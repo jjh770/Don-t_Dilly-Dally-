@@ -9,7 +9,6 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
     private readonly ICustomizingManager _customizingManager;
     private readonly ICustomizingAssetLoader _assetLoader;
     private readonly SemaphoreSlim _renderLock = new SemaphoreSlim(1, 1);
-    private RuntimeFacePortraitCaptureRig _rig;
 
     public RuntimeFacePortraitRenderer(GameObject characterPrefab, ICustomizingManager customizingManager)
     {
@@ -32,8 +31,8 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
             return null;
         }
 
-        EnsureRig();
-        if (_rig == null)
+        RuntimeFacePortraitCaptureRig rig = CreateRig();
+        if (rig == null)
         {
             return null;
         }
@@ -41,39 +40,30 @@ public sealed class RuntimeFacePortraitRenderer : IDisposable
         await _renderLock.WaitAsync(cancellationToken);
         try
         {
-            await _rig.ApplyAppearanceAsync(request.Snapshot, _customizingManager, _assetLoader, cancellationToken);
+            await rig.ApplyAppearanceAsync(request.Snapshot, _customizingManager, _assetLoader, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            return _rig.Capture(request);
+            return rig.Capture(request);
         }
         finally
         {
+            rig.DisposeRig();
             _renderLock.Release();
         }
     }
 
     public void Dispose()
     {
-        if (_rig != null)
-        {
-            _rig.DisposeRig();
-            _rig = null;
-        }
-
         (_assetLoader as IDisposable)?.Dispose();
         _renderLock.Dispose();
     }
 
-    private void EnsureRig()
+    private RuntimeFacePortraitCaptureRig CreateRig()
     {
-        if (_rig != null)
-        {
-            return;
-        }
-
         GameObject rigRoot = new GameObject("RuntimeFacePortraitCaptureRig");
         rigRoot.hideFlags = HideFlags.HideAndDontSave;
         rigRoot.transform.position = new Vector3(10000f, -10000f, 10000f);
-        _rig = rigRoot.AddComponent<RuntimeFacePortraitCaptureRig>();
-        _rig.Initialize(_characterPrefab);
+        RuntimeFacePortraitCaptureRig rig = rigRoot.AddComponent<RuntimeFacePortraitCaptureRig>();
+        rig.Initialize(_characterPrefab);
+        return rig;
     }
 }

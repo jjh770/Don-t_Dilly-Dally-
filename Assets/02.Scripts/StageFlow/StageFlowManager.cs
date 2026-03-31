@@ -130,6 +130,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 미니게임 결과 대기 ──────────────────────────────────────
         private UniTaskCompletionSource<bool> _miniGameResultTcs;
+        private UniTaskCompletionSource<bool> _forcePatientSuccessTcs;
 
         // ── 캐시된 델리게이트 (구독 해제용) ─────────────────────────
         private Action _onTimerExpired;
@@ -142,6 +143,7 @@ namespace DontDillyDally.StageFlow
         public event Action<EGameOverReason> OnGameOver;
         public event Action OnStageClear;
         public event Action<StageRuntimeData> OnStageDataChanged;
+        public event Action<StageReward, StageResult> OnStageRewardGranted;
 
         // ================================================================
         //  초기화
@@ -181,6 +183,9 @@ namespace DontDillyDally.StageFlow
             _rpc.CurrentPhase.Subscribe(OnPhaseChangedForMovement).AddTo(this);
             PlayerRegistry.OnPlayerRegistered += OnPlayerRegistered;
 
+            // 보상 RPC 수신
+            _rpc.OnStageRewardGrantedReceived += OnRewardGrantedReceived;
+
             if (PhotonNetwork.IsMasterClient)
             {
                 StartStageFlow().Forget();
@@ -219,7 +224,7 @@ namespace DontDillyDally.StageFlow
                 Debug.Log("[StageFlow] ✓ Phase 3: Playing 완료 (모든 환자 치료 성공)");
 
                 // Phase 4: 스테이지 클리어
-                Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀");
+                Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀 가능");
                 PausePatientHealthDrain();
                 _timer.Pause();
                 SyncTimerState();
@@ -229,9 +234,13 @@ namespace DontDillyDally.StageFlow
                 // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
 
+
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
-                Debug.Log("[StageFlow] 대기실로 복귀합니다.");
-                PhotonServerManager.Instance.ReturnWaitingRoom();
+
+                // 보상 처리
+                Debug.Log("[StageFlow] 보상을 지급합니다.");     
+                ApplyReward();
+                //PhotonServerManager.Instance.ReturnWaitingRoom();
             }
             catch (OperationCanceledException)
             {
@@ -444,10 +453,19 @@ namespace DontDillyDally.StageFlow
             _recipeJudge.SetDisease(disease);
             InitializePatientHealth();
             _emergencyPolicy.ResetTimer();
+            _forcePatientSuccessTcs = new UniTaskCompletionSource<bool>();
 
-            await RunRecipeLoop(disease, ct);
+            try
+            {
+                await RunRecipeLoop(disease, ct);
+            }
+            finally
+            {
+                _forcePatientSuccessTcs = null;
+            }
 
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{_stageData.Patients.Count} 치료 완료! | 병명: {disease.DiseaseName} | 남은 체력: {_rpc.PatientHealth.Value}");
+            _stageData.SavedCount += 1;
         }
 
         // 한 환자의 레시피를 순서대로 제출받고 판정합니다.
@@ -462,7 +480,17 @@ namespace DontDillyDally.StageFlow
                 _rpc.SetRecipeIndex(recipeIndex);
                 Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 대기 중... (트레이 제출 대기)");
 
-                SubmittedTray tray = await _trayHandler.WaitForSubmission(ct);
+                UniTask<SubmittedTray> waitForTrayTask = _trayHandler.WaitForSubmission(ct);
+                UniTask<bool> forceSuccessTask = _forcePatientSuccessTcs != null
+                    ? _forcePatientSuccessTcs.Task
+                    : UniTask.Never<bool>(ct);
+
+                var (completedTaskIndex, tray, _) = await UniTask.WhenAny(waitForTrayTask, forceSuccessTask);
+                if (completedTaskIndex == 1)
+                {
+                    Debug.Log("[StageFlow]     디버그 요청으로 현재 환자를 성공 처리합니다.");
+                    return;
+                }
                 Debug.Log("[StageFlow]     트레이 제출됨 → 판정 중...");
 
                 SurgeryJudgeResult result = _recipeJudge.JudgeNextRecipe(tray, _rpc.PatientHealth.Value);
@@ -520,6 +548,37 @@ namespace DontDillyDally.StageFlow
         public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
         {
             return _trayHandler.RequestSubmission(tray, trayViewId);
+        }
+
+        [ContextMenu("Debug/Force Complete Current Patient")]
+        public void ForceCompleteCurrentPatient()
+        {
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                Debug.LogWarning("[StageFlow] 마스터 클라이언트만 현재 환자를 강제 성공 처리할 수 있습니다.");
+                return;
+            }
+
+            if (_isGameOver || _stageData == null)
+            {
+                Debug.LogWarning("[StageFlow] 현재 상태에서는 환자 강제 성공 처리를 실행할 수 없습니다.");
+                return;
+            }
+
+            if (_rpc == null || _rpc.CurrentPhase.Value != EStagePhase.Playing)
+            {
+                Debug.LogWarning("[StageFlow] Playing 페이즈에서만 환자 강제 성공 처리를 실행할 수 있습니다.");
+                return;
+            }
+
+            if (_forcePatientSuccessTcs == null)
+            {
+                Debug.LogWarning("[StageFlow] 현재 진행 중인 환자 루프가 없어 강제 성공 처리할 수 없습니다.");
+                return;
+            }
+
+            Debug.Log("[StageFlow] 현재 환자를 강제로 성공 처리하고 다음 환자로 넘깁니다.");
+            _forcePatientSuccessTcs.TrySetResult(true);
         }
 
         // ── 타이머 동기화 ─────────────────────────────────────────────
@@ -792,7 +851,7 @@ namespace DontDillyDally.StageFlow
                 EventManager.Instance?.OnTimeOut();
             }
 
-            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀");
+            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀 가능");
 
             // 역할 시각 표시 초기화
             SelectRoleManager.Instance?.ClearRoles();
@@ -820,15 +879,12 @@ namespace DontDillyDally.StageFlow
                 Debug.LogWarning("[StageFlow] 게임 오버 ACK 대기 중 타임아웃");
             }
 
-            await ReturnToWaitingRoomDelayed();
+            await UniTask.Delay(TimeSpan.FromSeconds(RETURN_TO_WAITING_ROOM_DELAY_SEC));
+
+            // 보상을 처리합니다.
+            ApplyReward();
         }
 
-        // 짧은 대기 후 대기실 씬으로 복귀시킵니다.
-        private async UniTask ReturnToWaitingRoomDelayed()
-        {
-            await UniTask.Delay(TimeSpan.FromSeconds(RETURN_TO_WAITING_ROOM_DELAY_SEC));
-            PhotonServerManager.Instance.ReturnWaitingRoom();
-        }
 
         // ── 플레이어 움직임 제어 ──────────────────────────────────────
 
@@ -865,6 +921,29 @@ namespace DontDillyDally.StageFlow
                     player.MovementAbility.SetMovementLocked(locked);
                 }
             }
+        }
+
+        // 결과에 따른 보상을 처리합니다.
+        private void ApplyReward()
+        {
+            var result = new StageResult(
+                savedCount: _stageData.SavedCount,
+                patientCount: _stageData.PatientCount,
+                difficulty: _stageData.Difficulty
+            );
+
+            StageReward reward = RoomDataManager.Instance.ApplyReward(_stageData.StageId, result);
+
+            // 모든 클라이언트에게 전파
+            _rpc.BroadcastStageReward(reward, result);
+
+            Debug.Log($"별: {reward.Stars} / 돈: {reward.Money} / 신기록: {reward.IsNewBest}");
+            // → UI 연출로 넘기기
+        }
+
+        public void OnRewardGrantedReceived(StageReward reward, StageResult result) 
+        {
+            OnStageRewardGranted?.Invoke(reward, result);
         }
 
         // ── Update ──────────────────────────────────────────────────
@@ -906,6 +985,7 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
                 _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
+                _rpc.OnStageRewardGrantedReceived -= OnRewardGrantedReceived;
             }
 
             PlayerRegistry.OnPlayerRegistered -= OnPlayerRegistered;
