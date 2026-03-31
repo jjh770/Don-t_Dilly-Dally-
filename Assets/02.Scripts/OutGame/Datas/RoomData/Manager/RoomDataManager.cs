@@ -64,7 +64,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         return isExist;
     }
     
-    public override void OnCreatedRoom()
+    public override void OnJoinedRoom()
     {
         LoadRoomDataAsync().Forget();
     }

@@ -17,7 +17,7 @@ public class RewardPresenter
         _view.InitializeReward(RoomDataManager.Instance.Money.Value, RoomDataManager.Instance.Star);
     }
 
-    public void HandleBackButtonClicked()
+    public void ReturnWaitingRoom()
     {
         PhotonServerManager.Instance.ReturnWaitingRoom();     
     }

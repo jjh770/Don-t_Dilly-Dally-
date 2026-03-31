@@ -183,6 +183,9 @@ namespace DontDillyDally.StageFlow
             _rpc.CurrentPhase.Subscribe(OnPhaseChangedForMovement).AddTo(this);
             PlayerRegistry.OnPlayerRegistered += OnPlayerRegistered;
 
+            // 보상 RPC 수신
+            _rpc.OnStageRewardGrantedReceived += OnRewardGrantedReceived;
+
             if (PhotonNetwork.IsMasterClient)
             {
                 StartStageFlow().Forget();
@@ -916,10 +919,16 @@ namespace DontDillyDally.StageFlow
 
             StageReward reward = RoomDataManager.Instance.ApplyReward(_stageData.StageId, result);
 
-            OnStageRewardGranted?.Invoke(reward, result);
+            // 모든 클라이언트에게 전파
+            _rpc.BroadcastStageReward(reward, result);
 
             Debug.Log($"별: {reward.Stars} / 돈: {reward.Money} / 신기록: {reward.IsNewBest}");
             // → UI 연출로 넘기기
+        }
+
+        public void OnRewardGrantedReceived(StageReward reward, StageResult result) 
+        {
+            OnStageRewardGranted?.Invoke(reward, result);
         }
 
         // ── Update ──────────────────────────────────────────────────
@@ -961,6 +970,7 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
                 _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
+                _rpc.OnStageRewardGrantedReceived -= OnRewardGrantedReceived;
             }
 
             PlayerRegistry.OnPlayerRegistered -= OnPlayerRegistered;

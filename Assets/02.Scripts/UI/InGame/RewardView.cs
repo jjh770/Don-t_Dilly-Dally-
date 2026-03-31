@@ -19,14 +19,15 @@ public class RewardView : UIPopupBase
     [SerializeField] private float _starOvershootScale = 1.2f;
     [SerializeField] private float _startRotation = -12f;
     [SerializeField] private float _starToRewardInterval = 0.5f;
+    [SerializeField] private float _returnWaitingRoomInterval = 1;
 
     [Header("Progress")]
     [SerializeField] private Slider _progressSlider;
     [SerializeField] private float _sliderDuration = 0.6f;
     [SerializeField] private float _sliderToStarInterval = 0.3f;
 
-    [Header("Button")]
-    [SerializeField] private Button _goBackButton;
+
+
 
     private Sequence _starSequence;
 
@@ -42,14 +43,12 @@ public class RewardView : UIPopupBase
     private void OnEnable()
     {
         HideAllStars();
-        _goBackButton.onClick.AddListener(HandleBackButtonClicked);
     }
 
     private void OnDisable()
     {
         _starSequence?.Kill();
         ResetStars();
-        _goBackButton.onClick.RemoveListener(HandleBackButtonClicked);
     }
 
     public void SetPresenter(RewardPresenter presenter)
@@ -61,11 +60,6 @@ public class RewardView : UIPopupBase
     {
         _coin.SetValueImmediate(coin);
         _star.SetValueImmediate(star);
-    }
-
-    public void HandleBackButtonClicked()
-    {
-        _presenter.HandleBackButtonClicked();
     }
 
     public void PlayRewardSequence(int count, float ratio, int coin, int star)
@@ -110,6 +104,8 @@ public class RewardView : UIPopupBase
         // 인터벌 후 별 카운팅
         _starSequence.AppendInterval(_rewardUpdateInterval);
         _starSequence.AppendCallback(() => _star.SetValue(star));
+        _starSequence.AppendInterval(_returnWaitingRoomInterval);
+        _starSequence.OnComplete(() => _presenter.ReturnWaitingRoom());
     }
 
     public void HideAllStars()
