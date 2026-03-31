@@ -20,6 +20,7 @@ public interface ICustomizingManager
     bool IsItemLocked(string itemId);
     void UnlockItem(string itemId);
     bool HasLockedEquippedItems();
+    bool HasUnsavedChanges();
 
     EEquipResult ToggleItem(CustomizingItemSO item);
     void Save();

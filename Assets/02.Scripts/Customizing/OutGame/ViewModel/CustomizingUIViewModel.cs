@@ -16,7 +16,8 @@ public class CustomizingUIViewModel
     public CustomizingType CurrentCategory => _currentCategory;
     public IReadOnlyList<CustomizingItemViewData> VisibleItems => _visibleItems;
     public string SelectedItemName => GetSelectedItemName();
-    public bool HasUnsavedChanges => CheckUnsavedChanges();
+    public bool HasUnsavedChanges => _manager.HasUnsavedChanges();
+    public bool CanSave => HasUnsavedChanges && !_manager.HasLockedEquippedItems();
     public bool IsInitialized => _manager != null && _manager.IsInitialized;
 
     public CustomizingUIViewModel(ICustomizingManager manager)
@@ -183,10 +184,5 @@ public class CustomizingUIViewModel
 
         var item = _manager.GetItemById(_selectedItemId);
         return item?.DisplayName ?? "";
-    }
-
-    private bool CheckUnsavedChanges()
-    {
-        return false;
     }
 }

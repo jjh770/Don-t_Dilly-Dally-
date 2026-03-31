@@ -24,11 +24,6 @@ public class UI_Customizing : MonoBehaviour
     [Header("정보 표시")]
     [SerializeField] private TextMeshProUGUI _selectedItemNameText;
 
-    [Header("경고 UI")]
-    [SerializeField] private GameObject _warningPanel;
-    [SerializeField] private TextMeshProUGUI _warningText;
-    [SerializeField] private float _warningDuration = 2f;
-
     [Header("탭 색상")]
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
     [SerializeField] private Color _tabNormalColor = Color.white;
@@ -60,6 +55,7 @@ public class UI_Customizing : MonoBehaviour
 
         _viewModel.Open();
         SelectCategory(_viewModel.CurrentCategory);
+        UpdateSaveButtonState();
     }
 
     private void Update()
@@ -116,6 +112,15 @@ public class UI_Customizing : MonoBehaviour
     private void HandleStateChanged()
     {
         RefreshItemList();
+        UpdateSaveButtonState();
+    }
+
+    private void UpdateSaveButtonState()
+    {
+        if (_saveButton != null && _viewModel != null)
+        {
+            _saveButton.interactable = _viewModel.CanSave;
+        }
     }
 
     private void HandleCategoryChanged(CustomizingType type)
@@ -144,40 +149,8 @@ public class UI_Customizing : MonoBehaviour
 
     private void OnSaveClicked()
     {
-        if (_viewModel == null) return;
-
-        if (_viewModel.TrySave())
-        {
-            OnSaved?.Invoke();
-        }
-        else
-        {
-            ShowWarning("출석체크를 해야 획득할 수 있는 아이템입니다.");
-        }
-    }
-
-    private void ShowWarning(string message)
-    {
-        if (_warningPanel != null)
-        {
-            _warningPanel.SetActive(true);
-
-            if (_warningText != null)
-                _warningText.text = message;
-
-            CancelInvoke(nameof(HideWarning));
-            Invoke(nameof(HideWarning), _warningDuration);
-        }
-        else
-        {
-            Debug.LogWarning($"[UI_Customizing] {message}");
-        }
-    }
-
-    private void HideWarning()
-    {
-        if (_warningPanel != null)
-            _warningPanel.SetActive(false);
+        _viewModel?.Save();
+        OnSaved?.Invoke();
     }
 
     private void OnResetClicked()
