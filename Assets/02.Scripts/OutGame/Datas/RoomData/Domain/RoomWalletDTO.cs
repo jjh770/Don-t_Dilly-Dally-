@@ -7,7 +7,7 @@ using Firebase.Firestore;
 public class RoomWalletDTO  
 {
     [FirestoreProperty]
-    public int Money { get; set; }
+    public int Coin { get; set; }
 
     [FirestoreProperty]
     public Dictionary<string, int> StageStars { get; set; } = new Dictionary<string, int>();
@@ -21,7 +21,7 @@ public class RoomWalletDTO
         );
 
         return new RoomWallet(
-        new RoomCurrency(ERoomCurrencyType.Money, Money),
+        new RoomCurrency(ERoomCurrencyType.Coin, Coin),
         stars
         );
     }
@@ -29,7 +29,7 @@ public class RoomWalletDTO
     // Domain → DTO
     public static RoomWalletDTO FromDomain(RoomWallet wallet) => new RoomWalletDTO
     {
-        Money = wallet.Money.Value,
+        Coin = wallet.Coin.Value,
         StageStars = wallet.StagesStars.ToDictionary(
                 kvp => kvp.Key,
                 kvp => kvp.Value.Best

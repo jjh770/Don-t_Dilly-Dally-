@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using Photon.Pun;
 using UnityEngine;
@@ -12,7 +13,9 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     private string _currentRoomCode;
 
     public int Star => _roomWallet.TotalStars;
-    public RoomCurrency Money => _roomWallet.Money; 
+    public RoomCurrency Coin => _roomWallet.Coin;
+
+    public event Action<int, int> OnRoomDataLoaded;
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
     {
         _roomDataRepository = roomDataRepository;
@@ -66,11 +69,17 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     
     public override void OnJoinedRoom()
     {
+        LoadRoomData();
+    }
+
+    public void LoadRoomData()
+    {
         LoadRoomDataAsync().Forget();
     }
 
     private async UniTask LoadRoomDataAsync()
     {
         await LoadCurrentRoom(PhotonNetwork.CurrentRoom.Name);
+        OnRoomDataLoaded?.Invoke(Coin.Value, Star);
     }
 }

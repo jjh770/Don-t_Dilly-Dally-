@@ -1,6 +1,6 @@
 
 public enum ERoomCurrencyType
 {
-    Money,
+    Coin,
     Star,
 }

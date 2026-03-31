@@ -1,3 +1,4 @@
+using System;
 using Photon.Realtime;
 using UnityEngine;
 
@@ -15,6 +16,12 @@ public class WaitingRoomPresenter
         _model = model;
 
         PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
+        RoomDataManager.Instance.OnRoomDataLoaded += HandleRoomDataLoaded;
+    }
+
+    private void HandleRoomDataLoaded(int coin, int star)
+    {
+        _waitingRoomView.SetRoomCurrency(coin, star);
     }
 
     public void Initialize()
@@ -41,7 +48,7 @@ public class WaitingRoomPresenter
     {
         string roomCode = PhotonServerManager.Instance.RoomCode;
         GUIUtility.systemCopyBuffer = roomCode;
-        string message = "Å¬¸³º¸µå¿¡ º¹»çµÇ¾ú½À´Ï´Ù.";
+        string message = "í´ë¦½ë³´ë“œì— ë³µì‚¬ë˜ì—ˆìŠµë‹ˆë‹¤.";
         _waitingRoomView.ShowMessage(message);
     }
 
