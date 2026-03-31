@@ -41,11 +41,6 @@ namespace DontDillyDally.Data
             {
                 return;
             }
-
-            if (heldItem.TryGetComponent(out IInteractable interactable))
-            {
-                heldItemInteractor.TryPickupInteractable(interactable);
-            }
         }
 
         public void StopInteract()

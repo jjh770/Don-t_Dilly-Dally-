@@ -37,7 +37,6 @@ namespace DontDillyDally.Data
         {
             base.PrepareForRecycle();
             ClearContentsAndSync();
-            ResetTrayDataAndSync(false);
         }
 
         public void InitializeTray(string displayName, GameObject modelPrefab = null, bool isSterilized = false)
