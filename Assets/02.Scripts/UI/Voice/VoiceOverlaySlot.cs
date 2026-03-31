@@ -22,7 +22,6 @@ public class VoiceOverlaySlot : MonoBehaviour
             return;
         }
 
-        ResolveMuteImage();
         _iconBaseColor = _iconImage.color;
         ApplyIcon(iconSprite);
         ApplySpeakingVisuals(false, _nicknameText.color);
@@ -69,25 +68,6 @@ public class VoiceOverlaySlot : MonoBehaviour
 
         _muteImage.enabled = isMuted;
         _muteImage.gameObject.SetActive(isMuted);
-    }
-
-    private void ResolveMuteImage()
-    {
-        if (_muteImage != null)
-        {
-            return;
-        }
-
-        Transform muteTransform = transform.Find("MuteImage");
-        if (muteTransform == null)
-        {
-            muteTransform = transform.Find("MutedImage");
-        }
-
-        if (muteTransform != null)
-        {
-            _muteImage = muteTransform.GetComponent<Image>();
-        }
     }
 
     private static Color WithAlpha(Color color, float alpha)

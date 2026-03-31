@@ -351,8 +351,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        PlayerProperty.SetVoiceMuted(isMuted);
-        PlayerProperty.SetVoiceSpeaking(isSpeaking);
+        PlayerProperty.SetVoiceState(isMuted, isSpeaking);
         _lastLocalMutedState = isMuted;
         _lastLocalSpeakingState = isSpeaking;
         NotifyOverlayStateChanged();
@@ -362,8 +361,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.LocalPlayer != null)
         {
-            PlayerProperty.SetVoiceMuted(false);
-            PlayerProperty.SetVoiceSpeaking(false);
+            PlayerProperty.SetVoiceState(false, false);
         }
 
         _lastLocalMutedState = false;

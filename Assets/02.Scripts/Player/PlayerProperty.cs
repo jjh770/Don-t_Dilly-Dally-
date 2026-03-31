@@ -94,6 +94,22 @@ public static class PlayerProperty
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
     }
 
+    public static void SetVoiceState(bool isMuted, bool isSpeaking)
+    {
+        if (PhotonNetwork.LocalPlayer == null)
+        {
+            return;
+        }
+
+        Hashtable props = new Hashtable
+        {
+            { IsVoiceMutedKey, isMuted },
+            { IsVoiceSpeakingKey, isSpeaking },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
     public static string GetNickname(Player player)
     {
         if (player == null)
