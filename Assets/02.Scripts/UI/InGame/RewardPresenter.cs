@@ -14,7 +14,7 @@ public class RewardPresenter
 
     public void SetupView()
     {
-        _view.InitializeReward(RoomDataManager.Instance.Money.Value, RoomDataManager.Instance.Star);
+        _view.InitializeReward(RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
     }
 
     public void ReturnWaitingRoom()
@@ -25,7 +25,7 @@ public class RewardPresenter
     private void HandleStageRewardGranted(StageReward reward, StageResult result)
     {
         _view.Show(() =>
-            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Money.Value, RoomDataManager.Instance.Star));
+            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star));
     }
 
     public void Dispose()

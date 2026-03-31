@@ -3,20 +3,20 @@ using System.Linq;
 
 public class RoomWallet
 {
-    private readonly RoomCurrency _money;
+    private readonly RoomCurrency _coin;
     private readonly Dictionary<string, StageStars> _stagesStars;
 
-    public RoomCurrency Money => _money;
+    public RoomCurrency Coin => _coin;
     public Dictionary<string, StageStars> StagesStars => _stagesStars;
 
-    public RoomWallet(RoomCurrency money, Dictionary<string, StageStars> stageStars)
+    public RoomWallet(RoomCurrency coin, Dictionary<string, StageStars> stageStars)
     {
-        _money = money;
+        _coin = coin;
         _stagesStars = stageStars;
     }
 
     public static RoomWallet Default =>
-        new(RoomCurrency.Default(ERoomCurrencyType.Money), new Dictionary<string, StageStars>());
+        new(RoomCurrency.Default(ERoomCurrencyType.Coin), new Dictionary<string, StageStars>());
 
     // ── 별 조회 ────────────────────────────────────────────────────────────
     public StageStars GetStageStars(string stageId) =>
@@ -34,12 +34,12 @@ public class RoomWallet
 
         var next = new Dictionary<string, StageStars>(_stagesStars);
         next[stageId] = StageStars.Default;
-        return new(_money, next);
+        return new(_coin, next);
     }
 
     // ── 돈: 매 클리어 누적 ────────────────────────────────────────────────
     public RoomWallet AddMoney(int amount) =>
-        new(_money.Add(amount), _stagesStars);
+        new(_coin.Add(amount), _stagesStars);
 
     // ── 별: 스테이지별 최고 기록만 유지 ───────────────────────────────────
     public RoomWallet UpdateStars(string stageId, int newStars)
@@ -49,7 +49,7 @@ public class RoomWallet
 
         var next = new Dictionary<string, StageStars>(_stagesStars);
         next[stageId] = updated;
-        return new(_money, next);
+        return new(_coin, next);
     }
 
     // ── 보상 한 번에 적용 ─────────────────────────────────────────────────
