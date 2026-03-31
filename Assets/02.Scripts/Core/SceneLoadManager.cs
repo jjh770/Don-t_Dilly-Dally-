@@ -23,11 +23,13 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     private bool _isLoading = false;
     private float _loadingProgress = 0f;
     private SceneDataSO _nextSceneData;
+    private ESceneType _currentSceneType;
 
 
     public bool IsLoading => _isLoading;
     public float LoadingProgress => _loadingProgress;
     public SceneDataSO NextSceneData => _nextSceneData;
+    public ESceneType CurrentSceneType => _currentSceneType;
 
     protected override void Awake()
     {
@@ -45,6 +47,8 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             }
             _sceneDataMap[type] = data;
         }
+
+        UpdateCurrentSceneType(SceneManager.GetActiveScene().name);
     }
 
 
@@ -127,6 +131,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         if (success && _nextSceneData != null)
         {
+            _currentSceneType = _nextSceneData.SceneType;
             OnSceneLoadComplete?.Invoke(_nextSceneData.SceneName);
             Debug.Log($"[SceneLoadManager] SceneLoad Success");
         }
@@ -140,6 +145,18 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         Debug.LogError(message);
         FinishSceneLoad(false);
+    }
+
+    private void UpdateCurrentSceneType(string sceneName)
+    {
+        foreach (SceneDataSO data in _sceneDataMap.Values)
+        {
+            if (data != null && data.SceneName == sceneName)
+            {
+                _currentSceneType = data.SceneType;
+                return;
+            }
+        }
     }
     #endregion
 }

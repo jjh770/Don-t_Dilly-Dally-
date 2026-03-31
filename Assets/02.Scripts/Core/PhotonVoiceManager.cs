@@ -4,14 +4,11 @@ using Photon.Realtime;
 using Photon.Voice.Unity;
 using System;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 {
     private const int MaxOverlaySlots = 4;
-    private const string LOBBY_SCENE = "Lobby";
-    private const string GAME_SCENE = "GameScene";
     public static PhotonVoiceManager Instance { get; private set; }
 
     [Header("Voice Overlay Visuals")]
@@ -29,6 +26,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     private bool _lastLocalMutedState;
     private bool _isShuttingDown;
     private SelectRoleManager _boundRoleManager;
+    private SceneLoadManager _sceneLoadManager;
 
     private void Awake()
     {
@@ -45,7 +43,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     public override void OnEnable()
     {
         base.OnEnable();
-        SceneManager.sceneLoaded += HandleSceneLoaded;
+        BindSceneLoadManager();
         CacheRecorder();
         BindRoleManager();
     }
@@ -70,7 +68,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     public override void OnDisable()
     {
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        UnbindSceneLoadManager();
         UnbindRoleManager();
         base.OnDisable();
     }
@@ -87,8 +85,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return;
         }
 
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
-
+        UnbindSceneLoadManager();
         if (!_isShuttingDown)
         {
             ResetLocalSpeakingState();
@@ -131,10 +128,17 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         NotifyOverlayStateChanged();
     }
 
-    private void HandleSceneLoaded(Scene scene, LoadSceneMode loadSceneMode)
+    private void HandleSceneLoadComplete(string sceneName)
     {
         BindRoleManager();
         NotifyOverlayStateChanged();
+    }
+
+    private ESceneType GetCurrentSceneType()
+    {
+        return SceneLoadManager.Instance != null
+            ? SceneLoadManager.Instance.CurrentSceneType
+            : default;
     }
 
     public bool ShouldDisplayOverlay()
@@ -144,14 +148,12 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return false;
         }
 
-        string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName.IndexOf(LOBBY_SCENE, StringComparison.OrdinalIgnoreCase) < 0;
+        return GetCurrentSceneType() != ESceneType.Lobby;
     }
 
     public bool ShouldUseWhiteOverlayText()
     {
-        string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName.IndexOf(GAME_SCENE, StringComparison.OrdinalIgnoreCase) < 0;
+        return GetCurrentSceneType() != ESceneType.Gameplay;
     }
 
     public int FillOverlayPlayers(Player[] buffer)
@@ -297,6 +299,34 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
         _boundRoleManager.OnPlayerRoleChanged += HandlePlayerRoleChanged;
         _boundRoleManager.OnRolesCleared += HandleRolesCleared;
+    }
+
+    private void BindSceneLoadManager()
+    {
+        SceneLoadManager manager = SceneLoadManager.Instance;
+        if (_sceneLoadManager == manager)
+        {
+            return;
+        }
+
+        UnbindSceneLoadManager();
+        _sceneLoadManager = manager;
+
+        if (_sceneLoadManager != null)
+        {
+            _sceneLoadManager.OnSceneLoadComplete += HandleSceneLoadComplete;
+        }
+    }
+
+    private void UnbindSceneLoadManager()
+    {
+        if (_sceneLoadManager == null)
+        {
+            return;
+        }
+
+        _sceneLoadManager.OnSceneLoadComplete -= HandleSceneLoadComplete;
+        _sceneLoadManager = null;
     }
 
     private void UnbindRoleManager()

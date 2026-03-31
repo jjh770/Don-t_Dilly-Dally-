@@ -9,6 +9,7 @@ public class VoiceOverlayController : MonoBehaviour
 
     private PhotonVoiceManager _voiceManager;
     private PortraitManager _portraitManager;
+    private SceneLoadManager _sceneLoadManager;
     private readonly Player[] _overlayPlayers = new Player[4];
 
     private void Awake()
@@ -18,22 +19,28 @@ public class VoiceOverlayController : MonoBehaviour
 
     private void OnEnable()
     {
+        BindSceneLoadManager();
         BindManagers();
         RefreshOverlay();
     }
 
-    private void Update()
+    private void Start()
     {
-        if (_voiceManager != PhotonVoiceManager.Instance || _portraitManager != PortraitManager.Instance)
-        {
-            BindManagers();
-            RefreshOverlay();
-        }
+        BindSceneLoadManager();
+        BindManagers();
+        RefreshOverlay();
     }
 
     private void OnDisable()
     {
+        UnbindSceneLoadManager();
         UnbindManagers();
+    }
+
+    private void HandleSceneLoadComplete(string sceneName)
+    {
+        BindManagers();
+        RefreshOverlay();
     }
 
     private void BindManagers()
@@ -82,6 +89,34 @@ public class VoiceOverlayController : MonoBehaviour
         {
             _portraitManager.PortraitStateChanged += RefreshOverlay;
         }
+    }
+
+    private void BindSceneLoadManager()
+    {
+        SceneLoadManager manager = SceneLoadManager.Instance;
+        if (_sceneLoadManager == manager)
+        {
+            return;
+        }
+
+        UnbindSceneLoadManager();
+        _sceneLoadManager = manager;
+
+        if (_sceneLoadManager != null)
+        {
+            _sceneLoadManager.OnSceneLoadComplete += HandleSceneLoadComplete;
+        }
+    }
+
+    private void UnbindSceneLoadManager()
+    {
+        if (_sceneLoadManager == null)
+        {
+            return;
+        }
+
+        _sceneLoadManager.OnSceneLoadComplete -= HandleSceneLoadComplete;
+        _sceneLoadManager = null;
     }
 
     private void UnbindManagers()
