@@ -44,6 +44,8 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+
             TrayItem trayItem = interactionAbility.CurrentHeldItem as TrayItem;
             if (trayItem == null)
             {
@@ -68,6 +70,7 @@ namespace DontDillyDally.StageFlow
             }
 
             trayItem.ClearContentsAndSync();
+            heldItemInteractor?.TryConsumeHeldItem(trayItem);
         }
 
         public void StopInteract()
