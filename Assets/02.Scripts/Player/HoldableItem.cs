@@ -7,7 +7,7 @@ using UnityEngine;
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(PhotonView))]
 [RequireComponent(typeof(HoldableItemNetworkSync))]
-public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
+public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclable
 {
     public bool IsInteracting { get; private set; }
     public bool IsStoredInContainer { get; private set; }
@@ -165,6 +165,12 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable
     public void StopInteract()
     {
         Drop();
+    }
+
+    public void PrepareForRecycle()
+    {
+        StopInteract();
+        SetStoredInContainer(false);
     }
 
     public void Hold(Transform holdPoint)

@@ -96,12 +96,6 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PhotonView itemPhotonView = itemObject.GetComponent<PhotonView>();
-            if (PhotonNetwork.InRoom && itemPhotonView != null && !itemPhotonView.IsMine && !itemPhotonView.AmController)
-            {
-                return;
-            }
-
             int itemInstanceId = itemObject.GetInstanceID();
             if (!_processingItemIds.Add(itemInstanceId))
             {

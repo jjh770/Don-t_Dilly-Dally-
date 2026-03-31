@@ -46,19 +46,7 @@ namespace DontDillyDally.Data
 
         private static void PrepareForRecycle(ItemObject itemObject)
         {
-            itemObject.transform.SetParent(null, true);
-
-            if (itemObject.TryGetComponent(out HoldableItem holdableItem))
-            {
-                holdableItem.StopInteract();
-                holdableItem.SetStoredInContainer(false);
-            }
-
-            if (itemObject is TrayItem trayItem)
-            {
-                trayItem.ClearContentsAndSync();
-                trayItem.ResetTrayDataAndSync(false);
-            }
+            itemObject.PrepareForRecycle();
         }
     }
 }
