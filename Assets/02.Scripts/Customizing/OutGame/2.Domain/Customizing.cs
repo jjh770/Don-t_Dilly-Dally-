@@ -67,7 +67,6 @@ public class Customizing
     public EEquipResult CanEquip(ICustomizingItemSpec item)
     {
         if (item == null) return EEquipResult.InvalidItem;
-        if (item.IsLocked) return EEquipResult.Locked;
         if (_state.IsEquippedItem(item.Category, item.ItemId)) return EEquipResult.AlreadyEquipped;
         return EEquipResult.Equipped;
     }
@@ -98,7 +97,6 @@ public class Customizing
     public EEquipResult ToggleEquip(ICustomizingItemSpec item)
     {
         if (item == null) return EEquipResult.InvalidItem;
-        if (item.IsLocked) return EEquipResult.Locked;
 
         if (_state.IsEquippedItem(item.Category, item.ItemId))
         {
@@ -118,12 +116,6 @@ public class Customizing
 
         _state.Remove(category);
         return EEquipResult.Unequipped;
-    }
-
-    // 기본값으로 초기화
-    public void ResetToDefaults()
-    {
-        InitializeWithDefaults();
     }
 
     // 현재 장착된 아이템 조회

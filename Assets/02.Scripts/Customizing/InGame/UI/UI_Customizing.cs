@@ -11,7 +11,8 @@ public class UI_Customizing : MonoBehaviour
     [SerializeField] private RectTransform _tabSelectionIndicator;
 
     [Header("아이템 리스트")]
-    [SerializeField] private UI_CustomizingItem _itemPrefab;
+    [SerializeField] private UI_CustomizingItem _itemSlotButton;
+    [SerializeField] private UI_CustomizingItem _itemSlotLockButton;
     [SerializeField] private Transform _itemListParent;
     [SerializeField] private ScrollRect _scrollRect;
 
@@ -54,6 +55,7 @@ public class UI_Customizing : MonoBehaviour
 
         _viewModel.Open();
         SelectCategory(_viewModel.CurrentCategory);
+        UpdateSaveButtonState();
     }
 
     private void Update()
@@ -110,6 +112,15 @@ public class UI_Customizing : MonoBehaviour
     private void HandleStateChanged()
     {
         RefreshItemList();
+        UpdateSaveButtonState();
+    }
+
+    private void UpdateSaveButtonState()
+    {
+        if (_saveButton != null && _viewModel != null)
+        {
+            _saveButton.interactable = _viewModel.CanSave;
+        }
     }
 
     private void HandleCategoryChanged(CustomizingType type)
@@ -176,9 +187,13 @@ public class UI_Customizing : MonoBehaviour
 
     private UI_CustomizingItem CreateItemButton(CustomizingItemViewData viewData)
     {
-        if (_itemPrefab == null || _itemListParent == null) return null;
+        if (_itemListParent == null) return null;
 
-        var buttonObj = Instantiate(_itemPrefab.gameObject, _itemListParent);
+        // 잠금 상태에 따라 다른 프리팹 사용
+        var prefab = viewData.IsLocked ? _itemSlotLockButton : _itemSlotButton;
+        if (prefab == null) return null;
+
+        var buttonObj = Instantiate(prefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
 
         button.Setup(viewData, () => OnItemClicked(viewData.ItemId));
