@@ -16,9 +16,7 @@ public class CustomizingUIViewModel
     public CustomizingType CurrentCategory => _currentCategory;
     public IReadOnlyList<CustomizingItemViewData> VisibleItems => _visibleItems;
     public string SelectedItemName => GetSelectedItemName();
-    public bool HasUnsavedChanges => _manager.HasUnsavedChanges();
-    public bool CanSave => HasUnsavedChanges && !_manager.HasLockedEquippedItems();
-    public bool IsInitialized => _manager != null && _manager.IsInitialized;
+    public bool CanSave => _manager.HasUnsavedChanges() && _manager.HasLockedEquippedItems() == false;
 
     public CustomizingUIViewModel(ICustomizingManager manager)
     {
@@ -77,9 +75,7 @@ public class CustomizingUIViewModel
         _manager.Save();
     }
 
-    /// <summary>
-    /// 저장 시도. 잠금 아이템이 장착되어 있으면 false 반환
-    /// </summary>
+    // 저장 시도. 잠금 아이템이 장착되어 있으면 false 반환
     public bool TrySave()
     {
         if (_manager.HasLockedEquippedItems())

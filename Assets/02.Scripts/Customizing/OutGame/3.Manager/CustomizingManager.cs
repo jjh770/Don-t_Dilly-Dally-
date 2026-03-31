@@ -306,9 +306,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return false;
     }
 
-    /// <summary>
-    /// 현재 상태가 저장된 상태와 다른지 확인
-    /// </summary>
     public bool HasUnsavedChanges()
     {
         if (_domain?.State == null || _savedState == null) return false;
