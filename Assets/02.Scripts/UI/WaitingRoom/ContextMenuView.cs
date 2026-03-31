@@ -33,7 +33,7 @@ public class ContextMenuView : MonoBehaviour
         _playerPopupPanel.transform.position = Vector3.zero;
     }
 
-    public void Initialized(WaitingRoomPresenter presenter)
+    public void SetPresenter(WaitingRoomPresenter presenter)
     {
         _presenter = presenter;
     }

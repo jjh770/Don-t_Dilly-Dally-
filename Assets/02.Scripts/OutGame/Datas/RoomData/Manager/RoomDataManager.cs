@@ -11,6 +11,8 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     private string _currentRoomCode;
 
+    public int Star => _roomWallet.TotalStars;
+    public RoomCurrency Money => _roomWallet.Money; 
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
     {
         _roomDataRepository = roomDataRepository;

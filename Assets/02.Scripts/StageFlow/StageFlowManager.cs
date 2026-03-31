@@ -143,6 +143,7 @@ namespace DontDillyDally.StageFlow
         public event Action<EGameOverReason> OnGameOver;
         public event Action OnStageClear;
         public event Action<StageRuntimeData> OnStageDataChanged;
+        public event Action<StageReward, StageResult> OnStageRewardGranted;
 
         // ================================================================
         //  초기화
@@ -221,7 +222,7 @@ namespace DontDillyDally.StageFlow
                 Debug.Log("[StageFlow] ✓ Phase 3: Playing 완료 (모든 환자 치료 성공)");
 
                 // Phase 4: 스테이지 클리어
-                Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀");
+                Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀 가능");
                 PausePatientHealthDrain();
                 _timer.Pause();
                 SyncTimerState();
@@ -232,13 +233,13 @@ namespace DontDillyDally.StageFlow
                 // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
 
-                // 보상 처리
-                ApplyReward();
 
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
 
-                Debug.Log("[StageFlow] 대기실로 복귀합니다.");
-                PhotonServerManager.Instance.ReturnWaitingRoom();
+                // 보상 처리
+                Debug.Log("[StageFlow] 보상을 지급합니다.");     
+                ApplyReward();
+                //PhotonServerManager.Instance.ReturnWaitingRoom();
             }
             catch (OperationCanceledException)
             {
@@ -832,7 +833,7 @@ namespace DontDillyDally.StageFlow
                 EventManager.Instance?.OnGameOver();
             }
 
-            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀");
+            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {_timer.RemainingTime:F1}초 | 5초 후 대기실 복귀 가능");
 
             // 역할 시각 표시 초기화
             SelectRoleManager.Instance?.ClearRoles();
@@ -860,18 +861,12 @@ namespace DontDillyDally.StageFlow
                 Debug.LogWarning("[StageFlow] 게임 오버 ACK 대기 중 타임아웃");
             }
 
+            await UniTask.Delay(TimeSpan.FromSeconds(RETURN_TO_WAITING_ROOM_DELAY_SEC));
+
             // 보상을 처리합니다.
             ApplyReward();
-
-            await ReturnToWaitingRoomDelayed();
         }
 
-        // 짧은 대기 후 대기실 씬으로 복귀시킵니다.
-        private async UniTask ReturnToWaitingRoomDelayed()
-        {
-            await UniTask.Delay(TimeSpan.FromSeconds(RETURN_TO_WAITING_ROOM_DELAY_SEC));
-            PhotonServerManager.Instance.ReturnWaitingRoom();
-        }
 
         // ── 플레이어 움직임 제어 ──────────────────────────────────────
 
@@ -920,6 +915,8 @@ namespace DontDillyDally.StageFlow
             );
 
             StageReward reward = RoomDataManager.Instance.ApplyReward(_stageData.StageId, result);
+
+            OnStageRewardGranted?.Invoke(reward, result);
 
             Debug.Log($"별: {reward.Stars} / 돈: {reward.Money} / 신기록: {reward.IsNewBest}");
             // → UI 연출로 넘기기

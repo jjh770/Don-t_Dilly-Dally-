@@ -1,0 +1,35 @@
+using DontDillyDally.StageFlow;
+
+public class RewardPresenter
+{
+    private readonly RewardView _view;
+
+
+    public RewardPresenter(RewardView view)
+    {
+        _view = view;
+        SetupView();
+        StageFlowManager.Instance.OnStageRewardGranted += HandleStageRewardGranted;
+    }
+
+    public void SetupView()
+    {
+        _view.InitializeReward(RoomDataManager.Instance.Money.Value, RoomDataManager.Instance.Star);
+    }
+
+    public void HandleBackButtonClicked()
+    {
+        PhotonServerManager.Instance.ReturnWaitingRoom();     
+    }
+
+    private void HandleStageRewardGranted(StageReward reward, StageResult result)
+    {
+        _view.Show(() =>
+            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Money.Value, RoomDataManager.Instance.Star));
+    }
+
+    public void Dispose()
+    {
+        StageFlowManager.Instance.OnStageRewardGranted -= HandleStageRewardGranted;
+    }
+}
