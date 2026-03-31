@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Cysharp.Threading.Tasks;
-using NUnit.Framework;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
@@ -60,9 +59,10 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         if (information == null)
         {
             Debug.Log("[PlayerDataManager] 새로운 데이터를 생성합니다.");
-            string nickName = _defaultNickNameList[UnityEngine.Random.Range(0, _defaultNickNameList.Count)];
+            string nickName = _defaultNickNameList.Count > 0
+                ? _defaultNickNameList[UnityEngine.Random.Range(0, _defaultNickNameList.Count)]
+                : "Player";
             _playerInformation = new PlayerInformation(nickName);
-
             SaveData();
             return;
         }
