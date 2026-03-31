@@ -26,6 +26,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private Recorder _recorder;
     private bool _lastLocalSpeakingState;
+    private bool _lastLocalMutedState;
     private bool _isShuttingDown;
     private SelectRoleManager _boundRoleManager;
 
@@ -53,7 +54,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     {
         CacheRecorder();
         BindRoleManager();
-        SyncLocalSpeakingState(forceUpdate: true);
+        SyncLocalVoiceStates(forceUpdate: true);
         NotifyOverlayStateChanged();
     }
 
@@ -66,7 +67,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
         CacheRecorder();
         BindRoleManager();
-        SyncLocalSpeakingState();
+        SyncLocalVoiceStates();
     }
 
     public override void OnDisable()
@@ -102,8 +103,9 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     public override void OnJoinedRoom()
     {
         _lastLocalSpeakingState = false;
+        _lastLocalMutedState = false;
         ResetLocalSpeakingState();
-        SyncLocalSpeakingState(forceUpdate: true);
+        SyncLocalVoiceStates(forceUpdate: true);
         NotifyOverlayStateChanged();
     }
 
@@ -265,11 +267,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         NotifyOverlayStateChanged();
     }
 
-    private void SyncLocalSpeakingState(bool forceUpdate = false)
+    private void SyncLocalVoiceStates(bool forceUpdate = false)
     {
         if (PhotonNetwork.LocalPlayer == null || !PhotonNetwork.InRoom)
         {
-            if (forceUpdate || _lastLocalSpeakingState)
+            if (forceUpdate || _lastLocalSpeakingState || _lastLocalMutedState)
             {
                 ResetLocalSpeakingState();
             }
@@ -279,7 +281,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
         if (_recorder == null)
         {
-            if (forceUpdate || _lastLocalSpeakingState)
+            if (forceUpdate || _lastLocalSpeakingState || _lastLocalMutedState)
             {
                 ResetLocalSpeakingState();
                 NotifyOverlayStateChanged();
@@ -288,13 +290,16 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return;
         }
 
+        bool isMuted = !_recorder.TransmitEnabled;
         bool isSpeaking = _recorder.TransmitEnabled && _recorder.IsCurrentlyTransmitting;
-        if (!forceUpdate && isSpeaking == _lastLocalSpeakingState)
+        if (!forceUpdate && isSpeaking == _lastLocalSpeakingState && isMuted == _lastLocalMutedState)
         {
             return;
         }
 
+        PlayerProperty.SetVoiceMuted(isMuted);
         PlayerProperty.SetVoiceSpeaking(isSpeaking);
+        _lastLocalMutedState = isMuted;
         _lastLocalSpeakingState = isSpeaking;
         NotifyOverlayStateChanged();
     }
@@ -303,9 +308,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     {
         if (PhotonNetwork.LocalPlayer != null)
         {
+            PlayerProperty.SetVoiceMuted(false);
             PlayerProperty.SetVoiceSpeaking(false);
         }
 
+        _lastLocalMutedState = false;
         _lastLocalSpeakingState = false;
     }
 

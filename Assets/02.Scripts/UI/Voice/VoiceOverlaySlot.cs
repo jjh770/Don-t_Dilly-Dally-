@@ -8,6 +8,7 @@ public class VoiceOverlaySlot : MonoBehaviour
     [SerializeField] private Image _iconImage;
     [SerializeField] private TextMeshProUGUI _nicknameText;
     [SerializeField] private UIOutline _iconOutline;
+    [SerializeField] private Image _muteImage;
 
     [Header("State Visuals")]
     [SerializeField, Range(0f, 1f)] private float _idleAlpha = 0.45f;
@@ -25,13 +26,15 @@ public class VoiceOverlaySlot : MonoBehaviour
             return;
         }
 
+        ResolveMuteImage();
         _iconBaseColor = _iconImage.color;
         ApplyIcon(iconSprite);
         ApplySpeakingVisuals(false);
+        ApplyMuteVisuals(false);
         _isInitialized = true;
     }
 
-    public void SetState(string nickname, Color textColor, bool isSpeaking, Sprite iconSprite)
+    public void SetState(string nickname, Color textColor, bool isSpeaking, bool isMuted, Sprite iconSprite)
     {
         Initialize(iconSprite);
 
@@ -40,6 +43,7 @@ public class VoiceOverlaySlot : MonoBehaviour
 
         ApplyIcon(iconSprite);
         ApplySpeakingVisuals(isSpeaking, textColor);
+        ApplyMuteVisuals(isMuted);
     }
 
     public void SetVisible(bool isVisible)
@@ -68,6 +72,36 @@ public class VoiceOverlaySlot : MonoBehaviour
         _iconOutline.effectColor = _iconOutlineColor;
         _iconOutline.effectDistance = _iconOutlineDistance;
         _iconOutline.useGraphicAlpha = true;
+    }
+
+    private void ApplyMuteVisuals(bool isMuted)
+    {
+        if (_muteImage == null)
+        {
+            return;
+        }
+
+        _muteImage.enabled = isMuted;
+        _muteImage.gameObject.SetActive(isMuted);
+    }
+
+    private void ResolveMuteImage()
+    {
+        if (_muteImage != null)
+        {
+            return;
+        }
+
+        Transform muteTransform = transform.Find("MuteImage");
+        if (muteTransform == null)
+        {
+            muteTransform = transform.Find("MutedImage");
+        }
+
+        if (muteTransform != null)
+        {
+            _muteImage = muteTransform.GetComponent<Image>();
+        }
     }
 
     private static Color WithAlpha(Color color, float alpha)

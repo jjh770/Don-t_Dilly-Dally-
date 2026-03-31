@@ -7,6 +7,7 @@ public static class PlayerProperty
     public const string NicknameKey = "Nickname";
     public const string IsReadyKey = "IsReady";
     public const string IsVoiceSpeakingKey = "IsVoiceSpeaking";
+    public const string IsVoiceMutedKey = "IsVoiceMuted";
 
     public static void EnsureProperties()
     {
@@ -30,6 +31,11 @@ public static class PlayerProperty
         if (!PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey(IsVoiceSpeakingKey))
         {
             props[IsVoiceSpeakingKey] = false;
+        }
+
+        if (!PhotonNetwork.LocalPlayer.CustomProperties.ContainsKey(IsVoiceMutedKey))
+        {
+            props[IsVoiceMutedKey] = false;
         }
 
         if (props.Count > 0)
@@ -73,6 +79,21 @@ public static class PlayerProperty
         PhotonNetwork.LocalPlayer.SetCustomProperties(props);
     }
 
+    public static void SetVoiceMuted(bool isMuted)
+    {
+        if (PhotonNetwork.LocalPlayer == null)
+        {
+            return;
+        }
+
+        Hashtable props = new Hashtable
+        {
+            { IsVoiceMutedKey, isMuted },
+        };
+
+        PhotonNetwork.LocalPlayer.SetCustomProperties(props);
+    }
+
     public static string GetNickname(Player player)
     {
         if (player == null)
@@ -108,6 +129,16 @@ public static class PlayerProperty
         if (player != null && player.CustomProperties.TryGetValue(IsVoiceSpeakingKey, out object value) && value is bool isSpeaking)
         {
             return isSpeaking;
+        }
+
+        return false;
+    }
+
+    public static bool GetVoiceMuted(Player player)
+    {
+        if (player != null && player.CustomProperties.TryGetValue(IsVoiceMutedKey, out object value) && value is bool isMuted)
+        {
+            return isMuted;
         }
 
         return false;

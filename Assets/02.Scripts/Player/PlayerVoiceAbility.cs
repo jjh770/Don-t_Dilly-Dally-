@@ -26,7 +26,7 @@ public class PlayerVoiceAbility : PlayerAbility
         }
 
         _recorder.VoiceDetection = true;
-        _recorder.VoiceDetectionThreshold = 0.01f;
+        _recorder.VoiceDetectionThreshold = 0.005f;
         _recorder.VoiceDetectionDelayMs = 300;
     }
 

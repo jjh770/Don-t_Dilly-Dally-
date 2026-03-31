@@ -151,6 +151,7 @@ public class VoiceOverlayController : MonoBehaviour
                 PlayerProperty.GetNickname(player),
                 voiceManager.GetOverlayTextColor(player),
                 PlayerProperty.GetVoiceSpeaking(player),
+                PlayerProperty.GetVoiceMuted(player),
                 iconSprite);
         }
     }

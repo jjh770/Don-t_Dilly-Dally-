@@ -39,14 +39,14 @@ public class VoiceOverlayView : MonoBehaviour
         _canvasGroup.blocksRaycasts = false;
     }
 
-    public void SetSlot(int index, string nickname, Color textColor, bool isSpeaking, Sprite iconSprite)
+    public void SetSlot(int index, string nickname, Color textColor, bool isSpeaking, bool isMuted, Sprite iconSprite)
     {
         if (!IsValidIndex(index))
         {
             return;
         }
 
-        _slots[index].SetState(nickname, textColor, isSpeaking, iconSprite);
+        _slots[index].SetState(nickname, textColor, isSpeaking, isMuted, iconSprite);
     }
 
     public void HideSlot(int index)
