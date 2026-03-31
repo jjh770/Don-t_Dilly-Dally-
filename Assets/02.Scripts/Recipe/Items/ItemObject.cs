@@ -1,11 +1,10 @@
-using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
 {
     // 월드에 배치되는 아이템 오브젝트의 공통 베이스 클래스입니다.
     // 표시 이름, 모델 프리팹, 박스 콜라이더 설정을 공통으로 관리합니다.
-    public abstract class ItemObject : MonoBehaviour
+    public abstract class ItemObject : MonoBehaviour, IRecyclable
     {
         private const int InvalidLayer = -1;
         private const string SupplyItemLayerName = "SupplyItem";
@@ -63,16 +62,36 @@ namespace DontDillyDally.Data
             SetModelPrefab(modelPrefab);
         }
 
+        public virtual void PrepareForRecycle()
+        {
+            transform.SetParent(null, true);
+
+            IRecyclable[] recyclables = GetComponents<IRecyclable>();
+            foreach (IRecyclable recyclable in recyclables)
+            {
+                if (ReferenceEquals(recyclable, this))
+                {
+                    continue;
+                }
+
+                recyclable.PrepareForRecycle();
+            }
+        }
+
+        protected void ResetReusableItemState()
+        {
+            DisplayName = null;
+            ModelPrefab = null;
+            ClearCurrentModel();
+        }
+
         public virtual void SetModelPrefab(GameObject modelPrefab)
         {
             ModelPrefab = modelPrefab;
             RefreshModel();
         }
 
-        protected void InitializeWithPresentation<TItemType>(
-            TItemType itemType,
-            string fallbackDisplayName,
-            PresentationResolver<TItemType> presentationResolver = null)
+        protected void InitializeWithPresentation<TItemType>(TItemType itemType, string fallbackDisplayName, PresentationResolver<TItemType> presentationResolver = null)
         {
             string resolvedDisplayName = string.IsNullOrWhiteSpace(DisplayName)
                 ? fallbackDisplayName
@@ -145,7 +164,7 @@ namespace DontDillyDally.Data
 
             Transform parent = ModelRoot != null ? ModelRoot : transform;
             CurrentModelInstance = Instantiate(ModelPrefab, parent);
-            CurrentModelInstance.name = $"{name}_Model";
+            CurrentModelInstance.name = GetModelInstanceName();
             CurrentModelInstance.transform.localPosition = Vector3.zero;
             CurrentModelInstance.transform.localRotation = Quaternion.identity;
             CurrentModelInstance.transform.localScale = Vector3.one;
@@ -159,11 +178,27 @@ namespace DontDillyDally.Data
             ModelRefreshed?.Invoke();
         }
 
+        private string GetModelInstanceName()
+        {
+            if (ModelPrefab != null && !string.IsNullOrWhiteSpace(ModelPrefab.name))
+            {
+                return $"{ModelPrefab.name}_Model";
+            }
+
+            if (!string.IsNullOrWhiteSpace(DisplayName))
+            {
+                return $"{DisplayName}_Model";
+            }
+
+            return $"{name}_Model";
+        }
+
         protected void ClearCurrentModel()
         {
             if (CurrentModelInstance != null)
             {
                 Destroy(CurrentModelInstance);
+                CurrentModelInstance = null;
             }
         }
 

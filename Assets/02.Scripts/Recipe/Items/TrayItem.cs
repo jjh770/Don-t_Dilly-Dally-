@@ -33,6 +33,12 @@ namespace DontDillyDally.Data
             InitializeTray(displayName, modelPrefab, isSterilized: false);
         }
 
+        public override void PrepareForRecycle()
+        {
+            base.PrepareForRecycle();
+            ClearContentsAndSync();
+        }
+
         public void InitializeTray(string displayName, GameObject modelPrefab = null, bool isSterilized = false)
         {
             base.Initialize(displayName, modelPrefab);
