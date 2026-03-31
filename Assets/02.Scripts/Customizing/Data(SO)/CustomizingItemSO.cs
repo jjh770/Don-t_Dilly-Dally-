@@ -17,14 +17,12 @@ public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
 
     [Header("Settings")]
     [SerializeField] private bool _isDefault;
-    [SerializeField] private bool _isLocked;
     [SerializeField] private int _sortOrder;
 
     public string ItemId => _itemId;
     public string DisplayName => _displayName;
     public CustomizingType Category => _customizingType;
     public bool IsDefault => _isDefault;
-    public bool IsLocked => _isLocked;
     public int SortOrder => _sortOrder;
     public Sprite PreviewIcon => _previewIcon;
 

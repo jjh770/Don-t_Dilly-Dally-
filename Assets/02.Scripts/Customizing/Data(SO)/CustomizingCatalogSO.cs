@@ -109,10 +109,10 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
         return item;
     }
 
-    // 잠금 해제된 아이템만 반환
+    // 잠금 해제된 아이템만 반환 (현재는 모든 아이템 반환 - Lock 여부는 CustomizingManager에서 판단)
     public List<CustomizingItemSO> GetUnlockedItemsByType(CustomizingType type)
     {
-        return GetItemsByType(type).Where(item => !item.IsLocked).ToList();
+        return GetItemsByType(type);
     }
 
     // ICustomizingCatalog 구현

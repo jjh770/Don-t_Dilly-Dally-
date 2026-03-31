@@ -10,6 +10,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     [Header("참조")]
     [SerializeField] private CustomizingCatalogSO _catalog;
     [SerializeField] private BaseEquipmentCatalogSO _baseEquipmentCatalog;
+    [SerializeField] private AttendanceRewardSO _attendanceRewardTable;
 
     [Header("세팅")]
     [SerializeField] private string _userId = "local_user";
@@ -249,11 +250,13 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     // 아이템이 잠금 상태인지 확인
     public bool IsItemLocked(string itemId)
     {
-        var item = _catalog?.GetItemById(itemId);
-        if (item == null) return true;
+        if (string.IsNullOrEmpty(itemId)) return false;
 
-        if (!item.IsLocked) return false;
+        // 출석 보상 테이블에 없으면 Lock 아님
+        if (!(_attendanceRewardTable?.IsRewardItem(itemId) ?? false))
+            return false;
 
+        // 출석 보상 아이템이지만 이미 해금되었으면 Lock 아님
         return !(_currentSaveData?.IsUnlocked(itemId) ?? false);
     }
 
