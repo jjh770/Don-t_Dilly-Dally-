@@ -10,6 +10,7 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
         (CustomizingType[])Enum.GetValues(typeof(CustomizingType));
 
     private Camera _captureCamera;
+    private Light _mainLight;
     private RenderTexture _renderTexture;
     private GameObject _characterInstance;
     private CustomizingCharacterView _characterView;
@@ -19,6 +20,7 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
     public void Initialize(GameObject characterPrefab)
     {
         CreateCamera();
+        CreateLights();
         CreateCharacter(characterPrefab);
     }
 
@@ -83,16 +85,19 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
 
         SetLayerRecursive(_characterInstance, request.CaptureLayer);
         _captureCamera.cullingMask = 1 << request.CaptureLayer;
+        ApplyLighting(request);
 
         FacePortraitCameraController.Apply(_captureCamera, faceAnchor, request.Profile);
 
         SetRenderersEnabled(true);
+        SetLightEnabled(true);
         try
         {
             _captureCamera.Render();
         }
         finally
         {
+            SetLightEnabled(false);
             SetRenderersEnabled(false);
         }
 
@@ -145,6 +150,19 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
         _captureCamera.farClipPlane = 10f;
         _captureCamera.allowHDR = true;
         _captureCamera.allowMSAA = false;
+    }
+
+    private void CreateLights()
+    {
+        GameObject lightObject = new GameObject("FacePortraitMainLight");
+        lightObject.hideFlags = HideFlags.HideAndDontSave;
+        lightObject.transform.SetParent(transform, false);
+
+        _mainLight = lightObject.AddComponent<Light>();
+        _mainLight.type = LightType.Directional;
+        _mainLight.shadows = LightShadows.None;
+        _mainLight.renderMode = LightRenderMode.ForcePixel;
+        _mainLight.enabled = false;
     }
 
     private void CreateCharacter(GameObject characterPrefab)
@@ -260,6 +278,19 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
         }
     }
 
+    private void ApplyLighting(FacePortraitCaptureRequest request)
+    {
+        if (_mainLight == null || request.Profile == null)
+        {
+            return;
+        }
+
+        _mainLight.cullingMask = 1 << request.CaptureLayer;
+        _mainLight.color = request.Profile.MainLightColor;
+        _mainLight.intensity = request.Profile.MainLightIntensity;
+        _mainLight.transform.rotation = Quaternion.Euler(request.Profile.MainLightEulerAngles);
+    }
+
     private void SetRenderersEnabled(bool isEnabled)
     {
         if (_characterRenderers == null)
@@ -273,6 +304,14 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
             {
                 _characterRenderers[i].enabled = isEnabled;
             }
+        }
+    }
+
+    private void SetLightEnabled(bool isEnabled)
+    {
+        if (_mainLight != null)
+        {
+            _mainLight.enabled = isEnabled;
         }
     }
 }

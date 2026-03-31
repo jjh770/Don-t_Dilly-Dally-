@@ -13,9 +13,10 @@ public class VoiceOverlaySlot : MonoBehaviour
     [SerializeField, Range(0f, 1f)] private float _speakingAlpha = 1f;
 
     private bool _isInitialized;
+    private Color _baseTextColor = Color.white;
     private Color _iconBaseColor = Color.white;
 
-    public void Initialize(Sprite iconSprite)
+    public void Initialize()
     {
         if (_isInitialized)
         {
@@ -23,21 +24,37 @@ public class VoiceOverlaySlot : MonoBehaviour
         }
 
         _iconBaseColor = _iconImage.color;
-        ApplyIcon(iconSprite);
-        ApplySpeakingVisuals(false, _nicknameText.color);
+        _baseTextColor = _nicknameText.color;
+        ApplySpeakingVisuals(false, _baseTextColor);
         ApplyMuteVisuals(false);
         _isInitialized = true;
     }
 
-    public void SetState(string nickname, Color textColor, bool isSpeaking, bool isMuted, Sprite iconSprite)
+    public void SetIdentityContent(string nickname, Sprite iconSprite)
     {
-        Initialize(iconSprite);
+        Initialize();
 
         gameObject.SetActive(true);
         _nicknameText.text = nickname;
-
         ApplyIcon(iconSprite);
-        ApplySpeakingVisuals(isSpeaking, textColor);
+    }
+
+    public void SetTextColor(Color textColor)
+    {
+        Initialize();
+
+        _baseTextColor = textColor;
+        ApplySpeakingVisuals(false, _baseTextColor);
+    }
+
+    public void SetVoiceState(bool isSpeaking, bool isMuted)
+    {
+        if (!_isInitialized)
+        {
+            Initialize();
+        }
+
+        ApplySpeakingVisuals(isSpeaking, _baseTextColor);
         ApplyMuteVisuals(isMuted);
     }
 

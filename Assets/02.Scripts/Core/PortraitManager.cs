@@ -7,10 +7,8 @@ using Photon.Realtime;
 using UnityEngine;
 
 [DisallowMultipleComponent]
-public class PortraitManager : MonoBehaviourPunCallbacks
+public class PortraitManager : PunPersistentSingleton<PortraitManager>
 {
-    public static PortraitManager Instance { get; private set; }
-
     [Header("Face Portrait")]
     [SerializeField] private GameObject _portraitCharacterPrefab;
     [SerializeField] private FacePortraitProfile _facePortraitProfile = new FacePortraitProfile();
@@ -23,17 +21,6 @@ public class PortraitManager : MonoBehaviourPunCallbacks
     private IPlayerAppearanceSource _appearanceSource;
     private PlayerPortraitService _portraitService;
     private CancellationTokenSource _portraitCts;
-
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
-            Destroy(gameObject);
-            return;
-        }
-
-        Instance = this;
-    }
 
     public override void OnEnable()
     {
@@ -79,7 +66,6 @@ public class PortraitManager : MonoBehaviourPunCallbacks
 
         UnbindCustomizingManager();
         DisposePortraitService();
-        Instance = null;
     }
 
     public override void OnJoinedRoom()
@@ -120,14 +106,24 @@ public class PortraitManager : MonoBehaviourPunCallbacks
     {
         portraitSprite = null;
 
+        IPlayerPortraitService portraitService = GetOrCreatePortraitService();
+        if (player == null || portraitService == null)
+        {
+            return false;
+        }
+
+        if (portraitService.TryGetCached(player.ActorNumber, out portraitSprite))
+        {
+            return true;
+        }
+
         PlayerAppearanceSnapshot snapshot = CreateAppearanceSnapshot(player);
         if (snapshot == null)
         {
             return false;
         }
 
-        IPlayerPortraitService portraitService = GetOrCreatePortraitService();
-        return portraitService != null && portraitService.TryGetCached(snapshot, out portraitSprite);
+        return portraitService.TryGetCached(snapshot, out portraitSprite);
     }
 
     private void BindCustomizingManager()

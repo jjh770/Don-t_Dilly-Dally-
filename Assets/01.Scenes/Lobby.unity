@@ -1524,7 +1524,6 @@ GameObject:
   m_Component:
   - component: {fileID: 415259356}
   - component: {fileID: 415259355}
-  - component: {fileID: 415259357}
   m_Layer: 0
   m_Name: PortraitManager
   m_TagString: Untagged
@@ -1551,8 +1550,11 @@ MonoBehaviour:
     _cameraEulerAngles: {x: 0, y: 0, z: 0}
     _characterEulerAngles: {x: 0, y: 180, z: 0}
     _orthographicSize: 0.3
+    _mainLightEulerAngles: {x: 25, y: -35, z: 0}
+    _mainLightColor: {r: 1, g: 1, b: 1, a: 1}
+    _mainLightIntensity: 1
   _portraitResolution: 256
-  _portraitLayer: 7
+  _portraitLayer: 9
 --- !u!4 &415259356
 Transform:
   m_ObjectHideFlags: 0
@@ -1568,18 +1570,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &415259357
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 415259354}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fdee27ae6f6eb3a4e822f90ffd4f0213, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDestroyOnLoad
 --- !u!1 &437672993
 GameObject:
   m_ObjectHideFlags: 0

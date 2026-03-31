@@ -1,7 +1,7 @@
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,8 +16,8 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     private Dictionary<ESceneType, SceneDataSO> _sceneDataMap = new Dictionary<ESceneType, SceneDataSO>();
 
     #region Events
-    public event Action<string> OnSceneLoadStart;
-    public event Action<string> OnSceneLoadComplete;
+    public event Action<ESceneType> OnSceneLoadStart;
+    public event Action<ESceneType> OnSceneLoadComplete;
     #endregion
 
     private bool _isLoading = false;
@@ -30,14 +30,9 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     public float LoadingProgress => _loadingProgress;
     public SceneDataSO NextSceneData => _nextSceneData;
     public ESceneType CurrentSceneType => _currentSceneType;
-
-    protected override void Awake()
-    {
-        base.Awake();
-    }
     private void Start()
     {
-        foreach(SceneDataSO data in sceneDataSOs)
+        foreach (SceneDataSO data in sceneDataSOs)
         {
             ESceneType type = data.SceneType;
             if (_sceneDataMap.ContainsKey(type))
@@ -81,11 +76,10 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         _loadingProgress = 0f;
 
-        float startTime = Time.time;
         string sceneName = _nextSceneData.SceneName;
         ESceneLoadMode loadMode = _nextSceneData.SceneLoadMode;
 
-        OnSceneLoadStart?.Invoke(sceneName);
+        OnSceneLoadStart?.Invoke(_nextSceneData.SceneType);
 
         if (loadMode == ESceneLoadMode.Local)
         {
@@ -94,7 +88,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             if (asyncLoad == null)
             {
                 FailSceneLoad(($"[SceneLoadManager] Failed to load scene: {sceneName}"));
-        
+
                 yield break;
             }
 
@@ -122,7 +116,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             }
 
             _loadingProgress = 1f;
-            
+
         }
         FinishSceneLoad(true);
     }
@@ -132,7 +126,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
         if (success && _nextSceneData != null)
         {
             _currentSceneType = _nextSceneData.SceneType;
-            OnSceneLoadComplete?.Invoke(_nextSceneData.SceneName);
+            OnSceneLoadComplete?.Invoke(_nextSceneData.SceneType);
             Debug.Log($"[SceneLoadManager] SceneLoad Success");
         }
 

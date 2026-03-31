@@ -128,7 +128,7 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         NotifyOverlayStateChanged();
     }
 
-    private void HandleSceneLoadComplete(string sceneName)
+    private void HandleSceneLoadComplete(ESceneType _)
     {
         BindRoleManager();
         NotifyOverlayStateChanged();

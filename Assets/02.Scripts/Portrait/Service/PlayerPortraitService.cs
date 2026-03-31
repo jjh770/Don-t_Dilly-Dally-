@@ -80,6 +80,24 @@ public sealed class PlayerPortraitService : IPlayerPortraitService
         return true;
     }
 
+    public bool TryGetCached(int actorNumber, out Sprite sprite)
+    {
+        sprite = null;
+
+        if (!_actorCacheKeys.TryGetValue(actorNumber, out string cacheKey))
+        {
+            return false;
+        }
+
+        if (!_cachedSprites.TryGetValue(cacheKey, out Sprite cachedSprite) || cachedSprite == null)
+        {
+            return false;
+        }
+
+        sprite = cachedSprite;
+        return true;
+    }
+
     public void Invalidate(int actorNumber)
     {
         if (!_actorCacheKeys.TryGetValue(actorNumber, out string cacheKey))
