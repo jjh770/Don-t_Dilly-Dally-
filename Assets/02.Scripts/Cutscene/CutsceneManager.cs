@@ -275,22 +275,12 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
     {
         if (_director == null) return;
 
-        var tcs = new UniTaskCompletionSource();
-
-        void OnStopped(PlayableDirector director)
+        // Hold 모드에서는 stopped 이벤트가 발생하지 않으므로
+        // time이 duration에 도달할 때까지 폴링
+        var duration = _director.duration;
+        while (_director.state == PlayState.Playing && _director.time < duration)
         {
-            tcs.TrySetResult();
-        }
-
-        _director.stopped += OnStopped;
-
-        try
-        {
-            await tcs.Task.AttachExternalCancellation(ct);
-        }
-        finally
-        {
-            _director.stopped -= OnStopped;
+            await UniTask.Yield(ct);
         }
     }
 
