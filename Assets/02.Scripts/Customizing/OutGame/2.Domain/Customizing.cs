@@ -63,7 +63,7 @@ public class Customizing
         return _state.ToSaveData();
     }
 
-    // 장착 가능 여부 검사 (미리보기 착용 허용 - 잠금 체크는 Save 시점에 수행)
+    // 장착 가능 여부 검사
     public EEquipResult CanEquip(ICustomizingItemSpec item)
     {
         if (item == null) return EEquipResult.InvalidItem;
@@ -93,7 +93,7 @@ public class Customizing
         return EEquipResult.Equipped;
     }
 
-    // 재클릭 시 해제 (미리보기 착용 허용 - 잠금 체크는 Save 시점에 수행)
+    // 재클릭 시 해제
     public EEquipResult ToggleEquip(ICustomizingItemSpec item)
     {
         if (item == null) return EEquipResult.InvalidItem;
@@ -116,12 +116,6 @@ public class Customizing
 
         _state.Remove(category);
         return EEquipResult.Unequipped;
-    }
-
-    // 기본값으로 초기화
-    public void ResetToDefaults()
-    {
-        InitializeWithDefaults();
     }
 
     // 현재 장착된 아이템 조회

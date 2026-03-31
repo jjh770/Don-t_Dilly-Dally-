@@ -220,10 +220,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return _catalog?.GetItemById(itemId);
     }
 
-    public BaseEquipmentItemSO GetBaseEquipmentItem(BaseEquipmentType type)
-    {
-        return _baseEquipmentCatalog?.GetItem(type);
-    }
 
     public IEnumerable<(BaseEquipmentType type, BaseEquipmentItemSO item)> GetAllBaseEquipmentItems()
     {
@@ -250,25 +246,18 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     // ========== 해금 API ==========
 
-    /// <summary>
-    /// 아이템이 실제로 잠금 상태인지 확인
-    /// 기본 잠금 아이템이고 아직 해금되지 않았으면 true
-    /// </summary>
+    // 아이템이 잠금 상태인지 확인
     public bool IsItemLocked(string itemId)
     {
         var item = _catalog?.GetItemById(itemId);
         if (item == null) return true;
 
-        // 기본 잠금 아이템이 아니면 잠금 아님
         if (!item.IsLocked) return false;
 
-        // 기본 잠금 아이템이지만 해금되었으면 잠금 아님
         return !(_currentSaveData?.IsUnlocked(itemId) ?? false);
     }
 
-    /// <summary>
-    /// 아이템 해금 처리 (중복 요청 안전)
-    /// </summary>
+    // 아이템 해금 처리
     public void UnlockItem(string itemId)
     {
         if (string.IsNullOrEmpty(itemId))
@@ -303,9 +292,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         OnItemUnlocked?.Invoke(itemId);
     }
 
-    /// <summary>
-    /// 현재 장착 중인 아이템 중 잠금 상태인 것이 있는지 확인
-    /// </summary>
+    // 현재 장착 중인 아이템 중 잠금 상태인 것이 있는지 확인
     public bool HasLockedEquippedItems()
     {
         if (_domain?.State == null) return false;
@@ -317,11 +304,5 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         }
 
         return false;
-    }
-
-    private void OnDestroy()
-    {
-        if (Instance == this)
-            Instance = null;
     }
 }
