@@ -9,12 +9,11 @@ public class VoiceOverlayController : MonoBehaviour
 
     private PhotonVoiceManager _voiceManager;
     private PortraitManager _portraitManager;
-    private readonly int[] _slotActorNumbers = new int[4];
+    private readonly Player[] _overlayPlayers = new Player[4];
 
     private void Awake()
     {
-        _view = GetComponent<VoiceOverlayView>();
-        ResetSlotActors();
+        _view ??= GetComponent<VoiceOverlayView>();
     }
 
     private void OnEnable()
@@ -112,7 +111,6 @@ public class VoiceOverlayController : MonoBehaviour
         {
             _view.SetVisible(false);
             _view.HideAll();
-            ResetSlotActors();
             return;
         }
 
@@ -123,22 +121,19 @@ public class VoiceOverlayController : MonoBehaviour
         if (!shouldDisplay)
         {
             _view.HideAll();
-            ResetSlotActors();
             return;
         }
 
-        Player[] players = voiceManager.GetOverlayPlayers();
+        int playerCount = voiceManager.FillOverlayPlayers(_overlayPlayers);
         for (int i = 0; i < voiceManager.OverlaySlotCount; i++)
         {
-            if (i >= players.Length)
+            if (i >= playerCount)
             {
-                _slotActorNumbers[i] = -1;
                 _view.HideSlot(i);
                 continue;
             }
 
-            Player player = players[i];
-            _slotActorNumbers[i] = player.ActorNumber;
+            Player player = _overlayPlayers[i];
 
             Sprite iconSprite = voiceManager.SlotIconSprite;
             if (_portraitManager != null && _portraitManager.TryGetPortrait(player, out Sprite portraitSprite))
@@ -153,14 +148,6 @@ public class VoiceOverlayController : MonoBehaviour
                 PlayerProperty.GetVoiceSpeaking(player),
                 PlayerProperty.GetVoiceMuted(player),
                 iconSprite);
-        }
-    }
-
-    private void ResetSlotActors()
-    {
-        for (int i = 0; i < _slotActorNumbers.Length; i++)
-        {
-            _slotActorNumbers[i] = -1;
         }
     }
 }

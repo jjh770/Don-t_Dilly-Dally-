@@ -16,6 +16,8 @@ public class VoiceOverlayView : MonoBehaviour
     {
         _canvasGroup = GetComponent<CanvasGroup>();
         _slotParent ??= transform as RectTransform;
+        _canvasGroup.interactable = false;
+        _canvasGroup.blocksRaycasts = false;
     }
 
     public void Initialize(int slotCount, Sprite iconSprite)
@@ -35,8 +37,6 @@ public class VoiceOverlayView : MonoBehaviour
         _canvasGroup ??= GetComponent<CanvasGroup>();
 
         _canvasGroup.alpha = isVisible ? 1f : 0f;
-        _canvasGroup.interactable = false;
-        _canvasGroup.blocksRaycasts = false;
     }
 
     public void SetSlot(int index, string nickname, Color textColor, bool isSpeaking, bool isMuted, Sprite iconSprite)

@@ -3,7 +3,6 @@ using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
 using System;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,7 +10,8 @@ using UnityEngine.SceneManagement;
 public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 {
     private const int MaxOverlaySlots = 4;
-
+    private const string LOBBY_SCENE = "Lobby";
+    private const string GAME_SCENE = "GameScene";
     public static PhotonVoiceManager Instance { get; private set; }
 
     [Header("Voice Overlay Visuals")]
@@ -52,8 +52,6 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        CacheRecorder();
-        BindRoleManager();
         SyncLocalVoiceStates(forceUpdate: true);
         NotifyOverlayStateChanged();
     }
@@ -102,8 +100,6 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     public override void OnJoinedRoom()
     {
-        _lastLocalSpeakingState = false;
-        _lastLocalMutedState = false;
         ResetLocalSpeakingState();
         SyncLocalVoiceStates(forceUpdate: true);
         NotifyOverlayStateChanged();
@@ -149,27 +145,46 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         }
 
         string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName.IndexOf("Lobby", StringComparison.OrdinalIgnoreCase) < 0;
+        return sceneName.IndexOf(LOBBY_SCENE, StringComparison.OrdinalIgnoreCase) < 0;
     }
 
     public bool ShouldUseWhiteOverlayText()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        return sceneName.IndexOf("Game", StringComparison.OrdinalIgnoreCase) < 0;
+        return sceneName.IndexOf(GAME_SCENE, StringComparison.OrdinalIgnoreCase) < 0;
     }
 
-    public Player[] GetOverlayPlayers()
+    public int FillOverlayPlayers(Player[] buffer)
     {
-        if (!PhotonNetwork.InRoom)
+        if (buffer == null)
         {
-            return Array.Empty<Player>();
+            throw new ArgumentNullException(nameof(buffer));
         }
 
-        return PhotonNetwork.PlayerList
-            .OrderBy(player => player.IsMasterClient ? 0 : 1)
-            .ThenBy(player => player.ActorNumber)
-            .Take(MaxOverlaySlots)
-            .ToArray();
+        int maxCount = Math.Min(buffer.Length, MaxOverlaySlots);
+        if (!PhotonNetwork.InRoom || maxCount == 0)
+        {
+            return 0;
+        }
+
+        Room currentRoom = PhotonNetwork.CurrentRoom;
+        if (currentRoom == null)
+        {
+            return 0;
+        }
+
+        int count = 0;
+        foreach (Player player in currentRoom.Players.Values)
+        {
+            if (player == null)
+            {
+                continue;
+            }
+
+            InsertOverlayPlayer(buffer, ref count, maxCount, player);
+        }
+
+        return count;
     }
 
     public Color GetOverlayTextColor(Player player)
@@ -213,6 +228,45 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
         }
 
         return RoleProperties.GetPlayerRole(player);
+    }
+
+    private static void InsertOverlayPlayer(Player[] buffer, ref int count, int maxCount, Player candidate)
+    {
+        int insertIndex = 0;
+        while (insertIndex < count && CompareOverlayPlayers(buffer[insertIndex], candidate) <= 0)
+        {
+            insertIndex++;
+        }
+
+        if (insertIndex >= maxCount)
+        {
+            return;
+        }
+
+        if (count < maxCount)
+        {
+            count++;
+        }
+
+        for (int i = count - 1; i > insertIndex; i--)
+        {
+            buffer[i] = buffer[i - 1];
+        }
+
+        buffer[insertIndex] = candidate;
+    }
+
+    private static int CompareOverlayPlayers(Player left, Player right)
+    {
+        int leftPriority = left.IsMasterClient ? 0 : 1;
+        int rightPriority = right.IsMasterClient ? 0 : 1;
+        int priorityComparison = leftPriority.CompareTo(rightPriority);
+        if (priorityComparison != 0)
+        {
+            return priorityComparison;
+        }
+
+        return left.ActorNumber.CompareTo(right.ActorNumber);
     }
 
     private void CacheRecorder()

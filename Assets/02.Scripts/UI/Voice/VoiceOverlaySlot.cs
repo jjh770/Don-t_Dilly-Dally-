@@ -25,7 +25,7 @@ public class VoiceOverlaySlot : MonoBehaviour
         ResolveMuteImage();
         _iconBaseColor = _iconImage.color;
         ApplyIcon(iconSprite);
-        ApplySpeakingVisuals(false);
+        ApplySpeakingVisuals(false, _nicknameText.color);
         ApplyMuteVisuals(false);
         _isInitialized = true;
     }
@@ -51,11 +51,6 @@ public class VoiceOverlaySlot : MonoBehaviour
     {
         _iconImage.sprite = iconSprite;
         _iconImage.enabled = iconSprite != null;
-    }
-
-    private void ApplySpeakingVisuals(bool isSpeaking)
-    {
-        ApplySpeakingVisuals(isSpeaking, _nicknameText.color);
     }
 
     private void ApplySpeakingVisuals(bool isSpeaking, Color textColor)

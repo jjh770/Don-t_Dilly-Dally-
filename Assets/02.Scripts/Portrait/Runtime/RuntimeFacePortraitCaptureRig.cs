@@ -6,6 +6,9 @@ using UnityEngine;
 
 public class RuntimeFacePortraitCaptureRig : MonoBehaviour
 {
+    private static readonly CustomizingType[] CachedCustomizingTypes =
+        (CustomizingType[])Enum.GetValues(typeof(CustomizingType));
+
     private Camera _captureCamera;
     private RenderTexture _renderTexture;
     private GameObject _characterInstance;
@@ -38,7 +41,7 @@ public class RuntimeFacePortraitCaptureRig : MonoBehaviour
 
         ApplyBaseEquipment(customizingManager);
 
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        foreach (CustomizingType type in CachedCustomizingTypes)
         {
             cancellationToken.ThrowIfCancellationRequested();
 

@@ -1,17 +1,15 @@
-using Photon.Voice.PUN;
 using Photon.Voice.Unity;
 using UnityEngine;
 
 public class PlayerVoiceAbility : PlayerAbility
 {
-    private PhotonVoiceView _photonVoiceView;
     private Recorder _recorder;
 
     private void Start()
     {
-        if (_photonVoiceView == null)
+        if (_owner?.PhotonView == null || !_owner.PhotonView.IsMine)
         {
-            _photonVoiceView = GetComponent<PhotonVoiceView>();
+            return;
         }
 
         if (_recorder == null && PhotonVoiceManager.Instance != null)
