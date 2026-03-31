@@ -1,3 +1,4 @@
+using System;
 using Cysharp.Threading.Tasks;
 using Photon.Pun;
 using UnityEngine;
@@ -11,6 +12,10 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     private string _currentRoomCode;
 
+    public int Star => _roomWallet.TotalStars;
+    public RoomCurrency Coin => _roomWallet.Coin;
+
+    public event Action<int, int> OnRoomDataLoaded;
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
     {
         _roomDataRepository = roomDataRepository;
@@ -43,6 +48,17 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         _roomDataRepository.Save(_currentRoomCode, _roomWallet);
     }
 
+    public StageReward ApplyReward(string stageId, StageResult result)
+    {
+        StageStars previousStars = _roomWallet.GetStageStars(stageId);
+        StageReward reward = StageRewardCalculator.Calculate(result, previousStars);
+
+        _roomWallet = _roomWallet.ApplyReward(stageId, reward);
+
+        SaveData();
+        return reward;
+    }
+
     public async UniTask<bool> IsRoomDataExist(string roomCode)
     {
         if (_roomDataRepository == null) return false;
@@ -51,7 +67,12 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         return isExist;
     }
     
-    public override void OnCreatedRoom()
+    public override void OnJoinedRoom()
+    {
+        LoadRoomData();
+    }
+
+    public void LoadRoomData()
     {
         LoadRoomDataAsync().Forget();
     }
@@ -59,5 +80,6 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     private async UniTask LoadRoomDataAsync()
     {
         await LoadCurrentRoom(PhotonNetwork.CurrentRoom.Name);
+        OnRoomDataLoaded?.Invoke(Coin.Value, Star);
     }
 }

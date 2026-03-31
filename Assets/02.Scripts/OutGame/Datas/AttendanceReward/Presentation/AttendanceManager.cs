@@ -93,6 +93,11 @@ public class AttendanceManager : MonoBehaviour
         var reward = _domainService.CheckAndGetReward(record);
         Debug.Log($"{record.TotalDays}일차 출석 : {reward.ItemId} 수령");
 
+        if (!string.IsNullOrEmpty(reward.ItemId) && CustomizingManager.Instance != null)
+        {
+            CustomizingManager.Instance.UnlockItem(reward.ItemId);
+        }
+
         OnAttendanceChecked?.Invoke(record.TotalDays);
 
         await _attendanceRepo.SaveAsync(_playerId, record)

@@ -17,6 +17,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.InRoom) return;
 
         Init();
+        RoomDataManager.Instance.LoadRoomData();
     }
 
     public override void OnJoinedRoom()
@@ -32,7 +33,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _presenter.Initialize();
 
         _defaultView.Initialized(_presenter);
-        _popupView.Initialized(_presenter);
+        _popupView.SetPresenter(_presenter);
 
         _clickManager.Initialized(_presenter);
     }

@@ -1,26 +1,39 @@
 
+using System.Collections.Generic;
+using System.Linq;
 using Firebase.Firestore;
 
 [FirestoreData]
 public class RoomWalletDTO  
 {
     [FirestoreProperty]
-    public int Money { get; set; }
+    public int Coin { get; set; }
 
     [FirestoreProperty]
-    public int Star { get; set; }
+    public Dictionary<string, int> StageStars { get; set; } = new Dictionary<string, int>();
 
     // DTO → Domain
-    public RoomWallet ToDomain() => new RoomWallet(new[] {
-        new RoomCurrency(ERoomCurrencyType.Money, Money),
-        new RoomCurrency(ERoomCurrencyType.Star,  Star),
-    });
+    public RoomWallet ToDomain()
+    {
+        var stars = StageStars.ToDictionary(
+            kvp => kvp.Key,
+            kvp => new StageStars(kvp.Value)
+        );
+
+        return new RoomWallet(
+        new RoomCurrency(ERoomCurrencyType.Coin, Coin),
+        stars
+        );
+    }
 
     // Domain → DTO
     public static RoomWalletDTO FromDomain(RoomWallet wallet) => new RoomWalletDTO
     {
-        Money = wallet.Get(ERoomCurrencyType.Money).Value,
-        Star = wallet.Get(ERoomCurrencyType.Star).Value,
+        Coin = wallet.Coin.Value,
+        StageStars = wallet.StagesStars.ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.Best
+            )
     };
 
 }

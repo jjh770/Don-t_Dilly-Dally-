@@ -10,6 +10,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     [Header("참조")]
     [SerializeField] private CustomizingCatalogSO _catalog;
     [SerializeField] private BaseEquipmentCatalogSO _baseEquipmentCatalog;
+    [SerializeField] private AttendanceRewardSO _attendanceRewardTable;
 
     [Header("세팅")]
     [SerializeField] private string _userId = "local_user";
@@ -18,11 +19,13 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     private Customizing _domain;
     private ICustomizingRepository _repository;
     private CustomizingState _savedState;
+    private CustomizingSaveData _currentSaveData;
 
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
     public event Action OnSaved;
     public event Action OnLoaded;
+    public event Action<string> OnItemUnlocked;
 
     public bool IsInitialized => _domain != null;
 
@@ -83,16 +86,16 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
             return;
         }
 
-        var saveData = await _repository.Load();
+        _currentSaveData = await _repository.Load();
 
-        if (saveData != null && saveData.SelectedItems.Count > 0)
-            _domain.RestoreFromSaveData(saveData);
+        if (_currentSaveData != null && _currentSaveData.SelectedItems.Count > 0)
+            _domain.RestoreFromSaveData(_currentSaveData);
         else
             _domain.InitializeWithDefaults();
 
         _savedState.CopyFrom(_domain.State);
 
-        Debug.Log("[CustomizingManager] 로드 완료");
+        Debug.Log($"[CustomizingManager] 로드 완료. 해금된 아이템 수: {_currentSaveData?.UnlockedItems?.Count ?? 0}");
         OnLoaded?.Invoke();
     }
 
@@ -108,6 +111,17 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         var saveData = _domain.ToSaveData();
         saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
+
+        // 기존 해금 데이터 유지
+        if (_currentSaveData != null)
+        {
+            foreach (var itemId in _currentSaveData.UnlockedItems)
+            {
+                saveData.UnlockedItems.Add(itemId);
+            }
+        }
+
+        _currentSaveData = saveData;
         _repository.Save(saveData).Forget();
 
         Debug.Log("[CustomizingManager] 저장 완료");
@@ -196,10 +210,19 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public Dictionary<CustomizingType, string> GetEquippedItemIds()
     {
-        if (_domain?.State == null)
-            return new Dictionary<CustomizingType, string>();
+        var result = new Dictionary<CustomizingType, string>();
+        if (_domain == null) return result;
 
-        return new Dictionary<CustomizingType, string>(_domain.State.GetAll());
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        {
+            if (type == CustomizingType.None) continue;
+
+            var item = _domain.GetEquipped(type);
+            if (item != null)
+                result[type] = item.ItemId;
+        }
+
+        return result;
     }
 
     public CustomizingItemSO GetItemById(string itemId)
@@ -207,10 +230,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return _catalog?.GetItemById(itemId);
     }
 
-    public BaseEquipmentItemSO GetBaseEquipmentItem(BaseEquipmentType type)
-    {
-        return _baseEquipmentCatalog?.GetItem(type);
-    }
 
     public IEnumerable<(BaseEquipmentType type, BaseEquipmentItemSO item)> GetAllBaseEquipmentItems()
     {
@@ -230,9 +249,95 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return _catalog?.GetUnlockedItemsByType(type) ?? new List<CustomizingItemSO>();
     }
 
-    private void OnDestroy()
+    public List<CustomizingItemSO> GetAllItemsByType(CustomizingType type)
     {
-        if (Instance == this)
-            Instance = null;
+        return _catalog?.GetItemsByType(type) ?? new List<CustomizingItemSO>();
+    }
+
+    // ========== 해금 API ==========
+
+    // 아이템이 잠금 상태인지 확인
+    public bool IsItemLocked(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId)) return false;
+
+        // 출석 보상 테이블에 없으면 Lock 아님
+        if (!(_attendanceRewardTable?.IsRewardItem(itemId) ?? false))
+            return false;
+
+        // 출석 보상 아이템이지만 이미 해금되었으면 Lock 아님
+        return !(_currentSaveData?.IsUnlocked(itemId) ?? false);
+    }
+
+    // 아이템 해금 처리
+    public void UnlockItem(string itemId)
+    {
+        if (string.IsNullOrEmpty(itemId))
+        {
+            Debug.LogWarning("[CustomizingManager] 빈 ItemId로 해금 시도");
+            return;
+        }
+
+        if (_currentSaveData == null)
+        {
+            _currentSaveData = CustomizingSaveData.Default;
+        }
+
+        if (_currentSaveData.IsUnlocked(itemId))
+        {
+            Debug.Log($"[CustomizingManager] 이미 해금된 아이템: {itemId}");
+            return;
+        }
+
+        var item = _catalog?.GetItemById(itemId);
+        if (item == null)
+        {
+            Debug.LogWarning($"[CustomizingManager] 카탈로그에 없는 아이템: {itemId}");
+            return;
+        }
+
+        _currentSaveData.TryUnlock(itemId);
+        _currentSaveData.LastSavedAt = DateTime.UtcNow.ToString("o");
+        _repository.Save(_currentSaveData).Forget();
+
+        Debug.Log($"[CustomizingManager] 아이템 해금 완료: {itemId}");
+        OnItemUnlocked?.Invoke(itemId);
+    }
+
+    // 현재 장착 중인 아이템 중 잠금 상태인 것이 있는지 확인
+    public bool HasLockedEquippedItems()
+    {
+        if (_domain == null) return false;
+
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        {
+            if (type == CustomizingType.None) continue;
+
+            var item = _domain.GetEquipped(type);
+            if (item != null && IsItemLocked(item.ItemId))
+                return true;
+        }
+
+        return false;
+    }
+
+    public bool HasUnsavedChanges()
+    {
+        if (_domain == null || _savedState == null) return false;
+
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        {
+            if (type == CustomizingType.None) continue;
+
+            var currentItem = _domain.GetEquipped(type);
+            var savedItemId = _savedState.GetEquippedId(type);
+
+            string currentItemId = currentItem?.ItemId;
+
+            if (currentItemId != savedItemId)
+                return true;
+        }
+
+        return false;
     }
 }

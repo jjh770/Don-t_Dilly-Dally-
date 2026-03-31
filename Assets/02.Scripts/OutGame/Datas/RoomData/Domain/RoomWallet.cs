@@ -1,35 +1,58 @@
-
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
 public class RoomWallet
 {
-    private readonly Dictionary<ERoomCurrencyType, RoomCurrency> _currencies;
+    private readonly RoomCurrency _coin;
+    private readonly Dictionary<string, StageStars> _stagesStars;
 
-    private RoomWallet()
+    public RoomCurrency Coin => _coin;
+    public Dictionary<string, StageStars> StagesStars => _stagesStars;
+
+    public RoomWallet(RoomCurrency coin, Dictionary<string, StageStars> stageStars)
     {
-        _currencies = Enum.GetValues(typeof(ERoomCurrencyType))
-                          .Cast<ERoomCurrencyType>()
-                          .ToDictionary(
-                              type => type,
-                              type => RoomCurrency.Default(type)
-                          );
+        _coin = coin;
+        _stagesStars = stageStars;
     }
 
-    public RoomWallet(IEnumerable<RoomCurrency> currencies)
+    public static RoomWallet Default =>
+        new(RoomCurrency.Default(ERoomCurrencyType.Coin), new Dictionary<string, StageStars>());
+
+    // ── 별 조회 ────────────────────────────────────────────────────────────
+    public StageStars GetStageStars(string stageId) =>
+        _stagesStars.TryGetValue(stageId, out var s) ? s : StageStars.Default;
+
+    public int TotalStars => _stagesStars.Values.Sum(s => s.Best);
+
+    // ── 해금 여부 (키 존재 여부로 판단) ───────────────────────────────────
+    public bool IsStageUnlocked(string stageId) => _stagesStars.ContainsKey(stageId);
+
+    // ── 스테이지 해금 (딕셔너리에 추가) ───────────────────────────────────
+    public RoomWallet UnlockStage(string stageId)
     {
-        _currencies = currencies.ToDictionary(c => c.Type);
+        if (IsStageUnlocked(stageId)) return this;
+
+        var next = new Dictionary<string, StageStars>(_stagesStars);
+        next[stageId] = StageStars.Default;
+        return new(_coin, next);
     }
 
-    public static RoomWallet Default => new RoomWallet();
+    // ── 돈: 매 클리어 누적 ────────────────────────────────────────────────
+    public RoomWallet AddMoney(int amount) =>
+        new(_coin.Add(amount), _stagesStars);
 
-    public RoomCurrency Get(ERoomCurrencyType type) => _currencies[type];
-    public bool Has(ERoomCurrencyType type) => _currencies.ContainsKey(type);
-    public RoomWallet With(RoomCurrency updated)
+    // ── 별: 스테이지별 최고 기록만 유지 ───────────────────────────────────
+    public RoomWallet UpdateStars(string stageId, int newStars)
     {
-        var next = new Dictionary<ERoomCurrencyType, RoomCurrency>(_currencies);
-        next[updated.Type] = updated;
-        return new RoomWallet(next.Values); // 불변 갱신
+        StageStars updated = GetStageStars(stageId).KeepBest(newStars);
+        if (updated.Best == GetStageStars(stageId).Best) return this;
+
+        var next = new Dictionary<string, StageStars>(_stagesStars);
+        next[stageId] = updated;
+        return new(_coin, next);
     }
+
+    // ── 보상 한 번에 적용 ─────────────────────────────────────────────────
+    public RoomWallet ApplyReward(string stageId, StageReward reward) =>
+        AddMoney(reward.Money).UpdateStars(stageId, reward.Stars);
 }
