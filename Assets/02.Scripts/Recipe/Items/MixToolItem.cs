@@ -16,6 +16,7 @@ namespace DontDillyDally.Data
 
         public void Initialize(ToolType toolType)
         {
+            ResetReusableItemState();
             ResetSourceState();
             SetAsSupplyItem();
 

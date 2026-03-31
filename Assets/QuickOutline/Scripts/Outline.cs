@@ -9,6 +9,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using DontDillyDally.Data;
 using UnityEngine;
 
 [DisallowMultipleComponent]
@@ -77,13 +78,13 @@ public class Outline : MonoBehaviour {
   private Renderer[] renderers;
   private Material outlineMaskMaterial;
   private Material outlineFillMaterial;
+  private ItemObject itemObject;
 
   private bool needsUpdate;
 
   void Awake() {
-
-    // Cache renderers
-    renderers = GetComponentsInChildren<Renderer>();
+    itemObject = GetComponent<ItemObject>();
+    CacheRenderers();
 
     // Instantiate outline materials
     outlineMaskMaterial = Instantiate(Resources.Load<Material>(@"Materials/OutlineMask"));
@@ -100,16 +101,9 @@ public class Outline : MonoBehaviour {
   }
 
   void OnEnable() {
-    foreach (var renderer in renderers) {
-
-      // Append outline shaders
-      var materials = renderer.sharedMaterials.ToList();
-
-      materials.Add(outlineMaskMaterial);
-      materials.Add(outlineFillMaterial);
-
-      renderer.materials = materials.ToArray();
-    }
+    SubscribeToModelRefresh();
+    CacheRenderers();
+    ApplyOutlineMaterials();
   }
 
   void OnValidate() {
@@ -138,23 +132,26 @@ public class Outline : MonoBehaviour {
   }
 
   void OnDisable() {
-    foreach (var renderer in renderers) {
-
-      // Remove outline shaders
-      var materials = renderer.sharedMaterials.ToList();
-
-      materials.Remove(outlineMaskMaterial);
-      materials.Remove(outlineFillMaterial);
-
-      renderer.materials = materials.ToArray();
-    }
+    UnsubscribeFromModelRefresh();
+    RemoveOutlineMaterials();
   }
 
   void OnDestroy() {
+    UnsubscribeFromModelRefresh();
 
     // Destroy material instances
     Destroy(outlineMaskMaterial);
     Destroy(outlineFillMaterial);
+  }
+
+  void HandleModelRefreshed() {
+    CacheRenderers();
+    LoadSmoothNormals();
+
+    if (enabled) {
+      ApplyOutlineMaterials();
+      needsUpdate = true;
+    }
   }
 
   void Bake() {
@@ -304,6 +301,73 @@ public class Outline : MonoBehaviour {
         outlineFillMaterial.SetFloat("_ZTest", (float)UnityEngine.Rendering.CompareFunction.Greater);
         outlineFillMaterial.SetFloat("_OutlineWidth", 0f);
         break;
+    }
+  }
+
+  void CacheRenderers() {
+    renderers = GetComponentsInChildren<Renderer>(true);
+  }
+
+  void ApplyOutlineMaterials() {
+    if (renderers == null) {
+      return;
+    }
+
+    foreach (var renderer in renderers) {
+      if (renderer == null) {
+        continue;
+      }
+
+      var materials = renderer.sharedMaterials.ToList();
+
+      if (!materials.Contains(outlineMaskMaterial)) {
+        materials.Add(outlineMaskMaterial);
+      }
+
+      if (!materials.Contains(outlineFillMaterial)) {
+        materials.Add(outlineFillMaterial);
+      }
+
+      renderer.materials = materials.ToArray();
+    }
+  }
+
+  void RemoveOutlineMaterials() {
+    if (renderers == null) {
+      return;
+    }
+
+    foreach (var renderer in renderers) {
+      if (renderer == null) {
+        continue;
+      }
+
+      var materials = renderer.sharedMaterials.ToList();
+      bool removed = materials.Remove(outlineMaskMaterial);
+      removed = materials.Remove(outlineFillMaterial) || removed;
+
+      if (removed) {
+        renderer.materials = materials.ToArray();
+      }
+    }
+  }
+
+  void SubscribeToModelRefresh() {
+    if (itemObject == null) {
+      itemObject = GetComponent<ItemObject>();
+    }
+
+    if (itemObject == null) {
+      return;
+    }
+
+    itemObject.ModelRefreshed -= HandleModelRefreshed;
+    itemObject.ModelRefreshed += HandleModelRefreshed;
+  }
+
+  void UnsubscribeFromModelRefresh() {
+    if (itemObject != null) {
+      itemObject.ModelRefreshed -= HandleModelRefreshed;
     }
   }
 }

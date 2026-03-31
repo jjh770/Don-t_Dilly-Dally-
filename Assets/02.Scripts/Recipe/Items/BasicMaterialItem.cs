@@ -21,6 +21,7 @@ namespace DontDillyDally.Data
 
         public void Initialize(CraftedMaterialType materialType)
         {
+            ResetReusableItemState();
             ResetSourceState();
             SetAsSupplyItem();
 
