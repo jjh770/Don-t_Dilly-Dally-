@@ -12,6 +12,7 @@ public class UI_Commentary : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float _fadeInDuration = 0.3f;
     [SerializeField] private float _fadeOutDuration = 0.5f;
+    [SerializeField] private float _typingSpeed = 0.05f;
 
     [Header("Animation")]
     [SerializeField] private CanvasGroup _canvasGroup;
@@ -89,7 +90,7 @@ public class UI_Commentary : MonoBehaviour
 
     private IEnumerator DisplayNarrationCoroutine(string text)
     {
-        _narrationText.text = text;
+        _narrationText.text = "";
         _narrationPanel.SetActive(true);
 
         // 페이드 인
@@ -104,6 +105,13 @@ public class UI_Commentary : MonoBehaviour
                 yield return null;
             }
             _canvasGroup.alpha = 1f;
+        }
+
+        // 타자 효과
+        for (int i = 0; i < text.Length; i++)
+        {
+            _narrationText.text = text.Substring(0, i + 1);
+            yield return new WaitForSeconds(_typingSpeed);
         }
 
         _displayCoroutine = null;
