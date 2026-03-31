@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -83,37 +82,8 @@ public class UI_NumberCounterTween : MonoBehaviour
     {
         if (_label == null) return;
 
-        string formatted = _decimalPlaces > 0
-            ? value.ToString($"F{_decimalPlaces}")
-            : Mathf.RoundToInt(value).ToString();
-
-        if (_useComma)
-            formatted = AddComma(formatted);
-
-        _label.text = $"{_prefix}{formatted}{_suffix}";
-    }
-
-    private string AddComma(string numberStr)
-    {
-        // 소수점 처리
-        int dotIndex = numberStr.IndexOf('.');
-        string intPart = dotIndex >= 0 ? numberStr[..dotIndex] : numberStr;
-        string decPart = dotIndex >= 0 ? numberStr[dotIndex..] : "";
-
-        bool isNegative = intPart.StartsWith('-');
-        if (isNegative) intPart = intPart[1..];
-
-        char[] chars = intPart.ToCharArray();
-        List<char> result = new();
-        for (int i = 0; i < chars.Length; i++)
-        {
-            if (i > 0 && (chars.Length - i) % 3 == 0)
-                result.Add(',');
-            result.Add(chars[i]);
-        }
-
-        string formatted = new string(result.ToArray()) + decPart;
-        return isNegative ? "-" + formatted : formatted;
+        string format = _useComma ? "N" : "F";
+        _label.text = $"{_prefix}{value.ToString($"{format}{_decimalPlaces}")}{_suffix}";
     }
 
     private void KillTween()
