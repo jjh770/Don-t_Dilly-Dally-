@@ -22,16 +22,16 @@ public class AttendancePresenter
 
         _attendancePopup = attendancePopup;
 
-        _attendanceManager.OnAttendanceRecordLoaded += OnDataLoaded;
-        _attendanceManager.OnAttendanceChecked += OnAttendanceChecked;
-        AttendanceManager.OnAttendanceManagerReady += OnAttendanceManagerReady;
- 
+        _attendanceManager.OnAttendanceRecordLoaded += HandleDataLoaded;
+        _attendanceManager.OnAttendanceChecked += HandleAttendanceChecked;
+        AttendanceManager.OnAttendanceManagerReady += HandleAttendanceManagerReady;
+        PlayerDataManager.Instance.OnNicknameChanged += SetName;
+
+
         if (_attendanceManager.IsReady)
         {
-            OnAttendanceManagerReady();
+            HandleAttendanceManagerReady();
         }
-
-        SetName(PlayerDataManager.Instance.PlayerID);
     }
 
     public void OnPopupShow()
@@ -45,15 +45,16 @@ public class AttendancePresenter
         ResetCTS();
     }
 
-    private void OnAttendanceManagerReady()
+    private void HandleAttendanceManagerReady()
     {
         _cts = new CancellationTokenSource();
+        SetName(PlayerDataManager.Instance.PlayerNickname);
 
         _attendanceManager.LoadAttendance(_cts.Token);
         _rewardRepository = _attendanceManager.RewardRepo;
     }
 
-    private void OnDataLoaded(AttendanceRecord record)
+    private void HandleDataLoaded(AttendanceRecord record)
     {
         ResetCTS();
 
@@ -75,7 +76,7 @@ public class AttendancePresenter
         }
     }
 
-    private void OnAttendanceChecked(int totalDays)
+    private void HandleAttendanceChecked(int totalDays)
     {
         _view.SetComplete(totalDays);
     }
@@ -100,9 +101,10 @@ public class AttendancePresenter
 
     public void Dispose()
     {
-        _attendanceManager.OnAttendanceRecordLoaded -= OnDataLoaded;
-        _attendanceManager.OnAttendanceChecked -= OnAttendanceChecked;
-        AttendanceManager.OnAttendanceManagerReady -= OnAttendanceManagerReady;
+        _attendanceManager.OnAttendanceRecordLoaded -= HandleDataLoaded;
+        _attendanceManager.OnAttendanceChecked -= HandleAttendanceChecked;
+        AttendanceManager.OnAttendanceManagerReady -= HandleAttendanceManagerReady;
+        PlayerDataManager.Instance.OnNicknameChanged -= SetName;
         ResetCTS();
     }
 }

@@ -14,10 +14,10 @@ public class PlayerInformation
     private int _maxHospitals;
     public string Nickname => _nickname;
 
-    private PlayerInformation()
+    public PlayerInformation(string nickName = "Player")
     {
         _hospitals = new List<MyHospital>();
-        _nickname = "Player";
+        _nickname = nickName;
         _maxHospitals = DefaultMaxHospitalCount;
     }
 
