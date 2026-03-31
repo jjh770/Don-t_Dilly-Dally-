@@ -31,7 +31,6 @@ public class CustomizingItemSOEditor : Editor
         // Settings
         EditorGUILayout.LabelField("Settings", EditorStyles.boldLabel);
         EditorGUILayout.PropertyField(serializedObject.FindProperty("_isDefault"));
-        EditorGUILayout.PropertyField(serializedObject.FindProperty("_isLocked"));
         EditorGUILayout.PropertyField(serializedObject.FindProperty("_sortOrder"));
 
         serializedObject.ApplyModifiedProperties();

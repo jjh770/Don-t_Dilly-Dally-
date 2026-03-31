@@ -11,6 +11,8 @@ public class WaitingRoomView : MonoBehaviour
     [SerializeField] private Button _exitButton;
     [SerializeField] private Button _roomCodeCopyButton;
 
+    [SerializeField] private UI_NumberCounterTween _roomCoinText;
+    [SerializeField] private UI_NumberCounterTween _roomStarsText;
     [SerializeField] private TextMeshProUGUI _roomCodeText;
     [SerializeField] private TextMeshProUGUI _readyButtonText;
     [SerializeField] private UI_Message _errorMessage;
@@ -75,6 +77,12 @@ public class WaitingRoomView : MonoBehaviour
     {
         _roomCodeText.text = roomCode;
     }
+    public void SetRoomCurrency(int coin, int star)
+    {
+        _roomCoinText.SetValueImmediate(coin);
+        _roomStarsText.SetValueImmediate(star);
+    }
+
 
     public void ShowMessage(string message)
     {

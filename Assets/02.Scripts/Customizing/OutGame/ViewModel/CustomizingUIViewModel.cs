@@ -16,8 +16,7 @@ public class CustomizingUIViewModel
     public CustomizingType CurrentCategory => _currentCategory;
     public IReadOnlyList<CustomizingItemViewData> VisibleItems => _visibleItems;
     public string SelectedItemName => GetSelectedItemName();
-    public bool HasUnsavedChanges => CheckUnsavedChanges();
-    public bool IsInitialized => _manager != null && _manager.IsInitialized;
+    public bool CanSave => _manager.HasUnsavedChanges() && _manager.HasLockedEquippedItems() == false;
 
     public CustomizingUIViewModel(ICustomizingManager manager)
     {
@@ -35,6 +34,7 @@ public class CustomizingUIViewModel
         _manager.OnLoaded += HandleLoaded;
         _manager.OnItemChanged += HandleItemChanged;
         _manager.OnSaved += HandleSaved;
+        _manager.OnItemUnlocked += HandleItemUnlocked;
     }
 
     private void UnsubscribeFromManager()
@@ -42,6 +42,7 @@ public class CustomizingUIViewModel
         _manager.OnLoaded -= HandleLoaded;
         _manager.OnItemChanged -= HandleItemChanged;
         _manager.OnSaved -= HandleSaved;
+        _manager.OnItemUnlocked -= HandleItemUnlocked;
     }
 
     public void SelectCategory(CustomizingType type)
@@ -74,6 +75,18 @@ public class CustomizingUIViewModel
     public void Save()
     {
         _manager.Save();
+    }
+
+    // 저장 시도. 잠금 아이템이 장착되어 있으면 false 반환
+    public bool TrySave()
+    {
+        if (_manager.HasLockedEquippedItems())
+        {
+            return false;
+        }
+
+        _manager.Save();
+        return true;
     }
 
     public void Cancel()
@@ -122,16 +135,25 @@ public class CustomizingUIViewModel
         OnStateChanged?.Invoke();
     }
 
+    private void HandleItemUnlocked(string itemId)
+    {
+        RefreshVisibleItems();
+        OnStateChanged?.Invoke();
+    }
+
     private void RefreshVisibleItems()
     {
         _visibleItems.Clear();
 
-        var items = _manager.GetUnlockedItemsByType(_currentCategory);
+        // 모든 아이템 표시 (잠금 아이템 포함)
+        var items = _manager.GetAllItemsByType(_currentCategory);
         var equippedItem = _manager.GetEquipped(_currentCategory);
 
         foreach (var item in items)
         {
             bool isEquipped = equippedItem != null && equippedItem.ItemId == item.ItemId;
+            // 실제 잠금 상태 = 기본 잠금 && 미해금
+            bool isLocked = _manager.IsItemLocked(item.ItemId);
 
             var viewData = new CustomizingItemViewData(
                 itemId: item.ItemId,
@@ -139,7 +161,7 @@ public class CustomizingUIViewModel
                 icon: item.PreviewIcon,
                 isSelected: isEquipped,
                 isEquipped: isEquipped,
-                isLocked: item.IsLocked,
+                isLocked: isLocked,
                 canUnequip: true
             );
 
@@ -166,10 +188,5 @@ public class CustomizingUIViewModel
 
         var item = _manager.GetItemById(_selectedItemId);
         return item?.DisplayName ?? "";
-    }
-
-    private bool CheckUnsavedChanges()
-    {
-        return false;
     }
 }

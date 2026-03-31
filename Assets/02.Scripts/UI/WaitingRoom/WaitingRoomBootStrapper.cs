@@ -17,6 +17,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         if (!PhotonNetwork.InRoom) return;
 
         Init();
+        RoomDataManager.Instance.LoadRoomData();
     }
 
     public override void OnJoinedRoom()
