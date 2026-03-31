@@ -1,7 +1,7 @@
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -16,26 +16,23 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     private Dictionary<ESceneType, SceneDataSO> _sceneDataMap = new Dictionary<ESceneType, SceneDataSO>();
 
     #region Events
-    public event Action<string> OnSceneLoadStart;
-    public event Action<string> OnSceneLoadComplete;
+    public event Action<ESceneType> OnSceneLoadStart;
+    public event Action<ESceneType> OnSceneLoadComplete;
     #endregion
 
     private bool _isLoading = false;
     private float _loadingProgress = 0f;
     private SceneDataSO _nextSceneData;
+    private ESceneType _currentSceneType;
 
 
     public bool IsLoading => _isLoading;
     public float LoadingProgress => _loadingProgress;
     public SceneDataSO NextSceneData => _nextSceneData;
-
-    protected override void Awake()
-    {
-        base.Awake();
-    }
+    public ESceneType CurrentSceneType => _currentSceneType;
     private void Start()
     {
-        foreach(SceneDataSO data in sceneDataSOs)
+        foreach (SceneDataSO data in sceneDataSOs)
         {
             ESceneType type = data.SceneType;
             if (_sceneDataMap.ContainsKey(type))
@@ -45,6 +42,8 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             }
             _sceneDataMap[type] = data;
         }
+
+        UpdateCurrentSceneType(SceneManager.GetActiveScene().name);
     }
 
 
@@ -77,11 +76,10 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         _loadingProgress = 0f;
 
-        float startTime = Time.time;
         string sceneName = _nextSceneData.SceneName;
         ESceneLoadMode loadMode = _nextSceneData.SceneLoadMode;
 
-        OnSceneLoadStart?.Invoke(sceneName);
+        OnSceneLoadStart?.Invoke(_nextSceneData.SceneType);
 
         if (loadMode == ESceneLoadMode.Local)
         {
@@ -90,7 +88,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             if (asyncLoad == null)
             {
                 FailSceneLoad(($"[SceneLoadManager] Failed to load scene: {sceneName}"));
-        
+
                 yield break;
             }
 
@@ -118,7 +116,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             }
 
             _loadingProgress = 1f;
-            
+
         }
         FinishSceneLoad(true);
     }
@@ -127,7 +125,8 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         if (success && _nextSceneData != null)
         {
-            OnSceneLoadComplete?.Invoke(_nextSceneData.SceneName);
+            _currentSceneType = _nextSceneData.SceneType;
+            OnSceneLoadComplete?.Invoke(_nextSceneData.SceneType);
             Debug.Log($"[SceneLoadManager] SceneLoad Success");
         }
 
@@ -140,6 +139,18 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         Debug.LogError(message);
         FinishSceneLoad(false);
+    }
+
+    private void UpdateCurrentSceneType(string sceneName)
+    {
+        foreach (SceneDataSO data in _sceneDataMap.Values)
+        {
+            if (data != null && data.SceneName == sceneName)
+            {
+                _currentSceneType = data.SceneType;
+                return;
+            }
+        }
     }
     #endregion
 }

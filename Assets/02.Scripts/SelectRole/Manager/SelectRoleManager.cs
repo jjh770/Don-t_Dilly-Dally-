@@ -22,6 +22,23 @@ public class SelectRoleManager : MonoBehaviourPunCallbacks
 
     public RoleVisualProfileSO VisualProfile => _visualProfile;
 
+    public bool TryGetAssignedRole(Player player, out RoleType role)
+    {
+        role = RoleType.None;
+
+        if (player == null)
+        {
+            return false;
+        }
+
+        return _playerRoles.TryGetValue(player.ActorNumber, out role);
+    }
+
+    public RoleType GetAssignedRole(Player player)
+    {
+        return TryGetAssignedRole(player, out RoleType role) ? role : RoleType.None;
+    }
+
     private void Awake()
     {
         if (Instance == null)

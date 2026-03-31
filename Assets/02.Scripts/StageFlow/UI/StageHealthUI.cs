@@ -179,7 +179,7 @@ public class StageHealthUI : MonoBehaviour
 
         if (_healthText != null)
         {
-            _healthText.text = "체력";
+            _healthText.text = "환자 체력";
         }
     }
 
