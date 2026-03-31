@@ -33,6 +33,9 @@ namespace DontDillyDally.StageFlow
         public event Action<EGameOverReason> OnGameOverReceived;
         public event Action<SubmittedTray, int, int> OnTraySubmittedReceived; // tray, trayViewId, submitterActorNumber
 
+        // ── 리워드 이벤트 ─────────────────────────────────────────────
+        public event Action<StageReward, StageResult> OnStageRewardGrantedReceived;
+
         // ── 미니게임 이벤트 ─────────────────────────────────────────
         public event Action<MiniGameType> OnMiniGameRequested;
         public event Action<bool> OnMiniGameResultReceived;
@@ -166,6 +169,17 @@ namespace DontDillyDally.StageFlow
             photonView.RPC(nameof(RPC_MiniGameResult), RpcTarget.MasterClient, success);
         }
 
+        // ── 보상 ────────────────────────────────────────────────────
+        public void BroadcastStageReward(StageReward reward, StageResult result)
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC(nameof(RPC_StageRewardGranted), RpcTarget.All,
+                    reward.Stars, reward.Money, reward.IsNewBest,
+                    result.SavedCount, result.PatientCount, (int)result.Difficulty);
+            }
+        }
+
         // ================================================================
         //  RPC 수신 (클라이언트 측)
         // ================================================================
@@ -294,6 +308,18 @@ namespace DontDillyDally.StageFlow
         {
             Debug.Log($"[StageFlow] [RPC] 미니게임 결과 수신: {(success ? "성공" : "실패")}");
             OnMiniGameResultReceived?.Invoke(success);
+        }
+
+        // ── 보상 ────────────────────────────────────────────────────
+
+        [PunRPC]
+        private void RPC_StageRewardGranted(
+            int stars, int money, bool isNewBest,
+            int savedCount, int patientCount, int difficulty)
+        {
+            var reward = new StageReward (stars, money, isNewBest );
+            var result = new StageResult(savedCount, patientCount, difficulty);
+            OnStageRewardGrantedReceived?.Invoke(reward, result);
         }
 
         // ================================================================

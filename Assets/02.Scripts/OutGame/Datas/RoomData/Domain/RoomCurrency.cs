@@ -19,6 +19,8 @@ public readonly struct RoomCurrency
 
     public RoomCurrency Add(int value) => new RoomCurrency(Type, Value + value);
 
+    public RoomCurrency Set(int value) => new RoomCurrency(Type, value);
+
     public RoomCurrency Minus(int value) => new RoomCurrency(Type, Value - value);
 
 }
