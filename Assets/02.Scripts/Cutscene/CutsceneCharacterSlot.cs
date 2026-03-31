@@ -29,6 +29,8 @@ public class CutsceneCharacterSlot : MonoBehaviour
     private void OnValidate()
     {
         if (Application.isPlaying) return;
+        // 중복 등록 방지: 기존 등록을 제거한 뒤 다시 추가
+        UnityEditor.EditorApplication.delayCall -= RefreshPreview;
         UnityEditor.EditorApplication.delayCall += RefreshPreview;
     }
 

@@ -13,6 +13,8 @@ public class EmergencyFlicker : MonoBehaviour
 
     private void Update()
     {
+        if (_emergencyLights == null || _emergencyLights.Length == 0) return;
+
         _timer += Time.deltaTime;
         if (_timer < _flickerInterval) return;
 
@@ -24,6 +26,7 @@ public class EmergencyFlicker : MonoBehaviour
         // 배열 전체를 한번에 순회.
         for (int i = 0; i < _emergencyLights.Length; i++)
         {
+            if (_emergencyLights[i] == null) continue;
             _emergencyLights[i].intensity = intensity;
         }
     }
