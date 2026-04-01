@@ -36,6 +36,8 @@ namespace DontDillyDally.StageFlow
         // ── 이벤트 (StageFlowManager가 구독) ────────────────────────
         public event Action<EGameOverReason> OnGameOverReceived;
         public event Action<SubmittedTray, int, int> OnTraySubmittedReceived; // tray, trayViewId, submitterActorNumber
+        public event Action<EmergencyEventKind, EmergencyTriggerSource, CraftedMaterialType, DiagnosisScanType> OnEmergencyStartedReceived;
+        public event Action OnEmergencyEndedReceived;
 
         // ── 리워드 이벤트 ─────────────────────────────────────────────
         public event Action<StageReward, StageResult> OnStageRewardGrantedReceived;
@@ -154,11 +156,29 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        public void BroadcastEmergency()
+        public void BroadcastEmergency(
+            EmergencyEventKind kind,
+            EmergencyTriggerSource triggerSource,
+            CraftedMaterialType trayTarget,
+            DiagnosisScanType diagnosisTarget)
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                photonView.RPC(nameof(RPC_TriggerEmergency), RpcTarget.Others);
+                photonView.RPC(
+                    nameof(RPC_TriggerEmergency),
+                    RpcTarget.Others,
+                    (int)kind,
+                    (int)triggerSource,
+                    (int)trayTarget,
+                    (int)diagnosisTarget);
+            }
+        }
+
+        public void BroadcastEmergencyEnd()
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC(nameof(RPC_EndEmergency), RpcTarget.Others);
             }
         }
 
@@ -304,10 +324,26 @@ namespace DontDillyDally.StageFlow
         }
 
         [PunRPC]
-        private void RPC_TriggerEmergency()
+        private void RPC_TriggerEmergencyLegacy()
         {
             // 코멘터리는 마스터에서만 발행 (HandleEmergencyEvent에서 OnPatientCritical 호출)
             // 여기서는 클라이언트 측 게임플레이 로직만 처리
+        }
+
+        [PunRPC]
+        private void RPC_TriggerEmergency(int kind, int triggerSource, int trayTarget, int diagnosisTarget)
+        {
+            OnEmergencyStartedReceived?.Invoke(
+                (EmergencyEventKind)kind,
+                (EmergencyTriggerSource)triggerSource,
+                (CraftedMaterialType)trayTarget,
+                (DiagnosisScanType)diagnosisTarget);
+        }
+
+        [PunRPC]
+        private void RPC_EndEmergency()
+        {
+            OnEmergencyEndedReceived?.Invoke();
         }
 
         [PunRPC]

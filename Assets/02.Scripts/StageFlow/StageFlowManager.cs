@@ -59,7 +59,20 @@ namespace DontDillyDally.StageFlow
         public EStageRole LocalRole => GetLocalRole();
         public bool IsLocalSurgeon => LocalRole == EStageRole.Surgeon;
         public bool IsLocalAssistant => LocalRole == EStageRole.Assistant;
-        public bool CanLocalInteractWithPatient => CanSubmitRecipeTray && IsLocalSurgeon;
+        public bool IsEmergencyActive => _emergencyController != null && _emergencyController.IsActive;
+        public EmergencyEventKind CurrentEmergencyKind => _emergencyController?.CurrentKind ?? EmergencyEventKind.None;
+        public float EmergencyRemainingTime => _emergencyController?.RemainingTime ?? 0f;
+        public CraftedMaterialType CurrentEmergencyTrayTarget => _emergencyController?.CurrentTrayTarget ?? CraftedMaterialType.None;
+        public DiagnosisScanType CurrentEmergencyDiagnosisTarget => _emergencyController?.CurrentDiagnosisTarget ?? DiagnosisScanType.None;
+        public bool CanLocalInteractWithPatient =>
+            CanSubmitRecipeTray &&
+            IsLocalSurgeon &&
+            (_emergencyController == null || _emergencyController.CanSubmitTrayToPatient());
+
+        public bool ShouldShowEmergencyUi =>
+            IsLocalSurgeon &&
+            IsEmergencyActive &&
+            (_rpc == null || _rpc.CurrentPhase.Value == EStagePhase.Playing);
 
         // ================================================================
         //  공개 조회 API
@@ -137,11 +150,48 @@ namespace DontDillyDally.StageFlow
             return Mathf.Max(0f, duration - (float)elapsed);
         }
 
+        public string GetEmergencyObjectiveText()
+        {
+            if (!IsEmergencyActive)
+            {
+                return string.Empty;
+            }
+
+            return CurrentEmergencyKind switch
+            {
+                EmergencyEventKind.Tray => $"멸균 트레이에 {GetMaterialDisplayName(CurrentEmergencyTrayTarget)} 제출",
+                EmergencyEventKind.Diagnosis => $"{GetDiagnosisDisplayName(CurrentEmergencyDiagnosisTarget)} 기계를 환자에게 작동",
+                _ => "긴급 처치 진행"
+            };
+        }
+
+        private static string GetMaterialDisplayName(CraftedMaterialType materialType)
+        {
+            return materialType switch
+            {
+                CraftedMaterialType.SedativeSyringe => "Sedative Syringe",
+                CraftedMaterialType.Defibrillator => "Defibrillator",
+                CraftedMaterialType.BloodPack => "Blood Pack",
+                _ => materialType.ToString()
+            };
+        }
+
+        private static string GetDiagnosisDisplayName(DiagnosisScanType diagnosisType)
+        {
+            return diagnosisType switch
+            {
+                DiagnosisScanType.XRay => "X-Ray",
+                _ => diagnosisType.ToString()
+            };
+        }
+
         // ── 내부 상태 ────────────────────────────────────────────────
         private StageRuntimeData _stageData;
         private SurgeryRecipeJudge _recipeJudge;
         private PatientHealthController _patientHealthController;
         private CancellationTokenSource _flowCts;
+        private EmergencyEventController _emergencyController;
+        private bool _isWaitingForRecipeSubmission;
         private bool _isGameOver;
 
         // ── 트레이 제출 핸들러 ──────────────────────────────────────
@@ -150,6 +200,9 @@ namespace DontDillyDally.StageFlow
         // ── 미니게임 결과 대기 ──────────────────────────────────────
         private UniTaskCompletionSource<bool> _miniGameResultTcs;
         private UniTaskCompletionSource<bool> _forcePatientSuccessTcs;
+
+        // ── 긴급 이벤트 결과 대기 ──────────────────────────────────────
+        private UniTaskCompletionSource<EmergencyResumeResult> _emergencyResultTcs;
 
         // ── 캐시된 델리게이트 (구독 해제용) ─────────────────────────
         private Action _onTimerExpired;
@@ -202,6 +255,9 @@ namespace DontDillyDally.StageFlow
             // 미니게임 RPC 수신
             _rpc.OnMiniGameRequested += HandleMiniGameRequested;
             _rpc.OnMiniGameResultReceived += HandleMiniGameResultReceived;
+            _rpc.OnTraySubmittedReceived += HandleEmergencyTraySubmitted;
+            _rpc.OnEmergencyStartedReceived += HandleEmergencyStartedReceived;
+            _rpc.OnEmergencyEndedReceived += HandleEmergencyEndedReceived;
 
             // 페이즈에 따른 플레이어 움직임 제어
             _rpc.CurrentPhase.Subscribe(OnPhaseChangedForMovement).AddTo(this);
@@ -209,6 +265,10 @@ namespace DontDillyDally.StageFlow
 
             // 보상 RPC 수신
             _rpc.OnStageRewardGrantedReceived += OnRewardGrantedReceived;
+
+            // 긴급 이벤트 컨트롤러 초기화
+            _emergencyController = new EmergencyEventController();
+            _isWaitingForRecipeSubmission = false;
 
             _flowCts?.Cancel();
             _flowCts?.Dispose();
@@ -281,16 +341,6 @@ namespace DontDillyDally.StageFlow
             {
                 Debug.Log("[StageFlow] 플로우 취소됨 (게임 오버)");
             }
-        }
-
-        private static int FindSurgeonActorNumber()
-        {
-            foreach (var player in PhotonNetwork.PlayerList)
-            {
-                if (RoleProperties.GetPlayerRole(player) == RoleType.Surgeon)
-                    return player.ActorNumber;
-            }
-            return -1;
         }
 
         /// <summary>
@@ -447,12 +497,14 @@ namespace DontDillyDally.StageFlow
                 _rpc.SetRecipeIndex(recipeIndex);
                 Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 대기 중... (트레이 제출 대기)");
 
+                _isWaitingForRecipeSubmission = true;
                 UniTask<SubmittedTray> waitForTrayTask = _trayHandler.WaitForSubmission(ct);
                 UniTask<bool> forceSuccessTask = _forcePatientSuccessTcs != null
                     ? _forcePatientSuccessTcs.Task
                     : UniTask.Never<bool>(ct);
 
                 var (completedTaskIndex, tray, _) = await UniTask.WhenAny(waitForTrayTask, forceSuccessTask);
+                _isWaitingForRecipeSubmission = false;
                 if (completedTaskIndex == 1)
                 {
                     Debug.Log("[StageFlow]     디버그 요청으로 현재 환자를 성공 처리합니다.");
@@ -468,7 +520,7 @@ namespace DontDillyDally.StageFlow
 
                     // 집도의에게만 레시피 성공 후 수술 미니게임 권한을 부여합니다.
                     // OnSurgerySuccess/OnSurgeryFail은 RunRecipeMiniGame 내부에서 미니게임 결과에 따라 호출됩니다.
-                    await RunRecipeMiniGame(ct);
+                    bool shouldAdvanceRecipe = await RunRecipeMiniGame(ct);
 
                     if (result.DiseaseCured)
                     {
@@ -476,7 +528,10 @@ namespace DontDillyDally.StageFlow
                         return;
                     }
 
-                    recipeIndex++;
+                    if (shouldAdvanceRecipe)
+                    {
+                        recipeIndex++;
+                    }
                 }
                 else if (result.SurgeryFailure == SurgeryFailureReason.RecipeMismatch)
                 {
@@ -493,7 +548,17 @@ namespace DontDillyDally.StageFlow
                     if (_emergencyPolicy.ShouldTriggerOnRecipeFail())
                     {
                         Debug.Log("[StageFlow]     ⚡ 긴급 이벤트 발동!");
-                        await HandleEmergencyEvent(ct);
+
+                        if (TryStartEmergencyEvent(EmergencyTriggerSource.RecipeFail))
+                        {
+                            EmergencyResumeResult emergencyResult = await WaitForEmergencyResult(ct);
+                            if (emergencyResult == EmergencyResumeResult.AdvanceToNextRecipe)
+                            {
+                                recipeIndex++;
+                            }
+
+                            continue;
+                        }
                     }
                 }
             }
@@ -514,6 +579,25 @@ namespace DontDillyDally.StageFlow
         // 환자 상호작용으로 만들어진 제출 요청을 검증 루프로 전달합니다.
         public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
         {
+            if (_emergencyController != null && _emergencyController.IsActive)
+            {
+                if (_emergencyController.CurrentKind != EmergencyEventKind.Tray)
+                {
+                    return false;
+                }
+
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    HandleEmergencyTraySubmitted(tray, trayViewId, PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
+                }
+                else
+                {
+                    _rpc.SubmitTray(tray, trayViewId);
+                }
+
+                return true;
+            }
+
             return _trayHandler.RequestSubmission(tray, trayViewId);
         }
 
@@ -617,7 +701,7 @@ namespace DontDillyDally.StageFlow
         // ── 레시피 성공 미니게임 ──────────────────────────────────────
 
         // 정답 레시피 이후 집도의 대상 미니게임을 실행하고 결과를 반영합니다.
-        private async UniTask RunRecipeMiniGame(CancellationToken ct)
+        private async UniTask<bool> RunRecipeMiniGame(CancellationToken ct)
         {
             MiniGameType type = MiniGameTypeExtensions.GetRandom();
             int surgeonActorNumber = GetMiniGameTargetActorNumber();
@@ -629,27 +713,35 @@ namespace DontDillyDally.StageFlow
             if (success)
             {
                 float recoveredHealth = RecoverPatientHealth(_miniGameSuccessHeal);
-                Debug.Log($"[StageFlow]     미니게임 성공! 체력 +{_miniGameSuccessHeal} → 현재 체력: {recoveredHealth}");
+                Debug.Log($"[StageFlow]     미니게임 성공! 체력 +{_miniGameSuccessHeal} | 현재 체력: {recoveredHealth}");
                 EventManager.Instance?.OnSurgerySuccess();
-                return;
+                return true;
             }
 
             float newHealth = ApplyPatientDamage(_miniGameFailPenalty);
-            Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} → 현재 체력: {newHealth}");
+            Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} | 현재 체력: {newHealth}");
             EventManager.Instance?.OnSurgeryFail(SurgeryFailureReason.MiniGameFailure);
 
             if (_isGameOver)
             {
-                Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");
-                return;
+                Debug.Log("[StageFlow]     !! 환자 사망 -> 게임 오버");
+                return false;
             }
 
             if (_emergencyPolicy.ShouldTriggerOnRecipeFail())
             {
-                Debug.Log("[StageFlow]     ⚡ 미니게임 실패 → 긴급 이벤트 발동!");
-                await HandleEmergencyEvent(ct);
+                Debug.Log("[StageFlow]     ⚡ 미니게임 실패 -> 긴급 이벤트 발동!");
+
+                if (TryStartEmergencyEvent(EmergencyTriggerSource.MiniGameFail))
+                {
+                    EmergencyResumeResult emergencyResult = await WaitForEmergencyResult(ct);
+                    return emergencyResult == EmergencyResumeResult.AdvanceToNextRecipe;
+                }
             }
+
+            return false;
         }
+
 
         // 현재 클라이언트에서 직접 미니게임을 실행하고 성공 여부를 반환합니다.
         private async UniTask<bool> LaunchLocalMiniGame(MiniGameType type, CancellationToken ct)
@@ -765,28 +857,139 @@ namespace DontDillyDally.StageFlow
 
         // ── 긴급 이벤트 ─────────────────────────────────────────────
 
-        // 응급 이벤트를 발생시키고 전용 미니게임 결과를 반영합니다.
-        private async UniTask HandleEmergencyEvent(CancellationToken ct)
+        // 
+        private EmergencyEventKind SelectEmergencyKind()
         {
-            EventManager.Instance?.OnPatientCritical("긴급 처치가 필요합니다!");
-            _rpc.BroadcastEmergency();
+            return UnityEngine.Random.value < 0.5f
+                ? EmergencyEventKind.Tray
+                : EmergencyEventKind.Diagnosis;
+        }
 
-            float healthPenalty;
+        private bool TryStartEmergencyEvent(EmergencyTriggerSource triggerSource)
+        {
+            if (_emergencyController == null || _rpc == null)
+                return false;
 
-            MiniGameType type = _emergencyPolicy.GetRandomMiniGameType();
-            int surgeonActorNumber = GetMiniGameTargetActorNumber();
-            bool success = await LaunchRoleMiniGame(surgeonActorNumber, type, ct);
-            healthPenalty = _emergencyPolicy.GetPenaltyByMiniGameResult(success);
-
-            if (healthPenalty > 0f)
+            if (!_emergencyController.CanBegin(
+                    _rpc.CurrentPhase.Value,
+                    _isGameOver,
+                    _isWaitingForRecipeSubmission,
+                    triggerSource))
             {
-                float newHealth = ApplyPatientDamage(healthPenalty);
-
-                if (_isGameOver)
-                {
-                    Debug.Log($"[StageFlow]     긴급 처치 실패! 현재 체력: {newHealth}");
-                }
+                return false;
             }
+
+            EmergencyEventKind kind = SelectEmergencyKind();
+            if (!_emergencyController.TryBegin(kind, triggerSource))
+                return false;
+
+            EventManager.Instance?.OnPatientCritical("긴급 처치가 필요합니다.");
+            _rpc.BroadcastEmergency(
+                kind,
+                triggerSource,
+                _emergencyController.CurrentTrayTarget,
+                _emergencyController.CurrentDiagnosisTarget);
+
+            Debug.Log($"[StageFlow] 긴급 이벤트 시작: {kind} | 원인: {triggerSource}");
+            return true;
+        }
+
+        private async UniTask<EmergencyResumeResult> WaitForEmergencyResult(CancellationToken ct)
+        {
+            _emergencyResultTcs?.TrySetCanceled();
+            _emergencyResultTcs = new UniTaskCompletionSource<EmergencyResumeResult>();
+
+            using (ct.Register(() => _emergencyResultTcs.TrySetCanceled()))
+            {
+                return await _emergencyResultTcs.Task;
+            }
+        }
+
+        private void CompleteEmergencySuccess()
+        {
+            if (_emergencyController == null || !_emergencyController.IsActive)
+                return;
+
+            EmergencyResumeResult result = _emergencyController.ResolveSuccess();
+            _rpc?.BroadcastEmergencyEnd();
+            _emergencyResultTcs?.TrySetResult(result);
+            _emergencyResultTcs = null;
+        }
+
+        private void CompleteEmergencyFailure()
+        {
+            if (_emergencyController == null || !_emergencyController.IsActive)
+                return;
+
+            EmergencyResumeResult result = _emergencyController.ResolveFailure();
+            _rpc?.BroadcastEmergencyEnd();
+            _emergencyResultTcs?.TrySetResult(result);
+            _emergencyResultTcs = null;
+        }
+
+        private void HandleEmergencyStartedReceived(
+            EmergencyEventKind kind,
+            EmergencyTriggerSource triggerSource,
+            CraftedMaterialType trayTarget,
+            DiagnosisScanType diagnosisTarget)
+        {
+            if (PhotonNetwork.IsMasterClient || _emergencyController == null)
+            {
+                return;
+            }
+
+            _emergencyController.SyncBegin(kind, triggerSource, trayTarget, diagnosisTarget);
+        }
+
+        private void HandleEmergencyEndedReceived()
+        {
+            if (PhotonNetwork.IsMasterClient || _emergencyController == null)
+            {
+                return;
+            }
+
+            _emergencyController.End();
+        }
+
+        private void HandleEmergencyTraySubmitted(SubmittedTray tray, int trayViewId, int submitterActorNumber)
+        {
+            if (!PhotonNetwork.IsMasterClient || _emergencyController == null || !_emergencyController.IsActive)
+            {
+                return;
+            }
+
+            if (_emergencyController.CurrentKind != EmergencyEventKind.Tray)
+            {
+                return;
+            }
+
+            SyncSubmittedTrayReset(trayViewId);
+
+            if (_emergencyController.EvaluateTraySubmission(tray))
+            {
+                Debug.Log($"[StageFlow] 긴급 트레이 제출 성공: Actor {submitterActorNumber}");
+                CompleteEmergencySuccess();
+                return;
+            }
+
+            Debug.Log($"[StageFlow] 긴급 트레이 제출 실패: Actor {submitterActorNumber}");
+            CompleteEmergencyFailure();
+        }
+
+        private void SyncSubmittedTrayReset(int trayViewId)
+        {
+            if (trayViewId < 0)
+            {
+                return;
+            }
+
+            PhotonView trayView = PhotonView.Find(trayViewId);
+            if (trayView == null || !trayView.TryGetComponent(out TrayItem trayItem))
+            {
+                return;
+            }
+
+            trayItem.ClearContentsAndSync();
         }
 
         // ── 게임 오버 ───────────────────────────────────────────────
@@ -929,9 +1132,16 @@ namespace DontDillyDally.StageFlow
             if (_isGameOver)
                 return;
 
+            if (_emergencyController != null && _emergencyController.HasTimedOut())
+            {
+                Debug.Log("[StageFlow] 긴급 이벤트 시간 초과");
+                CompleteEmergencyFailure();
+                return;
+            }
+
             if (_emergencyPolicy.ShouldTriggerRandom(Time.deltaTime))
             {
-                HandleEmergencyEvent(_flowCts.Token).Forget();
+                TryStartEmergencyEvent(EmergencyTriggerSource.Random);
             }
         }
 
@@ -952,6 +1162,9 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
                 _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
+                _rpc.OnTraySubmittedReceived -= HandleEmergencyTraySubmitted;
+                _rpc.OnEmergencyStartedReceived -= HandleEmergencyStartedReceived;
+                _rpc.OnEmergencyEndedReceived -= HandleEmergencyEndedReceived;
                 _rpc.OnStageRewardGrantedReceived -= OnRewardGrantedReceived;
             }
 
