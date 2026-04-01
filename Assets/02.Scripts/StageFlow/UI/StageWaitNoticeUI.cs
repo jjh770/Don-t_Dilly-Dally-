@@ -7,6 +7,7 @@ public class StageWaitNoticeUI : MonoBehaviour
 {
     [SerializeField] private GameObject _panelRoot;
     [SerializeField] private TextMeshProUGUI _countdownText;
+    [SerializeField] private string _loadingMessage = "데이터 준비 중입니다...";
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
@@ -88,8 +89,11 @@ public class StageWaitNoticeUI : MonoBehaviour
             return;
         }
 
-        bool shouldShow = _stageFlowManager != null &&
-                          _stageFlowManager.CurrentPhase.Value == EStagePhase.Countdown;
+        bool isLoading = _stageFlowManager == null ||
+                         _stageFlowManager.CurrentPhase.Value == EStagePhase.Loading;
+        bool isCountdown = _stageFlowManager != null &&
+                           _stageFlowManager.CurrentPhase.Value == EStagePhase.Countdown;
+        bool shouldShow = isLoading || isCountdown;
 
         _panelRoot.SetActive(shouldShow);
         if (!shouldShow)
@@ -102,6 +106,12 @@ public class StageWaitNoticeUI : MonoBehaviour
             return;
         }
 
+        if (isLoading)
+        {
+            _countdownText.text = _loadingMessage;
+            return;
+        }
+
         float remainingTime = _stageFlowManager.GetRemainingCountdownTime();
         int displayCount = Mathf.CeilToInt(remainingTime);
 
@@ -110,5 +120,7 @@ public class StageWaitNoticeUI : MonoBehaviour
             _countdownText.text = displayCount.ToString();
             return;
         }
+
+        _countdownText.text = string.Empty;
     }
 }
