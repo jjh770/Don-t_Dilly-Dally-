@@ -36,13 +36,23 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
     {
         if (!_isPlaying || _isSkipped) return;
         if (!PhotonNetwork.IsMasterClient) return;
+
+        RefreshSkipNoticeState();
         if (!Input.GetKeyDown(KeyCode.Escape)) return;
 
         if (_skipUI == null) return;
 
         if (!_skipUI.IsVisible)
         {
-            _skipUI.Show();
+            ShowSkipNotice();
+        }
+        else if (!CanSkipCutscene())
+        {
+            _skipUI.ShowLoading();
+        }
+        else if (!_skipUI.IsShowingSkipConfirm)
+        {
+            _skipUI.ShowSkipConfirm();
         }
         else
         {
@@ -278,6 +288,50 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
         {
             Debug.LogError("[CutsceneManager] SceneLoadManager가 없음 - GameScene 전환 실패");
         }
+    }
+
+    private void RefreshSkipNoticeState()
+    {
+        if (_skipUI == null || !_skipUI.IsVisible)
+        {
+            return;
+        }
+
+        if (CanSkipCutscene())
+        {
+            if (!_skipUI.IsShowingSkipConfirm)
+            {
+                _skipUI.ShowSkipConfirm();
+            }
+
+            return;
+        }
+
+        if (!_skipUI.IsShowingLoading)
+        {
+            _skipUI.ShowLoading();
+        }
+    }
+
+    private void ShowSkipNotice()
+    {
+        if (_skipUI == null)
+        {
+            return;
+        }
+
+        if (CanSkipCutscene())
+        {
+            _skipUI.ShowSkipConfirm();
+            return;
+        }
+
+        _skipUI.ShowLoading();
+    }
+
+    private bool CanSkipCutscene()
+    {
+        return StagePreloader.Instance == null || StagePreloader.Instance.IsDataPrepComplete;
     }
 
     private async UniTask WaitForDirectorFinish(CancellationToken ct)
