@@ -2,7 +2,6 @@ using DG.Tweening;
 using DontDillyDally.Data;
 using DontDillyDally.StageFlow;
 using System.Collections.Generic;
-using TMPro;
 using UniRx;
 using UnityEngine;
 
@@ -10,7 +9,6 @@ public class StageCurrentRecipeUI : MonoBehaviour
 {
     [Header("UI 참조")]
     [SerializeField] private RectTransform _panelRoot;
-    [SerializeField] private TextMeshProUGUI _recipeInfoText;
     [SerializeField] private RectTransform _recipeListRoot;
 
     [Header("레시피 항목 프리팹")]
@@ -43,6 +41,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
     private StageFlowManager _stageFlowManager;
     private int _lastRecipeIndex = -1;
     private bool _isAnimating;
+    private bool _isStageDataBound;
 
     private void Start()
     {
@@ -61,6 +60,11 @@ public class StageCurrentRecipeUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_stageFlowManager != null && _isStageDataBound)
+        {
+            _stageFlowManager.OnStageDataChanged -= HandleStageDataChanged;
+        }
+
         _disposables.Dispose();
         DOTween.Kill(this);
     }
@@ -73,6 +77,8 @@ public class StageCurrentRecipeUI : MonoBehaviour
         }
 
         _stageFlowManager = StageFlowManager.Instance;
+        _stageFlowManager.OnStageDataChanged += HandleStageDataChanged;
+        _isStageDataBound = true;
 
         _stageFlowManager.CurrentPhase
             .Subscribe(_ => RefreshUi(false))
@@ -86,6 +92,13 @@ public class StageCurrentRecipeUI : MonoBehaviour
             .Subscribe(newIndex => OnRecipeIndexChanged(newIndex))
             .AddTo(_disposables);
 
+        RefreshUi(false);
+    }
+
+    private void HandleStageDataChanged(StageRuntimeData _)
+    {
+        _lastRecipeIndex = -1;
+        ClearAllItems();
         RefreshUi(false);
     }
 
@@ -155,30 +168,9 @@ public class StageCurrentRecipeUI : MonoBehaviour
             return;
         }
 
-        RefreshHeader(disease);
-
         if (!keepExisting)
         {
             RebuildRecipeList(disease);
-        }
-    }
-
-    private void RefreshHeader(DiseaseData disease)
-    {
-        int displayPatientIndex = _stageFlowManager.CurrentPatientIndex.Value + 1;
-        int totalPatientCount = _stageFlowManager.CurrentStageData != null
-            ? _stageFlowManager.CurrentStageData.PatientCount
-            : 0;
-
-        if (_recipeInfoText != null)
-        {
-            string patientName = string.IsNullOrWhiteSpace(disease.PatientName)
-                ? $"환자 {displayPatientIndex}"
-                : disease.PatientName;
-            string diseaseName = string.IsNullOrWhiteSpace(disease.DiseaseName)
-                ? "원인 불명"
-                : disease.DiseaseName;
-            _recipeInfoText.text = $"환자 {displayPatientIndex}/{Mathf.Max(totalPatientCount, displayPatientIndex)}, {patientName}, {diseaseName}";
         }
     }
 
@@ -210,11 +202,10 @@ public class StageCurrentRecipeUI : MonoBehaviour
                 ? recipe.RecipeId
                 : recipe.DisplayName;
 
-            string prefix = isCurrent ? "▶ " : "   ";
             int displayOrder = i - currentRecipeIndex + 1;
 
             item.SetData(
-                $"{prefix}{displayOrder}. {recipeName}",
+                $"{displayOrder}. {recipeName}",
                 recipe.RequiredMaterials,
                 _iconTable,
                 isCurrent ? _currentTextColor : _pendingTextColor,
@@ -338,10 +329,9 @@ public class StageCurrentRecipeUI : MonoBehaviour
                 ? recipe.RecipeId
                 : recipe.DisplayName;
 
-            string prefix = isCurrent ? "▶ " : "   ";
 
             _visibleItems[i].SetData(
-                $"{prefix}{i + 1}. {recipeName}",
+                $"{i + 1}. {recipeName}",
                 recipe.RequiredMaterials,
                 _iconTable,
                 isCurrent ? _currentTextColor : _pendingTextColor,

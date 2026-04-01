@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(CanvasGroup))]
 public class VoiceOverlayView : MonoBehaviour
@@ -47,6 +48,7 @@ public class VoiceOverlayView : MonoBehaviour
         }
 
         _slots[index].SetIdentityContent(nickname, iconSprite);
+        RebuildLayout();
     }
 
     public void SetSlotTextColor(int index, Color textColor)
@@ -77,6 +79,7 @@ public class VoiceOverlayView : MonoBehaviour
         }
 
         _slots[index].SetVisible(false);
+        RebuildLayout();
     }
 
     public void HideAll()
@@ -88,6 +91,8 @@ public class VoiceOverlayView : MonoBehaviour
                 _slots[i].SetVisible(false);
             }
         }
+
+        RebuildLayout();
     }
 
     private void EnsureSlots(int slotCount)
@@ -157,6 +162,14 @@ public class VoiceOverlayView : MonoBehaviour
         _hasLoggedMissingSlotPrefab = false;
 
         return slotView;
+    }
+
+    private void RebuildLayout()
+    {
+        if (_slotParent != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_slotParent);
+        }
     }
 
     private bool IsValidIndex(int index)

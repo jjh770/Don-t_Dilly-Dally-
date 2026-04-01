@@ -84,6 +84,17 @@ public class StageTimerUI : MonoBehaviour
             return;
         }
 
+        bool shouldShow = _stageFlowManager != null &&
+                          (_currentPhase == EStagePhase.Playing ||
+                           _currentPhase == EStagePhase.PatientTransition ||
+                           _currentPhase == EStagePhase.StageClear);
+
+        _timerText.gameObject.SetActive(shouldShow);
+        if (!shouldShow)
+        {
+            return;
+        }
+
         float displayTime = GetDisplayTime();
         int totalSeconds = Mathf.CeilToInt(displayTime);
         int minutes = totalSeconds / 60;
