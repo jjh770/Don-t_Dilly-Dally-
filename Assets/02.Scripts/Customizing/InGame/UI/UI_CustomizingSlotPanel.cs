@@ -8,8 +8,6 @@ public class UI_CustomizingSlotPanel : MonoBehaviour
     private CustomizingUIViewModel _viewModel;
     private int _selectedIndex = 0;
 
-    public int SelectedIndex => _selectedIndex;
-
     public void Initialize(CustomizingUIViewModel viewModel)
     {
         _viewModel = viewModel;
@@ -38,6 +36,13 @@ public class UI_CustomizingSlotPanel : MonoBehaviour
             _viewModel.OnSlotStateChanged -= RefreshSlots;
             _viewModel.OnSlotSelected -= HandleSlotSelected;
         }
+
+        foreach (var slot in _slots)
+        {
+            if (slot == null) continue;
+            slot.OnClicked -= OnSlotClicked;
+            slot.OnNameChanged -= OnSlotNameChanged;
+        }
     }
 
     private void SetupSlots()
@@ -47,7 +52,6 @@ public class UI_CustomizingSlotPanel : MonoBehaviour
             var slot = _slots[i];
             if (slot == null) continue;
 
-            slot.SetIndex(i);
             slot.OnClicked += OnSlotClicked;
             slot.OnNameChanged += OnSlotNameChanged;
         }
@@ -87,15 +91,5 @@ public class UI_CustomizingSlotPanel : MonoBehaviour
         {
             _slots[i]?.SetSelected(i == index);
         }
-    }
-
-    public void SelectSlot(int index)
-    {
-        _viewModel?.SelectSlot(index);
-    }
-
-    public void AutoSelectMatchingSlot()
-    {
-        _viewModel?.AutoSelectSlot();
     }
 }

@@ -21,11 +21,6 @@ public class UI_CustomizingSlot : MonoBehaviour
 
     public int SlotIndex => _slotIndex;
 
-    public void SetIndex(int index)
-    {
-        _slotIndex = index;
-    }
-
     private void Awake()
     {
         if (_button != null)
