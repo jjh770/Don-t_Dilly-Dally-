@@ -236,7 +236,7 @@ namespace DontDillyDally.StageFlow
                 _rpc.SetPhase(EStagePhase.Loading);
 
                 // 1. 집도의 동기화 (이미 컷씬에서 선정 완료 — RPC 전파만)
-                int surgeonActor = FindSurgeonActorNumber();
+                int surgeonActor = StagePreloader.Instance.SurgeonActorNumber;
                 Debug.Log($"[StageFlow] 집도의 동기화: Actor {surgeonActor}");
                 await BroadcastAndWaitAck(
                     () => _rpc.SetSurgeon(surgeonActor),

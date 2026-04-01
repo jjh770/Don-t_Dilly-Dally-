@@ -101,10 +101,7 @@ namespace DontDillyDally.StageFlow
 
         private void OnDestroy()
         {
-            if (SceneLoadManager.Instance != null)
-            {
-                SceneLoadManager.Instance.OnSceneLoadComplete -= HandleSceneLoadComplete;
-            }
+            Cleanup();
         }
     }
 }
