@@ -1,4 +1,5 @@
 using DG.Tweening;
+using DontDillyDally.Data;
 using DontDillyDally.StageFlow;
 using TMPro;
 using UniRx;
@@ -10,7 +11,8 @@ public class StageHealthUI : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject _panelRoot;
     [SerializeField] private Slider _healthGauge;
-    [SerializeField] private TextMeshProUGUI _healthText;
+    [SerializeField] private TextMeshProUGUI _patientCountText;
+    [SerializeField] private TextMeshProUGUI _patientInfoText;
 
     [Header("Health Tween")]
     [SerializeField] private float _healthTweenDuration = 0.25f;
@@ -26,7 +28,6 @@ public class StageHealthUI : MonoBehaviour
 
     private void Start()
     {
-        EnsureUiReferences();
         TryBind();
         RefreshUi(snapGaugeValue: true);
     }
@@ -123,28 +124,8 @@ public class StageHealthUI : MonoBehaviour
         SetGaugeValueImmediate(_cachedHealth);
     }
 
-    private void EnsureUiReferences()
-    {
-        if (_panelRoot == null)
-        {
-            _panelRoot = gameObject;
-        }
-
-        if (_healthGauge == null)
-        {
-            _healthGauge = GetComponentInChildren<Slider>(true);
-        }
-
-        if (_healthText == null)
-        {
-            _healthText = GetComponentInChildren<TextMeshProUGUI>(true);
-        }
-    }
-
     private void RefreshUi(bool snapGaugeValue)
     {
-        EnsureUiReferences();
-
         if (_panelRoot == null)
         {
             return;
@@ -177,10 +158,30 @@ public class StageHealthUI : MonoBehaviour
             }
         }
 
-        if (_healthText != null)
+        if (_patientInfoText != null)
         {
-            _healthText.text = "환자 체력";
+            _patientInfoText.text = GetPatientInfoText();
         }
+
+        if (_patientCountText != null)
+        {
+            _patientCountText.text = GetPatientCountText();
+        }
+    }
+
+    private string GetPatientCountText()
+    {
+        int displayPatientIndex = _stageFlowManager.CurrentPatientIndex.Value + 1;
+        int totalPatientCount = _stageFlowManager.CurrentStageData.PatientCount;
+        return $"남은 환자 수 {displayPatientIndex} / {totalPatientCount}";
+    }
+
+    private string GetPatientInfoText()
+    {
+        _stageFlowManager.TryGetCurrentDisease(out DiseaseData disease);
+        string patientName = disease.PatientName;
+        string diseaseName = disease.DiseaseName;
+        return $"{patientName} 환자 / 병명 : {diseaseName}";
     }
 
     private void AnimateGaugeTo(float targetValue)
