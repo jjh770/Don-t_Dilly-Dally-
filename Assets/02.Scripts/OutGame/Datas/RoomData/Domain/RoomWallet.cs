@@ -41,6 +41,11 @@ public class RoomWallet
     public RoomWallet AddMoney(int amount) =>
         new(_coin.Add(amount), _stagesStars);
 
+
+    // ── 돈: 소비 ────────────────────────────────────────────────
+    public RoomWallet SpendCoin(int amount) =>
+    new(_coin.Minus(amount), _stagesStars);
+
     // ── 별: 스테이지별 최고 기록만 유지 ───────────────────────────────────
     public RoomWallet UpdateStars(string stageId, int newStars)
     {

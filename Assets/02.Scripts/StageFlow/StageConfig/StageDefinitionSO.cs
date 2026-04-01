@@ -13,12 +13,20 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private float _patientHealthDrainPerSecond = 0.25f;
         [SerializeField] private int _difficulty = 1;
 
+        [Header("해금 조건")]
+        [SerializeField] private int _requiredStars = 0;
+        [SerializeField] private int _unlockPrice = 0;
+
         public string StageId => _stageId;
         public int PatientCount => _patientCount;
         public float TotalTimeLimitSec => _totalTimeLimitSec;
         public float InitialPatientHealth => _initialPatientHealth;
         public float PatientHealthDrainPerSecond => _patientHealthDrainPerSecond;
         public int Difficulty => _difficulty;
+
+        public int RequiredStars => _requiredStars;
+        public int UnlockPrice => _unlockPrice;
+        public bool IsDefaultUnlocked => _requiredStars == 0 && _unlockPrice == 0;
 
         // SO는 원본 설정만 들고 있고, 실제 플레이에는 별도의 런타임 데이터를 생성해서 넘깁니다.
         public StageRuntimeData CreateRuntimeData()

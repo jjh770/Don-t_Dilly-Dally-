@@ -21,10 +21,10 @@ public class WaitingRoomPresenter
 
         PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
         PhotonServerManager.Instance.OnReadyStateChanged += HandleReadyStateChanged;
-        RoomDataManager.Instance.OnRoomDataLoaded += HandleRoomDataLoaded;
+        RoomDataManager.Instance.OnRoomDataChanged += HandleRoomDataChanged;
     }
 
-    private void HandleRoomDataLoaded(int coin, int star)
+    private void HandleRoomDataChanged(int coin, int star)
     {
         _waitingRoomView.SetRoomCurrency(coin, star);
     }
@@ -143,7 +143,7 @@ public class WaitingRoomPresenter
 
         if (RoomDataManager.Instance != null)
         {
-            RoomDataManager.Instance.OnRoomDataLoaded -= HandleRoomDataLoaded;
+            RoomDataManager.Instance.OnRoomDataChanged -= HandleRoomDataChanged;
         }
     }
 }
