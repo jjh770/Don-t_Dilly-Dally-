@@ -1,4 +1,5 @@
 using System;
+using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
@@ -7,15 +8,19 @@ public class WaitingRoomPresenter
     private readonly WaitingRoomView _waitingRoomView;
     private readonly ContextMenuView _contextMenuView;
     private readonly WaitingRoomModel _model;
+    private bool _wasMaster;
 
-    public bool IsMaster => _model != null? _model.IsMaster : false;
+    public bool IsMaster => PhotonServerManager.Instance != null && PhotonServerManager.Instance.IsMasterClient;
+
     public WaitingRoomPresenter(WaitingRoomView waitingRoomView, ContextMenuView contextMenuView, WaitingRoomModel model)
     {
         _waitingRoomView = waitingRoomView;
         _contextMenuView = contextMenuView;
         _model = model;
+        _wasMaster = PhotonServerManager.Instance != null && PhotonServerManager.Instance.IsMasterClient;
 
         PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
+        PhotonServerManager.Instance.OnReadyStateChanged += HandleReadyStateChanged;
         RoomDataManager.Instance.OnRoomDataLoaded += HandleRoomDataLoaded;
     }
 
@@ -31,8 +36,8 @@ public class WaitingRoomPresenter
 
     public void ToggleReadyState()
     {
-        _model.ToggleReady();
-        PlayerProperty.SetReadyState(_model.IsReady);
+        bool nextReadyState = !PhotonServerManager.Instance.GetLocalPlayerReadyState();
+        PlayerProperty.SetReadyState(nextReadyState);
         RefreshWaitingRoomUI();
     }
 
@@ -95,12 +100,22 @@ public class WaitingRoomPresenter
 
     private void HandleMasterClientChanged()
     {
-        UpdateMasterState(PhotonServerManager.Instance.IsMasterClient);
+        bool isMaster = PhotonServerManager.Instance.IsMasterClient;
+
+        if (_wasMaster && !isMaster)
+        {
+            PlayerProperty.SetReadyState(false);
+        }
+
+        _wasMaster = isMaster;
+        RefreshWaitingRoomUI();
     }
 
-    private void UpdateMasterState(bool isMaster)
+    private void HandleReadyStateChanged(Player targetPlayer, bool isReady)
     {
-        _model.SetIsMaster(isMaster);
+        if (PhotonNetwork.LocalPlayer == null || targetPlayer == null) return;
+        if (targetPlayer.ActorNumber != PhotonNetwork.LocalPlayer.ActorNumber) return;
+
         RefreshWaitingRoomUI();
     }
 
@@ -108,13 +123,27 @@ public class WaitingRoomPresenter
     {
         _waitingRoomView.SetRoomCode(PhotonServerManager.Instance.RoomCode);
 
-        if (_model.IsMaster)
+        if (PhotonServerManager.Instance.IsMasterClient)
         {
             _waitingRoomView.ShowMasterUI();
             return;
         }
 
         _waitingRoomView.ShowGuestUI();
-        _waitingRoomView.ButtonSet(_model.IsReady);
+        _waitingRoomView.ButtonSet(PhotonServerManager.Instance.GetLocalPlayerReadyState());
+    }
+
+    public void Dispose()
+    {
+        if (PhotonServerManager.Instance != null)
+        {
+            PhotonServerManager.Instance.OnMasterClientChanged -= HandleMasterClientChanged;
+            PhotonServerManager.Instance.OnReadyStateChanged -= HandleReadyStateChanged;
+        }
+
+        if (RoomDataManager.Instance != null)
+        {
+            RoomDataManager.Instance.OnRoomDataLoaded -= HandleRoomDataLoaded;
+        }
     }
 }

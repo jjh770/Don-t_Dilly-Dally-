@@ -27,7 +27,8 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 
     private void Init()
     {
-        _model = new WaitingRoomModel(PhotonServerManager.Instance.IsMasterClient, PhotonServerManager.Instance.GetLocalPlayerReadyState());
+        _presenter?.Dispose();
+        _model = new WaitingRoomModel();
 
         _presenter = new WaitingRoomPresenter(_defaultView, _popupView, _model);
         _presenter.Initialize();
@@ -36,5 +37,10 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _popupView.SetPresenter(_presenter);
 
         _clickManager.Initialized(_presenter);
+    }
+
+    private void OnDestroy()
+    {
+        _presenter?.Dispose();
     }
 }
