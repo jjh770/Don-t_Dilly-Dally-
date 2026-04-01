@@ -1,15 +1,15 @@
-using System;
-using System.Linq;
 using Cysharp.Threading.Tasks;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Linq;
 using UnityEngine;
 
 
 public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, IOnEventCallback
 {
- 
+
     [SerializeField]
     private int _roomIdLength = 6;
 
@@ -26,7 +26,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
-    public string RoomCode => PhotonNetwork.InRoom? PhotonNetwork.CurrentRoom.Name : null;
+    public string RoomCode => PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom.Name : null;
     public int CountOfPlayers => PhotonNetwork.CountOfPlayers;
 
 
@@ -44,11 +44,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public override void OnEnable()
     {
         base.OnEnable();
-        PhotonNetwork.AddCallbackTarget(this);     
+        PhotonNetwork.AddCallbackTarget(this);
     }
 
     public override void OnDisable()
     {
+        base.OnDisable();
         PhotonNetwork.RemoveCallbackTarget(this);
         PlayerDataManager.Instance.OnNicknameChanged -= HandleNicknameChanged;
     }
@@ -143,9 +144,9 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public RoomOptions GetRoomOptions()
     {
         RoomOptions roomOptions = new RoomOptions();
-        roomOptions.MaxPlayers = _maxPlayersPerRoom;   
-        roomOptions.IsOpen = true; 
-        roomOptions.IsVisible = true; 
+        roomOptions.MaxPlayers = _maxPlayersPerRoom;
+        roomOptions.IsOpen = true;
+        roomOptions.IsVisible = true;
         return roomOptions;
     }
 
@@ -260,6 +261,15 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public void LeaveRoom()
     {
-        PhotonNetwork.LeaveRoom();
+        if (PhotonNetwork.InRoom)
+        {
+            // PUN 방을 나가기 전에 보이스 클라이언트 연결을 수동으로 먼저 해제하여 FollowLeader 로직 차단
+            if (PhotonVoiceManager.Instance != null && PhotonVoiceManager.Instance.VoiceConnection != null && PhotonVoiceManager.Instance.VoiceConnection.Client != null)
+            {
+                PhotonVoiceManager.Instance.VoiceConnection.Client.Disconnect();
+            }
+
+            PhotonNetwork.LeaveRoom();
+        }
     }
 }
