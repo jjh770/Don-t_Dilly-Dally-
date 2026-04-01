@@ -5,6 +5,7 @@ namespace DontDillyDally.StageFlow
         None = 0,
         Loading = 10,
         Cutscene = 20,
+        Countdown = 25,
         Playing = 30,
         PatientTransition = 40,
         StageClear = 50,
