@@ -21,6 +21,8 @@ namespace DontDillyDally.StageFlow
         private readonly ReactiveProperty<int> _currentPatientIndex = new(0);
         private readonly ReactiveProperty<int> _currentRecipeIndex = new(0);
         private readonly ReactiveProperty<int> _surgeonActorNumber = new(-1);
+        private readonly ReactiveProperty<double> _countdownStartTime = new(0d);
+        private readonly ReactiveProperty<float> _countdownDuration = new(0f);
 
         public IReadOnlyReactiveProperty<EStagePhase> CurrentPhase => _currentPhase;
         public IReadOnlyReactiveProperty<float> PatientHealth => _patientHealth;
@@ -28,6 +30,8 @@ namespace DontDillyDally.StageFlow
         public IReadOnlyReactiveProperty<int> CurrentPatientIndex => _currentPatientIndex;
         public IReadOnlyReactiveProperty<int> CurrentRecipeIndex => _currentRecipeIndex;
         public IReadOnlyReactiveProperty<int> SurgeonActorNumber => _surgeonActorNumber;
+        public IReadOnlyReactiveProperty<double> CountdownStartTime => _countdownStartTime;
+        public IReadOnlyReactiveProperty<float> CountdownDuration => _countdownDuration;
 
         // ── 이벤트 (StageFlowManager가 구독) ────────────────────────
         public event Action<EGameOverReason> OnGameOverReceived;
@@ -48,6 +52,7 @@ namespace DontDillyDally.StageFlow
         // ── 스테이지 데이터 수신 이벤트 (StageFlowManager가 구독) ───────────────────────────────
         public event Action<StageRuntimeData> OnStageDataReceived;
         private bool _isGameOver;
+        private StageRuntimeData _lastReceivedStageData;
 
         // ================================================================
         //  마스터 → 클라이언트 동기화 메서드
@@ -81,6 +86,20 @@ namespace DontDillyDally.StageFlow
             if (PhotonNetwork.IsMasterClient)
             {
                 photonView.RPC(nameof(RPC_SyncTimer), RpcTarget.Others, clampedTime);
+            }
+        }
+
+        public void StartCountdown(double startTime, float duration)
+        {
+            double clampedStartTime = Math.Max(0d, startTime);
+            float clampedDuration = Mathf.Max(0f, duration);
+
+            _countdownStartTime.Value = clampedStartTime;
+            _countdownDuration.Value = clampedDuration;
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                photonView.RPC(nameof(RPC_StartCountdown), RpcTarget.Others, clampedStartTime, clampedDuration);
             }
         }
 
@@ -119,6 +138,12 @@ namespace DontDillyDally.StageFlow
             {
                 photonView.RPC(nameof(RPC_ReceiveStageData), RpcTarget.Others, json);
             }
+        }
+
+        public bool TryGetLatestStageData(out StageRuntimeData stageData)
+        {
+            stageData = _lastReceivedStageData;
+            return stageData != null;
         }
 
         public void BroadcastGameOver(EGameOverReason reason)
@@ -204,6 +229,13 @@ namespace DontDillyDally.StageFlow
         }
 
         [PunRPC]
+        private void RPC_StartCountdown(double startTime, float duration)
+        {
+            _countdownStartTime.Value = Math.Max(0d, startTime);
+            _countdownDuration.Value = Mathf.Max(0f, duration);
+        }
+
+        [PunRPC]
         private void RPC_SyncPatientIndex(int index)
         {
             _currentPatientIndex.Value = index;
@@ -234,6 +266,7 @@ namespace DontDillyDally.StageFlow
         private void RPC_ReceiveStageData(string json)
         {
             var stageData = JsonUtility.FromJson<StageRuntimeData>(json);
+            _lastReceivedStageData = stageData;
             Debug.Log($"[StageFlow] [RPC] 스테이지 데이터 수신: 환자 {stageData.Patients.Count}명");
             OnStageDataReceived?.Invoke(stageData);
 
@@ -329,6 +362,8 @@ namespace DontDillyDally.StageFlow
         public void ResetState()
         {
             _isGameOver = false;
+            _countdownStartTime.Value = 0d;
+            _countdownDuration.Value = 0f;
         }
 
         // ================================================================
@@ -343,6 +378,8 @@ namespace DontDillyDally.StageFlow
             _currentPatientIndex.Dispose();
             _currentRecipeIndex.Dispose();
             _surgeonActorNumber.Dispose();
+            _countdownStartTime.Dispose();
+            _countdownDuration.Dispose();
         }
     }
 }
