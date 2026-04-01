@@ -1,19 +1,14 @@
-
-using System;
-using Photon.Pun;
 using Photon.Realtime;
 
 public class PlayerPresenter
 {
-    private readonly PlayerModel _model;
     private readonly PlayerView _view;
 
     private readonly Player _owner;
 
-    public PlayerPresenter(PlayerModel model, PlayerView view, Player owner)
+    public PlayerPresenter(PlayerView view, Player owner)
     {
         _view = view;
-        _model = model;
         _owner = owner;
         PhotonServerManager.Instance.OnNicknameChanged += SetNickname;
         PhotonServerManager.Instance.OnReadyStateChanged += ReadyStateChange;
@@ -24,16 +19,11 @@ public class PlayerPresenter
     {
         if (_owner.IsMasterClient)
         {
-            _model.SetIsMaster(true);
             _view.SetMasterNickname();
             return;
         }
 
-        if (!_model.IsMaster) return;
-
-        _model.SetIsMaster(false);
-
-        if (_model.IsReady)
+        if (PlayerProperty.GetReadyState(_owner))
         {
             if (_owner.IsLocal)
             {
@@ -42,7 +32,7 @@ public class PlayerPresenter
         }
         else
         {
-            ReadyStateChange(_owner, _model.IsReady);
+            ReadyStateChange(_owner, false);
         }
     }
 
@@ -50,21 +40,19 @@ public class PlayerPresenter
     {
         if (targetPlayer.ActorNumber != _owner.ActorNumber || _owner.IsMasterClient) return;
 
-        _model.SetReadyState(isReady);
-        _view.SetReadyState(_model.IsReady);
+        _view.SetReadyState(isReady);
     }
 
     public void SetNickname(Player targetPlayer, string name)
     {
         if (targetPlayer.ActorNumber != _owner.ActorNumber) return;
 
-        _model.SetNickname(name);
-        _view.SetNickname(_model.Nickname);
+        _view.SetNickname(name);
     }
 
     public void Initialize()
     {
-        _view.SetNickname(_model.Nickname);
+        _view.SetNickname(PlayerProperty.GetNickname(_owner));
 
         if (_owner.IsMasterClient)
         {
@@ -72,7 +60,7 @@ public class PlayerPresenter
         }
         else
         {
-            ReadyStateChange(_owner, _model.IsReady);
+            ReadyStateChange(_owner, PlayerProperty.GetReadyState(_owner));
         }
     }
 
