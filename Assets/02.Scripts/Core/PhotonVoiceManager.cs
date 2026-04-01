@@ -28,6 +28,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
     private SelectRoleManager _boundRoleManager;
     private SceneLoadManager _sceneLoadManager;
 
+    // 외부에 제공할 VoiceConnection 프로퍼티 추가
+    [Header("Voice Connection")]
+    [SerializeField] private VoiceConnection _voiceConnection;
+    public VoiceConnection VoiceConnection => _voiceConnection;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -38,6 +43,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
         Instance = this;
         CacheRecorder();
+
+        if (_voiceConnection == null)
+        {
+            _voiceConnection = GetComponent<VoiceConnection>();
+        }
     }
 
     public override void OnEnable()
@@ -353,13 +363,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private void SyncLocalVoiceStates(bool forceUpdate = false)
     {
-        if (PhotonNetwork.LocalPlayer == null || !PhotonNetwork.InRoom)
+        if (PhotonNetwork.LocalPlayer == null || !PhotonNetwork.InRoom || PhotonNetwork.NetworkClientState != ClientState.Joined)
         {
-            if (forceUpdate || _lastLocalSpeakingState || _lastLocalMutedState)
-            {
-                ResetLocalSpeakingState();
-            }
-
+            // 방에 없을 때는 로컬 캐시 변수만 초기화하고 서버에 요청(SetProperties)을 보내지 않습니다.
+            _lastLocalMutedState = false;
+            _lastLocalSpeakingState = false;
             return;
         }
 
@@ -389,13 +397,18 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private void ResetLocalSpeakingState()
     {
-        if (PhotonNetwork.LocalPlayer != null)
-        {
-            PlayerProperty.SetVoiceState(false, false);
-        }
-
+        // 로컬 변수 상태는 무조건 초기화
         _lastLocalMutedState = false;
         _lastLocalSpeakingState = false;
+
+        // 핵심: 현재 방 안에 있고, 연결 상태가 완전히 Joined일 때만 서버에 프로퍼티를 동기화합니다.
+        if (PhotonNetwork.InRoom && PhotonNetwork.NetworkClientState == ClientState.Joined)
+        {
+            if (PhotonNetwork.LocalPlayer != null)
+            {
+                PlayerProperty.SetVoiceState(false, false);
+            }
+        }
     }
 
     private void NotifyOverlayStateChanged()
