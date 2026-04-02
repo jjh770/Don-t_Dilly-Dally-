@@ -21,6 +21,10 @@ public readonly struct RoomCurrency
 
     public RoomCurrency Set(int value) => new RoomCurrency(Type, value);
 
-    public RoomCurrency Minus(int value) => new RoomCurrency(Type, Value - value);
+    public RoomCurrency Minus(int value)
+    {
+        if (Value - value < 0) throw new Exception("코인이 부족합니다.");
+        return new RoomCurrency(Type, Value - value);
+    }
 
 }

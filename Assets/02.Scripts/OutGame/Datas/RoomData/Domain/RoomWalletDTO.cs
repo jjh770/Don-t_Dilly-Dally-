@@ -12,6 +12,9 @@ public class RoomWalletDTO
     [FirestoreProperty]
     public Dictionary<string, int> StageStars { get; set; } = new Dictionary<string, int>();
 
+    [FirestoreProperty]
+    public int Level { get; set; }
+
     // DTO → Domain
     public RoomWallet ToDomain()
     {
@@ -22,8 +25,8 @@ public class RoomWalletDTO
 
         return new RoomWallet(
         new RoomCurrency(ERoomCurrencyType.Coin, Coin),
-        stars
-        );
+        stars,
+        new HospitalLevel(Level));
     }
 
     // Domain → DTO
@@ -33,7 +36,8 @@ public class RoomWalletDTO
         StageStars = wallet.StagesStars.ToDictionary(
                 kvp => kvp.Key,
                 kvp => kvp.Value.Best
-            )
+            ),
+        Level = wallet.HospitalLevel.Value 
     };
 
 }

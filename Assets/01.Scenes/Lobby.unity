@@ -2295,7 +2295,7 @@ MonoBehaviour:
   _myHospitalList: {fileID: 1430548989753335554}
   _roomCodeInputField: {fileID: 4723803772908620830}
   _nickNameInputField: {fileID: 1912950664}
-  _errorMessage: {fileID: 0}
+  _errorMessage: {fileID: 1493326304}
 --- !u!222 &684927659
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -4289,6 +4289,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e5313e78c17b894cac6b03c542101af, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RoomDataManager
+  _stageCatalog: {fileID: 11400000, guid: 8ff4dac7383e5604eb4af91e2fca50fe, type: 2}
+  _hospitalLevelCatalog: {fileID: 11400000, guid: 08cbb8fafa06cf54b93c2bfe2c95c031, type: 2}
 --- !u!4 &1369935243
 Transform:
   m_ObjectHideFlags: 0
@@ -4722,6 +4724,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd585cda12f2f034babce07805c005bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_DayListItem
+--- !u!114 &1493326304 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5531947216613379530, guid: 29c8aae0f0991454784c9090032c83bd, type: 3}
+  m_PrefabInstance: {fileID: 175443237687210542}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 189db6d3cf5820046b5be2b48c541ef8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_Message
 --- !u!114 &1508217400 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 6772694762507703717, guid: 730a4db3da0cf2e4e8116dd6f35c8920, type: 3}
