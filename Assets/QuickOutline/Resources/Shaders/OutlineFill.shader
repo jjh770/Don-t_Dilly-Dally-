@@ -73,7 +73,10 @@ Shader "Custom/Outline Fill" {
       }
 
       fixed4 frag(v2f input) : SV_Target {
-        return input.color;
+        // Boost color to survive ACES tonemapping
+        fixed4 col = input.color;
+        col.rgb *= 2.5;
+        return col;
       }
       ENDCG
     }
