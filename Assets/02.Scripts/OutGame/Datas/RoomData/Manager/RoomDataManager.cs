@@ -19,12 +19,14 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     private const byte HOSPITAL_UPGRADE_EVENT = 101;
 
-    public int Star => _roomWallet.TotalStars;
-    public RoomCurrency Coin => _roomWallet.Coin;
+    public bool HasRoomWallet => _roomWallet != null;
+    public int Star => _roomWallet != null ? _roomWallet.TotalStars : 0;
+    public RoomCurrency Coin => _roomWallet != null ? _roomWallet.Coin : RoomCurrency.Default(ERoomCurrencyType.Coin);
     public int SelectedStageIndex => _selectedStageIndex;
     public IReadOnlyList<StageDefinitionSO> StageDefinitions => _stageCatalog != null ? _stageCatalog.StageDefinitions : Array.Empty<StageDefinitionSO>();
 
     public HospitalLevelDefinitionSO CurrentLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value) : null;
+    public HospitalLevelDefinitionSO NextLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetNextLevel(_roomWallet.HospitalLevel.Value) : null;
 
     public event Action<int, int> OnRoomDataChanged;
 

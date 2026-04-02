@@ -122,12 +122,19 @@ public class WaitingRoomPresenter
     private void HandleDataLoaded()
     {
         HospitalLevelDefinitionSO definition = RoomDataManager.Instance.CurrentLevelDefinition;
+
+
         _waitingRoomView.SetHospitalInformation(PhotonServerManager.Instance.RoomCode, definition.HospitalName, definition.Level, definition.HospitalIcon);
 
         _waitingRoomView.SetRoomCurrency(RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
     }
     private void HandleHospitalUpgraded(HospitalLevelDefinitionSO sO)
     {
+        if (sO == null)
+        {
+            return;
+        }
+
         _waitingRoomView.SetHospitalInformation(PhotonServerManager.Instance.RoomCode, sO.HospitalName, sO.Level, sO.HospitalIcon);
     }
 

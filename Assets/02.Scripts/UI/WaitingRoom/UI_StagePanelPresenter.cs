@@ -49,7 +49,12 @@ public class UI_StagePanelPresenter
 
     private void HandleSelectedStageChanged(int selectedStageIndex, StageDefinitionSO selectedStage)
     {
-        _view?.SetSelectedStage(selectedStageIndex, selectedStage.StageName, selectedStage.Description);
+        if (_view == null || selectedStage == null)
+        {
+            return;
+        }
+
+        _view.SetSelectedStage(selectedStageIndex, selectedStage.StageName, selectedStage.Description);
     }
 
     private void Render()

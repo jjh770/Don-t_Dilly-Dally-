@@ -9,10 +9,12 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 
     [SerializeField] private ContextMenuView _popupView;
     [SerializeField] private UI_StagePanelView _stageUnlockPanelView;
+    [SerializeField] private UI_HospitalUpgradeView _hospitalUpgradeView;
 
     private WaitingRoomModel _model;
     private WaitingRoomPresenter _presenter;
     private UI_StagePanelPresenter _stageUnlockPanelPresenter;
+    private UI_HospitalUpgradePresenter _hospitalUpgradePresenter;
 
     private void Start()
     {
@@ -31,6 +33,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
     {
         _presenter?.Dispose();
         _stageUnlockPanelPresenter?.Dispose();
+        _hospitalUpgradePresenter?.Dispose();
         _model = new WaitingRoomModel();
 
         _presenter = new WaitingRoomPresenter(_defaultView, _popupView, _model);
@@ -47,11 +50,19 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
             _stageUnlockPanelView.Initialize(_stageUnlockPanelPresenter);
             _stageUnlockPanelPresenter.Initialize();
         }
+
+        if (_hospitalUpgradeView != null)
+        {
+            _hospitalUpgradePresenter = new UI_HospitalUpgradePresenter(_hospitalUpgradeView);
+            _hospitalUpgradeView.Initialize(_hospitalUpgradePresenter);
+            _hospitalUpgradePresenter.Initialize();
+        }
     }
 
     private void OnDestroy()
     {
         _presenter?.Dispose();
         _stageUnlockPanelPresenter?.Dispose();
+        _hospitalUpgradePresenter?.Dispose();
     }
 }
