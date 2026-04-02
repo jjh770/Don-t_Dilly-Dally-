@@ -149,7 +149,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         var result = _domain.TryEquip(item);
 
-        if (result.HasChanged())
+        if (result.HasChanged() == true)
         {
             OnItemChanged?.Invoke(item.Category, item);
         }
@@ -164,7 +164,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         var result = _domain.ToggleEquip(item);
 
-        if (result.HasChanged())
+        if (result.HasChanged() == true)
         {
             if (result == EEquipResult.Equipped)
             {

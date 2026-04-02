@@ -81,7 +81,7 @@ public class CustomizingState
         foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
             string itemId = saveData.GetSelectedItemId(type);
-            if (!string.IsNullOrEmpty(itemId))
+            if (string.IsNullOrEmpty(itemId) == false)
             {
                 _equippedItemIds[type] = itemId;
             }

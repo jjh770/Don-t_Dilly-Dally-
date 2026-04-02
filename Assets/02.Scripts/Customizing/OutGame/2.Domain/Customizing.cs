@@ -74,8 +74,8 @@ public class Customizing
     // 해제 가능 여부 검사
     public EEquipResult CanUnequip(CustomizingType category)
     {
-        if (!_state.IsEquipped(category)) return EEquipResult.AlreadyUnequipped;
-        if (!category.CanUnequip()) return EEquipResult.CannotUnequipRequired;
+        if (_state.IsEquipped(category) == false) return EEquipResult.AlreadyUnequipped;
+        if (category.CanUnequip() == false) return EEquipResult.CannotUnequipRequired;
         return EEquipResult.Unequipped;
     }
 
@@ -111,7 +111,7 @@ public class Customizing
     public EEquipResult TryUnequip(CustomizingType category)
     {
         var result = CanUnequip(category);
-        if (!result.IsSuccess()) return result;
+        if (result.IsSuccess() == false) return result;
         if (result == EEquipResult.AlreadyUnequipped) return result;
 
         _state.Remove(category);

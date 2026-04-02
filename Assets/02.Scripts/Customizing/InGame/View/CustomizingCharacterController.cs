@@ -37,6 +37,12 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
             _viewModel.Dispose();
             _viewModel = null;
         }
+
+        if (_assetLoader != null)
+        {
+            (_assetLoader as IDisposable)?.Dispose();
+            _assetLoader = null;
+        }
     }
 
     private void Initialize()
@@ -139,8 +145,8 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
 
     public void SyncToNetwork()
     {
-        if (!IsLocalPlayer) return;
-        if (_viewModel == null || !_viewModel.IsInitialized) return;
+        if (IsLocalPlayer == false) return;
+        if (_viewModel == null || _viewModel.IsInitialized == false) return;
 
         var itemIds = _viewModel.GetEquippedItemIds();
         // Photon Custom Properties에 저장
@@ -167,7 +173,7 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
         }
 
         // 변경된 속성만 업데이트
-        if (_isCustomizingApplied && CustomizingProperties.TryGetFromChangedProps(changedProps, out var items))
+        if (_isCustomizingApplied == true && CustomizingProperties.TryGetFromChangedProps(changedProps, out var items) == true)
         {
             ApplyFromItemIds(items);
         }
@@ -175,19 +181,19 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
 
     private void HandleLoaded()
     {
-        if (!IsLocalPlayer) return;
+        if (IsLocalPlayer == false) return;
         ApplyFromViewModel();
     }
 
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
     {
-        if (!IsLocalPlayer) return;
+        if (IsLocalPlayer == false) return;
         _view.ApplyItem(type, item);
     }
 
     private void HandleSaved()
     {
-        if (!IsLocalPlayer) return;
+        if (IsLocalPlayer == false) return;
         SyncToNetwork();
     }
 
