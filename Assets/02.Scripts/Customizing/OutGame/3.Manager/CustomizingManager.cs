@@ -276,11 +276,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public bool HasUnsavedChanges()
     {
-        if (_domain == null || _slotManager == null) return false;
-
-        var selectedSlot = _slotManager.GetSlot(_slotManager.SelectedSlotIndex);
-        if (selectedSlot == null || selectedSlot.IsEmpty()) return true;
-
-        return !_domain.MatchesSlotData(selectedSlot);
+        return _slotManager?.HasUnsavedChanges() ?? false;
     }
 }

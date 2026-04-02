@@ -88,16 +88,21 @@ public class CustomizingSaveData : ISaveData
 
     public void MergeMetaFrom(CustomizingSaveData source)
     {
-        if (source == null) return;
+        if (source == null)
+        {
+            EnsureSlots();
+            LastSavedAt = DateTime.UtcNow.ToString("o");
+            return;
+        }
 
         foreach (var itemId in source.UnlockedItems)
         {
             UnlockedItems.Add(itemId);
         }
 
-        foreach (var slot in source.Slots)
+        for (int i = 0; i < source.Slots.Count && i < MaxSlotCount; i++)
         {
-            Slots.Add(slot);
+            SetSlot(i, source.Slots[i]);
         }
 
         SelectedSlotIndex = source.SelectedSlotIndex;

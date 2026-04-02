@@ -34,6 +34,7 @@ public class CustomizingCharacterView : MonoBehaviour
     private ICustomizingAssetLoader _assetLoader;
     private Dictionary<CustomizingType, string> _loadedAssetKeys = new();               // 현재 각 슬롯에 어떤 Key가 로드되어 있는지 기록
     private Dictionary<CustomizingType, CancellationTokenSource> _loadingCts = new();   // 각 타입별 현재 진행 중인 로딩 취소 토큰 저장
+    private CancellationTokenSource _applyAllCts;                                       // ApplyAll 전체 작업 취소 토큰
 
     private void Awake()
     {
@@ -55,12 +56,21 @@ public class CustomizingCharacterView : MonoBehaviour
 
     private void CancelAllLoading()
     {
+        CancelApplyAll();
+
         foreach (var cts in _loadingCts.Values)
         {
-            cts?.Cancel();      // 현재 진행 중인 로딩 취소
-            cts?.Dispose();     // 토큰 자원 해제
+            cts?.Cancel();
+            cts?.Dispose();
         }
-        _loadingCts.Clear();    // 딕셔너리 비우기
+        _loadingCts.Clear();
+    }
+
+    private void CancelApplyAll()
+    {
+        _applyAllCts?.Cancel();
+        _applyAllCts?.Dispose();
+        _applyAllCts = null;
     }
 
     public async UniTask PreloadItemsAsync(IEnumerable<CustomizingItemSO> items)
@@ -161,30 +171,44 @@ public class CustomizingCharacterView : MonoBehaviour
 
     public void ApplyAll(Func<CustomizingType, CustomizingItemSO> itemGetter)
     {
-        ApplyAllAsync(itemGetter).Forget();
+        CancelApplyAll();
+
+        _applyAllCts = CancellationTokenSource.CreateLinkedTokenSource(destroyCancellationToken);
+        ApplyAllAsync(itemGetter, _applyAllCts.Token).Forget();
     }
 
-    private async UniTask ApplyAllAsync(Func<CustomizingType, CustomizingItemSO> itemGetter)
+    private async UniTask ApplyAllAsync(Func<CustomizingType, CustomizingItemSO> itemGetter, CancellationToken cancellationToken)
     {
-        // 1. 모든 아이템 수집
-        var items = new List<CustomizingItemSO>();
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        try
         {
-            var item = itemGetter(type);
-            if (item != null && item.HasAssetRef)
+            // 1. 모든 아이템 수집
+            var items = new List<CustomizingItemSO>();
+            foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
             {
-                items.Add(item);
+                var item = itemGetter(type);
+                if (item != null && item.HasAssetRef)
+                {
+                    items.Add(item);
+                }
+            }
+
+            // 2. 프리로드
+            await PreloadItemsAsync(items);
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            // 3. 적용 (이미 캐시되어 있으므로 빠름)
+            foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+
+                var item = itemGetter(type);
+                ApplyItem(type, item);
             }
         }
-
-        // 2. 프리로드
-        await PreloadItemsAsync(items);
-
-        // 3. 적용 (이미 캐시되어 있으므로 빠름)
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        catch (OperationCanceledException)
         {
-            var item = itemGetter(type);
-            ApplyItem(type, item);
+            // 취소됨 - 무시
         }
     }
 

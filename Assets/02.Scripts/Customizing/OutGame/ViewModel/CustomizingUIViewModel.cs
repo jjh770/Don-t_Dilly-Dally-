@@ -222,7 +222,6 @@ public class CustomizingUIViewModel
     public void SelectSlot(int index)
     {
         _manager.SelectSlot(index);
-        _manager.LoadFromSlot(index);
     }
 
     public void SaveToSelectedSlot()

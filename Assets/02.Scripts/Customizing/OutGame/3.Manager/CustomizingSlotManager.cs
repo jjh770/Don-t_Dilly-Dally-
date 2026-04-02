@@ -118,6 +118,16 @@ public class CustomizingSlotManager
         return slot == null || slot.IsEmpty();
     }
 
+    public bool HasUnsavedChanges()
+    {
+        if (_domain == null) return false;
+
+        var selectedSlot = _getSaveData()?.GetSlot(_selectedSlotIndex);
+        if (selectedSlot == null || selectedSlot.IsEmpty()) return true;
+
+        return !_domain.MatchesSlotData(selectedSlot);
+    }
+
     public int FindMatchingSlot()
     {
         var saveData = _getSaveData();
