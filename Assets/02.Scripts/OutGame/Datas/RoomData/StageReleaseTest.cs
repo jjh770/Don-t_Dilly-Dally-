@@ -3,12 +3,11 @@ using UnityEngine;
 
 public class StageReleaseTest : MonoBehaviour
 {
-    [SerializeField] private StageDefinitionSO _targetStage;
 
     [ContextMenu("해금")]
     public void DebugUnlockStage()
     {
-        RoomDataManager.Instance.TryUnlockStage(_targetStage);
+        RoomDataManager.Instance.TryUpgradeHospital();
     }
 
     public void Start()
