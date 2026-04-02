@@ -36,13 +36,23 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
     {
         if (!_isPlaying || _isSkipped) return;
         if (!PhotonNetwork.IsMasterClient) return;
+
+        RefreshSkipNoticeState();
         if (!Input.GetKeyDown(KeyCode.Escape)) return;
 
         if (_skipUI == null) return;
 
         if (!_skipUI.IsVisible)
         {
-            _skipUI.Show();
+            ShowSkipNotice();
+        }
+        else if (!CanSkipCutscene())
+        {
+            _skipUI.ShowLoading();
+        }
+        else if (!_skipUI.IsShowingSkipConfirm)
+        {
+            _skipUI.ShowSkipConfirm();
         }
         else
         {
@@ -87,13 +97,18 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
         // 0. CustomizingManager 준비 대기
         await WaitForCustomizingManager(ct);
 
-        // 1. 플레이어-슬롯 매핑
+        // 1. 집도의 선정 (StagePreloader → SelectRoleManager 자체 PhotonView로 RPC 전파)
+        if (PhotonNetwork.IsMasterClient)
+            StagePreloader.Instance?.AssignRoles();
+        await StagePreloader.Instance.WaitForRoleAssignment(ct);
+
+        // 2. 플레이어-슬롯 매핑 (집도의 정보 확정 후)
         AssignPlayersToSlots();
 
-        // 2. 할당된 슬롯에 커스터마이징 병렬 적용 (타임아웃 포함)
+        // 3. 할당된 슬롯에 커스터마이징 병렬 적용 (타임아웃 포함)
         await ApplyAllCustomizingAsync(ct);
 
-        // 3. 미할당 슬롯에 기본 외형 적용
+        // 4. 미할당 슬롯에 기본 외형 적용
         foreach (var slot in _characterSlots)
         {
             if (!slot.IsAssigned)
@@ -102,7 +117,11 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
             }
         }
 
-        // 4. Timeline 재생 및 완료 대기
+        // 5. 질병/음성 데이터 사전 생성 시작 (MasterClient - 컷씬과 병렬)
+        if (PhotonNetwork.IsMasterClient)
+            StagePreloader.Instance?.StartDataPrep();
+
+        // 6. Timeline 재생 및 완료 대기
         _isPlaying = true;
         if (_director != null)
         {
@@ -116,7 +135,7 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
 
         Debug.Log("[CutsceneManager] 컷씬 완료 → GameScene 전환");
 
-        // 5. GameScene으로 전환
+        // 7. GameScene으로 전환
         LoadGameScene();
     }
 
@@ -269,6 +288,50 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
         {
             Debug.LogError("[CutsceneManager] SceneLoadManager가 없음 - GameScene 전환 실패");
         }
+    }
+
+    private void RefreshSkipNoticeState()
+    {
+        if (_skipUI == null || !_skipUI.IsVisible)
+        {
+            return;
+        }
+
+        if (CanSkipCutscene())
+        {
+            if (!_skipUI.IsShowingSkipConfirm)
+            {
+                _skipUI.ShowSkipConfirm();
+            }
+
+            return;
+        }
+
+        if (!_skipUI.IsShowingLoading)
+        {
+            _skipUI.ShowLoading();
+        }
+    }
+
+    private void ShowSkipNotice()
+    {
+        if (_skipUI == null)
+        {
+            return;
+        }
+
+        if (CanSkipCutscene())
+        {
+            _skipUI.ShowSkipConfirm();
+            return;
+        }
+
+        _skipUI.ShowLoading();
+    }
+
+    private bool CanSkipCutscene()
+    {
+        return StagePreloader.Instance == null || StagePreloader.Instance.IsDataPrepComplete;
     }
 
     private async UniTask WaitForDirectorFinish(CancellationToken ct)

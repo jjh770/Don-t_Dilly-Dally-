@@ -1,6 +1,7 @@
 using System;
 using Photon.Pun;
 using Photon.Realtime;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class WaitingRoomPresenter
@@ -21,13 +22,12 @@ public class WaitingRoomPresenter
 
         PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
         PhotonServerManager.Instance.OnReadyStateChanged += HandleReadyStateChanged;
+        RoomDataManager.Instance.OnRoomDataLoaded += HandleDataLoaded;
         RoomDataManager.Instance.OnRoomDataChanged += HandleRoomDataChanged;
+        RoomDataManager.Instance.OnHospitalUpgraded += HandleHospitalUpgraded;
     }
 
-    private void HandleRoomDataChanged(int coin, int star)
-    {
-        _waitingRoomView.SetRoomCurrency(coin, star);
-    }
+    
 
     public void Initialize()
     {
@@ -119,10 +119,26 @@ public class WaitingRoomPresenter
         RefreshWaitingRoomUI();
     }
 
+    private void HandleDataLoaded()
+    {
+        HospitalLevelDefinitionSO definition = RoomDataManager.Instance.CurrentLevelDefinition;
+        _waitingRoomView.SetHospitalInformation(PhotonServerManager.Instance.RoomCode, definition.HospitalName, definition.Level, definition.HospitalIcon);
+
+        _waitingRoomView.SetRoomCurrency(RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
+    }
+    private void HandleHospitalUpgraded(HospitalLevelDefinitionSO sO)
+    {
+        _waitingRoomView.SetHospitalInformation(PhotonServerManager.Instance.RoomCode, sO.HospitalName, sO.Level, sO.HospitalIcon);
+    }
+
+    private void HandleRoomDataChanged(int coin, int star)
+    {
+        _waitingRoomView.SetRoomCurrency(coin, star);
+    }
+
+
     private void RefreshWaitingRoomUI()
     {
-        _waitingRoomView.SetRoomCode(PhotonServerManager.Instance.RoomCode);
-
         if (PhotonServerManager.Instance.IsMasterClient)
         {
             _waitingRoomView.ShowMasterUI();

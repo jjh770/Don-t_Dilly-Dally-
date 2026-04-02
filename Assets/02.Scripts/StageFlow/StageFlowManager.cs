@@ -25,8 +25,8 @@ namespace DontDillyDally.StageFlow
         private const int ACK_RETRY_DELAY_MS = 2000;
         private const int STAGE_DATA_ACK_TIMEOUT_MS = 10000;
         private const int GAME_OVER_ACK_TOTAL_TIMEOUT_MS = 12000;
+        private const float STAGE_START_COUNTDOWN_SEC = 3f;
         private const float STAGE_CLEAR_DELAY_SEC = 5f;
-        private const float CUTSCENE_DELAY_SEC = 3f;
         private const float PATIENT_TRANSITION_DELAY_SEC = 2f;
         private const float RETURN_TO_WAITING_ROOM_DELAY_SEC = 5f;
 
@@ -36,8 +36,7 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private StageTimer _timer;
         [SerializeField] private EmergencyEventPolicy _emergencyPolicy;
 
-        [Header("병 정보, 미니게임 참조")]
-        [SerializeField] private DiseaseGenerationManager _diseaseGenManager;
+        [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
 
         [Header("미니게임")]
@@ -51,6 +50,8 @@ namespace DontDillyDally.StageFlow
         public IReadOnlyReactiveProperty<int> CurrentPatientIndex => _rpc.CurrentPatientIndex;
         public IReadOnlyReactiveProperty<int> CurrentRecipeIndex => _rpc.CurrentRecipeIndex;
         public IReadOnlyReactiveProperty<int> SurgeonActorNumber => _rpc.SurgeonActorNumber;
+        public IReadOnlyReactiveProperty<double> CountdownStartTime => _rpc.CountdownStartTime;
+        public IReadOnlyReactiveProperty<float> CountdownDuration => _rpc.CountdownDuration;
         public StageRuntimeData CurrentStageData => _stageData;
         public float LocalRemainingTime => _timer != null ? _timer.RemainingTime : 0f;
         public TraySubmissionHandler TrayHandler => _trayHandler;
@@ -118,6 +119,24 @@ namespace DontDillyDally.StageFlow
             return disease != null;
         }
 
+        // 시작 카운트다운 중 남은 시간을 반환합니다. (마스터 클라이언트 기준)
+        public float GetRemainingCountdownTime()
+        {
+            if (_rpc == null)
+            {
+                return 0f;
+            }
+
+            float duration = Mathf.Max(0f, _rpc.CountdownDuration.Value);
+            if (duration <= 0f)
+            {
+                return 0f;
+            }
+
+            double elapsed = PhotonNetwork.Time - _rpc.CountdownStartTime.Value;
+            return Mathf.Max(0f, duration - (float)elapsed);
+        }
+
         // ── 내부 상태 ────────────────────────────────────────────────
         private StageRuntimeData _stageData;
         private SurgeryRecipeJudge _recipeJudge;
@@ -152,6 +171,7 @@ namespace DontDillyDally.StageFlow
         // StageFlow에 필요한 런타임 의존성과 이벤트를 초기화합니다.
         public void Initialize(StageRuntimeData stageData)
         {
+            _rpc.ResetState();
             _stageData = stageData;
             OnStageDataChanged?.Invoke(_stageData);
             _recipeJudge = new SurgeryRecipeJudge();
@@ -174,6 +194,10 @@ namespace DontDillyDally.StageFlow
             _onGameOverReceived = reason => OnGameOver?.Invoke(reason);
             _rpc.OnGameOverReceived += _onGameOverReceived;
             _rpc.OnStageDataReceived += HandleStageDataReceived;
+            if (_rpc.TryGetLatestStageData(out StageRuntimeData receivedStageData))
+            {
+                HandleStageDataReceived(receivedStageData);
+            }
 
             // 미니게임 RPC 수신
             _rpc.OnMiniGameRequested += HandleMiniGameRequested;
@@ -186,6 +210,10 @@ namespace DontDillyDally.StageFlow
             // 보상 RPC 수신
             _rpc.OnStageRewardGrantedReceived += OnRewardGrantedReceived;
 
+            _flowCts?.Cancel();
+            _flowCts?.Dispose();
+            _flowCts = new CancellationTokenSource();
+
             if (PhotonNetwork.IsMasterClient)
             {
                 StartStageFlow().Forget();
@@ -196,51 +224,58 @@ namespace DontDillyDally.StageFlow
         //  마스터 전용 - 메인 흐름
         // ================================================================
 
-        // 마스터 클라이언트가 전체 스테이지 진행을 순서대로 실행합니다.
+        // 집도의/질병/음성은 StagePreloader가 컷씬 중 사전 생성 완료.
+        // 여기서는 RPC 동기화 + 게임 루프만 실행합니다.
         private async UniTaskVoid StartStageFlow()
         {
             Debug.Log("[StageFlow] ========== 스테이지 플로우 시작 ==========");
-            _flowCts = new CancellationTokenSource();
             var ct = _flowCts.Token;
 
             try
             {
-                // Phase 1: 로딩 (집도의 선정 + 질병 생성)
-                Debug.Log("[StageFlow] ▶ Phase 1: Loading 진입");
                 _rpc.SetPhase(EStagePhase.Loading);
-                await RunLoadingPhase(ct);
-                Debug.Log("[StageFlow] ✓ Phase 1: Loading 완료");
 
-                // Phase 2: 컷씬 (첫 환자 입장)
-                Debug.Log("[StageFlow] ▶ Phase 2: Cutscene 진입");
-                _rpc.SetPhase(EStagePhase.Cutscene);
-                await RunCutscenePhase(ct);
-                Debug.Log("[StageFlow] ✓ Phase 2: Cutscene 완료");
+                // 1. 집도의 동기화 (이미 컷씬에서 선정 완료 — RPC 전파만)
+                int surgeonActor = StagePreloader.Instance.SurgeonActorNumber;
+                Debug.Log($"[StageFlow] 집도의 동기화: Actor {surgeonActor}");
+                await BroadcastAndWaitAck(
+                    () => _rpc.SetSurgeon(surgeonActor),
+                    handler => _rpc.OnSurgeonAckReceived += handler,
+                    handler => _rpc.OnSurgeonAckReceived -= handler,
+                    "집도의 동기화",
+                    ACK_TIMEOUT_MS, ct);
 
-                // Phase 3: 게임 루프
-                Debug.Log("[StageFlow] ▶ Phase 3: Playing 진입 (게임 루프 시작)");
+                // 2. 스테이지 데이터 동기화 (이미 Preloader에서 생성 완료)
+                Debug.Log("[StageFlow] 스테이지 데이터 동기화");
+                string json = JsonUtility.ToJson(_stageData);
+                await BroadcastAndWaitAck(
+                    () => _rpc.BroadcastStageData(json),
+                    handler => _rpc.OnStageDataAckReceived += handler,
+                    handler => _rpc.OnStageDataAckReceived -= handler,
+                    "스테이지 데이터",
+                    STAGE_DATA_ACK_TIMEOUT_MS, ct);
+
+                // 3. 게임 루프
+                Debug.Log("[StageFlow] ▶ Playing 진입 (게임 카운트 다운 시작)");
+                await RunStageStartCountdown(ct);
+                Debug.Log("[StageFlow] ▶ Playing 시작 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
                 await RunGameLoop(ct);
-                Debug.Log("[StageFlow] ✓ Phase 3: Playing 완료 (모든 환자 치료 성공)");
+                Debug.Log("[StageFlow] ✓ Playing 완료 (모든 환자 치료 성공)");
 
-                // Phase 4: 스테이지 클리어
-                Debug.Log("[StageFlow] ▶ Phase 4: StageClear! 5초 후 대기실 복귀 가능");
+                // 4. 스테이지 클리어
+                Debug.Log("[StageFlow] ▶ StageClear! 5초 후 대기실 복귀 가능");
                 PausePatientHealthDrain();
                 _timer.Pause();
                 SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
                 OnStageClear?.Invoke();
-
-                // 역할 시각 표시 초기화
                 SelectRoleManager.Instance?.ClearRoles();
-
 
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
 
-                // 보상 처리
-                Debug.Log("[StageFlow] 보상을 지급합니다.");     
+                Debug.Log("[StageFlow] 보상을 지급합니다.");
                 ApplyReward();
-                //PhotonServerManager.Instance.ReturnWaitingRoom();
             }
             catch (OperationCanceledException)
             {
@@ -248,53 +283,14 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        // ── 로딩 페이즈 ─────────────────────────────────────────────
-
-        // 집도의 선정과 질병 생성, 스테이지 데이터 동기화를 처리합니다.
-        private async UniTask RunLoadingPhase(CancellationToken ct)
+        private static int FindSurgeonActorNumber()
         {
-            // 1. 집도의 선정 (SelectRoleManager가 담당) + ACK 대기
-            Debug.Log("[StageFlow]   (1/3) 집도의 선정 중...");
-            int surgeonActor = SelectRoleManager.Instance?.AssignRoles() ?? -1;
-            if (surgeonActor < 0)
+            foreach (var player in PhotonNetwork.PlayerList)
             {
-                Debug.LogError("[StageFlow] 집도의 선정 실패");
-                return;
+                if (RoleProperties.GetPlayerRole(player) == RoleType.Surgeon)
+                    return player.ActorNumber;
             }
-            await BroadcastAndWaitAck(
-                () => _rpc.SetSurgeon(surgeonActor),             // 집도의 선정 RPC 호출
-                handler => _rpc.OnSurgeonAckReceived += handler, // ACK 수신 핸들러 구독
-                handler => _rpc.OnSurgeonAckReceived -= handler, // ACK 수신 핸들러 구독 해제
-                "집도의 선정",                                   // 작업명
-                ACK_TIMEOUT_MS, ct);                                 // 타임아웃 대기, 취소 토큰 전달
-
-            // 2. 질병 데이터 생성
-            Debug.Log($"[StageFlow]   (2/4) 질병 데이터 생성 중... (환자 {_stageData.PatientCount}명)");
-            await GenerateAllDiseases(ct);
-            Debug.Log($"[StageFlow]   (2/4) 질병 데이터 생성 완료: {_stageData.Patients.Count}개");
-
-            // 3. 환자 소개 음성 사전 생성
-            Debug.Log("[StageFlow]   (3/4) 환자 소개 음성 사전 생성 중...");
-            if (CommentaryController.Instance != null)
-            {
-                var patientInfos = new List<(string, string)>();
-                foreach (var patient in _stageData.Patients)
-                {
-                    patientInfos.Add((patient.PatientName, patient.DiseaseName));
-                }
-                await CommentaryController.Instance.PreGeneratePatientIntros(patientInfos, ct);
-            }
-            Debug.Log("[StageFlow]   (3/4) 환자 소개 음성 사전 생성 완료");
-
-            // 4. 스테이지 데이터를 클라이언트에 전송 + ACK 대기
-            Debug.Log("[StageFlow]   (4/4) 스테이지 데이터 클라이언트 전송");
-            string json = JsonUtility.ToJson(_stageData);
-            await BroadcastAndWaitAck(
-                () => _rpc.BroadcastStageData(json),               // 스테이지 데이터 전달 RPC 호출
-                handler => _rpc.OnStageDataAckReceived += handler, // ACK 수신 핸들러 구독
-                handler => _rpc.OnStageDataAckReceived -= handler, // ACK 수신 핸들러 구독 해제
-                "스테이지 데이터",                                 // 작업명
-                STAGE_DATA_ACK_TIMEOUT_MS, ct);                     // 타임아웃 대기, 취소 토큰 전달
+            return -1;
         }
 
         /// <summary>
@@ -302,6 +298,16 @@ namespace DontDillyDally.StageFlow
         /// broadcast를 호출(나를 제외한 모두에게 전파)하고 모든 클라이언트의 ACK(Acknowledgement : 확답, 수신 확인)를 기다립니다.
         /// 타임아웃 시 retry를 1회 시도한 뒤 진행합니다.
         /// </summary>
+        private async UniTask RunStageStartCountdown(CancellationToken ct)
+        {
+            double countdownStartTime = PhotonNetwork.Time;
+            _rpc.StartCountdown(countdownStartTime, STAGE_START_COUNTDOWN_SEC);
+            _rpc.SetPhase(EStagePhase.Countdown);
+
+            Debug.Log($"[StageFlow] 시작 카운트다운: {STAGE_START_COUNTDOWN_SEC:0}초");
+            await UniTask.Delay(TimeSpan.FromSeconds(STAGE_START_COUNTDOWN_SEC), cancellationToken: ct);
+        }
+
         private async UniTask BroadcastAndWaitAck(
             Action broadcast,
             Action<Action<int>> subscribe,
@@ -364,45 +370,6 @@ namespace DontDillyDally.StageFlow
             {
                 unsubscribe(OnAck);
             }
-        }
-
-        // 이번 스테이지의 모든 환자 질병 데이터를 생성합니다.
-        private async UniTask GenerateAllDiseases(CancellationToken ct)
-        {
-            _stageData.Patients.Clear();
-
-            var tasks = new List<UniTask<DiseaseData>>();
-            for (int i = 0; i < _stageData.PatientCount; i++)
-            {
-                tasks.Add(GenerateSingleDisease(ct));
-            }
-
-            DiseaseData[] diseases = await UniTask.WhenAll(tasks);
-
-            for (int i = 0; i < diseases.Length; i++)
-            {
-                _stageData.Patients.Add(diseases[i]);
-            }
-        }
-
-        // 난이도 기반으로 환자 한 명의 질병 데이터를 생성합니다.
-        private async UniTask<DiseaseData> GenerateSingleDisease(CancellationToken ct)
-        {
-            var result = await _diseaseGenManager.GenerateDisease(_stageData.Difficulty);
-            ct.ThrowIfCancellationRequested();
-            return result;
-        }
-
-        // ── 컷씬 페이즈 ────────────────────────────────────────────
-
-        // 게임 시작 전 컷씬 또는 시작 연출 대기 구간을 처리합니다.
-        private async UniTask RunCutscenePhase(CancellationToken ct)
-        {
-            Debug.Log("[StageFlow]   컷씬 재생 시작 (3초 대기)");
-
-            // TODO: 실제 컷씬 시스템 연동 시 교체
-            await UniTask.Delay(TimeSpan.FromSeconds(CUTSCENE_DELAY_SEC), cancellationToken: ct);
-            Debug.Log("[StageFlow]   컷씬 재생 종료");
         }
 
         // ── 게임 루프 ───────────────────────────────────────────────
@@ -941,7 +908,7 @@ namespace DontDillyDally.StageFlow
             // → UI 연출로 넘기기
         }
 
-        public void OnRewardGrantedReceived(StageReward reward, StageResult result) 
+        public void OnRewardGrantedReceived(StageReward reward, StageResult result)
         {
             OnStageRewardGranted?.Invoke(reward, result);
         }

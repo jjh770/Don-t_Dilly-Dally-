@@ -11,6 +11,10 @@ public class WaitingRoomView : MonoBehaviour
     [SerializeField] private Button _exitButton;
     [SerializeField] private Button _roomCodeCopyButton;
 
+    [SerializeField] private TextMeshProUGUI _hospitalLevelText;
+    [SerializeField] private TextMeshProUGUI _hospitalNameText;
+    [SerializeField] private Image _hospitalImage;
+
     [SerializeField] private UI_NumberCounterTween _roomCoinText;
     [SerializeField] private UI_NumberCounterTween _roomStarsText;
     [SerializeField] private TextMeshProUGUI _roomCodeText;
@@ -73,9 +77,12 @@ public class WaitingRoomView : MonoBehaviour
         _presenter = presenter;
     }
 
-    public void SetRoomCode(string roomCode)
+    public void SetHospitalInformation(string code, string name, int level, Sprite image)
     {
-        _roomCodeText.text = roomCode;
+        _roomCodeText.text = code;
+        _hospitalImage.sprite = image;
+        _hospitalLevelText.text = $"{level}";
+        _hospitalNameText.text = name;
     }
     public void SetRoomCurrency(int coin, int star)
     {

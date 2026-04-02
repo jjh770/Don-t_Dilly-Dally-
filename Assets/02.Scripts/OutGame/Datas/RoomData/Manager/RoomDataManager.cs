@@ -20,9 +20,13 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public int Star => _roomWallet.TotalStars;
     public RoomCurrency Coin => _roomWallet.Coin;
 
-    public string CurrentLevelName => _roomWallet != null ? _hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value).HospitalName : null;
+    public HospitalLevelDefinitionSO CurrentLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value) : null;
 
     public event Action<int, int> OnRoomDataChanged;
+
+    public event Action OnRoomDataLoaded;
+
+    public event Action<HospitalLevelDefinitionSO> OnHospitalUpgraded;
 
     // ── 초기화 ────────────────────────────────────────────────────────────
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
@@ -63,7 +67,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     private async UniTask LoadRoomDataAsync()
     {
         await LoadCurrentRoom(PhotonNetwork.CurrentRoom.Name);
-        OnRoomDataChanged?.Invoke(Coin.Value, Star);
+        OnRoomDataLoaded?.Invoke();
     }
 
     private async UniTask LoadCurrentRoom(string roomCode)
@@ -133,7 +137,9 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     {
         _roomWallet = _roomWallet.UpgradeHospital(cost);
         OnRoomDataChanged?.Invoke(Coin.Value, Star);
-        Debug.Log($"[RoomDataManager] {CurrentLevelName}로 업그레이드 완료");
+
+        OnHospitalUpgraded?.Invoke(_hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value));
+        Debug.Log($"[RoomDataManager] 업그레이드 완료 - {CurrentLevelDefinition.HospitalName}");
     }
 
 

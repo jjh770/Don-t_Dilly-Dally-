@@ -910,6 +910,9 @@ MonoBehaviour:
   _gameStartButton: {fileID: 346472639}
   _exitButton: {fileID: 1925931272}
   _roomCodeCopyButton: {fileID: 1482588785}
+  _hospitalLevelText: {fileID: 3127034163868688320}
+  _hospitalNameText: {fileID: 3127034163868688322}
+  _hospitalImage: {fileID: 3127034163868688321}
   _roomCoinText: {fileID: 119150068}
   _roomStarsText: {fileID: 119150067}
   _roomCodeText: {fileID: 790507080}
@@ -5374,6 +5377,18 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 241392323}
     m_Modifications:
+    - target: {fileID: 1073062964546898942, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1073062964546898942, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2559431406497771105, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+      propertyPath: m_Name
+      value: Text_Level
+      objectReference: {fileID: 0}
     - target: {fileID: 2877715086756366326, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
       propertyPath: m_Name
       value: AboutRoom
@@ -5484,11 +5499,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7397421143722908315, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 269
+      value: 313
       objectReference: {fileID: 0}
     - target: {fileID: 7397421143722908315, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -116
+      value: -128
       objectReference: {fileID: 0}
     - target: {fileID: 7397421143722908315, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5502,11 +5517,48 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 8615725222154668967, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+      propertyPath: m_Name
+      value: LevelBackground
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+--- !u!114 &3127034163868688320 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7818723500206897440, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+  m_PrefabInstance: {fileID: 3127034163868688319}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3127034163868688321 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8985246086201285394, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+  m_PrefabInstance: {fileID: 3127034163868688319}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &3127034163868688322 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 124193380331722325, guid: 2a1789f6298af9a4399118befd05d91e, type: 3}
+  m_PrefabInstance: {fileID: 3127034163868688319}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1001 &4346073882766595577
 PrefabInstance:
   m_ObjectHideFlags: 0
