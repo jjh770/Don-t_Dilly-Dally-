@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AddressableAssets;
 
 [CreateAssetMenu(fileName = "CustomizingItem", menuName = "Customizing/Item")]
-public class CustomizingItemSO : ScriptableObject, ICustomizingItemSpec
+public class CustomizingItemSO : ScriptableObject
 {
     [Header("Basic Info")]
     [SerializeField] private string _itemId;

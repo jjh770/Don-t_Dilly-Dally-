@@ -143,6 +143,7 @@ public class PortraitManager : PunPersistentSingleton<PortraitManager>
         }
 
         _boundCustomizingManager.OnSaved += HandleLocalAppearanceSaved;
+        _boundCustomizingManager.OnAppearanceApplied += HandleLocalAppearanceSaved;
     }
 
     private void UnbindCustomizingManager()
@@ -153,6 +154,7 @@ public class PortraitManager : PunPersistentSingleton<PortraitManager>
         }
 
         _boundCustomizingManager.OnSaved -= HandleLocalAppearanceSaved;
+        _boundCustomizingManager.OnAppearanceApplied -= HandleLocalAppearanceSaved;
         _boundCustomizingManager = null;
     }
 

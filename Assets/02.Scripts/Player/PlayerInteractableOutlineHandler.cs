@@ -4,10 +4,10 @@ using UnityEngine;
 public class PlayerInteractableOutlineHandler : MonoBehaviour
 {
     [Header("아웃라인 설정")]
-    [SerializeField] private Color _defaultOutlineColor = Color.white;
-    [SerializeField] private Color _compatibleOutlineColor = Color.green;
-    [SerializeField] private Color _incompatibleOutlineColor = Color.red;
-    [SerializeField] private float _outlineWidth = 2f;
+    [SerializeField] private Color _defaultOutlineColor = new Color(1f, 1f, 0.6f, 1f);  // bright warm yellow
+    [SerializeField] private Color _compatibleOutlineColor = new Color(0.2f, 1f, 0.3f, 1f);  // vivid green
+    [SerializeField] private Color _incompatibleOutlineColor = new Color(1f, 0.2f, 0.2f, 1f);  // vivid red
+    [SerializeField] private float _outlineWidth = 5f;
     [SerializeField] private Outline.Mode _outlineMode = Outline.Mode.OutlineVisible;
 
     private PlayerInteractionAbility _interactionAbility;
