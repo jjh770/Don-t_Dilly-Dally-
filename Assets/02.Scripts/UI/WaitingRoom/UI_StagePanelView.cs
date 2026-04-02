@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using DontDillyDally.StageFlow;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,8 @@ public class UI_StagePanelView : MonoBehaviour
     [SerializeField] private UI_StageItemView _itemTemplate;
     [SerializeField] private Transform _contentRoot;
     [SerializeField] private ToggleGroup _toggleGroup;
+    [SerializeField] private TextMeshProUGUI _selectedStageNameText;
+    [SerializeField] private TextMeshProUGUI _selectedStageDescriptionText;
 
     private readonly List<UI_StageItemView> _items = new();
     private UI_StagePanelPresenter _presenter;
@@ -78,15 +81,15 @@ public class UI_StagePanelView : MonoBehaviour
             _items.Add(item);
         }
 
-        SetSelectedStage(selectedStageIndex);
+        StageDefinitionSO selectedStage = stages[selectedStageIndex];
+        SetSelectedStage(selectedStageIndex, selectedStage.StageName, selectedStage.Description);
     }
 
-    public void SetSelectedStage(int selectedStageIndex)
+    public void SetSelectedStage(int selectedStageIndex, string name, string description)
     {
-        foreach (UI_StageItemView item in _items)
-        {
-            item.SetSelectedWithoutNotify(item.StageIndex == selectedStageIndex);
-        }
+        _items[selectedStageIndex].SetSelectedWithoutNotify(true);
+        _selectedStageNameText.text = name;
+        _selectedStageDescriptionText.text = description;
     }
 
     private void HandleItemSelected(int stageIndex)

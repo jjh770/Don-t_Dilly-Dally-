@@ -1,3 +1,5 @@
+using DontDillyDally.StageFlow;
+
 public class UI_StagePanelPresenter
 {
     private readonly UI_StagePanelView _view;
@@ -45,9 +47,9 @@ public class UI_StagePanelPresenter
         Render();
     }
 
-    private void HandleSelectedStageChanged(int selectedStageIndex)
+    private void HandleSelectedStageChanged(int selectedStageIndex, StageDefinitionSO selectedStage)
     {
-        _view?.SetSelectedStage(selectedStageIndex);
+        _view?.SetSelectedStage(selectedStageIndex, selectedStage.StageName, selectedStage.Description);
     }
 
     private void Render()

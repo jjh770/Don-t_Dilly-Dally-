@@ -31,7 +31,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public event Action OnRoomDataLoaded;
 
     public event Action<HospitalLevelDefinitionSO> OnHospitalUpgraded;
-    public event Action<int> OnSelectedStageChanged;
+    public event Action<int, StageDefinitionSO> OnSelectedStageChanged;
 
     // ── 초기화 ────────────────────────────────────────────────────────────
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
@@ -139,7 +139,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         }
 
         _selectedStageIndex = stageIndex;
-        OnSelectedStageChanged?.Invoke(_selectedStageIndex);
+        OnSelectedStageChanged?.Invoke(_selectedStageIndex, _stageCatalog.StageDefinitions[_selectedStageIndex]);
         return true;
     }
 
