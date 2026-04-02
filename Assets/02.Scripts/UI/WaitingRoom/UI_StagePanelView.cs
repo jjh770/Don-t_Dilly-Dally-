@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UI_StagePanelView : MonoBehaviour
+public class UI_StagePanelView : UIPopupBase
 {
     [SerializeField] private UI_StageItemView _itemTemplate;
     [SerializeField] private Transform _contentRoot;
@@ -12,12 +12,16 @@ public class UI_StagePanelView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _selectedStageNameText;
     [SerializeField] private TextMeshProUGUI _selectedStageDescriptionText;
 
+    [SerializeField] private Button _closeButton;
+
     private readonly List<UI_StageItemView> _items = new();
     private UI_StagePanelPresenter _presenter;
     private bool _templatePrepared;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         if (_contentRoot == null && _itemTemplate != null)
         {
             _contentRoot = _itemTemplate.transform.parent;
@@ -37,11 +41,13 @@ public class UI_StagePanelView : MonoBehaviour
     private void OnDisable()
     {
         ClearItems();
+        _closeButton.onClick.RemoveListener(Hide);    
     }
 
     private void OnEnable()
     {
         _presenter?.Initialize();
+        _closeButton.onClick.AddListener(Hide);
     }
 
     public void Initialize(UI_StagePanelPresenter presenter)
@@ -132,5 +138,10 @@ public class UI_StagePanelView : MonoBehaviour
         }
 
         _templatePrepared = true;
+    }
+
+    protected override void OnShow()
+    {
+       
     }
 }
