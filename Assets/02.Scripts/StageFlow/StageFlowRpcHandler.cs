@@ -36,6 +36,8 @@ namespace DontDillyDally.StageFlow
         // ── 이벤트 (StageFlowManager가 구독) ────────────────────────
         public event Action<EGameOverReason> OnGameOverReceived;
         public event Action<SubmittedTray, int, int> OnTraySubmittedReceived; // tray, trayViewId, submitterActorNumber
+        public event Action<CraftedMaterialType, int, int> OnEmergencyMaterialSubmittedReceived; // materialType, itemViewId, submitterActorNumber
+        public event Action<DiagnosisScanType, int> OnEmergencyDiagnosisOperateReceived; // diagnosisType, submitterActorNumber
         public event Action<EmergencyEventKind, EmergencyTriggerSource, CraftedMaterialType, DiagnosisScanType> OnEmergencyStartedReceived;
         public event Action OnEmergencyEndedReceived;
 
@@ -201,6 +203,52 @@ namespace DontDillyDally.StageFlow
         }
 
         // ── 미니게임 RPC 전송 ─────────────────────────────────────────
+        public void SubmitEmergencyMaterial(CraftedMaterialType materialType, int itemViewId = -1)
+        {
+            if (materialType == CraftedMaterialType.None)
+            {
+                Debug.LogWarning("[StageFlow] [RPC] 긴급 재료 제출값이 비어 있습니다.");
+                return;
+            }
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                OnEmergencyMaterialSubmittedReceived?.Invoke(
+                    materialType,
+                    itemViewId,
+                    PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
+                return;
+            }
+
+            photonView.RPC(
+                nameof(RPC_SubmitEmergencyMaterial),
+                RpcTarget.MasterClient,
+                (int)materialType,
+                itemViewId);
+        }
+
+        public void SubmitEmergencyDiagnosisOperate(DiagnosisScanType diagnosisType)
+        {
+            if (diagnosisType == DiagnosisScanType.None)
+            {
+                Debug.LogWarning("[StageFlow] [RPC] 긴급 진단 기계 타입이 비어 있습니다.");
+                return;
+            }
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                OnEmergencyDiagnosisOperateReceived?.Invoke(
+                    diagnosisType,
+                    PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
+                return;
+            }
+
+            photonView.RPC(
+                nameof(RPC_SubmitEmergencyDiagnosisOperate),
+                RpcTarget.MasterClient,
+                (int)diagnosisType);
+        }
+
         public void RequestMiniGame(int targetActorNumber, MiniGameType type)
         {
             if (PhotonNetwork.IsMasterClient)
@@ -362,6 +410,24 @@ namespace DontDillyDally.StageFlow
         }
 
         // ── 미니게임 RPC 수신 ─────────────────────────────────────────
+
+        [PunRPC]
+        private void RPC_SubmitEmergencyMaterial(int materialType, int itemViewId, PhotonMessageInfo info)
+        {
+            CraftedMaterialType submittedMaterial = (CraftedMaterialType)materialType;
+            int submitterActorNumber = info.Sender?.ActorNumber ?? -1;
+            Debug.Log($"[StageFlow] [RPC] 긴급 재료 제출 수신: {submittedMaterial} | Actor {submitterActorNumber}");
+            OnEmergencyMaterialSubmittedReceived?.Invoke(submittedMaterial, itemViewId, submitterActorNumber);
+        }
+
+        [PunRPC]
+        private void RPC_SubmitEmergencyDiagnosisOperate(int diagnosisType, PhotonMessageInfo info)
+        {
+            DiagnosisScanType submittedDiagnosisType = (DiagnosisScanType)diagnosisType;
+            int submitterActorNumber = info.Sender?.ActorNumber ?? -1;
+            Debug.Log($"[StageFlow] [RPC] 긴급 진단 기계 작동 수신: {submittedDiagnosisType} | Actor {submitterActorNumber}");
+            OnEmergencyDiagnosisOperateReceived?.Invoke(submittedDiagnosisType, submitterActorNumber);
+        }
 
         [PunRPC]
         private void RPC_RequestMiniGame(int targetActorNumber, int miniGameType)

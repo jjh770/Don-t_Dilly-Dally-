@@ -10,9 +10,7 @@ namespace DontDillyDally.Data
         [Header("Shared")]
         [SerializeField] private MaterialIconTable _materialIconTable;
 
-        [Header("Tray Event")]
-        [SerializeField] private Sprite _trayEventIcon;
-        [SerializeField] private Sprite _sterilizedBadgeIcon;
+        [Header("Material Event")]
         [SerializeField] private List<TargetMaterialProcessEntry> _targetMaterialProcesses = new List<TargetMaterialProcessEntry>();
 
         [Header("Diagnosis Event")]
@@ -22,8 +20,6 @@ namespace DontDillyDally.Data
         private Dictionary<DiagnosisScanType, Sprite> _diagnosisCache;
 
         public MaterialIconTable MaterialIconTable => _materialIconTable;
-        public Sprite TrayEventIcon => _trayEventIcon;
-        public Sprite SterilizedBadgeIcon => _sterilizedBadgeIcon;
 
         public Sprite GetDiagnosisIcon(DiagnosisScanType diagnosisType)
         {

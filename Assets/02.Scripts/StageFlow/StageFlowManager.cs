@@ -72,6 +72,7 @@ namespace DontDillyDally.StageFlow
         public bool ShouldShowEmergencyUi =>
             IsLocalSurgeon &&
             IsEmergencyActive &&
+            (_emergencyController == null || !_emergencyController.IsDiagnosisOperating) &&
             (_rpc == null || _rpc.CurrentPhase.Value == EStagePhase.Playing);
 
         // ================================================================
@@ -157,6 +158,11 @@ namespace DontDillyDally.StageFlow
                 return string.Empty;
             }
 
+            if (CurrentEmergencyKind == EmergencyEventKind.Tray)
+            {
+                return $"{GetMaterialDisplayName(CurrentEmergencyTrayTarget)} 제출";
+            }
+
             return CurrentEmergencyKind switch
             {
                 EmergencyEventKind.Tray => $"멸균 트레이에 {GetMaterialDisplayName(CurrentEmergencyTrayTarget)} 제출",
@@ -180,7 +186,7 @@ namespace DontDillyDally.StageFlow
         {
             return diagnosisType switch
             {
-                DiagnosisScanType.XRay => "X-Ray",
+                DiagnosisScanType.Radiograph => "X-Ray",
                 _ => diagnosisType.ToString()
             };
         }
@@ -203,6 +209,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 긴급 이벤트 결과 대기 ──────────────────────────────────────
         private UniTaskCompletionSource<EmergencyResumeResult> _emergencyResultTcs;
+        private CancellationTokenSource _diagnosisOperateCts;
 
         // ── 캐시된 델리게이트 (구독 해제용) ─────────────────────────
         private Action _onTimerExpired;
@@ -255,7 +262,8 @@ namespace DontDillyDally.StageFlow
             // 미니게임 RPC 수신
             _rpc.OnMiniGameRequested += HandleMiniGameRequested;
             _rpc.OnMiniGameResultReceived += HandleMiniGameResultReceived;
-            _rpc.OnTraySubmittedReceived += HandleEmergencyTraySubmitted;
+            _rpc.OnEmergencyMaterialSubmittedReceived += HandleEmergencyMaterialSubmitted;
+            _rpc.OnEmergencyDiagnosisOperateReceived += HandleEmergencyDiagnosisOperateReceived;
             _rpc.OnEmergencyStartedReceived += HandleEmergencyStartedReceived;
             _rpc.OnEmergencyEndedReceived += HandleEmergencyEndedReceived;
 
@@ -579,26 +587,66 @@ namespace DontDillyDally.StageFlow
         // 환자 상호작용으로 만들어진 제출 요청을 검증 루프로 전달합니다.
         public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
         {
-            if (_emergencyController != null && _emergencyController.IsActive)
+            return _trayHandler.RequestSubmission(tray, trayViewId);
+        }
+
+        public bool RequestEmergencyMaterialSubmission(CraftedMaterialType materialType, int itemViewId = -1)
+        {
+            if (_emergencyController == null || !_emergencyController.IsActive)
             {
-                if (_emergencyController.CurrentKind != EmergencyEventKind.Tray)
-                {
-                    return false;
-                }
-
-                if (PhotonNetwork.IsMasterClient)
-                {
-                    HandleEmergencyTraySubmitted(tray, trayViewId, PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
-                }
-                else
-                {
-                    _rpc.SubmitTray(tray, trayViewId);
-                }
-
-                return true;
+                return false;
             }
 
-            return _trayHandler.RequestSubmission(tray, trayViewId);
+            if (_emergencyController.CurrentKind != EmergencyEventKind.Tray)
+            {
+                return false;
+            }
+
+            if (materialType == CraftedMaterialType.None)
+            {
+                return false;
+            }
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                HandleEmergencyMaterialSubmitted(materialType, itemViewId, PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
+            }
+            else
+            {
+                _rpc.SubmitEmergencyMaterial(materialType, itemViewId);
+            }
+
+            return true;
+        }
+
+        public bool RequestDiagnosisOperation(DiagnosisScanType diagnosisType)
+        {
+            if (_emergencyController == null || !_emergencyController.IsActive)
+            {
+                return false;
+            }
+
+            if (_emergencyController.CurrentKind != EmergencyEventKind.Diagnosis)
+            {
+                return false;
+            }
+
+            if (diagnosisType == DiagnosisScanType.None)
+            {
+                return false;
+            }
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                HandleEmergencyDiagnosisOperateReceived(diagnosisType, PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
+            }
+            else
+            {
+                _emergencyController.TryBeginDiagnosisOperationLocally(diagnosisType);
+                _rpc.SubmitEmergencyDiagnosisOperate(diagnosisType);
+            }
+
+            return true;
         }
 
         [ContextMenu("Debug/Force Complete Current Patient")]
@@ -910,6 +958,7 @@ namespace DontDillyDally.StageFlow
             if (_emergencyController == null || !_emergencyController.IsActive)
                 return;
 
+            CancelDiagnosisOperateTask();
             EmergencyResumeResult result = _emergencyController.ResolveSuccess();
             _rpc?.BroadcastEmergencyEnd();
             _emergencyResultTcs?.TrySetResult(result);
@@ -921,6 +970,7 @@ namespace DontDillyDally.StageFlow
             if (_emergencyController == null || !_emergencyController.IsActive)
                 return;
 
+            CancelDiagnosisOperateTask();
             EmergencyResumeResult result = _emergencyController.ResolveFailure();
             _rpc?.BroadcastEmergencyEnd();
             _emergencyResultTcs?.TrySetResult(result);
@@ -951,7 +1001,7 @@ namespace DontDillyDally.StageFlow
             _emergencyController.End();
         }
 
-        private void HandleEmergencyTraySubmitted(SubmittedTray tray, int trayViewId, int submitterActorNumber)
+        private void HandleEmergencyMaterialSubmitted(CraftedMaterialType materialType, int itemViewId, int submitterActorNumber)
         {
             if (!PhotonNetwork.IsMasterClient || _emergencyController == null || !_emergencyController.IsActive)
             {
@@ -963,9 +1013,7 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            SyncSubmittedTrayReset(trayViewId);
-
-            if (_emergencyController.EvaluateTraySubmission(tray))
+            if (_emergencyController.EvaluateEmergencyMaterialSubmission(materialType))
             {
                 Debug.Log($"[StageFlow] 긴급 트레이 제출 성공: Actor {submitterActorNumber}");
                 CompleteEmergencySuccess();
@@ -974,6 +1022,67 @@ namespace DontDillyDally.StageFlow
 
             Debug.Log($"[StageFlow] 긴급 트레이 제출 실패: Actor {submitterActorNumber}");
             CompleteEmergencyFailure();
+        }
+
+        private void HandleEmergencyDiagnosisOperateReceived(DiagnosisScanType diagnosisType, int submitterActorNumber)
+        {
+            if (!PhotonNetwork.IsMasterClient || _emergencyController == null || !_emergencyController.IsActive)
+            {
+                return;
+            }
+
+            if (_emergencyController.CurrentKind != EmergencyEventKind.Diagnosis)
+            {
+                return;
+            }
+
+            EmergencyDiagnosisOperationResult result = _emergencyController.TryBeginDiagnosisOperation(diagnosisType);
+            switch (result)
+            {
+                case EmergencyDiagnosisOperationResult.Started:
+                    Debug.Log($"[StageFlow] Diagnosis emergency started: {diagnosisType} | Actor {submitterActorNumber}");
+                    RunDiagnosisEmergencySuccess().Forget();
+                    break;
+
+                case EmergencyDiagnosisOperationResult.Failed:
+                    Debug.Log($"[StageFlow] Diagnosis emergency failed: {diagnosisType} | Actor {submitterActorNumber}");
+                    CompleteEmergencyFailure();
+                    break;
+            }
+        }
+
+        private async UniTaskVoid RunDiagnosisEmergencySuccess()
+        {
+            CancelDiagnosisOperateTask();
+            _diagnosisOperateCts = CancellationTokenSource.CreateLinkedTokenSource(_flowCts.Token);
+
+            try
+            {
+                await UniTask.Delay(TimeSpan.FromSeconds(5f), cancellationToken: _diagnosisOperateCts.Token);
+
+                if (_emergencyController != null &&
+                    _emergencyController.IsActive &&
+                    _emergencyController.CurrentKind == EmergencyEventKind.Diagnosis &&
+                    _emergencyController.IsDiagnosisOperating)
+                {
+                    CompleteEmergencySuccess();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }
+
+        private void CancelDiagnosisOperateTask()
+        {
+            if (_diagnosisOperateCts == null)
+            {
+                return;
+            }
+
+            _diagnosisOperateCts.Cancel();
+            _diagnosisOperateCts.Dispose();
+            _diagnosisOperateCts = null;
         }
 
         private void SyncSubmittedTrayReset(int trayViewId)
@@ -1162,7 +1271,8 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
                 _rpc.OnMiniGameRequested -= HandleMiniGameRequested;
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
-                _rpc.OnTraySubmittedReceived -= HandleEmergencyTraySubmitted;
+                _rpc.OnEmergencyMaterialSubmittedReceived -= HandleEmergencyMaterialSubmitted;
+                _rpc.OnEmergencyDiagnosisOperateReceived -= HandleEmergencyDiagnosisOperateReceived;
                 _rpc.OnEmergencyStartedReceived -= HandleEmergencyStartedReceived;
                 _rpc.OnEmergencyEndedReceived -= HandleEmergencyEndedReceived;
                 _rpc.OnStageRewardGrantedReceived -= OnRewardGrantedReceived;
@@ -1178,6 +1288,7 @@ namespace DontDillyDally.StageFlow
             }
 
             _trayHandler?.Dispose();
+            CancelDiagnosisOperateTask();
         }
     }
 }

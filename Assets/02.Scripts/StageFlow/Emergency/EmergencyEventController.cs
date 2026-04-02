@@ -33,8 +33,8 @@ namespace DontDillyDally.StageFlow
         private static readonly DiagnosisScanType[] s_diagnosisTargets =
         {
             DiagnosisScanType.Ultrasound,
-            DiagnosisScanType.XRay,
-            DiagnosisScanType.ECG
+            DiagnosisScanType.Radiograph,
+            DiagnosisScanType.Encephalograph
         };
 
         public bool IsActive { get; private set; }
@@ -42,6 +42,7 @@ namespace DontDillyDally.StageFlow
         public EmergencyTriggerSource CurrentTriggerSource { get; private set; }
         public CraftedMaterialType CurrentTrayTarget { get; private set; }
         public DiagnosisScanType CurrentDiagnosisTarget { get; private set; }
+        public bool IsDiagnosisOperating { get; private set; }
         public float RemainingTime => !IsActive
             ? 0f
             : Mathf.Max(0f, _durationSec - (Time.unscaledTime - _startedAt));
@@ -112,6 +113,7 @@ namespace DontDillyDally.StageFlow
             CurrentTriggerSource = EmergencyTriggerSource.None;
             CurrentTrayTarget = CraftedMaterialType.None;
             CurrentDiagnosisTarget = DiagnosisScanType.None;
+            IsDiagnosisOperating = false;
             _startedAt = 0f;
             _durationSec = 0f;
         }
@@ -126,21 +128,50 @@ namespace DontDillyDally.StageFlow
             return !IsActive || CurrentKind == EmergencyEventKind.Tray;
         }
 
-        public bool EvaluateTraySubmission(SubmittedTray tray)
+        public bool EvaluateEmergencyMaterialSubmission(CraftedMaterialType materialType)
         {
-            if (!IsActive || CurrentKind != EmergencyEventKind.Tray || tray == null)
+            if (!IsActive || CurrentKind != EmergencyEventKind.Tray)
                 return false;
 
-            if (!tray.IsSterilizedTray || tray.ContainedItemCount != 1)
-                return false;
-
-            var materialTypes = tray.GetContainedMaterialTypes();
-            return materialTypes.Count == 1 && materialTypes[0] == CurrentTrayTarget;
+            return materialType != CraftedMaterialType.None && materialType == CurrentTrayTarget;
         }
 
         public bool HasTimedOut()
         {
-            return IsActive && RemainingTime <= 0f;
+            return IsActive && !IsDiagnosisOperating && RemainingTime <= 0f;
+        }
+
+        public EmergencyDiagnosisOperationResult TryBeginDiagnosisOperation(DiagnosisScanType diagnosisType)
+        {
+            if (!IsActive || CurrentKind != EmergencyEventKind.Diagnosis)
+                return EmergencyDiagnosisOperationResult.Invalid;
+
+            if (IsDiagnosisOperating)
+                return EmergencyDiagnosisOperationResult.Invalid;
+
+            if (diagnosisType == DiagnosisScanType.None)
+                return EmergencyDiagnosisOperationResult.Invalid;
+
+            if (diagnosisType != CurrentDiagnosisTarget)
+                return EmergencyDiagnosisOperationResult.Failed;
+
+            IsDiagnosisOperating = true;
+            return EmergencyDiagnosisOperationResult.Started;
+        }
+
+        public bool TryBeginDiagnosisOperationLocally(DiagnosisScanType diagnosisType)
+        {
+            if (!IsActive || CurrentKind != EmergencyEventKind.Diagnosis)
+                return false;
+
+            if (IsDiagnosisOperating)
+                return false;
+
+            if (diagnosisType == DiagnosisScanType.None || diagnosisType != CurrentDiagnosisTarget)
+                return false;
+
+            IsDiagnosisOperating = true;
+            return true;
         }
 
         public EmergencyResumeResult ResolveSuccess()
@@ -174,9 +205,17 @@ namespace DontDillyDally.StageFlow
             CurrentTriggerSource = triggerSource;
             CurrentTrayTarget = trayTarget;
             CurrentDiagnosisTarget = diagnosisTarget;
+            IsDiagnosisOperating = false;
             _startedAt = Time.unscaledTime;
             _durationSec = kind == EmergencyEventKind.Tray ? TrayDurationSec : DiagnosisDurationSec;
         }
+    }
+
+    public enum EmergencyDiagnosisOperationResult
+    {
+        Invalid = 0,
+        Started,
+        Failed
     }
 
     public enum EmergencyResumeResult

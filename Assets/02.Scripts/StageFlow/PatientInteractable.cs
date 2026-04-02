@@ -11,6 +11,7 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private bool _allowOnlyCurrentPatient = true;
         [SerializeField] private bool _surgeonOnly = true;
 
+        public int PatientIndex => _patientIndex;
         public bool IsInteracting => false;
         public Transform Transform => transform;
 
@@ -45,8 +46,33 @@ namespace DontDillyDally.StageFlow
             }
 
             IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
+            ItemObject heldItem = interactionAbility.CurrentHeldItem;
 
-            TrayItem trayItem = interactionAbility.CurrentHeldItem as TrayItem;
+            if (stageFlowManager.IsEmergencyActive &&
+                stageFlowManager.CurrentEmergencyKind == EmergencyEventKind.Tray)
+            {
+                BasicMaterialItem materialItem = heldItem as BasicMaterialItem;
+                if (materialItem == null)
+                {
+                    return;
+                }
+
+                int itemViewId = -1;
+                if (materialItem.TryGetComponent(out Photon.Pun.PhotonView itemView))
+                {
+                    itemViewId = itemView.ViewID;
+                }
+
+                if (!stageFlowManager.RequestEmergencyMaterialSubmission(materialItem.MaterialType, itemViewId))
+                {
+                    return;
+                }
+
+                heldItemInteractor?.TryConsumeHeldItem(materialItem);
+                return;
+            }
+
+            TrayItem trayItem = heldItem as TrayItem;
             if (trayItem == null)
             {
                 return;
@@ -79,9 +105,6 @@ namespace DontDillyDally.StageFlow
 
         public bool CanAcceptItem(ItemObject item)
         {
-            if (item is not TrayItem)
-                return false;
-
             StageFlowManager stageFlowManager = StageFlowManager.Instance;
             if (stageFlowManager == null || !stageFlowManager.CanLocalInteractWithPatient)
                 return false;
@@ -93,7 +116,13 @@ namespace DontDillyDally.StageFlow
                 stageFlowManager.CurrentPatientIndex.Value != _patientIndex)
                 return false;
 
-            return true;
+            if (stageFlowManager.IsEmergencyActive &&
+                stageFlowManager.CurrentEmergencyKind == EmergencyEventKind.Tray)
+            {
+                return item is BasicMaterialItem;
+            }
+
+            return item is TrayItem;
         }
     }
 }

@@ -23,8 +23,6 @@ public class EmergencyWorldUI : MonoBehaviour
 
     [Header("Tray Layout")]
     [SerializeField] private GameObject _trayLayout;
-    [SerializeField] private Image _trayEventIconImage;
-    [SerializeField] private Image _sterilizedIconImage;
     [SerializeField] private Image _targetMaterialIconImage;
     [SerializeField] private Image _processActionIconImage;
 
@@ -119,19 +117,23 @@ public class EmergencyWorldUI : MonoBehaviour
         CraftedMaterialType targetMaterial = _stageFlowManager.CurrentEmergencyTrayTarget;
         MaterialIconTable iconTable = _uiCatalog.MaterialIconTable;
 
-        SetImageSprite(_trayEventIconImage, _uiCatalog.TrayEventIcon);
-        SetImageSprite(_sterilizedIconImage, _uiCatalog.SterilizedBadgeIcon);
         SetImageSprite(_targetMaterialIconImage, iconTable != null ? iconTable.GetMaterialIcon(targetMaterial) : null);
 
         Sprite actionIcon = null;
+        bool shouldShowProcessAction = false;
         if (_uiCatalog.TryGetTargetMaterialProcess(targetMaterial, out EmergencyUiCatalogSO.TargetMaterialProcessEntry entry) &&
             iconTable != null &&
             entry.ProcessAction != ActionType.None)
         {
             actionIcon = iconTable.GetActionIcon(entry.ProcessAction);
+            shouldShowProcessAction = actionIcon != null;
         }
 
         SetImageSprite(_processActionIconImage, actionIcon);
+        if (_processActionIconImage != null)
+        {
+            _processActionIconImage.gameObject.SetActive(shouldShowProcessAction);
+        }
     }
 
     private void UpdateDiagnosisIcon()
