@@ -2,8 +2,8 @@ using System.Collections.Generic;
 
 public interface ICustomizingCatalog
 {
-    ICustomizingItemSpec GetItemById(string itemId);
-    ICustomizingItemSpec GetDefaultItem(CustomizingType category);
-    IReadOnlyList<ICustomizingItemSpec> GetItemsByCategory(CustomizingType category);
-    IReadOnlyList<ICustomizingItemSpec> GetUnlockedItemsByCategory(CustomizingType category);
+    CustomizingItemSO GetItemById(string itemId);
+    CustomizingItemSO GetDefaultItem(CustomizingType category);
+    IReadOnlyList<CustomizingItemSO> GetItemsByCategory(CustomizingType category);
+    IReadOnlyList<CustomizingItemSO> GetUnlockedItemsByCategory(CustomizingType category);
 }

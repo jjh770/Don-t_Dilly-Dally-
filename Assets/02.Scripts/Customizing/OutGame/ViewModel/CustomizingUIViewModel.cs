@@ -109,6 +109,7 @@ public class CustomizingUIViewModel
     public void Open()
     {
         _manager.OpenCustomizingUI();
+        AutoSelectSlot();
         RefreshVisibleItems();
         OnStateChanged?.Invoke();
     }

@@ -83,4 +83,22 @@ public class CustomizingSaveData : ISaveData
             Slots.Add(new CustomizingSlotData($"Slot {Slots.Count + 1}"));
         }
     }
+
+    public void MergeMetaFrom(CustomizingSaveData source)
+    {
+        if (source == null) return;
+
+        foreach (var itemId in source.UnlockedItems)
+        {
+            UnlockedItems.Add(itemId);
+        }
+
+        foreach (var slot in source.Slots)
+        {
+            Slots.Add(slot);
+        }
+
+        EnsureSlots();
+        LastSavedAt = DateTime.UtcNow.ToString("o");
+    }
 }
