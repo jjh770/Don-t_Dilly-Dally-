@@ -77,7 +77,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
             _domain,
             _repository,
             () => _currentSaveData,
-            data => _currentSaveData = data
+            () => _domain.CopyStateTo(_savedState)
         );
         _slotManager.OnSlotSelected += index => OnSlotSelected?.Invoke(index);
         _slotManager.OnSlotSaved += index => OnSlotSaved?.Invoke(index);
@@ -270,21 +270,11 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public bool HasUnsavedChanges()
     {
-        if (_domain == null || _savedState == null) return false;
+        if (_domain == null || _slotManager == null) return false;
 
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
-        {
-            if (type == CustomizingType.None) continue;
+        var selectedSlot = _slotManager.GetSlot(_slotManager.SelectedSlotIndex);
+        if (selectedSlot == null || selectedSlot.IsEmpty()) return true;
 
-            var currentItem = _domain.GetEquipped(type);
-            var savedItemId = _savedState.GetEquippedId(type);
-
-            string currentItemId = currentItem?.ItemId;
-
-            if (currentItemId != savedItemId)
-                return true;
-        }
-
-        return false;
+        return !_domain.MatchesSlotData(selectedSlot);
     }
 }

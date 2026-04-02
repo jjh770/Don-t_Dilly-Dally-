@@ -4,10 +4,12 @@ using Cysharp.Threading.Tasks;
 
 public class CustomizingSlotManager
 {
+    private const string DefaultSlotNameFormat = "슬롯 {0}";
+
     private readonly Customizing _domain;
     private readonly ICustomizingRepository _repository;
     private readonly Func<CustomizingSaveData> _getSaveData;
-    private readonly Action<CustomizingSaveData> _setSaveData;
+    private readonly Action _syncSavedState;
 
     private int _selectedSlotIndex = 0;
 
@@ -23,21 +25,21 @@ public class CustomizingSlotManager
         Customizing domain,
         ICustomizingRepository repository,
         Func<CustomizingSaveData> getSaveData,
-        Action<CustomizingSaveData> setSaveData)
+        Action syncSavedState)
     {
         _domain = domain;
         _repository = repository;
         _getSaveData = getSaveData;
-        _setSaveData = setSaveData;
+        _syncSavedState = syncSavedState;
     }
 
     public void SelectSlot(int index)
     {
-        if (index < 0 || index >= SlotCount)
-            return;
+        if (index < 0 || index >= SlotCount) return;
 
         _selectedSlotIndex = index;
         OnSlotSelected?.Invoke(index);
+        LoadFromSlot(index);
     }
 
     public void SaveToSelectedSlot()
@@ -48,15 +50,13 @@ public class CustomizingSlotManager
     public void SaveToSlot(int index)
     {
         var saveData = _getSaveData();
-        if (saveData == null || index < 0 || index >= SlotCount)
-            return;
+        if (saveData == null || index < 0 || index >= SlotCount) return;
 
         var slotData = CreateSlotDataFromCurrentState();
-        if (slotData == null)
-            return;
+        if (slotData == null) return;
 
         var existingSlot = saveData.GetSlot(index);
-        slotData.Name = existingSlot?.Name ?? $"Slot {index + 1}";
+        slotData.Name = existingSlot?.Name ?? string.Format(DefaultSlotNameFormat, index + 1);
 
         saveData.SetSlot(index, slotData);
         _repository.Save(saveData).Forget();
@@ -67,26 +67,23 @@ public class CustomizingSlotManager
     public void LoadFromSlot(int index)
     {
         var saveData = _getSaveData();
-        if (saveData == null || index < 0 || index >= SlotCount)
-            return;
+        if (saveData == null || index < 0 || index >= SlotCount) return;
 
         var slot = saveData.GetSlot(index);
-        if (slot == null || slot.IsEmpty())
-            return;
+        if (slot == null || slot.IsEmpty()) return;
 
         _domain.ApplySlotData(slot);
+        _syncSavedState?.Invoke();
         OnSlotApplied?.Invoke();
     }
 
     public void SetSlotName(int index, string name)
     {
         var saveData = _getSaveData();
-        if (saveData == null || index < 0 || index >= SlotCount)
-            return;
+        if (saveData == null || index < 0 || index >= SlotCount) return;
 
         var slot = saveData.GetSlot(index);
-        if (slot == null)
-            return;
+        if (slot == null) return;
 
         slot.Name = name;
         _repository.Save(saveData).Forget();
@@ -97,11 +94,12 @@ public class CustomizingSlotManager
     public string GetSlotName(int index)
     {
         var saveData = _getSaveData();
-        if (saveData == null || index < 0 || index >= SlotCount)
-            return $"Slot {index + 1}";
+        var defaultName = string.Format(DefaultSlotNameFormat, index + 1);
+
+        if (saveData == null || index < 0 || index >= SlotCount) return defaultName;
 
         var slot = saveData.GetSlot(index);
-        return slot?.Name ?? $"Slot {index + 1}";
+        return slot?.Name ?? defaultName;
     }
 
     public CustomizingSlotData GetSlot(int index)
@@ -123,8 +121,7 @@ public class CustomizingSlotManager
     public int FindMatchingSlot()
     {
         var saveData = _getSaveData();
-        if (saveData == null || _domain == null)
-            return -1;
+        if (saveData == null || _domain == null) return -1;
 
         for (int i = 0; i < saveData.Slots.Count; i++)
         {

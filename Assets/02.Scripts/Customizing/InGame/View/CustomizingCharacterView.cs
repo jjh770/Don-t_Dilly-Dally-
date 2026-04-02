@@ -161,6 +161,26 @@ public class CustomizingCharacterView : MonoBehaviour
 
     public void ApplyAll(Func<CustomizingType, CustomizingItemSO> itemGetter)
     {
+        ApplyAllAsync(itemGetter).Forget();
+    }
+
+    private async UniTask ApplyAllAsync(Func<CustomizingType, CustomizingItemSO> itemGetter)
+    {
+        // 1. 모든 아이템 수집
+        var items = new List<CustomizingItemSO>();
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
+        {
+            var item = itemGetter(type);
+            if (item != null && item.HasAssetRef)
+            {
+                items.Add(item);
+            }
+        }
+
+        // 2. 프리로드
+        await PreloadItemsAsync(items);
+
+        // 3. 적용 (이미 캐시되어 있으므로 빠름)
         foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
             var item = itemGetter(type);

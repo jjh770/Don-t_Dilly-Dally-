@@ -7,9 +7,11 @@ public class CustomizingSaveData : ISaveData
     public Dictionary<int, string> SelectedItems = new Dictionary<int, string>();
     public HashSet<string> UnlockedItems = new HashSet<string>();
     public List<CustomizingSlotData> Slots = new List<CustomizingSlotData>();
+    public int SelectedSlotIndex = 0;
     public string LastSavedAt { get; set; }
 
     public const int MaxSlotCount = 3;
+    private const string DefaultSlotNameFormat = "슬롯 {0}";
 
     public static CustomizingSaveData Default
     {
@@ -23,7 +25,7 @@ public class CustomizingSaveData : ISaveData
             };
             for (int i = 0; i < MaxSlotCount; i++)
             {
-                data.Slots.Add(new CustomizingSlotData($"Slot {i + 1}"));
+                data.Slots.Add(new CustomizingSlotData(string.Format(DefaultSlotNameFormat, i + 1)));
             }
             return data;
         }
@@ -70,7 +72,7 @@ public class CustomizingSaveData : ISaveData
 
         while (Slots.Count <= index)
         {
-            Slots.Add(new CustomizingSlotData($"Slot {Slots.Count + 1}"));
+            Slots.Add(new CustomizingSlotData(string.Format(DefaultSlotNameFormat, Slots.Count + 1)));
         }
 
         Slots[index] = slot;
@@ -80,7 +82,7 @@ public class CustomizingSaveData : ISaveData
     {
         while (Slots.Count < MaxSlotCount)
         {
-            Slots.Add(new CustomizingSlotData($"Slot {Slots.Count + 1}"));
+            Slots.Add(new CustomizingSlotData(string.Format(DefaultSlotNameFormat, Slots.Count + 1)));
         }
     }
 
@@ -98,6 +100,7 @@ public class CustomizingSaveData : ISaveData
             Slots.Add(slot);
         }
 
+        SelectedSlotIndex = source.SelectedSlotIndex;
         EnsureSlots();
         LastSavedAt = DateTime.UtcNow.ToString("o");
     }
