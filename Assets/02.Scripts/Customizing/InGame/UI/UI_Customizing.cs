@@ -24,6 +24,9 @@ public class UI_Customizing : MonoBehaviour
     [Header("정보 표시")]
     [SerializeField] private TextMeshProUGUI _selectedItemNameText;
 
+    [Header("슬롯")]
+    [SerializeField] private UI_CustomizingSlotPanel _slotPanel;
+
     [Header("탭 색상")]
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
     [SerializeField] private Color _tabNormalColor = Color.white;
@@ -40,6 +43,8 @@ public class UI_Customizing : MonoBehaviour
 
         _viewModel = viewModel ?? throw new System.ArgumentNullException(nameof(viewModel));
         SubscribeToViewModel();
+
+        _slotPanel?.Initialize(_viewModel);
     }
 
     private void Start()
@@ -54,6 +59,7 @@ public class UI_Customizing : MonoBehaviour
         SetupCategoryTabs();
 
         _viewModel.Open();
+        _viewModel.AutoSelectSlot();
         SelectCategory(_viewModel.CurrentCategory);
         UpdateSaveButtonState();
     }
@@ -150,6 +156,7 @@ public class UI_Customizing : MonoBehaviour
     private void OnSaveClicked()
     {
         _viewModel?.Save();
+        _viewModel?.SaveToSelectedSlot();
         OnSaved?.Invoke();
     }
 

@@ -64,7 +64,7 @@ public class Customizing
     }
 
     // 장착 가능 여부 검사
-    public EEquipResult CanEquip(ICustomizingItemSpec item)
+    public EEquipResult CanEquip(CustomizingItemSO item)
     {
         if (item == null) return EEquipResult.InvalidItem;
         if (_state.IsEquippedItem(item.Category, item.ItemId)) return EEquipResult.AlreadyEquipped;
@@ -80,7 +80,7 @@ public class Customizing
     }
 
     // 아이템 장착
-    public EEquipResult TryEquip(ICustomizingItemSpec item)
+    public EEquipResult TryEquip(CustomizingItemSO item)
     {
         var result = CanEquip(item);
         if (result != EEquipResult.Equipped && result != EEquipResult.AlreadyEquipped)
@@ -94,7 +94,7 @@ public class Customizing
     }
 
     // 재클릭 시 해제
-    public EEquipResult ToggleEquip(ICustomizingItemSpec item)
+    public EEquipResult ToggleEquip(CustomizingItemSO item)
     {
         if (item == null) return EEquipResult.InvalidItem;
 
@@ -119,9 +119,51 @@ public class Customizing
     }
 
     // 현재 장착된 아이템 조회
-    public ICustomizingItemSpec GetEquipped(CustomizingType category)
+    public CustomizingItemSO GetEquipped(CustomizingType category)
     {
         var itemId = _state.GetEquippedId(category);
         return !string.IsNullOrEmpty(itemId) ? _catalog.GetItemById(itemId) : null;
+    }
+
+    // ========== 상태 조작 메서드 ==========
+
+    // 저장 상태로 복원
+    public void RestoreFromState(CustomizingState savedState)
+    {
+        if (savedState == null) return;
+        _state.CopyFrom(savedState);
+    }
+
+    // 현재 상태를 외부 상태 객체로 복사
+    public void CopyStateTo(CustomizingState target)
+    {
+        if (target == null) return;
+        target.CopyFrom(_state);
+    }
+
+    // 슬롯 데이터 적용
+    public void ApplySlotData(CustomizingSlotData slotData)
+    {
+        if (slotData == null || slotData.IsEmpty()) return;
+
+        _state.Clear();
+        var equippedItems = slotData.ToEquippedItems();
+        foreach (var kvp in equippedItems)
+        {
+            _state.SetEquipped(kvp.Key, kvp.Value);
+        }
+    }
+
+    // 현재 장착 아이템 ID 스냅샷 반환
+    public IReadOnlyDictionary<CustomizingType, string> GetEquippedSnapshot()
+    {
+        return _state.GetAll();
+    }
+
+    // 현재 상태와 슬롯 데이터 일치 여부 확인
+    public bool MatchesSlotData(CustomizingSlotData slotData)
+    {
+        if (slotData == null) return false;
+        return slotData.Matches(_state.GetAll());
     }
 }
