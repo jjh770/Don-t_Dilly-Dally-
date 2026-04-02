@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DontDillyDally.Data;
 using UnityEngine;
 
@@ -7,9 +8,10 @@ namespace DontDillyDally.StageFlow
     {
         [Header("Diagnosis")]
         [SerializeField] private DiagnosisScanType _machineType = DiagnosisScanType.None;
-        [SerializeField] private float _patientDetectionRadius = 2.5f;
 
         public DiagnosisScanType MachineType => _machineType;
+
+        private readonly Dictionary<int, int> _patientZoneCounts = new Dictionary<int, int>();
 
         public bool TryHandleEmergencyInteract(Transform interactor)
         {
@@ -35,6 +37,20 @@ namespace DontDillyDally.StageFlow
             return stageFlowManager.RequestDiagnosisOperation(_machineType);
         }
 
+        public bool ShouldShowOperationTimerUi(StageFlowManager stageFlowManager)
+        {
+            if (stageFlowManager == null ||
+                !stageFlowManager.IsLocalSurgeon ||
+                !stageFlowManager.IsEmergencyActive ||
+                stageFlowManager.CurrentEmergencyKind != EmergencyEventKind.Diagnosis ||
+                !stageFlowManager.IsEmergencyDiagnosisOperating)
+            {
+                return false;
+            }
+
+            return stageFlowManager.CurrentEmergencyDiagnosisTarget == _machineType;
+        }
+
         private bool IsNearCurrentPatient(StageFlowManager stageFlowManager)
         {
             if (stageFlowManager == null)
@@ -42,21 +58,41 @@ namespace DontDillyDally.StageFlow
                 return false;
             }
 
-            PatientInteractable[] patients = FindObjectsOfType<PatientInteractable>(true);
             int currentPatientIndex = stageFlowManager.CurrentPatientIndex.Value;
-            for (int i = 0; i < patients.Length; i++)
-            {
-                PatientInteractable patient = patients[i];
-                if (patient == null || patient.PatientIndex != currentPatientIndex)
-                {
-                    continue;
-                }
+            return _patientZoneCounts.TryGetValue(currentPatientIndex, out int count) && count > 0;
+        }
 
-                float sqrDistance = (patient.transform.position - transform.position).sqrMagnitude;
-                return sqrDistance <= _patientDetectionRadius * _patientDetectionRadius;
+        public void NotifyPatientZoneEntered(int patientIndex)
+        {
+            if (patientIndex < 0)
+            {
+                return;
             }
 
-            return false;
+            if (_patientZoneCounts.TryGetValue(patientIndex, out int count))
+            {
+                _patientZoneCounts[patientIndex] = count + 1;
+            }
+            else
+            {
+                _patientZoneCounts[patientIndex] = 1;
+            }
+        }
+
+        public void NotifyPatientZoneExited(int patientIndex)
+        {
+            if (!_patientZoneCounts.TryGetValue(patientIndex, out int count))
+            {
+                return;
+            }
+
+            if (count <= 1)
+            {
+                _patientZoneCounts.Remove(patientIndex);
+                return;
+            }
+
+            _patientZoneCounts[patientIndex] = count - 1;
         }
     }
 }

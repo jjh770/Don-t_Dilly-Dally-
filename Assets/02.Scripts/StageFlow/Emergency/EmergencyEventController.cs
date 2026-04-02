@@ -21,7 +21,7 @@ namespace DontDillyDally.StageFlow
     public sealed class EmergencyEventController
     {
         private const float TrayDurationSec = 20f;
-        private const float DiagnosisDurationSec = 5f;
+        private const float DiagnosisDurationSec = 15f;
 
         private static readonly CraftedMaterialType[] s_trayTargets =
         {
@@ -43,12 +43,16 @@ namespace DontDillyDally.StageFlow
         public CraftedMaterialType CurrentTrayTarget { get; private set; }
         public DiagnosisScanType CurrentDiagnosisTarget { get; private set; }
         public bool IsDiagnosisOperating { get; private set; }
+        public float DiagnosisOperationRemainingTime => !IsDiagnosisOperating
+            ? 0f
+            : Mathf.Max(0f, DiagnosisDurationSec - (Time.unscaledTime - _diagnosisOperationStartedAt));
         public float RemainingTime => !IsActive
             ? 0f
             : Mathf.Max(0f, _durationSec - (Time.unscaledTime - _startedAt));
 
         private float _startedAt;
         private float _durationSec;
+        private float _diagnosisOperationStartedAt;
 
         public bool CanBegin(
             EStagePhase currentPhase,
@@ -116,6 +120,7 @@ namespace DontDillyDally.StageFlow
             IsDiagnosisOperating = false;
             _startedAt = 0f;
             _durationSec = 0f;
+            _diagnosisOperationStartedAt = 0f;
         }
 
         public bool CanAcceptNormalTraySubmission()
@@ -156,6 +161,7 @@ namespace DontDillyDally.StageFlow
                 return EmergencyDiagnosisOperationResult.Failed;
 
             IsDiagnosisOperating = true;
+            _diagnosisOperationStartedAt = Time.unscaledTime;
             return EmergencyDiagnosisOperationResult.Started;
         }
 
@@ -171,21 +177,14 @@ namespace DontDillyDally.StageFlow
                 return false;
 
             IsDiagnosisOperating = true;
+            _diagnosisOperationStartedAt = Time.unscaledTime;
             return true;
         }
 
         public EmergencyResumeResult ResolveSuccess()
         {
-            EmergencyResumeResult result = CurrentTriggerSource switch
-            {
-                EmergencyTriggerSource.RecipeFail => EmergencyResumeResult.AdvanceToNextRecipe,
-                EmergencyTriggerSource.MiniGameFail => EmergencyResumeResult.AdvanceToNextRecipe,
-                EmergencyTriggerSource.Random => EmergencyResumeResult.ResumeCurrentRecipe,
-                _ => EmergencyResumeResult.ResumeCurrentRecipe
-            };
-
             End();
-            return result;
+            return EmergencyResumeResult.ResumeCurrentRecipe;
         }
 
         public EmergencyResumeResult ResolveFailure()
@@ -208,6 +207,7 @@ namespace DontDillyDally.StageFlow
             IsDiagnosisOperating = false;
             _startedAt = Time.unscaledTime;
             _durationSec = kind == EmergencyEventKind.Tray ? TrayDurationSec : DiagnosisDurationSec;
+            _diagnosisOperationStartedAt = 0f;
         }
     }
 

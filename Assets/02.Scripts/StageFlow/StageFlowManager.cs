@@ -60,6 +60,8 @@ namespace DontDillyDally.StageFlow
         public bool IsLocalSurgeon => LocalRole == EStageRole.Surgeon;
         public bool IsLocalAssistant => LocalRole == EStageRole.Assistant;
         public bool IsEmergencyActive => _emergencyController != null && _emergencyController.IsActive;
+        public bool IsEmergencyDiagnosisOperating => _emergencyController != null && _emergencyController.IsDiagnosisOperating;
+        public float EmergencyDiagnosisOperationRemainingTime => _emergencyController?.DiagnosisOperationRemainingTime ?? 0f;
         public EmergencyEventKind CurrentEmergencyKind => _emergencyController?.CurrentKind ?? EmergencyEventKind.None;
         public float EmergencyRemainingTime => _emergencyController?.RemainingTime ?? 0f;
         public CraftedMaterialType CurrentEmergencyTrayTarget => _emergencyController?.CurrentTrayTarget ?? CraftedMaterialType.None;
@@ -1015,12 +1017,12 @@ namespace DontDillyDally.StageFlow
 
             if (_emergencyController.EvaluateEmergencyMaterialSubmission(materialType))
             {
-                Debug.Log($"[StageFlow] 긴급 트레이 제출 성공: Actor {submitterActorNumber}");
+                Debug.Log($"[StageFlow] 긴급 재료 제출 성공: Actor {submitterActorNumber}");
                 CompleteEmergencySuccess();
                 return;
             }
 
-            Debug.Log($"[StageFlow] 긴급 트레이 제출 실패: Actor {submitterActorNumber}");
+            Debug.Log($"[StageFlow] 긴급 재료 제출 실패: Actor {submitterActorNumber}");
             CompleteEmergencyFailure();
         }
 
