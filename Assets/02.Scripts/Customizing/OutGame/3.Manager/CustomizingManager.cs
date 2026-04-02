@@ -28,6 +28,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     public event Action OnSaved;
     public event Action OnLoaded;
     public event Action<string> OnItemUnlocked;
+    public event Action OnAppearanceApplied;
 
     // 슬롯 이벤트
     public event Action OnSlotLoaded;
@@ -187,7 +188,12 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     // ========== UI 상태 관리 ==========
 
     public void OpenCustomizingUI() => ResetToSaved();
-    public void CloseCustomizingUI() => ResetToSaved();
+
+    public void CloseCustomizingUI()
+    {
+        ResetToSaved();
+        OnAppearanceApplied?.Invoke();
+    }
 
     public void ResetToSaved()
     {
