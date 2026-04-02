@@ -14,20 +14,32 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     [Header("세팅")]
     [SerializeField] private string _userId = "local_user";
-    [SerializeField] private bool _autoLoadOnStart = true;
 
     private Customizing _domain;
     private ICustomizingRepository _repository;
     private CustomizingState _savedState;
     private CustomizingSaveData _currentSaveData;
 
+    private CustomizingSlotManager _slotManager;
+    private CustomizingUnlockManager _unlockManager;
+
     public event Action OnInitialized;
     public event Action<CustomizingType, CustomizingItemSO> OnItemChanged;
     public event Action OnSaved;
     public event Action OnLoaded;
     public event Action<string> OnItemUnlocked;
+    public event Action OnAppearanceApplied;
 
-    public bool IsInitialized => _domain != null;
+    // 슬롯 이벤트
+    public event Action OnSlotLoaded;
+    public event Action<int> OnSlotSelected;
+    public event Action<int> OnSlotSaved;
+    public event Action<int, string> OnSlotNameChanged;
+
+    public bool IsInitialized => _domain != null;                           // 도메인이 생성됐으면 초기화된 걸로 판단
+    public int SelectedSlotIndex => _slotManager?.SelectedSlotIndex ?? 0;   // 현재 슬롯 인덱스는 _slotManager가 관리
+    public int SlotCount => CustomizingSaveData.MaxSlotCount;
+    public bool IsSlotLoaded => _currentSaveData != null;
 
     private void Awake()
     {
@@ -46,22 +58,13 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     private void Start()
     {
         Initialize();
-
-        if (_autoLoadOnStart) Load();
+        Load();
     }
 
     public void Initialize()
     {
-        if (_catalog == null)
-        {
-            Debug.LogError("[CustomizingManager] 카탈로그가 할당되지 않았습니다.");
-            return;
-        }
-        if (_baseEquipmentCatalog == null)
-        {
-            Debug.LogError("[CustomizingManager] 기본 장착 카탈로그가 할당되지 않았습니다.");
-            return;
-        }
+        if (_catalog == null) return;
+        if (_baseEquipmentCatalog == null) return;
 
         _catalog.Initialize();
         _baseEquipmentCatalog.Initialize();
@@ -70,8 +73,33 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         _domain = new Customizing(_catalog);
         _savedState = new CustomizingState();
 
+        // 슬롯 매니저 초기화
+        _slotManager = new CustomizingSlotManager(
+            _domain,
+            _repository,
+            () => _currentSaveData,
+            () => _domain.CopyStateTo(_savedState)
+        );
+        _slotManager.OnSlotSelected += index => OnSlotSelected?.Invoke(index);
+        _slotManager.OnSlotSaved += index => OnSlotSaved?.Invoke(index);
+        _slotManager.OnSlotNameChanged += (index, name) => OnSlotNameChanged?.Invoke(index, name);
+        _slotManager.OnSlotApplied += () => OnLoaded?.Invoke();
+
+        // 해금 매니저 초기화
+        _unlockManager = new CustomizingUnlockManager(
+            _domain,
+            _catalog,
+            _repository,
+            _attendanceRewardTable,
+            () => _currentSaveData,
+            data => _currentSaveData = data
+        );
+        _unlockManager.OnItemUnlocked += itemId => OnItemUnlocked?.Invoke(itemId);
+
         OnInitialized?.Invoke();
     }
+
+    // ========== 저장/로드 ==========
 
     public void Load()
     {
@@ -80,55 +108,40 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public async UniTask LoadAsync()
     {
-        if (_domain == null)
-        {
-            Debug.LogError("[CustomizingManager] 초기화되지 않음");
-            return;
-        }
+        if (_domain == null) return;
 
         _currentSaveData = await _repository.Load();
 
         if (_currentSaveData != null && _currentSaveData.SelectedItems.Count > 0)
+        {
             _domain.RestoreFromSaveData(_currentSaveData);
+        }
         else
+        {
             _domain.InitializeWithDefaults();
+        }
 
-        _savedState.CopyFrom(_domain.State);
-
-        Debug.Log($"[CustomizingManager] 로드 완료. 해금된 아이템 수: {_currentSaveData?.UnlockedItems?.Count ?? 0}");
-        OnLoaded?.Invoke();
+        _domain.CopyStateTo(_savedState);   // 지금 상태를 세이브 데이터에 복사하고
+        OnLoaded?.Invoke();                 // UI를 갱신하고
+        OnSlotLoaded?.Invoke();             // 슬롯 로드 완료 알림
     }
 
     public void Save()
     {
-        if (_domain == null)
-        {
-            Debug.LogError("[CustomizingManager] 초기화되지 않음");
-            return;
-        }
+        if (_domain == null) return;
 
-        _savedState.CopyFrom(_domain.State);
+        _domain.CopyStateTo(_savedState);
 
         var saveData = _domain.ToSaveData();
-        saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
-
-        // 기존 해금 데이터 유지
-        if (_currentSaveData != null)
-        {
-            foreach (var itemId in _currentSaveData.UnlockedItems)
-            {
-                saveData.UnlockedItems.Add(itemId);
-            }
-        }
+        saveData.MergeMetaFrom(_currentSaveData);
 
         _currentSaveData = saveData;
         _repository.Save(saveData).Forget();
-
-        Debug.Log("[CustomizingManager] 저장 완료");
         OnSaved?.Invoke();
     }
 
-    // 아이템 선택
+    // ========== 아이템 선택/토글 ==========
+
     public EEquipResult SelectItem(CustomizingItemSO item)
     {
         if (_domain == null) return EEquipResult.InvalidItem;
@@ -144,7 +157,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return result;
     }
 
-    // 재클릭 시 해제
     public EEquipResult ToggleItem(CustomizingItemSO item)
     {
         if (_domain == null) return EEquipResult.InvalidItem;
@@ -155,9 +167,13 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         if (result.HasChanged())
         {
             if (result == EEquipResult.Equipped)
+            {
                 OnItemChanged?.Invoke(item.Category, item);
+            }
             else if (result == EEquipResult.Unequipped)
+            {
                 OnItemChanged?.Invoke(item.Category, null);
+            }
         }
 
         return result;
@@ -169,43 +185,48 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return SelectItem(item);
     }
 
-    public void OpenCustomizingUI()
-    {
-        if (_domain == null) return;
+    // ========== UI 상태 관리 ==========
 
-        _domain.State.CopyFrom(_savedState);
-        Debug.Log("[CustomizingManager] 커스터마이징 UI 열림 - Working State 초기화");
-        OnLoaded?.Invoke();
-    }
+    public void OpenCustomizingUI() => ResetToSaved();
 
     public void CloseCustomizingUI()
     {
-        if (_domain == null) return;
-
-        _domain.State.CopyFrom(_savedState);
-        Debug.Log("[CustomizingManager] 커스터마이징 UI 닫힘 - Saved State로 복원");
-        OnLoaded?.Invoke();
+        ResetToSaved();
+        OnAppearanceApplied?.Invoke();
     }
 
     public void ResetToSaved()
     {
         if (_domain == null) return;
-
-        _domain.State.CopyFrom(_savedState);
-        Debug.Log("[CustomizingManager] Saved State로 리셋");
+        _domain.RestoreFromState(_savedState);
         OnLoaded?.Invoke();
     }
 
-    public void ResetAll()
-    {
-        ResetToSaved();
-    }
+    // ========== 슬롯 API (위임) ==========
+
+    public void SelectSlot(int index) => _slotManager?.SelectSlot(index);
+    public void SaveToSelectedSlot() => _slotManager?.SaveToSelectedSlot();
+    public void SaveToSlot(int index) => _slotManager?.SaveToSlot(index);
+    public void LoadFromSlot(int index) => _slotManager?.LoadFromSlot(index);
+    public void SetSlotName(int index, string name) => _slotManager?.SetSlotName(index, name);
+    public string GetSlotName(int index) => _slotManager?.GetSlotName(index) ?? $"Slot {index + 1}";
+    public CustomizingSlotData GetSlot(int index) => _slotManager?.GetSlot(index);
+    public IReadOnlyList<CustomizingSlotData> GetAllSlots() => _slotManager?.GetAllSlots();
+    public bool IsSlotEmpty(int index) => _slotManager?.IsSlotEmpty(index) ?? true;
+    public int FindMatchingSlot() => _slotManager?.FindMatchingSlot() ?? -1;
+    public void AutoSelectSlot() => _slotManager?.AutoSelectSlot();
+
+    // ========== 해금 API (위임) ==========
+
+    public bool IsItemLocked(string itemId) => _unlockManager?.IsItemLocked(itemId) ?? false;
+    public void UnlockItem(string itemId) => _unlockManager?.UnlockItem(itemId);
+    public bool HasLockedEquippedItems() => _unlockManager?.HasLockedEquippedItems() ?? false;
 
     // ========== 조회 API ==========
+
     public CustomizingItemSO GetEquipped(CustomizingType type)
     {
-        var spec = _domain?.GetEquipped(type);
-        return spec as CustomizingItemSO;
+        return _domain?.GetEquipped(type);
     }
 
     public Dictionary<CustomizingType, string> GetEquippedItemIds()
@@ -230,7 +251,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return _catalog?.GetItemById(itemId);
     }
 
-
     public IEnumerable<(BaseEquipmentType type, BaseEquipmentItemSO item)> GetAllBaseEquipmentItems()
     {
         if (_baseEquipmentCatalog == null)
@@ -254,90 +274,8 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         return _catalog?.GetItemsByType(type) ?? new List<CustomizingItemSO>();
     }
 
-    // ========== 해금 API ==========
-
-    // 아이템이 잠금 상태인지 확인
-    public bool IsItemLocked(string itemId)
-    {
-        if (string.IsNullOrEmpty(itemId)) return false;
-
-        // 출석 보상 테이블에 없으면 Lock 아님
-        if (!(_attendanceRewardTable?.IsRewardItem(itemId) ?? false))
-            return false;
-
-        // 출석 보상 아이템이지만 이미 해금되었으면 Lock 아님
-        return !(_currentSaveData?.IsUnlocked(itemId) ?? false);
-    }
-
-    // 아이템 해금 처리
-    public void UnlockItem(string itemId)
-    {
-        if (string.IsNullOrEmpty(itemId))
-        {
-            Debug.LogWarning("[CustomizingManager] 빈 ItemId로 해금 시도");
-            return;
-        }
-
-        if (_currentSaveData == null)
-        {
-            _currentSaveData = CustomizingSaveData.Default;
-        }
-
-        if (_currentSaveData.IsUnlocked(itemId))
-        {
-            Debug.Log($"[CustomizingManager] 이미 해금된 아이템: {itemId}");
-            return;
-        }
-
-        var item = _catalog?.GetItemById(itemId);
-        if (item == null)
-        {
-            Debug.LogWarning($"[CustomizingManager] 카탈로그에 없는 아이템: {itemId}");
-            return;
-        }
-
-        _currentSaveData.TryUnlock(itemId);
-        _currentSaveData.LastSavedAt = DateTime.UtcNow.ToString("o");
-        _repository.Save(_currentSaveData).Forget();
-
-        Debug.Log($"[CustomizingManager] 아이템 해금 완료: {itemId}");
-        OnItemUnlocked?.Invoke(itemId);
-    }
-
-    // 현재 장착 중인 아이템 중 잠금 상태인 것이 있는지 확인
-    public bool HasLockedEquippedItems()
-    {
-        if (_domain == null) return false;
-
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
-        {
-            if (type == CustomizingType.None) continue;
-
-            var item = _domain.GetEquipped(type);
-            if (item != null && IsItemLocked(item.ItemId))
-                return true;
-        }
-
-        return false;
-    }
-
     public bool HasUnsavedChanges()
     {
-        if (_domain == null || _savedState == null) return false;
-
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
-        {
-            if (type == CustomizingType.None) continue;
-
-            var currentItem = _domain.GetEquipped(type);
-            var savedItemId = _savedState.GetEquippedId(type);
-
-            string currentItemId = currentItem?.ItemId;
-
-            if (currentItemId != savedItemId)
-                return true;
-        }
-
-        return false;
+        return _slotManager?.HasUnsavedChanges() ?? false;
     }
 }
