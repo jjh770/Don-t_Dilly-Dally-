@@ -51,7 +51,27 @@
       "mcp__unityMCP__manage_prefabs",
       "mcp__unityMCP__read_console",
       "Bash(find /c/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets -name *Director* -o -name *Signal*)",
-      "Bash(find /c/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets -name *Signal* -o -name *Receiver*)"
+      "Bash(find /c/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets -name *Signal* -o -name *Receiver*)",
+      "Bash(grep -r m_Materials C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Prefabs/ --include=*.prefab -l)",
+      "Bash(find C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Hospital_Interior/Prefabs -maxdepth 1 -name *.prefab)",
+      "Bash(find C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Characters -name *.fbx -o -name *.FBX)",
+      "Bash(for f:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/mknoh/Desktop/Don-t_Dilly-Dally-/**)",
+      "Bash(done)",
+      "Read(//c/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Materials/**)",
+      "Bash(grep -rl 7a69ee5d63a74b245bc767a1d5e10116 C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Meshes/ --include=*.meta)",
+      "Bash(grep -rl 83ae74ceb669c8343abf0fbb6eec6a68 C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Meshes/ --include=*.meta)",
+      "Bash(grep -rl 1ca67b25835e1864ba9b495d495d6430 C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Meshes/ --include=*.meta)",
+      "Bash(grep -rl d4c18054049408e409931337d5233270 C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Meshes/ --include=*.meta)",
+      "Bash(grep -rl aef843ddd2a764744aa5de48dc89c4a3 C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Meshes/ --include=*.meta)",
+      "Bash(grep -v \".mat$\")",
+      "Bash(grep -rl 'materialImportMode: 1' C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/Medical_Pack/Meshes/ --include=*.meta)",
+      "Bash(grep -v \"\\\\.mat$\\\\|\\\\.mat\\\\.meta$\")",
+      "Bash(for g:*)",
+      "Bash(grep -rl $g C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/ --include=*.meta)",
+      "Bash(grep -rl 933532a4fcc9baf4fa0491de14d08ed7 C:/Users/mknoh/Desktop/Don-t_Dilly-Dally-/Assets/ --include=*.meta)",
+      "mcp__unityMCP__execute_menu_item"
     ]
   }
 }
