@@ -14,7 +14,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     [Header("세팅")]
     [SerializeField] private string _userId = "local_user";
-    [SerializeField] private bool _autoLoadOnStart = true;
 
     private Customizing _domain;
     private ICustomizingRepository _repository;
@@ -22,8 +21,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     private CustomizingSaveData _currentSaveData;
 
     // 슬롯 관련
-    private ICustomizingSlotRepository _slotRepository;
-    private CustomizingSlotSaveData _slotSaveData;
     private int _selectedSlotIndex = 0;
 
     public event Action OnInitialized;
@@ -40,8 +37,8 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public bool IsInitialized => _domain != null;
     public int SelectedSlotIndex => _selectedSlotIndex;
-    public int SlotCount => CustomizingSlotSaveData.MaxSlotCount;
-    public bool IsSlotLoaded => _slotSaveData != null;
+    public int SlotCount => CustomizingSaveData.MaxSlotCount;
+    public bool IsSlotLoaded => _currentSaveData != null;
 
     private void Awake()
     {
@@ -60,28 +57,18 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     private void Start()
     {
         Initialize();
-
-        if (_autoLoadOnStart) Load();
+        Load();
     }
 
     public void Initialize()
     {
-        if (_catalog == null)
-        {
-            Debug.LogError("[CustomizingManager] 카탈로그가 할당되지 않았습니다.");
-            return;
-        }
-        if (_baseEquipmentCatalog == null)
-        {
-            Debug.LogError("[CustomizingManager] 기본 장착 카탈로그가 할당되지 않았습니다.");
-            return;
-        }
+        if (_catalog == null) return;
+        if (_baseEquipmentCatalog == null) return;
 
         _catalog.Initialize();
         _baseEquipmentCatalog.Initialize();
 
         _repository = new LocalCustomizingRepository(_userId);
-        _slotRepository = new LocalCustomizingSlotRepository(_userId);
         _domain = new Customizing(_catalog);
         _savedState = new CustomizingState();
 
@@ -111,10 +98,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         _savedState.CopyFrom(_domain.State);
 
-        // 슬롯 데이터 로드
-        _slotSaveData = await _slotRepository.Load();
-
-        Debug.Log($"[CustomizingManager] 로드 완료. 해금된 아이템 수: {_currentSaveData?.UnlockedItems?.Count ?? 0}, 슬롯 수: {_slotSaveData?.Slots?.Count ?? 0}");
+        Debug.Log($"[CustomizingManager] 로드 완료. 해금된 아이템 수: {_currentSaveData?.UnlockedItems?.Count ?? 0}, 슬롯 수: {_currentSaveData?.Slots?.Count ?? 0}");
         OnLoaded?.Invoke();
         OnSlotLoaded?.Invoke();
     }
@@ -132,13 +116,18 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         var saveData = _domain.ToSaveData();
         saveData.LastSavedAt = DateTime.UtcNow.ToString("o");
 
-        // 기존 해금 데이터 유지
+        // 기존 해금 및 슬롯 데이터 유지
         if (_currentSaveData != null)
         {
             foreach (var itemId in _currentSaveData.UnlockedItems)
             {
                 saveData.UnlockedItems.Add(itemId);
             }
+            foreach (var slot in _currentSaveData.Slots)
+            {
+                saveData.Slots.Add(slot);
+            }
+            saveData.EnsureSlots();
         }
 
         _currentSaveData = saveData;
@@ -239,18 +228,18 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public void SaveToSlot(int index)
     {
-        if (_slotSaveData == null || index < 0 || index >= SlotCount)
+        if (_currentSaveData == null || index < 0 || index >= SlotCount)
             return;
 
         var slotData = CreateSlotDataFromCurrentState();
         if (slotData == null)
             return;
 
-        var existingSlot = _slotSaveData.GetSlot(index);
+        var existingSlot = _currentSaveData.GetSlot(index);
         slotData.Name = existingSlot?.Name ?? $"Slot {index + 1}";
 
-        _slotSaveData.SetSlot(index, slotData);
-        _slotRepository.Save(_slotSaveData).Forget();
+        _currentSaveData.SetSlot(index, slotData);
+        _repository.Save(_currentSaveData).Forget();
 
         Debug.Log($"[CustomizingManager] 슬롯 {index + 1} 저장 완료");
         OnSlotSaved?.Invoke(index);
@@ -258,10 +247,10 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public void LoadFromSlot(int index)
     {
-        if (_slotSaveData == null || index < 0 || index >= SlotCount)
+        if (_currentSaveData == null || index < 0 || index >= SlotCount)
             return;
 
-        var slot = _slotSaveData.GetSlot(index);
+        var slot = _currentSaveData.GetSlot(index);
         if (slot == null || slot.IsEmpty())
             return;
 
@@ -270,52 +259,52 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
     public void SetSlotName(int index, string name)
     {
-        if (_slotSaveData == null || index < 0 || index >= SlotCount)
+        if (_currentSaveData == null || index < 0 || index >= SlotCount)
             return;
 
-        var slot = _slotSaveData.GetSlot(index);
+        var slot = _currentSaveData.GetSlot(index);
         if (slot == null)
             return;
 
         slot.Name = name;
-        _slotRepository.Save(_slotSaveData).Forget();
+        _repository.Save(_currentSaveData).Forget();
 
         OnSlotNameChanged?.Invoke(index, name);
     }
 
     public string GetSlotName(int index)
     {
-        if (_slotSaveData == null || index < 0 || index >= SlotCount)
+        if (_currentSaveData == null || index < 0 || index >= SlotCount)
             return $"Slot {index + 1}";
 
-        var slot = _slotSaveData.GetSlot(index);
+        var slot = _currentSaveData.GetSlot(index);
         return slot?.Name ?? $"Slot {index + 1}";
     }
 
     public CustomizingSlotData GetSlot(int index)
     {
-        return _slotSaveData?.GetSlot(index);
+        return _currentSaveData?.GetSlot(index);
     }
 
     public IReadOnlyList<CustomizingSlotData> GetAllSlots()
     {
-        return _slotSaveData?.Slots;
+        return _currentSaveData?.Slots;
     }
 
     public bool IsSlotEmpty(int index)
     {
-        var slot = _slotSaveData?.GetSlot(index);
+        var slot = _currentSaveData?.GetSlot(index);
         return slot == null || slot.IsEmpty();
     }
 
     public int FindMatchingSlot()
     {
-        if (_slotSaveData == null || _domain == null)
+        if (_currentSaveData == null || _domain == null)
             return -1;
 
-        for (int i = 0; i < _slotSaveData.Slots.Count; i++)
+        for (int i = 0; i < _currentSaveData.Slots.Count; i++)
         {
-            var slot = _slotSaveData.Slots[i];
+            var slot = _currentSaveData.Slots[i];
             if (slot != null && !slot.IsEmpty() && slot.Matches(_domain.State.GetAll()))
             {
                 return i;
