@@ -8,15 +8,26 @@ public class CustomizingUIViewModel
     private CustomizingType _currentCategory = CustomizingType.SkinColor;
     private List<CustomizingItemViewData> _visibleItems = new();
     private string _selectedItemId;
+    private int _selectedSlotIndex = 0;
 
     public event Action OnStateChanged;
     public event Action<CustomizingType> OnCategoryChanged;
     public event Action<string> OnItemSelected;
 
+    // 슬롯 이벤트
+    public event Action OnSlotStateChanged;
+    public event Action<int> OnSlotSelected;
+    public event Action<int> OnSlotSaved;
+
     public CustomizingType CurrentCategory => _currentCategory;
     public IReadOnlyList<CustomizingItemViewData> VisibleItems => _visibleItems;
     public string SelectedItemName => GetSelectedItemName();
     public bool CanSave => _manager.HasUnsavedChanges() && _manager.HasLockedEquippedItems() == false;
+
+    // 슬롯 프로퍼티
+    public int SelectedSlotIndex => _selectedSlotIndex;
+    public int SlotCount => _manager.SlotCount;
+    public bool IsSlotLoaded => _manager.IsSlotLoaded;
 
     public CustomizingUIViewModel(ICustomizingManager manager)
     {
@@ -35,6 +46,10 @@ public class CustomizingUIViewModel
         _manager.OnItemChanged += HandleItemChanged;
         _manager.OnSaved += HandleSaved;
         _manager.OnItemUnlocked += HandleItemUnlocked;
+
+        _manager.OnSlotLoaded += HandleSlotLoaded;
+        _manager.OnSlotSelected += HandleSlotSelected;
+        _manager.OnSlotSaved += HandleSlotSaved;
     }
 
     private void UnsubscribeFromManager()
@@ -43,6 +58,10 @@ public class CustomizingUIViewModel
         _manager.OnItemChanged -= HandleItemChanged;
         _manager.OnSaved -= HandleSaved;
         _manager.OnItemUnlocked -= HandleItemUnlocked;
+
+        _manager.OnSlotLoaded -= HandleSlotLoaded;
+        _manager.OnSlotSelected -= HandleSlotSelected;
+        _manager.OnSlotSaved -= HandleSlotSaved;
     }
 
     public void SelectCategory(CustomizingType type)
@@ -77,18 +96,6 @@ public class CustomizingUIViewModel
         _manager.Save();
     }
 
-    // 저장 시도. 잠금 아이템이 장착되어 있으면 false 반환
-    public bool TrySave()
-    {
-        if (_manager.HasLockedEquippedItems())
-        {
-            return false;
-        }
-
-        _manager.Save();
-        return true;
-    }
-
     public void Cancel()
     {
         _manager.CloseCustomizingUI();
@@ -102,6 +109,7 @@ public class CustomizingUIViewModel
     public void Open()
     {
         _manager.OpenCustomizingUI();
+        AutoSelectSlot();
         RefreshVisibleItems();
         OnStateChanged?.Invoke();
     }
@@ -188,5 +196,51 @@ public class CustomizingUIViewModel
 
         var item = _manager.GetItemById(_selectedItemId);
         return item?.DisplayName ?? "";
+    }
+
+    // ========== 슬롯 핸들러 ==========
+
+    private void HandleSlotLoaded()
+    {
+        OnSlotStateChanged?.Invoke();
+    }
+
+    private void HandleSlotSelected(int index)
+    {
+        _selectedSlotIndex = index;
+        OnSlotSelected?.Invoke(index);
+    }
+
+    private void HandleSlotSaved(int index)
+    {
+        OnSlotSaved?.Invoke(index);
+        OnSlotStateChanged?.Invoke();
+    }
+
+    // ========== 슬롯 메서드 ==========
+
+    public void SelectSlot(int index)
+    {
+        _manager.SelectSlot(index);
+    }
+
+    public void SaveToSelectedSlot()
+    {
+        _manager.SaveToSelectedSlot();
+    }
+
+    public void SetSlotName(int index, string name)
+    {
+        _manager.SetSlotName(index, name);
+    }
+
+    public string GetSlotName(int index)
+    {
+        return _manager.GetSlotName(index);
+    }
+
+    public void AutoSelectSlot()
+    {
+        _manager.AutoSelectSlot();
     }
 }

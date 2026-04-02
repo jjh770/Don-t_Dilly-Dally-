@@ -116,18 +116,10 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
     }
 
     // ICustomizingCatalog 구현
-    ICustomizingItemSpec ICustomizingCatalog.GetItemById(string itemId) => GetItemById(itemId);
-    ICustomizingItemSpec ICustomizingCatalog.GetDefaultItem(CustomizingType category) => GetDefaultItem(category);
-
-    IReadOnlyList<ICustomizingItemSpec> ICustomizingCatalog.GetItemsByCategory(CustomizingType category)
-    {
-        return GetItemsByType(category).Cast<ICustomizingItemSpec>().ToList();
-    }
-
-    IReadOnlyList<ICustomizingItemSpec> ICustomizingCatalog.GetUnlockedItemsByCategory(CustomizingType category)
-    {
-        return GetUnlockedItemsByType(category).Cast<ICustomizingItemSpec>().ToList();
-    }
+    CustomizingItemSO ICustomizingCatalog.GetItemById(string itemId) => GetItemById(itemId);
+    CustomizingItemSO ICustomizingCatalog.GetDefaultItem(CustomizingType category) => GetDefaultItem(category);
+    IReadOnlyList<CustomizingItemSO> ICustomizingCatalog.GetItemsByCategory(CustomizingType category) => GetItemsByType(category);
+    IReadOnlyList<CustomizingItemSO> ICustomizingCatalog.GetUnlockedItemsByCategory(CustomizingType category) => GetUnlockedItemsByType(category);
 
 #if UNITY_EDITOR
     private void OnValidate()
