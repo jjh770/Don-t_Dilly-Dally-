@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class EmergencyWorldUI : MonoBehaviour
 {
     private const float TrayDurationSec = 20f;
-    private const float DiagnosisDurationSec = 5f;
+    private const float DiagnosisDurationSec = 15f;
 
     [Header("Patient")]
     [SerializeField] private int _patientIndex;
