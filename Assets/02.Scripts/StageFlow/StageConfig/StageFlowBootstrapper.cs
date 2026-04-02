@@ -33,7 +33,9 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            if (!_stageCatalog.TryGetStageDefinition(_stageIndex, out StageDefinitionSO stageDefinition))
+            int stageIndex = ResolveStageIndex();
+
+            if (!_stageCatalog.TryGetStageDefinition(stageIndex, out StageDefinitionSO stageDefinition))
             {
                 Debug.LogError($"[StageFlowBootstrapper] StageCatalog에서 인덱스 {_stageIndex}에 해당하는 StageDefinitionSO를 찾지 못했습니다.");
                 return;
@@ -102,6 +104,16 @@ namespace DontDillyDally.StageFlow
         private void OnDestroy()
         {
             Cleanup();
+        }
+
+        private int ResolveStageIndex()
+        {
+            if (RoomDataManager.Instance != null)
+            {
+                return RoomDataManager.Instance.SelectedStageIndex;
+            }
+
+            return _stageIndex;
         }
     }
 }

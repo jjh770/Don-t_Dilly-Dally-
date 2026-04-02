@@ -8,9 +8,11 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
     [SerializeField] private WaitingRoomView _defaultView;
 
     [SerializeField] private ContextMenuView _popupView;
+    [SerializeField] private UI_StagePanelView _stageUnlockPanelView;
 
     private WaitingRoomModel _model;
     private WaitingRoomPresenter _presenter;
+    private UI_StagePanelPresenter _stageUnlockPanelPresenter;
 
     private void Start()
     {
@@ -28,6 +30,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
     private void Init()
     {
         _presenter?.Dispose();
+        _stageUnlockPanelPresenter?.Dispose();
         _model = new WaitingRoomModel();
 
         _presenter = new WaitingRoomPresenter(_defaultView, _popupView, _model);
@@ -37,10 +40,18 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _popupView.SetPresenter(_presenter);
 
         _clickManager.Initialized(_presenter);
+
+        if (_stageUnlockPanelView != null)
+        {
+            _stageUnlockPanelPresenter = new UI_StagePanelPresenter(_stageUnlockPanelView);
+            _stageUnlockPanelView.Initialize(_stageUnlockPanelPresenter);
+            _stageUnlockPanelPresenter.Initialize();
+        }
     }
 
     private void OnDestroy()
     {
         _presenter?.Dispose();
+        _stageUnlockPanelPresenter?.Dispose();
     }
 }

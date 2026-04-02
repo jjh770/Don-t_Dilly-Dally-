@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DontDillyDally.StageFlow;
 using ExitGames.Client.Photon;
@@ -14,11 +15,14 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     private IRoomCurrencyRepository _roomDataRepository;
     private RoomWallet _roomWallet;
     private string _currentRoomCode;
+    private int _selectedStageIndex;
 
     private const byte HOSPITAL_UPGRADE_EVENT = 101;
 
     public int Star => _roomWallet.TotalStars;
     public RoomCurrency Coin => _roomWallet.Coin;
+    public int SelectedStageIndex => _selectedStageIndex;
+    public IReadOnlyList<StageDefinitionSO> StageDefinitions => _stageCatalog != null ? _stageCatalog.StageDefinitions : Array.Empty<StageDefinitionSO>();
 
     public HospitalLevelDefinitionSO CurrentLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value) : null;
 
@@ -27,6 +31,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public event Action OnRoomDataLoaded;
 
     public event Action<HospitalLevelDefinitionSO> OnHospitalUpgraded;
+    public event Action<int> OnSelectedStageChanged;
 
     // ── 초기화 ────────────────────────────────────────────────────────────
     public void Initialized(IRoomCurrencyRepository roomDataRepository)
@@ -56,6 +61,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     {
         _currentRoomCode = null;
         _roomWallet = null;
+        _selectedStageIndex = 0;
     }
 
     // ── 로드 / 저장 ───────────────────────────────────────────────────────
@@ -81,12 +87,14 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         {
             Debug.Log("[RoomDataManager] 새로운 데이터를 생성합니다.");
             _roomWallet = RoomWallet.Default;
+            SelectHighestAvailableStage();
      
             SaveData();
             return;
         }
 
         _roomWallet = wallet;
+        SelectHighestAvailableStage();
     }
 
     private void SaveData()
@@ -99,6 +107,40 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     {
         if (_roomDataRepository == null) return false;
         return await _roomDataRepository.IsExist(roomCode);
+    }
+
+    public bool IsStageAvailable(StageDefinitionSO stageDefinition)
+    {
+        return _roomWallet != null &&
+               stageDefinition != null &&
+               _roomWallet.IsStageAvailable(stageDefinition);
+    }
+
+    public bool TrySelectStage(int stageIndex)
+    {
+        if (_stageCatalog == null || _roomWallet == null)
+        {
+            return false;
+        }
+
+        if (!_stageCatalog.TryGetStageDefinition(stageIndex, out StageDefinitionSO stageDefinition))
+        {
+            return false;
+        }
+
+        if (!_roomWallet.IsStageAvailable(stageDefinition))
+        {
+            return false;
+        }
+
+        if (_selectedStageIndex == stageIndex)
+        {
+            return true;
+        }
+
+        _selectedStageIndex = stageIndex;
+        OnSelectedStageChanged?.Invoke(_selectedStageIndex);
+        return true;
     }
 
 
@@ -136,6 +178,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     private void UpgradeHospital(int cost)
     {
         _roomWallet = _roomWallet.UpgradeHospital(cost);
+
         OnRoomDataChanged?.Invoke(Coin.Value, Star);
 
         OnHospitalUpgraded?.Invoke(_hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value));
@@ -168,5 +211,44 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
         SaveData();
         return reward;
+    }
+    private void SelectHighestAvailableStage()
+    {
+        if (_stageCatalog == null || _stageCatalog.StageCount <= 0)
+        {
+            _selectedStageIndex = 0;
+            return;
+        }
+
+        int bestStageIndex = 0;
+        int highestRequiredHospitalLevel = int.MinValue;
+
+        for (int i = 0; i < _stageCatalog.StageCount; i++)
+        {
+            if (!_stageCatalog.TryGetStageDefinition(i, out StageDefinitionSO stageDefinition))
+            {
+                continue;
+            }
+
+            if (!_roomWallet.IsStageAvailable(stageDefinition))
+            {
+                continue;
+            }
+
+            if (stageDefinition.RequiredHospitalLevel <= highestRequiredHospitalLevel)
+            {
+                continue;
+            }
+
+            highestRequiredHospitalLevel = stageDefinition.RequiredHospitalLevel;
+            bestStageIndex = i;
+        }
+
+        if (_selectedStageIndex == bestStageIndex)
+        {
+            return;
+        }
+
+        _selectedStageIndex = bestStageIndex;
     }
 }

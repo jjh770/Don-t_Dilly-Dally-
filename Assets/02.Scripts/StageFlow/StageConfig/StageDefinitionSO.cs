@@ -7,6 +7,8 @@ namespace DontDillyDally.StageFlow
     {
         [Header("스테이지 정보")]
         [SerializeField] private string _stageId = string.Empty;
+        [SerializeField] private string _stageName = string.Empty;
+        [SerializeField] private Sprite _stageThumbnail;
         [TextArea(minLines: 2, maxLines: 5)]
         [SerializeField] private string _description;
 
@@ -21,7 +23,8 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private int _requiredHospitalLevel = 0;  // 0 = 기본 해금
 
         public string StageId => _stageId;
-
+        public string StageName => string.IsNullOrWhiteSpace(_stageName) ? _stageId : _stageName;
+        public Sprite StageThumbnail => _stageThumbnail;
         public string Description => _description;
         public int PatientCount => _patientCount;
         public float TotalTimeLimitSec => _totalTimeLimitSec;

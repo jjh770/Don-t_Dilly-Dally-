@@ -159,7 +159,9 @@ public class WaitingRoomPresenter
 
         if (RoomDataManager.Instance != null)
         {
+            RoomDataManager.Instance.OnRoomDataLoaded -= HandleDataLoaded;
             RoomDataManager.Instance.OnRoomDataChanged -= HandleRoomDataChanged;
+            RoomDataManager.Instance.OnHospitalUpgraded -= HandleHospitalUpgraded;
         }
     }
 }
