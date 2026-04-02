@@ -5,6 +5,8 @@ using TMPro;
 
 public class UI_CustomizingSlot : MonoBehaviour
 {
+    private const int MaxNameLength = 5;
+
     [SerializeField] private Button _button;
     [SerializeField] private TMP_InputField _nameInput;
     [SerializeField] private TextMeshProUGUI _nameText;
@@ -31,6 +33,7 @@ public class UI_CustomizingSlot : MonoBehaviour
 
         if (_nameInput != null)
         {
+            _nameInput.characterLimit = MaxNameLength;
             _nameInput.onEndEdit.AddListener(OnNameEditEnd);
         }
     }
@@ -62,7 +65,7 @@ public class UI_CustomizingSlot : MonoBehaviour
     {
         if (string.IsNullOrWhiteSpace(newName))
         {
-            newName = $"Slot {_slotIndex + 1}";
+            newName = $"슬롯 {_slotIndex + 1}";
             SetName(newName);
         }
 

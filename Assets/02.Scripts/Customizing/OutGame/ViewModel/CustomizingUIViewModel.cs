@@ -230,11 +230,6 @@ public class CustomizingUIViewModel
         _manager.SaveToSelectedSlot();
     }
 
-    public void LoadFromSlot(int index)
-    {
-        _manager.LoadFromSlot(index);
-    }
-
     public void SetSlotName(int index, string name)
     {
         _manager.SetSlotName(index, name);
@@ -243,11 +238,6 @@ public class CustomizingUIViewModel
     public string GetSlotName(int index)
     {
         return _manager.GetSlotName(index);
-    }
-
-    public bool IsSlotEmpty(int index)
-    {
-        return _manager.IsSlotEmpty(index);
     }
 
     public void AutoSelectSlot()
