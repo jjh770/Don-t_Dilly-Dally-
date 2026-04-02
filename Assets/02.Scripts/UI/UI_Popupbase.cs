@@ -39,6 +39,7 @@ public abstract class UIPopupBase : MonoBehaviour
         _panel.gameObject.SetActive(true);
     }
 
+    public virtual void Show() => PlayShowAnimation();
     public virtual void Show(Action onComplete = null) => PlayShowAnimation(onComplete);
     public virtual void Hide() => PlayHideAnimation();
 
