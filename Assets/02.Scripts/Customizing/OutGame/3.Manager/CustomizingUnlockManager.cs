@@ -31,20 +31,20 @@ public class CustomizingUnlockManager
 
     public bool IsItemLocked(string itemId)
     {
-        if (string.IsNullOrEmpty(itemId)) return false;
+        if (string.IsNullOrEmpty(itemId) == true) return false;
 
         // 출석 보상 테이블에 없으면 Lock 아님
-        if (!(_attendanceRewardTable?.IsRewardItem(itemId) ?? false))
+        if ((_attendanceRewardTable?.IsRewardItem(itemId) ?? false) == false)
             return false;
 
         // 출석 보상 아이템이지만 이미 해금되었으면 Lock 아님
         var saveData = _getSaveData();
-        return !(saveData?.IsUnlocked(itemId) ?? false);
+        return (saveData?.IsUnlocked(itemId) ?? false) == false;
     }
 
     public void UnlockItem(string itemId)
     {
-        if (string.IsNullOrEmpty(itemId))
+        if (string.IsNullOrEmpty(itemId) == true)
         {
             Debug.LogWarning("[CustomizingUnlockManager] 빈 ItemId로 해금 시도");
             return;
@@ -57,7 +57,7 @@ public class CustomizingUnlockManager
             _setSaveData(saveData);
         }
 
-        if (saveData.IsUnlocked(itemId))
+        if (saveData.IsUnlocked(itemId) == true)
         {
             Debug.Log($"[CustomizingUnlockManager] 이미 해금된 아이템: {itemId}");
             return;
@@ -87,7 +87,7 @@ public class CustomizingUnlockManager
             if (type == CustomizingType.None) continue;
 
             var item = _domain.GetEquipped(type);
-            if (item != null && IsItemLocked(item.ItemId))
+            if (item != null && IsItemLocked(item.ItemId) == true)
                 return true;
         }
 

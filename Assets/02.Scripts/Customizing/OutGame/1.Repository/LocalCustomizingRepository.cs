@@ -21,7 +21,7 @@ public class LocalCustomizingRepository : ICustomizingRepository
 
     public UniTask<CustomizingSaveData> Load()
     {
-        if (!PlayerPrefs.HasKey(_key))
+        if (PlayerPrefs.HasKey(_key) == false)
             return UniTask.FromResult(CustomizingSaveData.Default);
 
         string json = PlayerPrefs.GetString(_key);
@@ -89,7 +89,7 @@ public class LocalCustomizingRepository : ICustomizingRepository
             {
                 foreach (var id in unlockedItemIds)
                 {
-                    if (!string.IsNullOrEmpty(id))
+                    if (string.IsNullOrEmpty(id) == false)
                         data.UnlockedItems.Add(id);
                 }
             }

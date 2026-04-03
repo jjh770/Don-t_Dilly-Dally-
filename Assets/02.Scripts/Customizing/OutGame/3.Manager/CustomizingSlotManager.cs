@@ -70,7 +70,7 @@ public class CustomizingSlotManager
         if (saveData == null || index < 0 || index >= SlotCount) return;
 
         var slot = saveData.GetSlot(index);
-        if (slot == null || slot.IsEmpty()) return;
+        if (slot == null || slot.IsEmpty() == true) return;
 
         _domain.ApplySlotData(slot);
         _syncSavedState?.Invoke();
@@ -115,7 +115,7 @@ public class CustomizingSlotManager
     public bool IsSlotEmpty(int index)
     {
         var slot = _getSaveData()?.GetSlot(index);
-        return slot == null || slot.IsEmpty();
+        return slot == null || slot.IsEmpty() == true;
     }
 
     public bool HasUnsavedChanges()
@@ -123,9 +123,9 @@ public class CustomizingSlotManager
         if (_domain == null) return false;
 
         var selectedSlot = _getSaveData()?.GetSlot(_selectedSlotIndex);
-        if (selectedSlot == null || selectedSlot.IsEmpty()) return true;
+        if (selectedSlot == null || selectedSlot.IsEmpty() == true) return true;
 
-        return !_domain.MatchesSlotData(selectedSlot);
+        return _domain.MatchesSlotData(selectedSlot) == false;
     }
 
     public int FindMatchingSlot()
@@ -136,7 +136,7 @@ public class CustomizingSlotManager
         for (int i = 0; i < saveData.Slots.Count; i++)
         {
             var slot = saveData.Slots[i];
-            if (slot != null && !slot.IsEmpty() && _domain.MatchesSlotData(slot))
+            if (slot != null && slot.IsEmpty() == false && _domain.MatchesSlotData(slot) == true)
             {
                 return i;
             }

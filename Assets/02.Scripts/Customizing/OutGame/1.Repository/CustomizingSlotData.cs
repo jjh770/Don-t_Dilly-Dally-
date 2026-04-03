@@ -46,7 +46,7 @@ public class CustomizingSlotData
         foreach (var kvp in EquippedItems)
         {
             var type = (CustomizingType)kvp.Key;
-            if (!equippedItems.TryGetValue(type, out var itemId))
+            if (equippedItems.TryGetValue(type, out var itemId) == false)
                 return false;
             if (itemId != kvp.Value)
                 return false;

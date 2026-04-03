@@ -51,7 +51,6 @@ public class CustomizingCharacterView : MonoBehaviour
     {
         CancelAllLoading();
         ReleaseAllAssets();
-        (_assetLoader as IDisposable)?.Dispose();
     }
 
     private void CancelAllLoading()
@@ -312,7 +311,7 @@ public class CustomizingCharacterView : MonoBehaviour
 
     private void CacheBoneRecursive(Transform bone)
     {
-        if (!_boneCache.ContainsKey(bone.name))
+        if (_boneCache.ContainsKey(bone.name) == false)
         {
             _boneCache[bone.name] = bone;
         }
@@ -342,12 +341,12 @@ public class CustomizingCharacterView : MonoBehaviour
         foreach (var renderer in renderers)
         {
             var boneInfo = renderer.GetComponent<SkinnedMeshBoneInfo>();
-            if (boneInfo == null || !boneInfo.IsValid())
+            if (boneInfo == null || boneInfo.IsValid() == false)
             {
                 continue;
             }
 
-            if (_boneCache.TryGetValue(boneInfo.RootBoneName, out Transform rootBone))
+            if (_boneCache.TryGetValue(boneInfo.RootBoneName, out Transform rootBone) == true)
             {
                 renderer.rootBone = rootBone;
             }
@@ -357,7 +356,7 @@ public class CustomizingCharacterView : MonoBehaviour
 
             for (int i = 0; i < boneNames.Length; i++)
             {
-                if (!string.IsNullOrEmpty(boneNames[i]) && _boneCache.TryGetValue(boneNames[i], out Transform bone))
+                if (string.IsNullOrEmpty(boneNames[i]) == false && _boneCache.TryGetValue(boneNames[i], out Transform bone) == true)
                 {
                     newBones[i] = bone;
                 }

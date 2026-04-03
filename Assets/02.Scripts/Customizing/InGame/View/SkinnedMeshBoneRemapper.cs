@@ -122,11 +122,11 @@ public class SkinnedMeshBoneRemapper : MonoBehaviour
     {
         foreach (Transform child in bone)
         {
-            if (!_boneCache.ContainsKey(child.name))
+            if (_boneCache.ContainsKey(child.name) == false)
             {
                 _boneCache[child.name] = child;
             }
-            else if (_showDebugLogs)
+            else if (_showDebugLogs == true)
             {
                 Debug.LogWarning($"[BoneRemapper] 중복된 본 이름: {child.name}");
             }
