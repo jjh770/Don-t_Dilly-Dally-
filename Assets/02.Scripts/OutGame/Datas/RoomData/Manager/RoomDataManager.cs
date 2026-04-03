@@ -36,7 +36,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public event Action<int, StageDefinitionSO> OnSelectedStageChanged;
 
     // ── 초기화 ────────────────────────────────────────────────────────────
-    public void Initialized(IRoomCurrencyRepository roomDataRepository)
+    public void Initialize(IRoomCurrencyRepository roomDataRepository)
     {
         _roomDataRepository = roomDataRepository;
     }

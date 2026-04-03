@@ -33,7 +33,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action<string> OnNicknameChanged;
     public bool IsReady { get; private set; }
-    public void Initialized(IPlayerInformationRepository playerRoomRepository)
+    public void Initialize(IPlayerInformationRepository playerRoomRepository)
     {
         _playerRoomRepository = playerRoomRepository;
 
