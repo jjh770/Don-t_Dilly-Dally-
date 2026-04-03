@@ -2,11 +2,11 @@ using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
 using UnityEngine;
 
-public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
+public class FirebaseRoomCurrencyRepository : IRoomCurrencyRepository
 {
     FirebaseFirestore _db;
 
-    public RoomCurrencyFirebaseRepository(FirebaseFirestore db)
+    public FirebaseRoomCurrencyRepository(FirebaseFirestore db)
     {
         _db = db;
     }
