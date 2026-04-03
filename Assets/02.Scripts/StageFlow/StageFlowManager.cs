@@ -41,7 +41,7 @@ namespace DontDillyDally.StageFlow
         [Header("핸들러")]
         [SerializeField] private StageFlowRpcHandler _rpc;
         [SerializeField] private StageTimer _timer;
-        [SerializeField] private EmergencyEventPolicy _emergencyPolicy;
+        private EmergencyEventPolicy _emergencyPolicy = new();
 
         [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
@@ -61,11 +61,7 @@ namespace DontDillyDally.StageFlow
         public IReadOnlyReactiveProperty<float> CountdownDuration => _rpc.CountdownDuration;
         public StageRuntimeData CurrentStageData => _stageData;
         public float LocalRemainingTime => _timer != null ? _timer.RemainingTime : 0f;
-        public TraySubmissionHandler TrayHandler => _trayHandler;
-        public bool CanSubmitRecipeTray => _trayHandler != null && _trayHandler.CanSubmit;
-        public EStageRole LocalRole => GetLocalRole();
-        public bool IsLocalSurgeon => LocalRole == EStageRole.Surgeon;
-        public bool IsLocalAssistant => LocalRole == EStageRole.Assistant;
+        public bool IsLocalSurgeon => GetLocalRole() == EStageRole.Surgeon;
         public bool IsEmergencyActive => _emergencyCoordinator != null && _emergencyCoordinator.IsActive;
         public bool IsEmergencyDiagnosisOperating => _emergencyCoordinator != null && _emergencyCoordinator.IsDiagnosisOperating;
         public float EmergencyDiagnosisOperationRemainingTime => _emergencyCoordinator?.DiagnosisOperationRemainingTime ?? 0f;
@@ -74,7 +70,8 @@ namespace DontDillyDally.StageFlow
         public CraftedMaterialType CurrentEmergencyTrayTarget => _emergencyCoordinator?.CurrentTrayTarget ?? CraftedMaterialType.None;
         public DiagnosisScanType CurrentEmergencyDiagnosisTarget => _emergencyCoordinator?.CurrentDiagnosisTarget ?? DiagnosisScanType.None;
         public bool CanLocalInteractWithPatient =>
-            CanSubmitRecipeTray &&
+            _trayHandler != null &&
+            _trayHandler.CanSubmit &&
             IsLocalSurgeon &&
             (_emergencyCoordinator == null || _emergencyCoordinator.CanSubmitTrayToPatient());
 
@@ -115,7 +112,7 @@ namespace DontDillyDally.StageFlow
         // 로컬 플레이어 역할을 UI용 문자열로 반환합니다.
         public string GetLocalRoleDisplayName()
         {
-            return LocalRole switch
+            return GetLocalRole() switch
             {
                 EStageRole.Surgeon => "집도의",
                 EStageRole.Assistant => "어시스트",
@@ -241,7 +238,6 @@ namespace DontDillyDally.StageFlow
 
         void IStageFlowCommands.PublishGameOver(EGameOverReason reason)
         {
-            OnGameOver?.Invoke(reason);
         }
 
         void IStageFlowCommands.PublishReward(StageReward reward, StageResult result)
@@ -327,8 +323,6 @@ namespace DontDillyDally.StageFlow
         private Action<float> _onTimerSyncTick;
 
         // ── 이벤트 ──────────────────────────────────────────────────
-        public event Action<EGameOverReason> OnGameOver;
-        public event Action OnStageClear;
         public event Action<StageRuntimeData> OnStageDataChanged;
         public event Action<StageReward, StageResult> OnStageRewardGranted;
 
@@ -416,7 +410,6 @@ namespace DontDillyDally.StageFlow
                 _timer.Pause();
                 SyncTimerState();
                 _rpc.SetPhase(EStagePhase.StageClear);
-                OnStageClear?.Invoke();
                 SelectRoleManager.Instance?.ClearRoles();
 
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
@@ -433,12 +426,6 @@ namespace DontDillyDally.StageFlow
         // ================================================================
         //  공개 제출 API
         // ================================================================
-
-        // 외부에서 제출된 트레이를 StageFlow 제출 핸들러로 전달합니다.
-        public void OnTraySubmitted(SubmittedTray tray)
-        {
-            _trayHandler.OnTraySubmitted(tray);
-        }
 
         // 환자 상호작용으로 만들어진 제출 요청을 검증 루프로 전달합니다.
         public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
@@ -458,6 +445,7 @@ namespace DontDillyDally.StageFlow
                    _emergencyCoordinator.RequestDiagnosisOperation(diagnosisType);
         }
 
+#if Unity_EDITOR
         [ContextMenu("Debug/Force Complete Current Patient")]
         public void ForceCompleteCurrentPatient()
         {
@@ -488,7 +476,7 @@ namespace DontDillyDally.StageFlow
             Debug.Log("[StageFlow] 현재 환자를 강제로 성공 처리하고 다음 환자로 넘깁니다.");
             _patientTreatmentCoordinator.TryForceCompleteCurrentPatient();
         }
-
+#endif
         // ── 타이머 동기화 ─────────────────────────────────────────────
 
         // 현재 마스터의 남은 시간을 모든 클라이언트에 동기화합니다.
@@ -525,6 +513,9 @@ namespace DontDillyDally.StageFlow
             if (!PhotonNetwork.IsMasterClient || _isGameOver)
                 return;
 
+            if (_rpc == null)
+                return;
+
             if (_rpc.CurrentPhase.Value != EStagePhase.Playing)
                 return;
 
@@ -538,7 +529,9 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            if (_emergencyCoordinator != null && _emergencyPolicy.ShouldTriggerRandom(_stageData, Time.deltaTime))
+            if (_emergencyCoordinator != null &&
+                _emergencyPolicy != null &&
+                _emergencyPolicy.ShouldTriggerRandom(_stageData, Time.deltaTime))
             {
                 _emergencyCoordinator.TryStartEmergencyEvent(
                     EmergencyTriggerSource.Random,
