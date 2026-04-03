@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
-using UnityEditor.Overlays;
 using UnityEngine;
 
 public class FirebaseCustomizingRepository : ICustomizingRepository
@@ -44,9 +43,8 @@ public class FirebaseCustomizingRepository : ICustomizingRepository
                 Debug.LogWarning("[FirebaseCustomizingRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
                 return null;
             }
-            {
-                return dto.ToDomain();
-            }
+
+            return dto.ToDomain();
         }
         catch (System.Exception e)
         {
@@ -59,78 +57,78 @@ public class FirebaseCustomizingRepository : ICustomizingRepository
     private class CustomizingSaveDataDTO
     {
         [FirestoreProperty]
-        public int[] types { get; set; }
+        public int[] Types { get; set; }
 
         [FirestoreProperty]
-        public string[] itemIds { get; set; }
+        public string[] ItemIds { get; set; }
 
         [FirestoreProperty]
-        public string[] unlockedItemIds { get; set; }
+        public string[] UnlockedItemIds { get; set; }
 
         [FirestoreProperty]
-        public CustomizingSlotDataDTO[] slots { get; set; }
+        public CustomizingSlotDataDTO[] Slots { get; set; }
 
         [FirestoreProperty]
-        public string lastSavedAt { get; set; }
+        public string LastSavedAt { get; set; }
 
         public CustomizingSaveDataDTO() { }
 
         public CustomizingSaveDataDTO(CustomizingSaveData data)
         {
-            lastSavedAt = data.LastSavedAt;
+            LastSavedAt = data.LastSavedAt;
 
             int count = data.SelectedItems.Count;
-            types = new int[count];
-            itemIds = new string[count];
+            Types = new int[count];
+            ItemIds = new string[count];
 
             int i = 0;
             foreach (var kvp in data.SelectedItems)
             {
-                types[i] = kvp.Key;
-                itemIds[i] = kvp.Value;
+                Types[i] = kvp.Key;
+                ItemIds[i] = kvp.Value;
                 i++;
             }
 
-            unlockedItemIds = new string[data.UnlockedItems.Count];
+            UnlockedItemIds = new string[data.UnlockedItems.Count];
             int j = 0;
             foreach (var id in data.UnlockedItems)
             {
-                unlockedItemIds[j++] = id;
+                UnlockedItemIds[j++] = id;
             }
 
-            slots = new CustomizingSlotDataDTO[data.Slots.Count];
+            Slots = new CustomizingSlotDataDTO[data.Slots.Count];
             for (int k = 0; k < data.Slots.Count; k++)
             {
-                slots[k] = new CustomizingSlotDataDTO(data.Slots[k]);
+                Slots[k] = new CustomizingSlotDataDTO(data.Slots[k]);
             }
         }
 
         public CustomizingSaveData ToDomain()
         {
             var data = new CustomizingSaveData();
-            data.LastSavedAt = lastSavedAt;
+            data.LastSavedAt = LastSavedAt;
 
-            if (types != null && itemIds != null)
+            if (Types != null && ItemIds != null)
             {
-                int count = Mathf.Min(types.Length, itemIds.Length);
+                int count = Mathf.Min(Types.Length, ItemIds.Length);
                 for (int i = 0; i < count; i++)
                 {
-                    data.SelectedItems[types[i]] = itemIds[i];
+                    data.SelectedItems[Types[i]] = ItemIds[i];
                 }
             }
 
-            if (unlockedItemIds != null)
+            if (UnlockedItemIds != null)
             {
-                foreach (var id in unlockedItemIds)
+                foreach (var id in UnlockedItemIds)
                 {
                     if (string.IsNullOrEmpty(id) == false)
                         data.UnlockedItems.Add(id);
                 }
             }
 
-            if (slots != null)
+            if (Slots != null)
             {
-                foreach (var slot in slots)
+                foreach (var slot in Slots)
                 {
                     data.Slots.Add(slot.ToDomain());
                 }
@@ -145,43 +143,43 @@ public class FirebaseCustomizingRepository : ICustomizingRepository
     private class CustomizingSlotDataDTO
     {
         [FirestoreProperty]
-        public string name { get; set; }
+        public string Name { get; set; }
 
         [FirestoreProperty]
-        public int[] types { get; set; }
+        public int[] Types { get; set; }
 
         [FirestoreProperty]
-        public string[] itemIds { get; set; }
+        public string[] ItemIds { get; set; }
 
         public CustomizingSlotDataDTO() { }
 
         public CustomizingSlotDataDTO(CustomizingSlotData slot)
         {
-            name = slot.Name;
+            Name = slot.Name;
 
             int count = slot.EquippedItems.Count;
-            types = new int[count];
-            itemIds = new string[count];
+            Types = new int[count];
+            ItemIds = new string[count];
 
             int i = 0;
             foreach (var kvp in slot.EquippedItems)
             {
-                types[i] = kvp.Key;
-                itemIds[i] = kvp.Value;
+                Types[i] = kvp.Key;
+                ItemIds[i] = kvp.Value;
                 i++;
             }
         }
 
         public CustomizingSlotData ToDomain()
         {
-            var slot = new CustomizingSlotData(name ?? "");
+            var slot = new CustomizingSlotData(Name ?? "");
 
-            if (types != null && itemIds != null)
+            if (Types != null && ItemIds != null)
             {
-                int count = Mathf.Min(types.Length, itemIds.Length);
+                int count = Mathf.Min(Types.Length, ItemIds.Length);
                 for (int i = 0; i < count; i++)
                 {
-                    slot.EquippedItems[types[i]] = itemIds[i];
+                    slot.EquippedItems[Types[i]] = ItemIds[i];
                 }
             }
 

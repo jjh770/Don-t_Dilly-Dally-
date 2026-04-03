@@ -6,7 +6,7 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
 {
     private readonly FirebaseFirestore _db;
 
-    private static string COLLECTION_NAME = "AttendanceRecord";
+    private const string CollectionName = "AttendanceRecord";
     public FirebaseAttendanceRepository(FirebaseFirestore db)
     {
         _db = db;
@@ -16,7 +16,7 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
     {
         try
         {
-            var result = await _db.Collection(COLLECTION_NAME).Document(playerId).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName).Document(playerId).GetSnapshotAsync();
 
             AttendanceRecordDTO dto = result.ConvertTo<AttendanceRecordDTO>();
 
@@ -40,7 +40,7 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
         try
         {
             var dto = AttendanceRecordDTO.FromDomain(record);
-            await _db.Collection(COLLECTION_NAME).Document(playerId).SetAsync(dto);
+            await _db.Collection(CollectionName).Document(playerId).SetAsync(dto);
             Debug.Log("[FirebaseAttendanceRepository] 저장 성공");
         }
         catch (System.Exception e)

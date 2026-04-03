@@ -11,7 +11,7 @@ public class TestPlayerInformationRepository
 
     private readonly string _id;
 
-    private string COLLECTION_NAME = "PlayerInformation";
+    private const string CollectionName = "PlayerInformation";
 
     public TestPlayerInformationRepository(FirebaseFirestore db, string userId)
     {
@@ -23,13 +23,13 @@ public class TestPlayerInformationRepository
     {
         try
         {
-            var result = await _db.Collection(COLLECTION_NAME).Document(_id).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName).Document(_id).GetSnapshotAsync();
 
             PlayerInformationDTO dto = result.ConvertTo<PlayerInformationDTO>();
-            Debug.LogFormat("[PlayerInformationTestRepository] 불러오기 성공");
+            Debug.LogFormat("[TestPlayerInformationRepository] 불러오기 성공");
             if (dto == null)
             {
-                Debug.LogWarning("[PlayerInformationTestRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
+                Debug.LogWarning("[TestPlayerInformationRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
                 return null;
             }
 
@@ -39,7 +39,7 @@ public class TestPlayerInformationRepository
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning("[PlayerInformationTestRepository] 불러오기 실패, null을 반환합니다. :" + e);
+            Debug.LogWarning("[TestPlayerInformationRepository] 불러오기 실패, null을 반환합니다. :" + e);
             return null;
         }
     }
@@ -50,12 +50,12 @@ public class TestPlayerInformationRepository
         {
             var dto = PlayerInformationDTO.FromDomain(saveData);
             PlayerPrefs.SetString($"{_id}.nickname", dto.Nickname);
-            await _db.Collection(COLLECTION_NAME).Document(_id).SetAsync(dto);
-            Debug.Log("[PlayerInformationTestRepository] 저장 성공");
+            await _db.Collection(CollectionName).Document(_id).SetAsync(dto);
+            Debug.Log("[TestPlayerInformationRepository] 저장 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[PlayerInformationTestRepository] 저장 실패: " + e);
+            Debug.LogError("[TestPlayerInformationRepository] 저장 실패: " + e);
         }
     }
 

@@ -10,7 +10,7 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
 
     private readonly string _id;
 
-    private string COLLECTION_NAME = "PlayerInformation";
+    private const string CollectionName = "PlayerInformation";
 
     public FirebasePlayerInformationRepository(FirebaseFirestore db, string userId)
     {
@@ -22,13 +22,13 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
     {
         try
         {
-            var result = await _db.Collection(COLLECTION_NAME).Document(_id).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName).Document(_id).GetSnapshotAsync();
 
             PlayerInformationDTO dto = result.ConvertTo<PlayerInformationDTO>();
-            Debug.LogFormat("[PlayerInformationFirebaseRepository] 불러오기 성공");
+            Debug.LogFormat("[FirebasePlayerInformationRepository] 불러오기 성공");
             if (dto == null)
             {
-                Debug.LogWarning("[PlayerInformationFirebaseRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
+                Debug.LogWarning("[FirebasePlayerInformationRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
                 return null;
             }
             {
@@ -37,7 +37,7 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
         }
         catch (System.Exception e)
         {
-            Debug.LogWarning("[PlayerInformationFirebaseRepository] 불러오기 실패, null을 반환합니다. :" + e);
+            Debug.LogWarning("[FirebasePlayerInformationRepository] 불러오기 실패, null을 반환합니다. :" + e);
             return null;
         }
     }
@@ -47,12 +47,12 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
         try
         {
             var dto = PlayerInformationDTO.FromDomain(saveData);
-            await _db.Collection(COLLECTION_NAME).Document(_id).SetAsync(dto);
-            Debug.Log("[PlayerInformationFirebaseRepository] 저장 성공");
+            await _db.Collection(CollectionName).Document(_id).SetAsync(dto);
+            Debug.Log("[FirebasePlayerInformationRepository] 저장 성공");
         }
         catch (System.Exception e)
         {
-            Debug.LogError("[PlayerInformationFirebaseRepository] 저장 실패: " + e);
+            Debug.LogError("[FirebasePlayerInformationRepository] 저장 실패: " + e);
         }
     }
 
