@@ -27,12 +27,32 @@ public class SkyLandingEntrance : PatientEntranceBase
     [Tooltip("착지 감속 커브.")]
     [SerializeField] private Ease _touchdownEase = Ease.InOutSine;
 
-    [Header("VFX")]
-    [Tooltip("로켓 추진 이펙트 (침대 아래). 하강 시작 시 재생, 착지 후 정지.")]
-    [SerializeField] private ParticleSystem _thrusterVfx;
+    [Header("VFX: Thruster (로켓 분화)")]
+    [Tooltip("로켓 분화 파티클 배열 (바퀴 4개). 침대 자식으로 배치, Play On Awake 끄기.")]
+    [SerializeField] private ParticleSystem[] _thrusterFx;
 
-    [Tooltip("바닥 이펙트 (먼지/연기). 호버링 높이 도달 시 재생.")]
-    [SerializeField] private ParticleSystem _groundVfx;
+    [Tooltip("로켓 분화 시작 시점 (초). 하강 시작에 맞추세요.")]
+    [SerializeField] private float _thrusterStartTime = 0.3f;
+
+    [Tooltip("로켓 분화 정지 시점 (초). 착지 완료에 맞추세요.")]
+    [SerializeField] private float _thrusterStopTime = 3.1f;
+
+    [Header("VFX: Ground Smoke (바닥 연기)")]
+    [Tooltip("바닥 연기 파티클. 로켓이 바닥에 가까워지면 바닥에서 연기가 퍼짐. 착륙 지점에 배치.")]
+    [SerializeField] private ParticleSystem _groundSmokeFx;
+
+    [Tooltip("바닥 연기 시작 시점 (초). 호버링 높이 근처에 맞추세요.")]
+    [SerializeField] private float _groundSmokeStartTime = 2.3f;
+
+    [Tooltip("바닥 연기 정지 시점 (초). 새 파티클 발생만 멈추고 기존 연기는 서서히 사라짐.")]
+    [SerializeField] private float _groundSmokeStopTime = 3.5f;
+
+    [Header("VFX: Landing Smoke (착지 자욱한 연기)")]
+    [Tooltip("착지 연기 루트 오브젝트. 자식에 있는 모든 ParticleSystem을 자동으로 재생. 착륙 지점에 배치.")]
+    [SerializeField] private GameObject _landingSmokeRoot;
+
+    [Tooltip("착지 연기 시작 시점 (초). 바닥에 닿는 순간에 맞추세요.")]
+    [SerializeField] private float _landingSmokeStartTime = 3.1f;
 
     private Sequence _sequence;
 
@@ -53,22 +73,20 @@ public class SkyLandingEntrance : PatientEntranceBase
         // Phase 0: Dramatic pause in the sky.
         _sequence.AppendInterval(_pauseBeforeDrop);
 
-        // Start thruster VFX.
-        _sequence.AppendCallback(() => PlayVfx(_thrusterVfx));
-
         // Phase 1: Fast descent to hover height.
         _sequence.Append(
             bedTransform.DOMove(hoverPosition, _descentDuration).SetEase(_descentEase));
-
-        // Ground VFX starts at hover height.
-        _sequence.AppendCallback(() => PlayVfx(_groundVfx));
 
         // Phase 2: Slow final touchdown.
         _sequence.Append(
             bedTransform.DOMove(finalPosition, _touchdownDuration).SetEase(_touchdownEase));
 
-        // Stop thruster VFX on touchdown.
-        _sequence.AppendCallback(() => StopVfx(_thrusterVfx));
+        // VFX callbacks at user-specified times.
+        _sequence.InsertCallback(_thrusterStartTime, PlayThrusters);
+        _sequence.InsertCallback(_thrusterStopTime, StopThrusters);
+        _sequence.InsertCallback(_groundSmokeStartTime, () => PlaySingleFx(_groundSmokeFx));
+        _sequence.InsertCallback(_groundSmokeStopTime, () => StopSingleFx(_groundSmokeFx));
+        _sequence.InsertCallback(_landingSmokeStartTime, PlayLandingSmoke);
 
         return _sequence;
     }
@@ -84,27 +102,108 @@ public class SkyLandingEntrance : PatientEntranceBase
         bedTransform.position = finalPosition;
         bedTransform.rotation = finalRotation;
 
-        StopVfx(_thrusterVfx);
-        StopVfx(_groundVfx);
+        ClearThrusters();
+        ClearSingleFx(_groundSmokeFx);
+        ClearLandingSmoke();
     }
 
-    private void PlayVfx(ParticleSystem vfx)
+    private void PlayThrusters()
     {
-        if (vfx == null)
+        if (_thrusterFx == null)
         {
             return;
         }
 
-        vfx.Play();
+        foreach (ParticleSystem fx in _thrusterFx)
+        {
+            if (fx != null)
+            {
+                fx.Play();
+            }
+        }
     }
 
-    private void StopVfx(ParticleSystem vfx)
+    private void StopThrusters()
     {
-        if (vfx == null)
+        if (_thrusterFx == null)
         {
             return;
         }
 
-        vfx.Stop();
+        foreach (ParticleSystem fx in _thrusterFx)
+        {
+            if (fx != null)
+            {
+                fx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+        }
+    }
+
+    private void ClearThrusters()
+    {
+        if (_thrusterFx == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in _thrusterFx)
+        {
+            if (fx != null)
+            {
+                fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
+    }
+
+    private void PlaySingleFx(ParticleSystem fx)
+    {
+        if (fx != null)
+        {
+            fx.Play();
+        }
+    }
+
+    private void PlayLandingSmoke()
+    {
+        if (_landingSmokeRoot == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in _landingSmokeRoot.GetComponentsInChildren<ParticleSystem>())
+        {
+            fx.Play();
+        }
+    }
+
+    private void ClearLandingSmoke()
+    {
+        if (_landingSmokeRoot == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in _landingSmokeRoot.GetComponentsInChildren<ParticleSystem>())
+        {
+            fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+    }
+
+    // Emission stops, existing particles fade out naturally.
+    private void StopSingleFx(ParticleSystem fx)
+    {
+        if (fx != null)
+        {
+            fx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+    }
+
+    // Full clear for animation restart.
+    private void ClearSingleFx(ParticleSystem fx)
+    {
+        if (fx != null)
+        {
+            fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
     }
 }
