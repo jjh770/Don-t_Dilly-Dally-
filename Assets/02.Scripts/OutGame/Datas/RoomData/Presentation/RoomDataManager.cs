@@ -93,10 +93,11 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
             SelectHighestAvailableStage();
 
             SaveData();
+
+            return;
         }
 
         _roomWallet = wallet;
-
 
         int selectedStage = RoomProperties.GetSelectedStage();
         if (selectedStage == -1)
