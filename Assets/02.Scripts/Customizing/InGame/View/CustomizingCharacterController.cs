@@ -1,3 +1,4 @@
+using System;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -10,41 +11,37 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
     private CustomizingCharacterView _view;
     private CustomizingCharacterViewModel _viewModel;
     private ICustomizingAssetLoader _assetLoader;
-    private bool _isInitialized;
-    private bool _isCustomizingApplied;
+    private bool _hasAppliedRemoteAppearance;    // 다른 플레이어의 외형 적용을 끝냈는지
 
     public bool IsLocalPlayer => photonView != null && photonView.IsMine;
 
     private void Awake()
     {
         _view = GetComponent<CustomizingCharacterView>();
-        _assetLoader = new AddressableAssetLoader();
+        _assetLoader = new AddressableAssetLoader(); // 아이템을 Adderessables로 불러오기
         _view.Initialize(_assetLoader);
     }
 
-    private void Start()
+    private void OnDestroy()
     {
-        Initialize();
-    }
-
-    public override void OnDisable()
-    {
-        base.OnDisable();
-
         if (_viewModel != null)
         {
             UnsubscribeFromViewModel();
-            _viewModel.Dispose();
             _viewModel = null;
+        }
+
+        if (_assetLoader != null)
+        {
+            (_assetLoader as IDisposable)?.Dispose();
+            _assetLoader = null;
         }
     }
 
-    private void Initialize()
+    public void Initialize(CustomizingCharacterViewModel viewModel)
     {
-        if (_isInitialized) return;
-        _isInitialized = true;
+        if (_viewModel != null) return;
 
-        TryCreateViewModel();
+        _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
 
         if (IsLocalPlayer)
         {
@@ -54,17 +51,6 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
         {
             InitializeRemote();
         }
-    }
-
-    private bool TryCreateViewModel()
-    {
-        if (_viewModel != null) return true;
-
-        var manager = CustomizingManager.Instance;
-        if (manager == null) return false;
-
-        _viewModel = new CustomizingCharacterViewModel(manager);
-        return true;
     }
 
     // 로컬 플레이어는 처음에
@@ -139,8 +125,8 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
 
     public void SyncToNetwork()
     {
-        if (!IsLocalPlayer) return;
-        if (_viewModel == null || !_viewModel.IsInitialized) return;
+        if (IsLocalPlayer == false) return;
+        if (_viewModel == null || _viewModel.IsInitialized == false) return;
 
         var itemIds = _viewModel.GetEquippedItemIds();
         // Photon Custom Properties에 저장
@@ -151,7 +137,6 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
     private void SetCustomizingCameraTarget(Transform transform)
     {
         CharacterPreviewCamera.SetLocalPlayerTarget(transform);
-        _isCustomizingApplied = true;
     }
 
     // 나 말고 다른 캐릭터의 커스텀 프로퍼티가 바뀌면
@@ -161,13 +146,13 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
         if (photonView.Owner != targetPlayer) return;
         if (IsLocalPlayer) return;
 
-        if (_isCustomizingApplied == false)
+        if (_hasAppliedRemoteAppearance == false)
         {
             TryApplyRemoteCustomizing();
         }
 
         // 변경된 속성만 업데이트
-        if (_isCustomizingApplied && CustomizingProperties.TryGetFromChangedProps(changedProps, out var items))
+        if (_hasAppliedRemoteAppearance == true && CustomizingProperties.TryGetFromChangedProps(changedProps, out var items) == true)
         {
             ApplyFromItemIds(items);
         }
@@ -175,19 +160,19 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
 
     private void HandleLoaded()
     {
-        if (!IsLocalPlayer) return;
+        if (IsLocalPlayer == false) return;
         ApplyFromViewModel();
     }
 
     private void HandleItemChanged(CustomizingType type, CustomizingItemSO item)
     {
-        if (!IsLocalPlayer) return;
+        if (IsLocalPlayer == false) return;
         _view.ApplyItem(type, item);
     }
 
     private void HandleSaved()
     {
-        if (!IsLocalPlayer) return;
+        if (IsLocalPlayer == false) return;
         SyncToNetwork();
     }
 
@@ -204,14 +189,14 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
 
     private void TryApplyRemoteCustomizing()
     {
-        if (_isCustomizingApplied) return;
+        if (_hasAppliedRemoteAppearance) return;
         if (_viewModel == null || !_viewModel.IsInitialized) return;
 
         var items = CustomizingProperties.GetPlayerCustomizing(photonView.Owner);
         if (items == null || items.Count == 0) return;
 
         ApplyFromItemIds(items);
-        _isCustomizingApplied = true;
+        _hasAppliedRemoteAppearance = true;
     }
 
     private void ApplyFromItemIds(Dictionary<CustomizingType, string> itemIds)

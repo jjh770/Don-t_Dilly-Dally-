@@ -40,7 +40,7 @@ public class BoneNameMapping : ScriptableObject
 
         foreach (var entry in _mappings)
         {
-            if (!string.IsNullOrEmpty(entry.SourceName) && !string.IsNullOrEmpty(entry.TargetName))
+            if (string.IsNullOrEmpty(entry.SourceName) == false && string.IsNullOrEmpty(entry.TargetName) == false)
             {
                 _mappingDict[entry.SourceName] = entry.TargetName;
             }
@@ -79,7 +79,7 @@ public class BoneNameMapping : ScriptableObject
 
     private void AddMapping(string source, string target)
     {
-        if (!_mappingDict.ContainsKey(source))
+        if (_mappingDict.ContainsKey(source) == false)
         {
             _mappingDict[source] = target;
         }

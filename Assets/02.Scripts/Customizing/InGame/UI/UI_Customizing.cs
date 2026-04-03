@@ -21,9 +21,6 @@ public class UI_Customizing : MonoBehaviour
     [SerializeField] private Button _resetButton;
     [SerializeField] private Button _closeButton;
 
-    [Header("정보 표시")]
-    [SerializeField] private TextMeshProUGUI _selectedItemNameText;
-
     [Header("슬롯")]
     [SerializeField] private UI_CustomizingSlotPanel _slotPanel;
 
@@ -49,17 +46,12 @@ public class UI_Customizing : MonoBehaviour
 
     private void Start()
     {
-        if (_viewModel == null)
-        {
-            Debug.LogError("[UI_Customizing] ViewModel이 주입되지 않았습니다. Initialize()를 먼저 호출하세요.");
-            return;
-        }
+        if (_viewModel == null) return;
 
         SetupButtons();
         SetupCategoryTabs();
-
-        _viewModel.Open();
-        _viewModel.AutoSelectSlot();
+        _viewModel.OpenCustomizingUI();                          // 화면 열기 처리
+        _viewModel.AutoSelectSlot();                // 현재 상태에 맞는 슬롯 선택
         SelectCategory(_viewModel.CurrentCategory);
         UpdateSaveButtonState();
     }
@@ -107,39 +99,36 @@ public class UI_Customizing : MonoBehaviour
     {
         foreach (var tab in _categoryTabs)
         {
-            if (tab.Button != null)
-            {
-                CustomizingType type = tab.Type;
-                tab.Button.onClick.AddListener(() => SelectCategory(type));
-            }
+            if (tab.Button == null) continue;
+
+            CustomizingType type = tab.Type;
+            tab.Button.onClick.AddListener(() => SelectCategory(type));
         }
     }
 
     private void HandleStateChanged()
     {
-        RefreshItemList();
-        UpdateSaveButtonState();
+        RefreshItemList();       // 상태가 바뀌면 아이템 목록 다시 그리고
+        UpdateSaveButtonState(); // 저장 버튼도 업데이트하기
     }
 
     private void UpdateSaveButtonState()
     {
-        if (_saveButton != null && _viewModel != null)
-        {
-            _saveButton.interactable = _viewModel.CanSave;
-        }
+        if (_saveButton == null) return;
+        if (_viewModel == null) return;
+
+        _saveButton.interactable = _viewModel.CanSave; // 저장 가능 여부는 ViewModel이 판단
     }
 
     private void HandleCategoryChanged(CustomizingType type)
     {
         UpdateTabVisuals();
 
-        if (_scrollRect != null)
-            _scrollRect.verticalNormalizedPosition = 1f;
+        if (_scrollRect != null)  _scrollRect.verticalNormalizedPosition = 1f;
     }
 
     private void HandleItemSelected(string itemId)
     {
-        UpdateSelectedItemName();
         UpdateItemSelections();
     }
 
@@ -155,19 +144,19 @@ public class UI_Customizing : MonoBehaviour
 
     private void OnSaveClicked()
     {
-        _viewModel?.Save();
-        _viewModel?.SaveToSelectedSlot();
+        _viewModel?.Save();                 // 일반 저장(?)
+        _viewModel?.SaveToSelectedSlot();   // 현재 선택 슬롯에 저장
         OnSaved?.Invoke();
     }
 
     private void OnResetClicked()
     {
-        _viewModel?.Reset();
+        _viewModel?.ResetToSaved();
     }
 
     private void OnCloseClicked()
     {
-        _viewModel?.Cancel();
+        _viewModel?.CloseCustomizingUI();
 
         if (OnClosed != null)
         {
@@ -185,6 +174,8 @@ public class UI_Customizing : MonoBehaviour
 
         if (_viewModel == null) return;
 
+        // 지금 카테고리에서 보여야 하는 아이템 목록을 가져와서
+        // 버튼을 하나씩 새로 생성
         foreach (var viewData in _viewModel.VisibleItems)
         {
             var button = CreateItemButton(viewData);
@@ -196,13 +187,13 @@ public class UI_Customizing : MonoBehaviour
     {
         if (_itemListParent == null) return null;
 
-        // 잠금 상태에 따라 다른 프리팹 사용
+        // 잠금 상태 O -> 잠금용 프리팹
+        // 잠금 상태 X -> 일반 프리팹
         var prefab = viewData.IsLocked ? _itemSlotLockButton : _itemSlotButton;
         if (prefab == null) return null;
 
         var buttonObj = Instantiate(prefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
-
         button.Setup(viewData, () => OnItemClicked(viewData.ItemId));
 
         return button;
@@ -212,8 +203,7 @@ public class UI_Customizing : MonoBehaviour
     {
         foreach (var button in _itemButtons)
         {
-            if (button != null)
-                Destroy(button.gameObject);
+            if (button != null) Destroy(button.gameObject);
         }
         _itemButtons.Clear();
     }
@@ -227,14 +217,6 @@ public class UI_Customizing : MonoBehaviour
         for (int i = 0; i < _itemButtons.Count && i < visibleItems.Count; i++)
         {
             _itemButtons[i].SetSelected(visibleItems[i].IsSelected);
-        }
-    }
-
-    private void UpdateSelectedItemName()
-    {
-        if (_selectedItemNameText != null && _viewModel != null)
-        {
-            _selectedItemNameText.text = _viewModel.SelectedItemName;
         }
     }
 
@@ -274,12 +256,7 @@ public class UI_Customizing : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
-        _viewModel?.Open();
-    }
-
-    public void Refresh()
-    {
-        _viewModel?.Refresh();
+        _viewModel?.OpenCustomizingUI();
     }
 
     [Serializable]

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using DontDillyDally.StageFlow;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,47 +54,52 @@ public class UI_StagePanelView : UIPopupBase
         _presenter = presenter;
     }
 
-    public void Render(IReadOnlyList<StageDefinitionSO> stages, RoomDataManager roomDataManager, int selectedStageIndex)
+    public void Render(IReadOnlyList<UI_StagePanelItemData> stages, int selectedStageIndex)
     {
         PrepareTemplate();
         ClearItems();
 
-        if (_itemTemplate == null || _contentRoot == null || stages == null || roomDataManager == null)
+        if (_itemTemplate == null || _contentRoot == null || stages == null)
         {
             return;
         }
 
         for (int i = 0; i < stages.Count; i++)
         {
-            StageDefinitionSO stage = stages[i];
-            if (stage == null)
-            {
-                continue;
-            }
+            UI_StagePanelItemData stage = stages[i];
 
             UI_StageItemView item = Instantiate(_itemTemplate, _contentRoot);
             item.gameObject.name = $"StageCard_{i}";
             item.gameObject.SetActive(true);
             item.OnSelected += HandleItemSelected;
             item.Initialize(
-                i,
-                i + 1,
+                stage.StageIndex,
+                stage.StageNumber,
                 stage.StageName,
                 stage.StageThumbnail,
-                roomDataManager.IsStageAvailable(stage),
+                stage.IsAvailable,
                 _toggleGroup);
             _items.Add(item);
         }
 
-        StageDefinitionSO selectedStage = stages[selectedStageIndex];
-        SetSelectedStage(selectedStageIndex, selectedStage.StageName, selectedStage.Description);
+        if (selectedStageIndex < 0 || selectedStageIndex >= stages.Count)
+        {
+            return;
+        }
+
+        SetSelectedStage(stages[selectedStageIndex]);
     }
 
-    public void SetSelectedStage(int selectedStageIndex, string name, string description)
+    public void SetSelectedStage(UI_StagePanelItemData selectedStage)
     {
-        _items[selectedStageIndex].SetSelectedWithoutNotify(true);
-        _selectedStageNameText.text = name;
-        _selectedStageDescriptionText.text = description;
+        if (selectedStage.StageIndex < 0 || selectedStage.StageIndex >= _items.Count)
+        {
+            return;
+        }
+
+        _items[selectedStage.StageIndex].SetSelectedWithoutNotify(true);
+        _selectedStageNameText.text = selectedStage.StageName;
+        _selectedStageDescriptionText.text = selectedStage.Description;
     }
 
     private void HandleItemSelected(int stageIndex)

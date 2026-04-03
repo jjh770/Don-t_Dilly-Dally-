@@ -6,11 +6,11 @@ public class Customizing
     private readonly ICustomizingCatalog _catalog;
     private readonly CustomizingState _state;
 
-    public CustomizingState State => _state;
-
     public Customizing(ICustomizingCatalog catalog)
     {
-        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+        if (catalog == null) throw new ArgumentNullException(nameof(catalog));
+
+        _catalog = catalog;
         _state = new CustomizingState();
     }
 
@@ -63,7 +63,6 @@ public class Customizing
         return _state.ToSaveData();
     }
 
-    // 장착 가능 여부 검사
     public EEquipResult CanEquip(CustomizingItemSO item)
     {
         if (item == null) return EEquipResult.InvalidItem;
@@ -71,29 +70,22 @@ public class Customizing
         return EEquipResult.Equipped;
     }
 
-    // 해제 가능 여부 검사
     public EEquipResult CanUnequip(CustomizingType category)
     {
-        if (!_state.IsEquipped(category)) return EEquipResult.AlreadyUnequipped;
-        if (!category.CanUnequip()) return EEquipResult.CannotUnequipRequired;
+        if (_state.IsEquipped(category) == false) return EEquipResult.AlreadyUnequipped;
+        if (category.CanUnequip() == false) return EEquipResult.CannotUnequipRequired;
         return EEquipResult.Unequipped;
     }
 
-    // 아이템 장착
     public EEquipResult TryEquip(CustomizingItemSO item)
     {
         var result = CanEquip(item);
-        if (result != EEquipResult.Equipped && result != EEquipResult.AlreadyEquipped)
-            return result;
-
-        if (result == EEquipResult.AlreadyEquipped)
-            return result;
+        if (result != EEquipResult.Equipped) return result;
 
         _state.SetEquipped(item.Category, item.ItemId);
         return EEquipResult.Equipped;
     }
 
-    // 재클릭 시 해제
     public EEquipResult ToggleEquip(CustomizingItemSO item)
     {
         if (item == null) return EEquipResult.InvalidItem;
@@ -103,22 +95,19 @@ public class Customizing
             return TryUnequip(item.Category);
         }
 
-        _state.SetEquipped(item.Category, item.ItemId);
-        return EEquipResult.Equipped;
+        return TryEquip(item);
     }
 
-    // 아이템 해제
     public EEquipResult TryUnequip(CustomizingType category)
     {
         var result = CanUnequip(category);
-        if (!result.IsSuccess()) return result;
+        if (result.IsSuccess() == false) return result;
         if (result == EEquipResult.AlreadyUnequipped) return result;
 
         _state.Remove(category);
         return EEquipResult.Unequipped;
     }
 
-    // 현재 장착된 아이템 조회
     public CustomizingItemSO GetEquipped(CustomizingType category)
     {
         var itemId = _state.GetEquippedId(category);
@@ -126,22 +115,18 @@ public class Customizing
     }
 
     // ========== 상태 조작 메서드 ==========
-
-    // 저장 상태로 복원
     public void RestoreFromState(CustomizingState savedState)
     {
         if (savedState == null) return;
         _state.CopyFrom(savedState);
     }
 
-    // 현재 상태를 외부 상태 객체로 복사
     public void CopyStateTo(CustomizingState target)
     {
         if (target == null) return;
         target.CopyFrom(_state);
     }
 
-    // 슬롯 데이터 적용
     public void ApplySlotData(CustomizingSlotData slotData)
     {
         if (slotData == null || slotData.IsEmpty()) return;
@@ -154,13 +139,11 @@ public class Customizing
         }
     }
 
-    // 현재 장착 아이템 ID 스냅샷 반환
     public IReadOnlyDictionary<CustomizingType, string> GetEquippedSnapshot()
     {
         return _state.GetAll();
     }
 
-    // 현재 상태와 슬롯 데이터 일치 여부 확인
     public bool MatchesSlotData(CustomizingSlotData slotData)
     {
         if (slotData == null) return false;

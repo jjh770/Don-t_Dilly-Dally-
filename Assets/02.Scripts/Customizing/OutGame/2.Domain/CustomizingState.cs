@@ -72,22 +72,6 @@ public class CustomizingState
         return saveData;
     }
 
-    // SaveData에서 복원
-    public void RestoreFromSaveData(CustomizingSaveData saveData)
-    {
-        Clear();
-        if (saveData == null) return;
-
-        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
-        {
-            string itemId = saveData.GetSelectedItemId(type);
-            if (!string.IsNullOrEmpty(itemId))
-            {
-                _equippedItemIds[type] = itemId;
-            }
-        }
-    }
-
     // 다른 상태에서 복사
     public void CopyFrom(CustomizingState other)
     {
