@@ -1,40 +1,33 @@
-using System;
-using System.Threading;
-using Cysharp.Threading.Tasks;
-using DontDillyDally.MiniGame;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
 {
-    [Serializable]
     public class EmergencyEventPolicy
     {
-        [Header("레시피 실패 시 긴급 이벤트")]
-        [SerializeField, Range(0f, 1f)] private float _recipeFailChance = 0.7f;
-        [SerializeField] private float _failHealthPenalty = 15f;
-
-        [Header("랜덤 긴급 이벤트")]
-        [SerializeField] private float _randomCheckIntervalSec = 30f;
-        [SerializeField, Range(0f, 1f)] private float _randomChance = 0.05f;
-
         private float _timeSinceLastRandomCheck;
 
-        public float FailHealthPenalty => _failHealthPenalty;
-
-        public bool ShouldTriggerOnRecipeFail()
+        public bool ShouldTriggerOnRecipeFail(StageRuntimeData stageData)
         {
-            return UnityEngine.Random.value <= _recipeFailChance;
+            return Random.value <= GetSettings(stageData).RecipeFailTriggerChance;
         }
 
-        public bool ShouldTriggerRandom(float deltaTime)
+        public bool ShouldTriggerOnMiniGameFail(StageRuntimeData stageData)
         {
+            return Random.value <= GetSettings(stageData).MiniGameFailTriggerChance;
+        }
+
+        public bool ShouldTriggerRandom(StageRuntimeData stageData, float deltaTime)
+        {
+            StageEmergencySettings settings = GetSettings(stageData);
             _timeSinceLastRandomCheck += deltaTime;
 
-            if (_timeSinceLastRandomCheck < _randomCheckIntervalSec)
+            if (_timeSinceLastRandomCheck < settings.RandomCheckIntervalSec)
+            {
                 return false;
+            }
 
             _timeSinceLastRandomCheck = 0f;
-            return UnityEngine.Random.value <= _randomChance;
+            return Random.value <= settings.RandomTriggerChance;
         }
 
         public void ResetTimer()
@@ -42,37 +35,9 @@ namespace DontDillyDally.StageFlow
             _timeSinceLastRandomCheck = 0f;
         }
 
-        public MiniGameType GetRandomMiniGameType()
+        private static StageEmergencySettings GetSettings(StageRuntimeData stageData)
         {
-            return MiniGameTypeExtensions.GetRandom();
-        }
-
-        public float GetPenaltyByMiniGameResult(bool isSuccess)
-        {
-            return isSuccess ? 0f : _failHealthPenalty;
-        }
-
-        public async UniTask<float> ExecuteEmergency(
-            MiniGameLauncher launcher,
-            CancellationToken ct)
-        {
-            MiniGameType type = MiniGameTypeExtensions.GetRandom();
-            return await ExecuteEmergency(launcher, type, ct);
-        }
-
-        public async UniTask<float> ExecuteEmergency(
-            MiniGameLauncher launcher,
-            MiniGameType type,
-            CancellationToken ct)
-        {
-            var tcs = new UniTaskCompletionSource<MiniGameResult>();
-            using (ct.Register(() => tcs.TrySetCanceled()))
-            {
-                launcher.Launch(type, result => tcs.TrySetResult(result));
-                MiniGameResult result = await tcs.Task;
-
-                return GetPenaltyByMiniGameResult(result.IsSuccess);
-            }
+            return stageData?.Settings?.EmergencySettings ?? new StageEmergencySettings();
         }
     }
 }

@@ -86,8 +86,8 @@ namespace DontDillyDally.StageFlow
 
             var result = new StageResult(
                 savedCount: stageData.SavedCount,
-                patientCount: stageData.PatientCount,
-                difficulty: stageData.Difficulty);
+                patientCount: stageData.Settings.PatientCount,
+                difficulty: stageData.Settings.Difficulty);
 
             StageReward reward = RoomDataManager.Instance.ApplyReward(stageData.StageId, result);
             _rpc.BroadcastStageReward(reward, result);

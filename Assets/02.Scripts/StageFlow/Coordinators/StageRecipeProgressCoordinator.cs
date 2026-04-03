@@ -107,7 +107,7 @@ namespace DontDillyDally.StageFlow
                     return;
                 }
 
-                if (_emergencyPolicy == null || !_emergencyPolicy.ShouldTriggerOnRecipeFail())
+                if (_emergencyPolicy == null || !_emergencyPolicy.ShouldTriggerOnRecipeFail(_host?.StageData))
                 {
                     continue;
                 }

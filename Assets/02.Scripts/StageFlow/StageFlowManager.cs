@@ -40,7 +40,6 @@ namespace DontDillyDally.StageFlow
         [Header("핸들러")]
         [SerializeField] private StageFlowRpcHandler _rpc;
         [SerializeField] private StageTimer _timer;
-        [SerializeField] private EmergencyEventPolicy _emergencyPolicy;
 
         [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
@@ -296,6 +295,7 @@ namespace DontDillyDally.StageFlow
         // ── 런타임 상태 ────────────────────────────────────────────────
         private StageRuntimeData _stageData;
         private bool _isGameOver;
+        private readonly EmergencyEventPolicy _emergencyPolicy = new EmergencyEventPolicy();
 
         // ── 런타임 컨트롤러 ───────────────────────────────────────────
         private StageRpcAckCoordinator _ackCoordinator;
@@ -538,7 +538,7 @@ namespace DontDillyDally.StageFlow
             }
 
             if (_emergencyCoordinator != null &&
-                _emergencyPolicy.ShouldTriggerRandom(Time.deltaTime))
+                _emergencyPolicy.ShouldTriggerRandom(_stageData, Time.deltaTime))
             {
                 _emergencyCoordinator.TryStartEmergencyEvent(
                     EmergencyTriggerSource.Random,

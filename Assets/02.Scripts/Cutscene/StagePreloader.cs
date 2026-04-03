@@ -119,11 +119,11 @@ public class StagePreloader : MonoBehaviour
         try
         {
             // 1. 질병 데이터 생성
-            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {StageData.PatientCount}명)");
+            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {StageData.Settings.PatientCount}명)");
             StageData.Patients.Clear();
 
             var tasks = new List<UniTask<DiseaseData>>();
-            for (int i = 0; i < StageData.PatientCount; i++)
+            for (int i = 0; i < StageData.Settings.PatientCount; i++)
             {
                 tasks.Add(GenerateSingleDisease(ct));
             }
@@ -160,7 +160,7 @@ public class StagePreloader : MonoBehaviour
 
     private async UniTask<DiseaseData> GenerateSingleDisease(CancellationToken ct)
     {
-        var result = await _diseaseGenManager.GenerateDisease(StageData.Difficulty);
+        var result = await _diseaseGenManager.GenerateDisease(StageData.Settings.Difficulty);
         ct.ThrowIfCancellationRequested();
         return result;
     }

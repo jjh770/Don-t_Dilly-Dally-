@@ -45,10 +45,10 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            _timer.Set(stageData.TotalTimeLimitSec);
+            _timer.Set(stageData.Settings.TotalTimeLimitSec);
             _timer.Resume();
             _host?.SyncTimerState();
-            Debug.Log($"[StageFlow]   타이머 시작: {stageData.TotalTimeLimitSec}초 | 환자 {stageData.Patients.Count}명 치료 시작");
+            Debug.Log($"[StageFlow]   타이머 시작: {stageData.Settings.TotalTimeLimitSec}초 | 환자 {stageData.Patients.Count}명 치료 시작");
 
             for (int i = 0; i < stageData.Patients.Count; i++)
             {
@@ -90,15 +90,15 @@ namespace DontDillyDally.StageFlow
         private async UniTask RunPatientLoop(int patientIndex, StageRuntimeData stageData, CancellationToken ct)
         {
             DiseaseData disease = stageData.Patients[patientIndex];
-            Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {stageData.MaxPatientHealth}");
+            Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {stageData.Settings.InitialPatientHealth}");
 
             CommentaryController.Instance?.SetCurrentPatientIndex(patientIndex);
             EventManager.Instance?.OnNewPatientAppeared(disease.PatientName, disease.DiseaseName);
 
             _recipeProgressCoordinator?.PrepareForDisease(disease);
             _host?.Initialize(
-                stageData.MaxPatientHealth,
-                stageData.PatientHealthDrainPerSecond,
+                stageData.Settings.InitialPatientHealth,
+                stageData.Settings.PatientHealthDrainPerSecond,
                 _host != null ? _host.CurrentPhase : EStagePhase.None);
             _emergencyPolicy?.ResetTimer();
             _forcePatientSuccessTcs = new UniTaskCompletionSource<bool>();

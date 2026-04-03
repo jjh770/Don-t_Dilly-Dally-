@@ -16,9 +16,15 @@ MonoBehaviour:
   _stageName: 
   _stageThumbnail: {fileID: -1549021634, guid: f7d404d4353767346930fa3d4921b66e, type: 3}
   _description: 
-  _patientCount: 4
-  _totalTimeLimitSec: 300
-  _initialPatientHealth: 100
-  _patientHealthDrainPerSecond: 0.25
-  _difficulty: 1
+  _settings:
+    PatientCount: 1
+    TotalTimeLimitSec: 120
+    InitialPatientHealth: 100
+    PatientHealthDrainPerSecond: 0.25
+    Difficulty: 1
+    EmergencySettings:
+      RecipeFailTriggerChance: 0.7
+      MiniGameFailTriggerChance: 0.7
+      RandomCheckIntervalSec: 30
+      RandomTriggerChance: 0.05
   _requiredHospitalLevel: 0

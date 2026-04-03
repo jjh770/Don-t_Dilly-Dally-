@@ -95,7 +95,7 @@ public class StageHealthUI : MonoBehaviour
             return;
         }
 
-        _maxHealth = Mathf.Max(1f, stageData.MaxPatientHealth);
+        _maxHealth = Mathf.Max(1f, stageData.Settings.InitialPatientHealth);
         _cachedHealth = _stageFlowManager != null
             ? Mathf.Clamp(_stageFlowManager.PatientHealth.Value, 0f, _maxHealth)
             : Mathf.Clamp(_cachedHealth, 0f, _maxHealth);
@@ -180,7 +180,7 @@ public class StageHealthUI : MonoBehaviour
         }
 
         int displayPatientIndex = _stageFlowManager.CurrentPatientIndex.Value + 1;
-        int totalPatientCount = _stageFlowManager.CurrentStageData.PatientCount;
+        int totalPatientCount = _stageFlowManager.CurrentStageData.Settings.PatientCount;
         return $"남은 환자 수 {displayPatientIndex} / {totalPatientCount}";
     }
 
