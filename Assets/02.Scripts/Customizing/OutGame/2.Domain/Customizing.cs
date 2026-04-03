@@ -6,8 +6,6 @@ public class Customizing
     private readonly ICustomizingCatalog _catalog;
     private readonly CustomizingState _state;
 
-    public CustomizingState State => _state;
-
     public Customizing(ICustomizingCatalog catalog)
     {
         _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
