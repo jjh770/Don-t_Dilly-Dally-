@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DontDillyDally.Data;
 using System.Threading;
 
 namespace DontDillyDally.StageFlow
@@ -45,33 +44,32 @@ namespace DontDillyDally.StageFlow
     }
 
     // 결과 처리 코디네이터가 필요로 하는 공통 호스트 묶음입니다.
-    public interface IStageOutcomeHost :
-        IStageFlowState,
-        IStageFlowCommands,
-        IStagePatientFlow
+    public interface IStageOutcomeHost : IStageFlowState, IStageFlowCommands, IStagePatientFlow
     {
     }
 
     // 레시피 진행 코디네이터가 필요로 하는 공통 호스트 묶음입니다.
-    public interface IStageRecipeProgressHost :
-        IStageFlowState,
-        IStagePatientFlow,
-        IStageMiniGameRunner
+    public interface IStageRecipeProgressHost : IStageFlowState, IStagePatientFlow, IStageMiniGameRunner
     {
     }
 
     // 환자 치료 코디네이터가 필요로 하는 공통 호스트 묶음입니다.
-    public interface IStagePatientTreatmentHost :
-        IStageFlowState,
-        IStageFlowCommands,
-        IStagePatientFlow
+    public interface IStagePatientTreatmentHost : IStageFlowState, IStageFlowCommands, IStagePatientFlow
     {
     }
 
     // 미니게임 결과 후처리 코디네이터가 필요로 하는 공통 호스트 묶음입니다.
-    public interface IStageMiniGameResolutionHost :
-        IStageFlowState,
-        IStagePatientFlow
+    public interface IStageMiniGameResolutionHost : IStageFlowState, IStagePatientFlow
     {
+    }
+
+    // 미니게임 결과 후처리에 필요한 협력 객체와 설정값을 묶습니다.
+    public interface IStageMiniGameResolutionDependencies
+    {
+        StageMiniGameCoordinator MiniGameCoordinator { get; }
+        StageEmergencyCoordinator EmergencyCoordinator { get; }
+        EmergencyEventPolicy EmergencyPolicy { get; }
+        float MiniGameFailPenalty { get; }
+        float MiniGameSuccessHeal { get; }
     }
 }

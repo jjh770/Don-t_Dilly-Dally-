@@ -24,7 +24,8 @@ namespace DontDillyDally.StageFlow
         IStageOutcomeHost,
         IStageRecipeProgressHost,
         IStagePatientTreatmentHost,
-        IStageMiniGameResolutionHost
+        IStageMiniGameResolutionHost,
+        IStageMiniGameResolutionDependencies
     {
         // ── 타이밍 상수 ─────────────────────────────────────────────
         private const int ACK_TIMEOUT_MS = 5000;
@@ -40,6 +41,7 @@ namespace DontDillyDally.StageFlow
         [Header("핸들러")]
         [SerializeField] private StageFlowRpcHandler _rpc;
         [SerializeField] private StageTimer _timer;
+        [SerializeField] private EmergencyEventPolicy _emergencyPolicy;
 
         [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
@@ -284,6 +286,13 @@ namespace DontDillyDally.StageFlow
             _patientStatusCoordinator?.Tick(deltaTime);
         }
 
+        StageMiniGameCoordinator IStageMiniGameResolutionDependencies.MiniGameCoordinator => _miniGameCoordinator;
+        StageEmergencyCoordinator IStageMiniGameResolutionDependencies.EmergencyCoordinator => _emergencyCoordinator;
+        EmergencyEventPolicy IStageMiniGameResolutionDependencies.EmergencyPolicy => _emergencyPolicy;
+        float IStageMiniGameResolutionDependencies.MiniGameFailPenalty => _miniGameFailPenalty;
+        float IStageMiniGameResolutionDependencies.MiniGameSuccessHeal => _miniGameSuccessHeal;
+
+
         // ── 레시피 미니게임 실행 제공 ────────────────────────────────
         UniTask<bool> IStageMiniGameRunner.RunRecipeMiniGame(CancellationToken ct)
         {
@@ -295,7 +304,6 @@ namespace DontDillyDally.StageFlow
         // ── 런타임 상태 ────────────────────────────────────────────────
         private StageRuntimeData _stageData;
         private bool _isGameOver;
-        private readonly EmergencyEventPolicy _emergencyPolicy = new EmergencyEventPolicy();
 
         // ── 런타임 컨트롤러 ───────────────────────────────────────────
         private StageRpcAckCoordinator _ackCoordinator;
@@ -363,14 +371,7 @@ namespace DontDillyDally.StageFlow
             _movementCoordinator = new StageMovementCoordinator(_rpc);
             _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this);
             _patientStatusCoordinator = new StagePatientStatusCoordinator(_patientHealthController, _rpc, TriggerGameOver);
-            _miniGameResolutionCoordinator = new StageMiniGameResolutionCoordinator(
-                _rpc,
-                _miniGameCoordinator,
-                _emergencyPolicy,
-                _emergencyCoordinator,
-                this,
-                _miniGameFailPenalty,
-                _miniGameSuccessHeal);
+            _miniGameResolutionCoordinator = new StageMiniGameResolutionCoordinator(_rpc, this, this);
             _recipeProgressCoordinator = new StageRecipeProgressCoordinator(_rpc, _trayHandler, _emergencyPolicy, _emergencyCoordinator, this);
             _patientTreatmentCoordinator = new StagePatientTreatmentCoordinator(_rpc, _timer, _emergencyPolicy, this, _recipeProgressCoordinator);
 
@@ -537,8 +538,7 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            if (_emergencyCoordinator != null &&
-                _emergencyPolicy.ShouldTriggerRandom(_stageData, Time.deltaTime))
+            if (_emergencyCoordinator != null && _emergencyPolicy.ShouldTriggerRandom(_stageData, Time.deltaTime))
             {
                 _emergencyCoordinator.TryStartEmergencyEvent(
                     EmergencyTriggerSource.Random,
