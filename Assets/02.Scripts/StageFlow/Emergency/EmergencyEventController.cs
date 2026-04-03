@@ -20,9 +20,6 @@ namespace DontDillyDally.StageFlow
 
     public sealed class EmergencyEventController
     {
-        private const float TrayDurationSec = 20f;
-        private const float DiagnosisDurationSec = 15f;
-
         private static readonly CraftedMaterialType[] s_trayTargets =
         {
             CraftedMaterialType.SedativeSyringe,
@@ -37,6 +34,8 @@ namespace DontDillyDally.StageFlow
             DiagnosisScanType.Encephalograph
         };
 
+        private readonly StageEmergencySettings _settings;
+
         public bool IsActive { get; private set; }
         public EmergencyEventKind CurrentKind { get; private set; }
         public EmergencyTriggerSource CurrentTriggerSource { get; private set; }
@@ -45,7 +44,7 @@ namespace DontDillyDally.StageFlow
         public bool IsDiagnosisOperating { get; private set; }
         public float DiagnosisOperationRemainingTime => !IsDiagnosisOperating
             ? 0f
-            : Mathf.Max(0f, DiagnosisDurationSec - (Time.unscaledTime - _diagnosisOperationStartedAt));
+            : Mathf.Max(0f, _settings.DiagnosisOperationDurationSec - (Time.unscaledTime - _diagnosisOperationStartedAt));
         public float RemainingTime => !IsActive
             ? 0f
             : Mathf.Max(0f, _durationSec - (Time.unscaledTime - _startedAt));
@@ -53,6 +52,13 @@ namespace DontDillyDally.StageFlow
         private float _startedAt;
         private float _durationSec;
         private float _diagnosisOperationStartedAt;
+
+        public EmergencyEventController(StageEmergencySettings settings)
+        {
+            _settings = settings != null
+                ? new StageEmergencySettings(settings)
+                : new StageEmergencySettings();
+        }
 
         public bool CanBegin(
             EStagePhase currentPhase,
@@ -206,7 +212,9 @@ namespace DontDillyDally.StageFlow
             CurrentDiagnosisTarget = diagnosisTarget;
             IsDiagnosisOperating = false;
             _startedAt = Time.unscaledTime;
-            _durationSec = kind == EmergencyEventKind.Tray ? TrayDurationSec : DiagnosisDurationSec;
+            _durationSec = kind == EmergencyEventKind.Tray
+                ? _settings.TrayDurationSec
+                : _settings.DiagnosisDurationSec;
             _diagnosisOperationStartedAt = 0f;
         }
     }

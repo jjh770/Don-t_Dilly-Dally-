@@ -109,17 +109,6 @@ namespace DontDillyDally.StageFlow
             return _rpc.SurgeonActorNumber.Value == actorNumber ? EStageRole.Surgeon : EStageRole.Assistant;
         }
 
-        // 로컬 플레이어 역할을 UI용 문자열로 반환합니다.
-        public string GetLocalRoleDisplayName()
-        {
-            return GetLocalRole() switch
-            {
-                EStageRole.Surgeon => "집도의",
-                EStageRole.Assistant => "어시스트",
-                _ => "역할 미정"
-            };
-        }
-
         // ── 현재 치료 대상 조회 ──────────────────────────────────────
 
         // 현재 환자에게 할당된 질병 데이터를 가져옵니다.
@@ -159,48 +148,6 @@ namespace DontDillyDally.StageFlow
 
             double elapsed = PhotonNetwork.Time - _rpc.CountdownStartTime.Value;
             return Mathf.Max(0f, duration - (float)elapsed);
-        }
-
-        // ── UI 표시용 텍스트 ────────────────────────────────────────
-
-        public string GetEmergencyObjectiveText()
-        {
-            if (!IsEmergencyActive)
-            {
-                return string.Empty;
-            }
-
-            if (CurrentEmergencyKind == EmergencyEventKind.Tray)
-            {
-                return $"{GetMaterialDisplayName(CurrentEmergencyTrayTarget)} 제출";
-            }
-
-            return CurrentEmergencyKind switch
-            {
-                EmergencyEventKind.Tray => $"멸균 트레이에 {GetMaterialDisplayName(CurrentEmergencyTrayTarget)} 제출",
-                EmergencyEventKind.Diagnosis => $"{GetDiagnosisDisplayName(CurrentEmergencyDiagnosisTarget)} 기계를 환자에게 작동",
-                _ => "긴급 처치 진행"
-            };
-        }
-
-        private static string GetMaterialDisplayName(CraftedMaterialType materialType)
-        {
-            return materialType switch
-            {
-                CraftedMaterialType.SedativeSyringe => "Sedative Syringe",
-                CraftedMaterialType.Defibrillator => "Defibrillator",
-                CraftedMaterialType.BloodPack => "Blood Pack",
-                _ => materialType.ToString()
-            };
-        }
-
-        private static string GetDiagnosisDisplayName(DiagnosisScanType diagnosisType)
-        {
-            return diagnosisType switch
-            {
-                DiagnosisScanType.Radiograph => "X-Ray",
-                _ => diagnosisType.ToString()
-            };
         }
 
         // ================================================================
@@ -361,7 +308,7 @@ namespace DontDillyDally.StageFlow
             // StageFlowManager를 host로 삼아 각 코디네이터를 다시 구성합니다.
             _bootstrapCoordinator = new StageBootstrapCoordinator(_rpc, _ackCoordinator, HandleStageDataReceived);
             _miniGameCoordinator = new StageMiniGameCoordinator(_rpc, _miniGameLauncher, () => IsLocalSurgeon);
-            _emergencyCoordinator = new StageEmergencyCoordinator(_rpc, () => _flowCts != null ? _flowCts.Token : CancellationToken.None);
+            _emergencyCoordinator = new StageEmergencyCoordinator(_rpc, () => _flowCts.Token, _stageData?.Settings?.EmergencySettings);
             _movementCoordinator = new StageMovementCoordinator(_rpc);
             _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this);
             _patientStatusCoordinator = new StagePatientStatusCoordinator(_patientHealthController, _rpc, TriggerGameOver);
@@ -391,15 +338,7 @@ namespace DontDillyDally.StageFlow
             try
             {
                 int surgeonActor = StagePreloader.Instance.SurgeonActorNumber;
-                await _bootstrapCoordinator.SynchronizeStageStart(
-                    _stageData,
-                    surgeonActor,
-                    STAGE_START_COUNTDOWN_SEC,
-                    ACK_TIMEOUT_MS,
-                    STAGE_DATA_ACK_TIMEOUT_MS,
-                    ct);
-
-                Debug.Log("[StageFlow] ▶ Playing 진입 (게임 카운트 다운 시작)");
+                await _bootstrapCoordinator.SynchronizeStageStart(_stageData, surgeonActor, STAGE_START_COUNTDOWN_SEC, ACK_TIMEOUT_MS, STAGE_DATA_ACK_TIMEOUT_MS, ct);
                 Debug.Log("[StageFlow] ▶ Playing 시작 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
                 await _patientTreatmentCoordinator.RunGameLoop(PATIENT_TRANSITION_DELAY_SEC, ct);
@@ -510,35 +449,47 @@ namespace DontDillyDally.StageFlow
         // 마스터가 플레이 중일 때 체력 드레인과 랜덤 응급 이벤트를 갱신합니다.
         private void Update()
         {
-            if (!PhotonNetwork.IsMasterClient || _isGameOver)
+            if (!CanRunPlayingUpdate(out EStagePhase currentPhase))
+            {
                 return;
-
-            if (_rpc == null)
-                return;
-
-            if (_rpc.CurrentPhase.Value != EStagePhase.Playing)
-                return;
+            }
 
             _patientStatusCoordinator?.Tick(Time.deltaTime);
 
             if (_isGameOver)
+            {
                 return;
+            }
 
             if (_emergencyCoordinator != null && _emergencyCoordinator.TryHandleTimeout())
             {
                 return;
             }
 
+            bool isWaitingForSubmission = _recipeProgressCoordinator != null && _recipeProgressCoordinator.IsWaitingForSubmission;
             if (_emergencyCoordinator != null &&
                 _emergencyPolicy != null &&
                 _emergencyPolicy.ShouldTriggerRandom(_stageData, Time.deltaTime))
             {
                 _emergencyCoordinator.TryStartEmergencyEvent(
                     EmergencyTriggerSource.Random,
-                    _rpc.CurrentPhase.Value,
+                    currentPhase,
                     _isGameOver,
-                    _recipeProgressCoordinator != null && _recipeProgressCoordinator.IsWaitingForSubmission);
+                    isWaitingForSubmission);
             }
+        }
+
+        private bool CanRunPlayingUpdate(out EStagePhase currentPhase)
+        {
+            currentPhase = EStagePhase.None;
+
+            if (!PhotonNetwork.IsMasterClient || _isGameOver || _rpc == null)
+            {
+                return false;
+            }
+
+            currentPhase = _rpc.CurrentPhase.Value;
+            return currentPhase == EStagePhase.Playing;
         }
 
         // ── 정리 ────────────────────────────────────────────────────

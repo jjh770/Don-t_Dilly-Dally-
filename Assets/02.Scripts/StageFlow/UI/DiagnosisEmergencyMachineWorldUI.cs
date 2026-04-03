@@ -5,8 +5,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class DiagnosisEmergencyMachineWorldUI : MonoBehaviour
 {
-    private const float DiagnosisOperationDurationSec = 5f;
-
     [Header("References")]
     [SerializeField] private DiagnosisEmergencyMachine _machine;
     [SerializeField] private GameObject _root;
@@ -52,8 +50,11 @@ public class DiagnosisEmergencyMachineWorldUI : MonoBehaviour
 
         if (_timerFillImage != null)
         {
-            float remainingRatio = Mathf.Clamp01(
-                _stageFlowManager.EmergencyDiagnosisOperationRemainingTime / DiagnosisOperationDurationSec);
+            StageEmergencySettings emergencySettings = _stageFlowManager.CurrentStageData?.Settings?.EmergencySettings;
+            float operationDurationSec = emergencySettings?.DiagnosisOperationDurationSec ?? 0f;
+            float remainingRatio = operationDurationSec > 0f
+                ? Mathf.Clamp01(_stageFlowManager.EmergencyDiagnosisOperationRemainingTime / operationDurationSec)
+                : 0f;
             _timerFillImage.fillAmount = 1f - remainingRatio;
         }
     }

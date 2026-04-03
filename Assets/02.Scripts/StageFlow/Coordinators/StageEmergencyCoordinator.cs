@@ -12,17 +12,22 @@ namespace DontDillyDally.StageFlow
     {
         private readonly StageFlowRpcHandler _rpc;
         private readonly Func<CancellationToken> _flowCancellationTokenProvider;
+        private readonly StageEmergencySettings _emergencySettings;
 
         private UniTaskCompletionSource<EmergencyResumeResult> _emergencyResultTcs;
         private CancellationTokenSource _diagnosisOperateCts;
 
         public StageEmergencyCoordinator(
             StageFlowRpcHandler rpc,
-            Func<CancellationToken> flowCancellationTokenProvider)
+            Func<CancellationToken> flowCancellationTokenProvider,
+            StageEmergencySettings emergencySettings)
         {
             _rpc = rpc;
             _flowCancellationTokenProvider = flowCancellationTokenProvider;
-            Controller = new EmergencyEventController();
+            _emergencySettings = emergencySettings != null
+                ? new StageEmergencySettings(emergencySettings)
+                : new StageEmergencySettings();
+            Controller = new EmergencyEventController(_emergencySettings);
 
             if (_rpc != null)
             {
@@ -297,7 +302,10 @@ namespace DontDillyDally.StageFlow
 
             try
             {
-                await UniTask.Delay(TimeSpan.FromSeconds(5f), cancellationToken: _diagnosisOperateCts.Token);
+                float operationDurationSec = _emergencySettings.DiagnosisOperationDurationSec;
+                await UniTask.Delay(
+                    TimeSpan.FromSeconds(operationDurationSec),
+                    cancellationToken: _diagnosisOperateCts.Token);
 
                 if (IsActive &&
                     CurrentKind == EmergencyEventKind.Diagnosis &&

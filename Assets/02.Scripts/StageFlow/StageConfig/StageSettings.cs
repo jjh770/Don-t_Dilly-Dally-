@@ -6,6 +6,15 @@ namespace DontDillyDally.StageFlow
     [Serializable]
     public class StageEmergencySettings
     {
+        [Min(0f)]
+        public float TrayDurationSec = 20f;
+
+        [Min(0f)]
+        public float DiagnosisDurationSec = 15f;
+
+        [Min(0f)]
+        public float DiagnosisOperationDurationSec = 5f;
+
         [Range(0f, 1f)]
         public float RecipeFailTriggerChance = 0.7f;
 
@@ -29,6 +38,9 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            TrayDurationSec = source.TrayDurationSec;
+            DiagnosisDurationSec = source.DiagnosisDurationSec;
+            DiagnosisOperationDurationSec = source.DiagnosisOperationDurationSec;
             RecipeFailTriggerChance = source.RecipeFailTriggerChance;
             MiniGameFailTriggerChance = source.MiniGameFailTriggerChance;
             RandomCheckIntervalSec = source.RandomCheckIntervalSec;

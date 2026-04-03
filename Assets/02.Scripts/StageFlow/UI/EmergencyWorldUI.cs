@@ -6,9 +6,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class EmergencyWorldUI : MonoBehaviour
 {
-    private const float TrayDurationSec = 20f;
-    private const float DiagnosisDurationSec = 15f;
-
     [Header("Patient")]
     [SerializeField] private int _patientIndex;
 
@@ -154,7 +151,11 @@ public class EmergencyWorldUI : MonoBehaviour
             return;
         }
 
-        float duration = kind == EmergencyEventKind.Tray ? TrayDurationSec : DiagnosisDurationSec;
+        StageEmergencySettings emergencySettings = _stageFlowManager.CurrentStageData?.Settings?.EmergencySettings;
+        float duration = kind == EmergencyEventKind.Tray
+            ? emergencySettings?.TrayDurationSec ?? 0f
+            : emergencySettings?.DiagnosisDurationSec ?? 0f;
+
         if (duration <= 0f)
         {
             _timerFillImage.fillAmount = 0f;
