@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 6415217260452693009}
   - component: {fileID: 7264888448533580826}
   - component: {fileID: 7582686018788082104}
+  - component: {fileID: 192785593890314163}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -102,6 +103,27 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &192785593890314163
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1446070671504311703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4534b34cf2d59d24c8d6d35f0ed253fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: '::'
+  _Panel: {fileID: 2355855251184639500}
+  _nicknameText: {fileID: 3158764836206796792}
+  _readyColor: {r: 0, g: 1, b: 0, a: 1}
+  _notReadyColor: {r: 1, g: 0, b: 0, a: 1}
+  _masterColor: {r: 0, g: 0, b: 0, a: 1}
+  Image: {fileID: 8241985449052486217}
+  _readySprite: {fileID: 21300000, guid: cc04d8c6097ab4aafbfd11cf1801eba6, type: 3}
+  _notReadySprite: {fileID: 21300000, guid: 959c72e1a886a4eb698e1b0a231466e6, type: 3}
+  _masterSprite: {fileID: 21300000, guid: aa3e86e82434b4aec82f2cdd8bba1319, type: 3}
 --- !u!1 &1514733852780051151
 GameObject:
   m_ObjectHideFlags: 0
@@ -248,7 +270,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3399757749777280282}
-  - component: {fileID: 588189392078077205}
   m_Layer: 5
   m_Name: PlayerInformation
   m_TagString: Untagged
@@ -277,26 +298,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0.85, y: 0.24}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &588189392078077205
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2355855251184639500}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4534b34cf2d59d24c8d6d35f0ed253fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: '::'
-  _nicknameText: {fileID: 3158764836206796792}
-  _readyColor: {r: 0, g: 1, b: 0, a: 1}
-  _notReadyColor: {r: 1, g: 0, b: 0, a: 1}
-  _masterColor: {r: 0, g: 0, b: 0, a: 1}
-  Image: {fileID: 8241985449052486217}
-  _readySprite: {fileID: 21300000, guid: cc04d8c6097ab4aafbfd11cf1801eba6, type: 3}
-  _notReadySprite: {fileID: 21300000, guid: 959c72e1a886a4eb698e1b0a231466e6, type: 3}
-  _masterSprite: {fileID: 21300000, guid: aa3e86e82434b4aec82f2cdd8bba1319, type: 3}
 --- !u!1 &6536501996314029870
 GameObject:
   m_ObjectHideFlags: 0
