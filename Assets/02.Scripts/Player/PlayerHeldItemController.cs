@@ -102,16 +102,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             return false;
         }
 
-        if (PhotonNetwork.InRoom)
-        {
-            PhotonNetwork.Destroy(releasedItem.gameObject);
-        }
-        else
-        {
-            Destroy(releasedItem.gameObject);
-        }
-
-        return true;
+        return ItemRecycleUtility.TryRecycle(releasedItem);
     }
 
     public bool TryBeginHeldItemInteractionLock(ItemObject expectedHeldItem)

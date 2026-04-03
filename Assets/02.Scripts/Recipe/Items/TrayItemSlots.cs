@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    // 트레이 위의 월드 아이템 배치와 슬롯 시각 표현만 담당합니다.
+    // 트레이 위 아이템 배치와 슬롯별 시각 정렬을 담당합니다.
     public class TrayItemSlots : MonoBehaviour
     {
         private const int MaxItemSlots = 4;
@@ -28,6 +28,24 @@ namespace DontDillyDally.Data
             }
 
             return -1;
+        }
+
+        public bool HasStoredItems()
+        {
+            if (_storedSlotItems == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                if (_storedSlotItems[i] != null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         public bool TryStoreItem(ItemObject itemObject, int slotIndex)
@@ -55,8 +73,8 @@ namespace DontDillyDally.Data
         }
 
         /// <summary>
-        /// 슬롯에 저장된 아이템을 모두 정리합니다.
-        /// 로컬에서 파괴할 수 없는 아이템(소유권 없음)의 ViewID 배열을 반환합니다.
+        /// 보관 중인 아이템을 모두 정리합니다.
+        /// 로컬에서 직접 회수하지 못한 아이템은 ViewID 목록으로 반환합니다.
         /// </summary>
         public int[] ClearStoredItems()
         {
@@ -81,20 +99,17 @@ namespace DontDillyDally.Data
                 PhotonView photonView = storedItem.GetComponent<PhotonView>();
                 if (PhotonNetwork.InRoom && photonView != null)
                 {
-                    if (photonView.IsMine || photonView.AmController)
+                    if (ItemRecycleUtility.TryRecycle(storedItem))
                     {
-                        PhotonNetwork.Destroy(storedItem.gameObject);
-                    }
-                    else
-                    {
-                        // 소유권이 없어 파괴 불가 → ViewID 수집
-                        undestroyedViewIds[undestroyedCount++] = photonView.ViewID;
+                        continue;
                     }
 
+                    // 소유권이 없어 직접 회수하지 못한 아이템만 따로 수집합니다.
+                    undestroyedViewIds[undestroyedCount++] = photonView.ViewID;
                     continue;
                 }
 
-                Destroy(storedItem.gameObject);
+                ItemRecycleUtility.TryRecycle(storedItem);
             }
 
             if (undestroyedCount == 0)
@@ -133,7 +148,7 @@ namespace DontDillyDally.Data
                 col.enabled = false;
             }
 
-            // 네트워크 동기화가 콜라이더를 다시 활성화하지 않도록 플래그 설정
+            // 보관 상태에서는 다시 집을 수 없도록 플래그를 설정합니다.
             HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
             if (holdable != null)
             {

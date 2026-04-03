@@ -95,7 +95,6 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            trayItem.ClearContentsAndSync();
             heldItemInteractor?.TryConsumeHeldItem(trayItem);
         }
 
