@@ -12,7 +12,9 @@ namespace DontDillyDally.StageFlow
     {
         private readonly StageFlowRpcHandler _rpc;
         private readonly Func<CancellationToken> _flowCancellationTokenProvider;
+        private readonly IStagePatientFlow _patientFlow;
         private readonly StageEmergencySettings _emergencySettings;
+        private readonly float _emergencyFailPenalty;
 
         private UniTaskCompletionSource<EmergencyResumeResult> _emergencyResultTcs;
         private CancellationTokenSource _diagnosisOperateCts;
@@ -20,13 +22,16 @@ namespace DontDillyDally.StageFlow
         public StageEmergencyCoordinator(
             StageFlowRpcHandler rpc,
             Func<CancellationToken> flowCancellationTokenProvider,
-            StageEmergencySettings emergencySettings)
+            StageSettings stageSettings,
+            IStagePatientFlow patientFlow)
         {
             _rpc = rpc;
             _flowCancellationTokenProvider = flowCancellationTokenProvider;
-            _emergencySettings = emergencySettings != null
-                ? new StageEmergencySettings(emergencySettings)
+            _patientFlow = patientFlow;
+            _emergencySettings = stageSettings?.EmergencySettings != null
+                ? new StageEmergencySettings(stageSettings.EmergencySettings)
                 : new StageEmergencySettings();
+            _emergencyFailPenalty = stageSettings?.EmergencySettings?.EmergencyFailPenalty ?? 0f;
             Controller = new EmergencyEventController(_emergencySettings);
 
             if (_rpc != null)
@@ -73,7 +78,7 @@ namespace DontDillyDally.StageFlow
                 return false;
             }
 
-            EmergencyEventKind kind = SelectEmergencyKind();
+            EmergencyEventKind kind = SelectEmergencyKind(_emergencySettings);
             if (!Controller.TryBegin(kind, triggerSource))
             {
                 return false;
@@ -178,9 +183,13 @@ namespace DontDillyDally.StageFlow
 
         // ── 내부 완료 / RPC 수신 처리 ────────────────────────────────
 
-        private static EmergencyEventKind SelectEmergencyKind()
+        private static EmergencyEventKind SelectEmergencyKind(StageEmergencySettings settings)
         {
-            return UnityEngine.Random.value < 0.5f
+            float trayEventSelectionChance = settings != null
+                ? Mathf.Clamp01(settings.TrayEventSelectionChance)
+                : 0.5f;
+
+            return UnityEngine.Random.value < trayEventSelectionChance
                 ? EmergencyEventKind.Tray
                 : EmergencyEventKind.Diagnosis;
         }
@@ -207,6 +216,8 @@ namespace DontDillyDally.StageFlow
             }
 
             CancelDiagnosisOperateTask();
+            float newHealth = _patientFlow != null ? _patientFlow.ApplyDamage(_emergencyFailPenalty) : 0f;
+            Debug.Log($"[StageFlow] 긴급 이벤트 실패. 체력 -{_emergencyFailPenalty} | 현재 체력: {newHealth}");
             EmergencyResumeResult result = Controller.ResolveFailure();
             _rpc?.BroadcastEmergencyEnd();
             _emergencyResultTcs?.TrySetResult(result);

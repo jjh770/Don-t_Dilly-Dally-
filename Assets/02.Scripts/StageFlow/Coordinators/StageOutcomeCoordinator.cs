@@ -86,8 +86,8 @@ namespace DontDillyDally.StageFlow
 
             var result = new StageResult(
                 savedCount: stageData.SavedCount,
-                patientCount: stageData.Settings.PatientCount,
-                difficulty: stageData.Settings.Difficulty);
+                patientCount: stageData.Settings.PatientSettings.PatientCount,
+                difficulty: stageData.Settings.PatientSettings.Difficulty);
 
             StageReward reward = RoomDataManager.Instance.ApplyReward(stageData.StageId, result);
             _rpc.BroadcastStageReward(reward, result);
@@ -121,13 +121,18 @@ namespace DontDillyDally.StageFlow
             {
                 if (_ackCoordinator != null && _rpc != null)
                 {
-                    await _ackCoordinator.BroadcastAndWaitAck(
+                    bool gameOverAckCompleted = await _ackCoordinator.BroadcastAndWaitAck(
                         () => _rpc.BroadcastGameOver(reason),
                         handler => _rpc.OnGameOverAckReceived += handler,
                         handler => _rpc.OnGameOverAckReceived -= handler,
                         "게임 오버",
                         ackTimeoutMs,
                         cts.Token);
+
+                    if (!gameOverAckCompleted)
+                    {
+                        Debug.LogWarning("[StageFlow] 게임 오버 ACK를 모두 받지 못한 채 보상 단계로 진행합니다.");
+                    }
                 }
             }
             catch (OperationCanceledException)

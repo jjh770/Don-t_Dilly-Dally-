@@ -29,6 +29,10 @@ public class EmergencyWorldUI : MonoBehaviour
 
     private StageFlowManager _stageFlowManager;
     private CanvasGroup _canvasGroup;
+    private bool _wasVisible;
+    private EmergencyEventKind _displayedKind = EmergencyEventKind.None;
+    private CraftedMaterialType _displayedTrayTarget = CraftedMaterialType.None;
+    private DiagnosisScanType _displayedDiagnosisTarget = DiagnosisScanType.None;
 
     private void Awake()
     {
@@ -60,23 +64,47 @@ public class EmergencyWorldUI : MonoBehaviour
         SetVisible(shouldShow);
         if (!shouldShow)
         {
+            if (_wasVisible)
+            {
+                ResetDisplayState();
+            }
+
             return;
         }
 
         EmergencyEventKind kind = _stageFlowManager.CurrentEmergencyKind;
-        UpdateLayout(kind);
+        if (!_wasVisible || _displayedKind != kind)
+        {
+            UpdateLayout(kind);
+            _displayedKind = kind;
+            _displayedTrayTarget = CraftedMaterialType.None;
+            _displayedDiagnosisTarget = DiagnosisScanType.None;
+        }
+
         UpdateTimer(kind, _stageFlowManager.EmergencyRemainingTime);
 
         switch (kind)
         {
             case EmergencyEventKind.Tray:
-                UpdateTrayIcons();
+                CraftedMaterialType trayTarget = _stageFlowManager.CurrentEmergencyTrayTarget;
+                if (_displayedTrayTarget != trayTarget)
+                {
+                    UpdateTrayIcons(trayTarget);
+                    _displayedTrayTarget = trayTarget;
+                }
                 break;
 
             case EmergencyEventKind.Diagnosis:
-                UpdateDiagnosisIcon();
+                DiagnosisScanType diagnosisTarget = _stageFlowManager.CurrentEmergencyDiagnosisTarget;
+                if (_displayedDiagnosisTarget != diagnosisTarget)
+                {
+                    UpdateDiagnosisIcon(diagnosisTarget);
+                    _displayedDiagnosisTarget = diagnosisTarget;
+                }
                 break;
         }
+
+        _wasVisible = true;
     }
 
     private void SetVisible(bool visible)
@@ -104,14 +132,13 @@ public class EmergencyWorldUI : MonoBehaviour
         }
     }
 
-    private void UpdateTrayIcons()
+    private void UpdateTrayIcons(CraftedMaterialType targetMaterial)
     {
         if (_uiCatalog == null)
         {
             return;
         }
 
-        CraftedMaterialType targetMaterial = _stageFlowManager.CurrentEmergencyTrayTarget;
         MaterialIconTable iconTable = _uiCatalog.MaterialIconTable;
 
         SetImageSprite(_targetMaterialIconImage, iconTable != null ? iconTable.GetMaterialIcon(targetMaterial) : null);
@@ -133,14 +160,14 @@ public class EmergencyWorldUI : MonoBehaviour
         }
     }
 
-    private void UpdateDiagnosisIcon()
+    private void UpdateDiagnosisIcon(DiagnosisScanType diagnosisTarget)
     {
         if (_uiCatalog == null)
         {
             return;
         }
 
-        Sprite diagnosisIcon = _uiCatalog.GetDiagnosisIcon(_stageFlowManager.CurrentEmergencyDiagnosisTarget);
+        Sprite diagnosisIcon = _uiCatalog.GetDiagnosisIcon(diagnosisTarget);
         SetImageSprite(_diagnosisIconImage, diagnosisIcon);
     }
 
@@ -174,5 +201,13 @@ public class EmergencyWorldUI : MonoBehaviour
 
         image.sprite = sprite;
         image.enabled = sprite != null;
+    }
+
+    private void ResetDisplayState()
+    {
+        _wasVisible = false;
+        _displayedKind = EmergencyEventKind.None;
+        _displayedTrayTarget = CraftedMaterialType.None;
+        _displayedDiagnosisTarget = DiagnosisScanType.None;
     }
 }

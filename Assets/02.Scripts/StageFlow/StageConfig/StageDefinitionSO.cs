@@ -48,6 +48,8 @@ namespace DontDillyDally.StageFlow
         private void EnsureSettingsInitialized()
         {
             _settings ??= new StageSettings();
+            _settings.PatientSettings ??= new StagePatientSettings();
+            _settings.MiniGameSettings ??= new StageMiniGameSettings();
             _settings.EmergencySettings ??= new StageEmergencySettings();
         }
     }

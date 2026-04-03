@@ -46,10 +46,6 @@ namespace DontDillyDally.StageFlow
         [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
 
-        [Header("미니게임")]
-        [SerializeField] private float _miniGameFailPenalty = 10f;
-        [SerializeField] private float _miniGameSuccessHeal = 5f;
-
         // ── 외부 구독용 (RpcHandler에 위임) ──────────────────────────
         public IReadOnlyReactiveProperty<EStagePhase> CurrentPhase => _rpc.CurrentPhase;
         public IReadOnlyReactiveProperty<float> PatientHealth => _rpc.PatientHealth;
@@ -232,8 +228,8 @@ namespace DontDillyDally.StageFlow
         StageMiniGameCoordinator IStageMiniGameResolutionDependencies.MiniGameCoordinator => _miniGameCoordinator;
         StageEmergencyCoordinator IStageMiniGameResolutionDependencies.EmergencyCoordinator => _emergencyCoordinator;
         EmergencyEventPolicy IStageMiniGameResolutionDependencies.EmergencyPolicy => _emergencyPolicy;
-        float IStageMiniGameResolutionDependencies.MiniGameFailPenalty => _miniGameFailPenalty;
-        float IStageMiniGameResolutionDependencies.MiniGameSuccessHeal => _miniGameSuccessHeal;
+        float IStageMiniGameResolutionDependencies.MiniGameFailPenalty => _stageData?.Settings?.MiniGameSettings?.FailPenalty ?? 0f;
+        float IStageMiniGameResolutionDependencies.MiniGameSuccessHeal => _stageData?.Settings?.MiniGameSettings?.SuccessHeal ?? 0f;
 
 
         // ── 레시피 미니게임 실행 제공 ────────────────────────────────
@@ -296,7 +292,7 @@ namespace DontDillyDally.StageFlow
             // 새 스테이지 시작 전에 이전 런타임 객체를 먼저 정리합니다.
             _flowCts?.Cancel();
             _flowCts?.Dispose();
-            _ackCoordinator = new StageRpcAckCoordinator(ACK_RETRY_DELAY_MS);
+            _ackCoordinator = new StageRpcAckCoordinator(ACK_RETRY_DELAY_MS, 10);
             _bootstrapCoordinator?.Dispose();
             _miniGameCoordinator?.Dispose();
             _emergencyCoordinator?.Dispose();
@@ -308,7 +304,7 @@ namespace DontDillyDally.StageFlow
             // StageFlowManager를 host로 삼아 각 코디네이터를 다시 구성합니다.
             _bootstrapCoordinator = new StageBootstrapCoordinator(_rpc, _ackCoordinator, HandleStageDataReceived);
             _miniGameCoordinator = new StageMiniGameCoordinator(_rpc, _miniGameLauncher, () => IsLocalSurgeon);
-            _emergencyCoordinator = new StageEmergencyCoordinator(_rpc, () => _flowCts.Token, _stageData?.Settings?.EmergencySettings);
+            _emergencyCoordinator = new StageEmergencyCoordinator(_rpc, () => _flowCts.Token, _stageData?.Settings, this);
             _movementCoordinator = new StageMovementCoordinator(_rpc);
             _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this);
             _patientStatusCoordinator = new StagePatientStatusCoordinator(_patientHealthController, _rpc, TriggerGameOver);
@@ -338,7 +334,11 @@ namespace DontDillyDally.StageFlow
             try
             {
                 int surgeonActor = StagePreloader.Instance.SurgeonActorNumber;
-                await _bootstrapCoordinator.SynchronizeStageStart(_stageData, surgeonActor, STAGE_START_COUNTDOWN_SEC, ACK_TIMEOUT_MS, STAGE_DATA_ACK_TIMEOUT_MS, ct);
+                bool stageStartSynchronized = await _bootstrapCoordinator.SynchronizeStageStart(_stageData, surgeonActor, STAGE_START_COUNTDOWN_SEC, ACK_TIMEOUT_MS, STAGE_DATA_ACK_TIMEOUT_MS, ct);
+                if (!stageStartSynchronized)
+                {
+                    Debug.LogWarning("[StageFlow] 스테이지 시작 ACK가 아직 모두 오지 않았지만 게임은 계속 진행합니다.");
+                }
                 Debug.Log("[StageFlow] ▶ Playing 시작 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
                 await _patientTreatmentCoordinator.RunGameLoop(PATIENT_TRANSITION_DELAY_SEC, ct);

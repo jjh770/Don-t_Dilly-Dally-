@@ -90,15 +90,15 @@ namespace DontDillyDally.StageFlow
         private async UniTask RunPatientLoop(int patientIndex, StageRuntimeData stageData, CancellationToken ct)
         {
             DiseaseData disease = stageData.Patients[patientIndex];
-            Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {stageData.Settings.InitialPatientHealth}");
+            Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {stageData.Settings.PatientSettings.InitialPatientHealth}");
 
             CommentaryController.Instance?.SetCurrentPatientIndex(patientIndex);
             EventManager.Instance?.OnNewPatientAppeared(disease.PatientName, disease.DiseaseName);
 
             _recipeProgressCoordinator?.PrepareForDisease(disease);
             _host?.Initialize(
-                stageData.Settings.InitialPatientHealth,
-                stageData.Settings.PatientHealthDrainPerSecond,
+                stageData.Settings.PatientSettings.InitialPatientHealth,
+                stageData.Settings.PatientSettings.PatientHealthDrainPerSecond,
                 _host != null ? _host.CurrentPhase : EStagePhase.None);
             _emergencyPolicy?.ResetTimer();
             _forcePatientSuccessTcs = new UniTaskCompletionSource<bool>();

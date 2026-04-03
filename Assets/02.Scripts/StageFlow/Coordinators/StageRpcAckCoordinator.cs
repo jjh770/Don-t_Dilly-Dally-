@@ -8,19 +8,21 @@ using UnityEngine;
 
 namespace DontDillyDally.StageFlow
 {
-    // RPC 전파 뒤 다른 클라이언트의 ACK를 기다리는 공용 동기화 헬퍼입니다.
+    // RPC 전파 후 다른 클라이언트의 ACK를 기다리고, 미응답 대상은 백그라운드에서 재동기화를 이어갑니다.
     public sealed class StageRpcAckCoordinator
     {
         private readonly int _retryDelayMs;
+        private readonly int _maxRetryCount;
 
-        public StageRpcAckCoordinator(int retryDelayMs)
+        public StageRpcAckCoordinator(int retryDelayMs, int maxRetryCount = 10)
         {
             _retryDelayMs = retryDelayMs;
+            _maxRetryCount = Mathf.Max(0, maxRetryCount);
         }
 
-        // ── ACK 대기 ────────────────────────────────────────────────
-
-        public async UniTask BroadcastAndWaitAck(
+        // 첫 대기 구간 안에 모든 ACK를 받으면 true를 반환합니다.
+        // 타임아웃이 나더라도 false를 반환한 뒤 백그라운드 재전송을 이어갑니다.
+        public async UniTask<bool> BroadcastAndWaitAck(
             Action broadcast,
             Action<Action<int>> subscribe,
             Action<Action<int>> unsubscribe,
@@ -33,7 +35,7 @@ namespace DontDillyDally.StageFlow
             {
                 Debug.Log($"[StageFlow]   {label}: 다른 플레이어 없음, ACK 생략");
                 broadcast();
-                return;
+                return true;
             }
 
             HashSet<int> pendingActors = new HashSet<int>();
@@ -46,14 +48,66 @@ namespace DontDillyDally.StageFlow
             }
 
             UniTaskCompletionSource allAckTcs = new UniTaskCompletionSource();
+            bool unsubscribed = false;
 
             void OnAck(int actorNumber)
             {
-                pendingActors.Remove(actorNumber);
+                if (!pendingActors.Remove(actorNumber))
+                {
+                    return;
+                }
+
                 Debug.Log($"[StageFlow]   {label} ACK: Actor {actorNumber} (남은 {pendingActors.Count}명)");
                 if (pendingActors.Count == 0)
                 {
                     allAckTcs.TrySetResult();
+                }
+            }
+
+            void Cleanup()
+            {
+                if (unsubscribed)
+                {
+                    return;
+                }
+
+                unsubscribed = true;
+                unsubscribe(OnAck);
+            }
+
+            async UniTaskVoid ContinueRetryAsync()
+            {
+                try
+                {
+                    for (int retryCount = 1; retryCount <= _maxRetryCount && pendingActors.Count > 0; retryCount++)
+                    {
+                        await UniTask.Delay(_retryDelayMs, cancellationToken: ct);
+                        broadcast();
+
+                        bool completed = await UniTask.WhenAny(
+                            allAckTcs.Task,
+                            UniTask.Delay(timeoutMs, cancellationToken: ct)) == 0;
+
+                        if (completed)
+                        {
+                            Debug.Log($"[StageFlow]   {label}: 백그라운드 재동기화 완료");
+                            return;
+                        }
+
+                        Debug.LogWarning($"[StageFlow]   {label}: ACK 재시도 진행 중 ({retryCount}/{_maxRetryCount}) - 미응답 Actor: {string.Join(", ", pendingActors)}");
+                    }
+
+                    if (pendingActors.Count > 0)
+                    {
+                        Debug.LogError($"[StageFlow]   {label}: ACK 재시도 종료 ({pendingActors.Count}명 미응답) - 미응답 Actor: {string.Join(", ", pendingActors)}");
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                }
+                finally
+                {
+                    Cleanup();
                 }
             }
 
@@ -70,17 +124,25 @@ namespace DontDillyDally.StageFlow
                 if (completed)
                 {
                     Debug.Log($"[StageFlow]   {label}: 모든 클라이언트 확인 완료");
+                    Cleanup();
+                    return true;
                 }
-                else
+
+                if (_maxRetryCount <= 0)
                 {
-                    Debug.LogWarning($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) - 재전송. 미응답 Actor: {string.Join(", ", pendingActors)}");
-                    broadcast();
-                    await UniTask.Delay(_retryDelayMs, cancellationToken: ct);
+                    Debug.LogError($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) - 재시도 비활성화. 미응답 Actor: {string.Join(", ", pendingActors)}");
+                    Cleanup();
+                    return false;
                 }
+
+                Debug.LogWarning($"[StageFlow]   {label}: ACK 타임아웃 ({pendingActors.Count}명 미응답) - 게임은 계속 진행하며 백그라운드 재동기화를 시작합니다. 미응답 Actor: {string.Join(", ", pendingActors)}");
+                ContinueRetryAsync().Forget();
+                return false;
             }
-            finally
+            catch
             {
-                unsubscribe(OnAck);
+                Cleanup();
+                throw;
             }
         }
     }

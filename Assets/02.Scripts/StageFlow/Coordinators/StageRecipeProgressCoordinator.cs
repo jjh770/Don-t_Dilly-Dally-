@@ -97,8 +97,9 @@ namespace DontDillyDally.StageFlow
                     continue;
                 }
 
-                float newHealth = _host != null ? _host.ApplyDamage(disease.FailHealthPenalty) : 0f;
-                Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{disease.FailHealthPenalty} → 현재 체력: {newHealth}");
+                float recipeFailPenalty = _host?.StageData?.Settings?.PatientSettings?.RecipeFailPenalty ?? disease.FailHealthPenalty;
+                float newHealth = _host != null ? _host.ApplyDamage(recipeFailPenalty) : 0f;
+                Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{recipeFailPenalty} → 현재 체력: {newHealth}");
                 EventManager.Instance?.OnSurgeryFail(result.SurgeryFailure);
 
                 if (_host != null && _host.IsGameOver)

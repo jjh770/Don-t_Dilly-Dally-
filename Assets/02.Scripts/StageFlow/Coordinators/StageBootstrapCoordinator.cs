@@ -33,9 +33,9 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        // ── 시작 동기화 ──────────────────────────────────────────────
-
-        public async UniTask SynchronizeStageStart(
+        // 첫 ACK 대기 구간 안에 모든 동기화가 끝났는지 반환합니다.
+        // 실패해도 게임 시작은 이어지고, 미응답 대상은 백그라운드 재동기화를 계속 시도합니다.
+        public async UniTask<bool> SynchronizeStageStart(
             StageRuntimeData stageData,
             int surgeonActorNumber,
             float countdownSeconds,
@@ -45,13 +45,13 @@ namespace DontDillyDally.StageFlow
         {
             if (_rpc == null || _ackCoordinator == null || stageData == null)
             {
-                return;
+                return false;
             }
 
             _rpc.SetPhase(EStagePhase.Loading);
 
-            Debug.Log($"[StageFlow] 집도의 동기화: Actor {surgeonActorNumber}");
-            await _ackCoordinator.BroadcastAndWaitAck(
+            Debug.Log($"[StageFlow] 집도의 동기화 시작: Actor {surgeonActorNumber}");
+            bool surgeonAckCompleted = await _ackCoordinator.BroadcastAndWaitAck(
                 () => _rpc.SetSurgeon(surgeonActorNumber),
                 handler => _rpc.OnSurgeonAckReceived += handler,
                 handler => _rpc.OnSurgeonAckReceived -= handler,
@@ -59,9 +59,14 @@ namespace DontDillyDally.StageFlow
                 ackTimeoutMs,
                 ct);
 
-            Debug.Log("[StageFlow] 스테이지 데이터 동기화");
+            if (!surgeonAckCompleted)
+            {
+                Debug.LogWarning("[StageFlow] 집도의 ACK가 아직 모두 오지 않았지만 게임 시작은 계속 진행합니다.");
+            }
+
+            Debug.Log("[StageFlow] 스테이지 데이터 동기화 시작");
             string json = JsonUtility.ToJson(stageData);
-            await _ackCoordinator.BroadcastAndWaitAck(
+            bool stageDataAckCompleted = await _ackCoordinator.BroadcastAndWaitAck(
                 () => _rpc.BroadcastStageData(json),
                 handler => _rpc.OnStageDataAckReceived += handler,
                 handler => _rpc.OnStageDataAckReceived -= handler,
@@ -69,15 +74,19 @@ namespace DontDillyDally.StageFlow
                 stageDataAckTimeoutMs,
                 ct);
 
+            if (!stageDataAckCompleted)
+            {
+                Debug.LogWarning("[StageFlow] 스테이지 데이터 ACK가 아직 모두 오지 않았지만 게임 시작은 계속 진행합니다.");
+            }
+
             double countdownStartTime = PhotonNetwork.Time;
             _rpc.StartCountdown(countdownStartTime, countdownSeconds);
             _rpc.SetPhase(EStagePhase.Countdown);
 
-            Debug.Log($"[StageFlow] 시작 카운트다운: {countdownSeconds:0}초");
+            Debug.Log($"[StageFlow] 시작 카운트다운 {countdownSeconds:0}초");
             await UniTask.Delay(TimeSpan.FromSeconds(countdownSeconds), cancellationToken: ct);
+            return surgeonAckCompleted && stageDataAckCompleted;
         }
-
-        // ── 정리 ────────────────────────────────────────────────────
 
         public void Dispose()
         {
@@ -86,8 +95,6 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
             }
         }
-
-        // ── 내부 수신 처리 ───────────────────────────────────────────
 
         private void HandleStageDataReceived(StageRuntimeData stageData)
         {
