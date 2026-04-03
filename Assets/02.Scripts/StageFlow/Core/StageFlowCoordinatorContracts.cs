@@ -10,6 +10,7 @@ namespace DontDillyDally.StageFlow
         StageRuntimeData StageData { get; }
         bool IsGameOver { get; }
         EStagePhase CurrentPhase { get; }
+        bool IsWaitingForRecipeSubmission { get; }
         float RemainingTime { get; }
         float PatientHealth { get; }
     }
@@ -63,6 +64,13 @@ namespace DontDillyDally.StageFlow
     public interface IStagePatientTreatmentHost :
         IStageFlowState,
         IStageFlowCommands,
+        IStagePatientFlow
+    {
+    }
+
+    // 미니게임 결과 후처리 코디네이터가 필요로 하는 공통 호스트 묶음입니다.
+    public interface IStageMiniGameResolutionHost :
+        IStageFlowState,
         IStagePatientFlow
     {
     }

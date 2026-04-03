@@ -23,7 +23,8 @@ namespace DontDillyDally.StageFlow
         IStageMiniGameRunner,
         IStageOutcomeHost,
         IStageRecipeProgressHost,
-        IStagePatientTreatmentHost
+        IStagePatientTreatmentHost,
+        IStageMiniGameResolutionHost
     {
         // ── 타이밍 상수 ─────────────────────────────────────────────
         private const int ACK_TIMEOUT_MS = 5000;
@@ -212,6 +213,7 @@ namespace DontDillyDally.StageFlow
         StageRuntimeData IStageFlowState.StageData => _stageData;
         bool IStageFlowState.IsGameOver => _isGameOver;
         EStagePhase IStageFlowState.CurrentPhase => _rpc != null ? _rpc.CurrentPhase.Value : EStagePhase.None;
+        bool IStageFlowState.IsWaitingForRecipeSubmission => _recipeProgressCoordinator != null && _recipeProgressCoordinator.IsWaitingForSubmission;
         float IStageFlowState.RemainingTime => _timer != null ? _timer.RemainingTime : 0f;
         float IStageFlowState.PatientHealth => _rpc != null ? _rpc.PatientHealth.Value : 0f;
 
@@ -286,7 +288,9 @@ namespace DontDillyDally.StageFlow
         // ── 레시피 미니게임 실행 제공 ────────────────────────────────
         UniTask<bool> IStageMiniGameRunner.RunRecipeMiniGame(CancellationToken ct)
         {
-            return RunRecipeMiniGame(ct);
+            return _miniGameResolutionCoordinator != null
+                ? _miniGameResolutionCoordinator.RunRecipeMiniGame(ct)
+                : UniTask.FromResult(false);
         }
 
         // ── 런타임 상태 ────────────────────────────────────────────────
@@ -297,6 +301,7 @@ namespace DontDillyDally.StageFlow
         private StageRpcAckCoordinator _ackCoordinator;
         private StageBootstrapCoordinator _bootstrapCoordinator;
         private StageMiniGameCoordinator _miniGameCoordinator;
+        private StageMiniGameResolutionCoordinator _miniGameResolutionCoordinator;
         private StageEmergencyCoordinator _emergencyCoordinator;
         private StageMovementCoordinator _movementCoordinator;
         private StageOutcomeCoordinator _outcomeCoordinator;
@@ -358,6 +363,14 @@ namespace DontDillyDally.StageFlow
             _movementCoordinator = new StageMovementCoordinator(_rpc);
             _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this);
             _patientStatusCoordinator = new StagePatientStatusCoordinator(_patientHealthController, _rpc, TriggerGameOver);
+            _miniGameResolutionCoordinator = new StageMiniGameResolutionCoordinator(
+                _rpc,
+                _miniGameCoordinator,
+                _emergencyPolicy,
+                _emergencyCoordinator,
+                this,
+                _miniGameFailPenalty,
+                _miniGameSuccessHeal);
             _recipeProgressCoordinator = new StageRecipeProgressCoordinator(_rpc, _trayHandler, _emergencyPolicy, _emergencyCoordinator, this);
             _patientTreatmentCoordinator = new StagePatientTreatmentCoordinator(_rpc, _timer, _emergencyPolicy, this, _recipeProgressCoordinator);
 
@@ -483,76 +496,7 @@ namespace DontDillyDally.StageFlow
             _rpc.SetTimer(_timer.RemainingTime);
         }
 
-        // ── 레시피 성공 후처리 ───────────────────────────────────────
-
-        // 정답 레시피 이후 집도의 대상 미니게임을 실행하고 성공/실패 결과를 반영합니다.
-        private async UniTask<bool> RunRecipeMiniGame(CancellationToken ct)
-        {
-            MiniGameType type = MiniGameTypeExtensions.GetRandom();
-            int surgeonActorNumber = GetMiniGameTargetActorNumber();
-            Debug.Log($"[StageFlow]     레시피 미니게임 시작: {type} | 집도의 Actor {surgeonActorNumber}");
-
-            bool success = _miniGameCoordinator != null &&
-                await _miniGameCoordinator.RunRecipeMiniGame(surgeonActorNumber, type, ct);
-            Debug.Log($"[StageFlow]     레시피 미니게임 결과: {(success ? "성공" : "실패")}");
-
-            if (success)
-            {
-                float recoveredHealth = _patientStatusCoordinator != null
-                    ? _patientStatusCoordinator.ApplyHeal(_miniGameSuccessHeal)
-                    : 0f;
-                Debug.Log($"[StageFlow]     미니게임 성공! 체력 +{_miniGameSuccessHeal} | 현재 체력: {recoveredHealth}");
-                EventManager.Instance?.OnSurgerySuccess();
-                return true;
-            }
-
-            float newHealth = _patientStatusCoordinator != null
-                ? _patientStatusCoordinator.ApplyDamage(_miniGameFailPenalty)
-                : 0f;
-            Debug.Log($"[StageFlow]     미니게임 실패! 체력 -{_miniGameFailPenalty} | 현재 체력: {newHealth}");
-            EventManager.Instance?.OnSurgeryFail(SurgeryFailureReason.MiniGameFailure);
-
-            if (_isGameOver)
-            {
-                Debug.Log("[StageFlow]     환자 사망으로 게임 오버 처리");
-                return false;
-            }
-
-            if (_emergencyPolicy.ShouldTriggerOnRecipeFail())
-            {
-                Debug.Log("[StageFlow]     미니게임 실패로 긴급 이벤트를 시작합니다.");
-
-                if (_emergencyCoordinator != null &&
-                    _emergencyCoordinator.TryStartEmergencyEvent(
-                        EmergencyTriggerSource.MiniGameFail,
-                        _rpc.CurrentPhase.Value,
-                        _isGameOver,
-                        _recipeProgressCoordinator != null && _recipeProgressCoordinator.IsWaitingForSubmission))
-                {
-                    await _emergencyCoordinator.WaitForResult(ct);
-                }
-            }
-
-            return false;
-        }
-
         // ── 내부 보조 메서드 ─────────────────────────────────────────
-
-        // 미니게임을 수행할 집도의 ActorNumber를 계산합니다.
-        private int GetMiniGameTargetActorNumber()
-        {
-            if (_rpc != null && _rpc.SurgeonActorNumber.Value > 0)
-            {
-                return _rpc.SurgeonActorNumber.Value;
-            }
-
-            if (PhotonNetwork.LocalPlayer != null)
-            {
-                return PhotonNetwork.LocalPlayer.ActorNumber;
-            }
-
-            return -1;
-        }
 
         // 동기화된 스테이지 데이터를 갱신하고 외부 구독자에게 알립니다.
         private void HandleStageDataReceived(StageRuntimeData data)
