@@ -65,7 +65,7 @@ namespace DontDillyDally.StageFlow
                     await UniTask.Delay(TimeSpan.FromSeconds(patientTransitionDelaySec), cancellationToken: ct);
                     _rpc.SetPhase(EStagePhase.Playing);
                     _timer.Resume();
-                    _host?.ResumeDrain(_host != null ? _host.CurrentPhase : EStagePhase.None);
+                    _host?.ResumeDrain(_host.CurrentPhase);
                     _host?.SyncTimerState();
                     Debug.Log("[StageFlow]   환자 전환 완료 (타이머 재개)");
                 }
