@@ -526,20 +526,23 @@ namespace DontDillyDally.StageFlow
 
                 if (result.Success)
                 {
-                    Debug.Log($"[StageFlow]     ✓ 레시피 {recipeIndex + 1} 성공! (ID: {result.CompletedRecipeId}) | 질병완치={result.DiseaseCured}");
+                    Debug.Log($"[StageFlow]     ✓ 레시피 {recipeIndex + 1} 일치! (ID: {result.MatchedRecipeId})");
 
                     // 집도의에게만 레시피 성공 후 수술 미니게임 권한을 부여합니다.
                     // OnSurgerySuccess/OnSurgeryFail은 RunRecipeMiniGame 내부에서 미니게임 결과에 따라 호출됩니다.
                     bool shouldAdvanceRecipe = await RunRecipeMiniGame(ct);
 
-                    if (result.DiseaseCured)
-                    {
-                        Debug.Log("[StageFlow]     ★ 질병 완치!");
-                        return;
-                    }
-
                     if (shouldAdvanceRecipe)
                     {
+                        SurgeryJudgeResult completionResult = _recipeJudge.ConfirmRecipeCompletion(result.MatchedRecipeId);
+                        Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 완료 확정! (ID: {completionResult.MatchedRecipeId}) | 질병완치={completionResult.DiseaseCured}");
+
+                        if (completionResult.DiseaseCured)
+                        {
+                            Debug.Log("[StageFlow]     ★ 질병 완치!");
+                            return;
+                        }
+
                         recipeIndex++;
                     }
                 }

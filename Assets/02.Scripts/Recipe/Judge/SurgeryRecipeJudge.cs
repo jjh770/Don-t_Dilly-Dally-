@@ -27,7 +27,7 @@ namespace DontDillyDally.Data
     {
         public bool Success;
         public bool DiseaseCured;
-        public string CompletedRecipeId;
+        public string MatchedRecipeId;
         public float OverallProgress;
         public SurgeryFailureReason SurgeryFailure;
         public GameOverReason GameOver;
@@ -77,21 +77,37 @@ namespace DontDillyDally.Data
                 return CreateResult(progress, surgeryFailure: SurgeryFailureReason.RecipeMismatch);
             }
 
-            completedRecipeIds.Add(nextRecipe.RecipeId);
+            return CreateResult(
+                progress,
+                success: true,
+                matchedRecipeId: nextRecipe.RecipeId);
+        }
+
+        public SurgeryJudgeResult ConfirmRecipeCompletion(string recipeId)
+        {
+            List<string> completedIds = completedRecipeIds.ToList();
+            float progress = CurrentDisease?.GetOverallProgress(completedIds) ?? 0f;
+
+            if (CurrentDisease == null || string.IsNullOrWhiteSpace(recipeId))
+            {
+                return CreateResult(progress);
+            }
+
+            completedRecipeIds.Add(recipeId);
             completedIds = completedRecipeIds.ToList();
 
             return CreateResult(
                 CurrentDisease.GetOverallProgress(completedIds),
                 success: true,
                 diseaseCured: CurrentDisease.IsAllRecipesCompleted(completedIds),
-                completedRecipeId: nextRecipe.RecipeId);
+                matchedRecipeId: recipeId);
         }
 
         private static SurgeryJudgeResult CreateResult(
             float progress,
             bool success = false,
             bool diseaseCured = false,
-            string completedRecipeId = null,
+            string matchedRecipeId = null,
             SurgeryFailureReason surgeryFailure = SurgeryFailureReason.None,
             GameOverReason gameFailure = GameOverReason.None)
         {
@@ -99,7 +115,7 @@ namespace DontDillyDally.Data
             {
                 Success = success,
                 DiseaseCured = diseaseCured,
-                CompletedRecipeId = completedRecipeId,
+                MatchedRecipeId = matchedRecipeId,
                 OverallProgress = progress,
                 SurgeryFailure = surgeryFailure,
                 GameOver = gameFailure
