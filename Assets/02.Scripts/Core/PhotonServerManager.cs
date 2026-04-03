@@ -83,6 +83,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         Debug.Log($"[PhotonServerManager] Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
 
         PlayerProperty.EnsureProperties();
+        RoomProperties.EnsureProperties();
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {

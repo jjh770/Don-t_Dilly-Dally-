@@ -72,6 +72,6 @@ public class UI_HospitalUpgradePresenter
                           currentCoin >= requiredCoin &&
                           currentStar >= requiredStar;
 
-        _view.Render(currentCoin, requiredCoin, currentStar, requiredStar, canUpgrade, hasNextLevel);
+        _view.Render(currentCoin, requiredCoin, currentStar, requiredStar, canUpgrade, hasNextLevel, PhotonServerManager.Instance.IsMasterClient);
     }
 }

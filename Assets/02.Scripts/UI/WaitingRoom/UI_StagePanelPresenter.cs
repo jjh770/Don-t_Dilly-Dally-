@@ -1,9 +1,11 @@
+using System.Collections.Generic;
 using DontDillyDally.StageFlow;
 
 public class UI_StagePanelPresenter
 {
     private readonly UI_StagePanelView _view;
     private readonly RoomDataManager _roomDataManager;
+    private readonly List<UI_StagePanelItemData> _stageItems = new();
 
     public UI_StagePanelPresenter(UI_StagePanelView view)
     {
@@ -54,7 +56,12 @@ public class UI_StagePanelPresenter
             return;
         }
 
-        _view.SetSelectedStage(selectedStageIndex, selectedStage.StageName, selectedStage.Description);
+        if (selectedStageIndex < 0 || selectedStageIndex >= _stageItems.Count)
+        {
+            return;
+        }
+
+        _view.SetSelectedStage(_stageItems[selectedStageIndex]);
     }
 
     private void Render()
@@ -64,6 +71,25 @@ public class UI_StagePanelPresenter
             return;
         }
 
-        _view.Render(_roomDataManager.StageDefinitions, _roomDataManager, _roomDataManager.SelectedStageIndex);
+        BuildStageItems();
+        _view.Render(_stageItems, _roomDataManager.SelectedStageIndex);
+    }
+
+    private void BuildStageItems()
+    {
+        _stageItems.Clear();
+
+        IReadOnlyList<StageDefinitionSO> stageDefinitions = _roomDataManager.StageDefinitions;
+        for (int i = 0; i < stageDefinitions.Count; i++)
+        {
+            StageDefinitionSO stage = stageDefinitions[i];
+            _stageItems.Add(new UI_StagePanelItemData(
+                i,
+                i + 1,
+                stage != null ? stage.StageName : string.Empty,
+                stage != null ? stage.Description : string.Empty,
+                stage != null ? stage.StageThumbnail : null,
+                stage != null && _roomDataManager.IsStageAvailable(stage)));
+        }
     }
 }
