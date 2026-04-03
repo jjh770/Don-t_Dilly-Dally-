@@ -2,21 +2,21 @@ using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
 using UnityEngine;
 
-public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
+public class FirebaseRoomCurrencyRepository : IRoomCurrencyRepository
 {
     FirebaseFirestore _db;
 
-    public RoomCurrencyFirebaseRepository(FirebaseFirestore db)
+    public FirebaseRoomCurrencyRepository(FirebaseFirestore db)
     {
         _db = db;
     }
 
-    private string COLLECTION_NAME = "RoomCurrency";
+    private const string CollectionName = "RoomCurrency";
     public async UniTask<RoomWallet> Load(string roomCode)
     {
         try
         {
-            var result = await _db.Collection(COLLECTION_NAME).Document(roomCode).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName).Document(roomCode).GetSnapshotAsync();
 
             RoomWalletDTO dto = result.ConvertTo<RoomWalletDTO >();
             Debug.LogFormat("[RoomDataRepository] 불러오기 성공");
@@ -40,7 +40,7 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
     {
         try
         {
-            var result = await _db.Collection(COLLECTION_NAME).Document(roomCode).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName).Document(roomCode).GetSnapshotAsync();
 
             RoomWalletDTO  dto = result.ConvertTo<RoomWalletDTO >();
             if (dto == null)
@@ -61,7 +61,7 @@ public class RoomCurrencyFirebaseRepository : IRoomCurrencyRepository
         try
         {
             var dto = RoomWalletDTO.FromDomain(wallet);
-            await _db.Collection(COLLECTION_NAME).Document(roomCode).SetAsync(dto);
+            await _db.Collection(CollectionName).Document(roomCode).SetAsync(dto);
             Debug.Log("[RoomDataRepository] 저장 성공");
         }
         catch (System.Exception e)

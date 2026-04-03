@@ -10,8 +10,6 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     private PlayerInformation _playerInformation;
 
-    private string _currentAccount;
-
     [SerializeField] private string _playerID = "Player";
     [SerializeField] private List<string> _defaultNickNameList = new List<string>
     {
@@ -33,7 +31,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action<string> OnNicknameChanged;
     public bool IsReady { get; private set; }
-    public void Initialized(IPlayerInformationRepository playerRoomRepository)
+    public void Initialize(IPlayerInformationRepository playerRoomRepository)
     {
         _playerRoomRepository = playerRoomRepository;
 
@@ -42,19 +40,18 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     private async UniTask InitializeDataAsync()
     {
-        await LoadPlayerInformation(_playerID);
+        await LoadPlayerInformation();
         IsReady = true;
         OnDataManagerReady?.Invoke();   
     }
 
     //닉넴 변경 이벤트 구현 필요
 
-    private async UniTask LoadPlayerInformation(string account)
+    private async UniTask LoadPlayerInformation()
     {
         if (_playerRoomRepository == null) return;
-        _currentAccount = account;
 
-        PlayerInformation information = await _playerRoomRepository.Load(account);
+        PlayerInformation information = await _playerRoomRepository.Load();
 
         if (information == null)
         {
@@ -80,7 +77,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     {
         if (_playerRoomRepository == null) return;
 
-        _playerRoomRepository.Save(_currentAccount, _playerInformation);
+        _playerRoomRepository.Save(_playerInformation);
     }
 
     public MyHospital[] GetHospital()

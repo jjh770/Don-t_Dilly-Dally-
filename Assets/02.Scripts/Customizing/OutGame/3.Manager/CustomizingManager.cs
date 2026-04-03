@@ -12,9 +12,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     [SerializeField] private BaseEquipmentCatalogSO _baseEquipmentCatalog;
     [SerializeField] private AttendanceRewardSO _attendanceRewardTable;
 
-    [Header("세팅")]
-    [SerializeField] private string _userId = "local_user";
-
     private Customizing _domain;
     private ICustomizingRepository _repository;
     private CustomizingState _savedState;
@@ -55,13 +52,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         }
     }
 
-    private void Start()
-    {
-        Initialize();
-        Load();
-    }
-
-    public void Initialize()
+    public void Initialize(ICustomizingRepository repository)
     {
         if (_catalog == null) return;
         if (_baseEquipmentCatalog == null) return;
@@ -69,7 +60,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         _catalog.Initialize();
         _baseEquipmentCatalog.Initialize();
 
-        _repository = new LocalCustomizingRepository(_userId);
+        _repository = repository;
         _domain = new Customizing(_catalog);
         _savedState = new CustomizingState();
 
@@ -97,6 +88,8 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         _unlockManager.OnItemUnlocked += itemId => OnItemUnlocked?.Invoke(itemId);
 
         OnInitialized?.Invoke();
+
+        Load();
     }
 
     // ========== 저장/로드 ==========
