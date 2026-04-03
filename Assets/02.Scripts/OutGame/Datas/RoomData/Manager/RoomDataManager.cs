@@ -89,14 +89,30 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         {
             Debug.Log("[RoomDataManager] 새로운 데이터를 생성합니다.");
             _roomWallet = RoomWallet.Default;
+
             SelectHighestAvailableStage();
-     
+
             SaveData();
-            return;
         }
 
         _roomWallet = wallet;
-        SelectHighestAvailableStage();
+
+        if (RoomProperties.GetSelectedStage() == -1)
+        {
+            SelectHighestAvailableStage();
+        }
+        else
+        {
+            int stage = RoomProperties.GetSelectedStage();
+
+            if (_stageCatalog == null || !_stageCatalog.TryGetStageDefinition(stage, out StageDefinitionSO stageDefinition))
+            {
+                return;
+            }
+        
+            _selectedStageIndex = stage;
+            OnSelectedStageChanged?.Invoke(stage, stageDefinition);
+        }     
     }
 
     private void SaveData()
@@ -120,6 +136,12 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     public bool TrySelectStage(int stageIndex)
     {
+
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            return false;
+        }
+
         if (_stageCatalog == null || _roomWallet == null)
         {
             return false;
@@ -139,9 +161,8 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         {
             return true;
         }
-
-        _selectedStageIndex = stageIndex;
-        OnSelectedStageChanged?.Invoke(_selectedStageIndex, _stageCatalog.StageDefinitions[_selectedStageIndex]);
+  
+        RoomProperties.SetSelectedStage(stageIndex);
         return true;
     }
 
@@ -149,7 +170,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     // ── 병원 업그레이드 ───────────────────────────────────────────────────
     public bool TryUpgradeHospital()
     {
-        if (!PhotonNetwork.InRoom) throw new Exception("병원 접속 상태가 아닙니다.");
+        if (!PhotonNetwork.InRoom) throw new InvalidOperationException("병원 접속 상태가 아닙니다.");
 
         HospitalLevelDefinitionSO next = _hospitalLevelCatalog.GetNextLevel(_roomWallet.HospitalLevel.Value);
 
@@ -202,10 +223,33 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         }
     }
 
+    public override void OnRoomPropertiesUpdate(Hashtable changedProps)
+    {
+        if (!changedProps.TryGetValue(RoomProperties.SelectedStageKey, out object value) || value is not int stageIndex)
+        {
+            return;
+        }
+
+        if (_stageCatalog == null || !_stageCatalog.TryGetStageDefinition(stageIndex, out StageDefinitionSO stageDefinition))
+        {
+            return;
+        }
+
+        if (_selectedStageIndex == stageIndex)
+        {
+            return;
+        }
+
+        int stage = RoomProperties.GetSelectedStage();
+        _selectedStageIndex = stage;
+        OnSelectedStageChanged?.Invoke(stage, _stageCatalog.StageDefinitions[stage]);
+        
+    }
+
     // ── 보상 ──────────────────────────────────────────────────────────────
     public StageReward ApplyReward(string stageId, StageResult result)
     {
-        if (!PhotonNetwork.InRoom) throw new Exception("병원 접속 상태가 아닙니다.");
+        if (!PhotonNetwork.InRoom) throw new InvalidOperationException("병원 접속 상태가 아닙니다.");
 
         StageStars previousStars = _roomWallet.GetStageStars(stageId);
         StageReward reward = StageRewardCalculator.Calculate(result, previousStars);
@@ -251,6 +295,6 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
             return;
         }
 
-        _selectedStageIndex = bestStageIndex;
+        RoomProperties.SetSelectedStage(bestStageIndex);
     }
 }
