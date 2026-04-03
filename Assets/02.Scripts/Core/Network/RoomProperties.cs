@@ -11,7 +11,7 @@ public static class RoomProperties
         if (PhotonNetwork.CurrentRoom == null) return;
         if (!PhotonNetwork.IsMasterClient) return;
 
-        Hashtable props = new Hashtable();
+        var props = new Hashtable();
 
         if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(SelectedStageKey))
             props[SelectedStageKey] = -1;
@@ -28,7 +28,7 @@ public static class RoomProperties
         if (PhotonNetwork.CurrentRoom == null) return;
         if (!PhotonNetwork.IsMasterClient) return;
 
-        Hashtable props = new Hashtable
+        var props = new Hashtable
         {
             { SelectedStageKey, stageIndex },
         };
@@ -41,10 +41,10 @@ public static class RoomProperties
         if (PhotonNetwork.CurrentRoom == null) return;
         if (!PhotonNetwork.IsMasterClient) return;
 
-        Hashtable props = new Hashtable
-    {
-        { IsGameInProgressKey, isInProgress },
-    };
+        var props = new Hashtable
+        {
+            { IsGameInProgressKey, isInProgress },
+        };
 
         PhotonNetwork.CurrentRoom.SetCustomProperties(props);
     }

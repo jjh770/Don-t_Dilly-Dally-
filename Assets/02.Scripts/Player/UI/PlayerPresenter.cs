@@ -55,7 +55,7 @@ public class PlayerPresenter
         _view.SetNickname(PlayerProperty.GetNickname(_owner));
 
         bool isInProgress = RoomProperties.GetGameInProgress();
-        _view.SetVisible(!isInProgress); // 게임 중이면 숨김
+        _view.SetVisible(!isInProgress);
 
         if (isInProgress) return;
 

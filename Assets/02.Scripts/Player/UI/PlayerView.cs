@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class PlayerView : MonoBehaviour
 {
-    [SerializeField] private GameObject _Panel;
+    [SerializeField] private GameObject _panel;
     [SerializeField] private TextMeshProUGUI _nicknameText;
     [SerializeField] private Color _readyColor = Color.green;
     [SerializeField] private Color _notReadyColor = Color.red;
@@ -37,7 +37,7 @@ public class PlayerView : MonoBehaviour
 
     public void SetVisible(bool isVisible)
     {
-        _Panel.SetActive(isVisible);
+        _panel.SetActive(isVisible);
     }
 
     public void SetNickname(string name)
