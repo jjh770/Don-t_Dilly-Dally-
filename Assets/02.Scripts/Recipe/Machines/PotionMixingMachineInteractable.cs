@@ -517,14 +517,7 @@ namespace DontDillyDally.Data
                     continue;
                 }
 
-                if (PhotonNetwork.InRoom)
-                {
-                    PhotonNetwork.Destroy(itemObject.gameObject);
-                }
-                else
-                {
-                    Destroy(itemObject.gameObject);
-                }
+                ItemRecycleUtility.TryRecycle(itemObject);
 
                 _slots[i].Clear();
             }

@@ -4,6 +4,7 @@ using DontDillyDally.StageFlow;
 using System.Collections.Generic;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class StageCurrentRecipeUI : MonoBehaviour
 {
@@ -217,6 +218,8 @@ public class StageCurrentRecipeUI : MonoBehaviour
 
             AnimateItemEnter(item, i - currentRecipeIndex);
         }
+
+        RefreshLayoutImmediate();
     }
 
     /// <summary>
@@ -289,8 +292,10 @@ public class StageCurrentRecipeUI : MonoBehaviour
         // 삭제 + 남은 항목 갱신 (HorizontalLayoutGroup이 왼쪽으로 재배치)
         seq.AppendCallback(() =>
         {
-            Destroy(completedItem.gameObject);
+            RemoveItemFromLayout(completedItem);
             UpdateRemainingItems();
+            RefreshLayoutImmediate();
+            Destroy(completedItem.gameObject);
         });
 
         seq.AppendInterval(_slideLeftDelay);
@@ -339,6 +344,8 @@ public class StageCurrentRecipeUI : MonoBehaviour
                 isCurrent,
                 recipe.RequiresSterilizedTray);
         }
+
+        RefreshLayoutImmediate();
     }
 
     // ================================================================
@@ -351,10 +358,45 @@ public class StageCurrentRecipeUI : MonoBehaviour
         {
             if (_visibleItems[i] != null)
             {
+                RemoveItemFromLayout(_visibleItems[i]);
                 Destroy(_visibleItems[i].gameObject);
             }
         }
 
         _visibleItems.Clear();
+        RefreshLayoutImmediate();
+    }
+
+    private void RemoveItemFromLayout(RecipeItemEntry item)
+    {
+        if (item == null)
+        {
+            return;
+        }
+
+        LayoutElement layoutElement = item.GetComponent<LayoutElement>();
+        if (layoutElement != null)
+        {
+            layoutElement.ignoreLayout = true;
+        }
+
+        item.gameObject.SetActive(false);
+    }
+
+    private void RefreshLayoutImmediate()
+    {
+        if (_recipeListRoot == null)
+        {
+            return;
+        }
+
+        Canvas.ForceUpdateCanvases();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_recipeListRoot);
+
+        RectTransform parent = _recipeListRoot.parent as RectTransform;
+        if (parent != null)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(parent);
+        }
     }
 }

@@ -1,3 +1,4 @@
+using DontDillyDally.StageFlow;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -11,10 +12,12 @@ public class PushableItem : MonoBehaviour, IPushable
 
     private Rigidbody _rigidbody;
     private Transform _player;
+    private DiagnosisEmergencyMachine _diagnosisEmergencyMachine;
 
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
+        _diagnosisEmergencyMachine = GetComponent<DiagnosisEmergencyMachine>();
     }
 
     private void FixedUpdate()
@@ -30,6 +33,12 @@ public class PushableItem : MonoBehaviour, IPushable
 
     public void Interact(Transform interactor)
     {
+        if (_diagnosisEmergencyMachine != null &&
+            _diagnosisEmergencyMachine.TryHandleEmergencyInteract(interactor))
+        {
+            return;
+        }
+
         _player = interactor;
         IsInteracting = true;
         _rigidbody.isKinematic = true;

@@ -29,15 +29,19 @@ namespace DontDillyDally.Data
         private NetworkItemOwnership _networkItemOwnership;
         private NetworkItemState _networkItemState;
         private int _currentAssignedLayer = InvalidLayer;
+        private bool _isPendingRecycle;
 
         public event System.Action ModelRefreshed;
 
         public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
         public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
         public NetworkItemState NetworkState => _networkItemState;
+        public bool IsPendingRecycle => _isPendingRecycle;
 
         protected virtual void Awake()
         {
+            ResetRecycleState();
+
             if (ModelPrefab != null)
             {
                 RefreshModel();
@@ -54,6 +58,11 @@ namespace DontDillyDally.Data
             {
                 _networkItemOwnership = gameObject.AddComponent<NetworkItemOwnership>();
             }
+        }
+
+        protected virtual void OnEnable()
+        {
+            ResetRecycleState();
         }
 
         public virtual void Initialize(string displayName, GameObject modelPrefab = null)
@@ -76,6 +85,22 @@ namespace DontDillyDally.Data
 
                 recyclable.PrepareForRecycle();
             }
+        }
+
+        public bool TryBeginRecycle()
+        {
+            if (_isPendingRecycle)
+            {
+                return false;
+            }
+
+            _isPendingRecycle = true;
+            return true;
+        }
+
+        public void ResetRecycleState()
+        {
+            _isPendingRecycle = false;
         }
 
         protected void ResetReusableItemState()
