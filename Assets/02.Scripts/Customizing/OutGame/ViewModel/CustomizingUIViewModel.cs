@@ -89,17 +89,17 @@ public class CustomizingUIViewModel
         _manager.Save();
     }
 
-    public void Cancel()
+    public void CloseCustomizingUI()
     {
         _manager.CloseCustomizingUI();
     }
 
-    public void Reset()
+    public void ResetToSaved()
     {
         _manager.ResetToSaved();
     }
 
-    public void Open()
+    public void OpenCustomizingUI()
     {
         _manager.OpenCustomizingUI();
         AutoSelectSlot();

@@ -209,7 +209,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     public void SaveToSlot(int index) => _slotManager?.SaveToSlot(index);
     public void LoadFromSlot(int index) => _slotManager?.LoadFromSlot(index);
     public void SetSlotName(int index, string name) => _slotManager?.SetSlotName(index, name);
-    public string GetSlotName(int index) => _slotManager?.GetSlotName(index) ?? $"Slot {index + 1}";
+    public string GetSlotName(int index) => _slotManager?.GetSlotName(index) ?? $"슬롯 {index + 1}";
     public CustomizingSlotData GetSlot(int index) => _slotManager?.GetSlot(index);
     public IReadOnlyList<CustomizingSlotData> GetAllSlots() => _slotManager?.GetAllSlots();
     public bool IsSlotEmpty(int index) => _slotManager?.IsSlotEmpty(index) ?? true;

@@ -51,7 +51,6 @@ public class CustomizingCharacterView : MonoBehaviour
     {
         CancelAllLoading();
         ReleaseAllAssets();
-        // AssetLoader는 Controller가 소유하므로 여기서 Dispose하지 않음
     }
 
     private void CancelAllLoading()

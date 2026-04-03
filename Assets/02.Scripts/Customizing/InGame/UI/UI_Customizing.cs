@@ -50,7 +50,7 @@ public class UI_Customizing : MonoBehaviour
 
         SetupButtons();
         SetupCategoryTabs();
-        _viewModel.Open();                          // 화면 열기 처리
+        _viewModel.OpenCustomizingUI();                          // 화면 열기 처리
         _viewModel.AutoSelectSlot();                // 현재 상태에 맞는 슬롯 선택
         SelectCategory(_viewModel.CurrentCategory);
         UpdateSaveButtonState();
@@ -151,12 +151,12 @@ public class UI_Customizing : MonoBehaviour
 
     private void OnResetClicked()
     {
-        _viewModel?.Reset();
+        _viewModel?.ResetToSaved();
     }
 
     private void OnCloseClicked()
     {
-        _viewModel?.Cancel();
+        _viewModel?.CloseCustomizingUI();
 
         if (OnClosed != null)
         {
@@ -256,7 +256,7 @@ public class UI_Customizing : MonoBehaviour
     public void Show()
     {
         gameObject.SetActive(true);
-        _viewModel?.Open();
+        _viewModel?.OpenCustomizingUI();
     }
 
     [Serializable]

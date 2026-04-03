@@ -11,9 +11,7 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
     private CustomizingCharacterView _view;
     private CustomizingCharacterViewModel _viewModel;
     private ICustomizingAssetLoader _assetLoader;
-    private bool _hasAppliedLocalAppearance;     // 내 캐릭터의 외형을 적용했는지
     private bool _hasAppliedRemoteAppearance;    // 다른 플레이어의 외형 적용을 끝냈는지
-
 
     public bool IsLocalPlayer => photonView != null && photonView.IsMine;
 
@@ -24,10 +22,8 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
         _view.Initialize(_assetLoader);
     }
 
-    public override void OnDisable()
+    private void OnDestroy()
     {
-        base.OnDisable();
-
         if (_viewModel != null)
         {
             UnsubscribeFromViewModel();
@@ -141,7 +137,6 @@ public class CustomizingCharacterController : MonoBehaviourPunCallbacks
     private void SetCustomizingCameraTarget(Transform transform)
     {
         CharacterPreviewCamera.SetLocalPlayerTarget(transform);
-        _hasAppliedLocalAppearance = true;
     }
 
     // 나 말고 다른 캐릭터의 커스텀 프로퍼티가 바뀌면
