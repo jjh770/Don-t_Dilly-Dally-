@@ -1,10 +1,11 @@
-using System;
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DontDillyDally.StageFlow;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
@@ -56,7 +57,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     public override void OnJoinedRoom()
     {
-        LoadRoomDataAsync().Forget();
+        LoadRoomDataAsync(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
     public override void OnLeftRoom()
@@ -69,21 +70,21 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     // ── 로드 / 저장 ───────────────────────────────────────────────────────
     public void LoadRoomData()
     {
-        LoadRoomDataAsync().Forget();
+        LoadRoomDataAsync(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
-    private async UniTask LoadRoomDataAsync()
+    private async UniTask LoadRoomDataAsync(CancellationToken token)
     {
-        await LoadCurrentRoom(PhotonNetwork.CurrentRoom.Name);
+        await LoadCurrentRoom(token, PhotonNetwork.CurrentRoom.Name);
         OnRoomDataLoaded?.Invoke();
     }
 
-    private async UniTask LoadCurrentRoom(string roomCode)
+    private async UniTask LoadCurrentRoom(CancellationToken token, string roomCode)
     {
         if (_roomDataRepository == null) return;
         _currentRoomCode = roomCode;
 
-        RoomWallet wallet = await _roomDataRepository.Load(roomCode);
+        RoomWallet wallet = await _roomDataRepository.Load(roomCode).AttachExternalCancellation(token);
 
         if (wallet == null)
         {

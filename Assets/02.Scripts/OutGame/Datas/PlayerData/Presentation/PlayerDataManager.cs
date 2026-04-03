@@ -1,7 +1,8 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
@@ -35,23 +36,23 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     {
         _playerRoomRepository = playerRoomRepository;
 
-        InitializeDataAsync().Forget();
+        InitializeDataAsync(this.GetCancellationTokenOnDestroy()).Forget();
     }
 
-    private async UniTask InitializeDataAsync()
+    private async UniTask InitializeDataAsync(CancellationToken token)
     {
-        await LoadPlayerInformation();
+        await LoadPlayerInformation(token);
         IsReady = true;
         OnDataManagerReady?.Invoke();   
     }
 
     //닉넴 변경 이벤트 구현 필요
 
-    private async UniTask LoadPlayerInformation()
+    private async UniTask LoadPlayerInformation(CancellationToken token)
     {
         if (_playerRoomRepository == null) return;
 
-        PlayerInformation information = await _playerRoomRepository.Load();
+        PlayerInformation information = await _playerRoomRepository.Load().AttachExternalCancellation(token);
 
         if (information == null)
         {

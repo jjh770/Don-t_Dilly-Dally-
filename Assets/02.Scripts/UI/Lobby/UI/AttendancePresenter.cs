@@ -1,4 +1,3 @@
-using NUnit.Framework;
 using System.Threading;
 using UnityEngine;
 
@@ -34,15 +33,14 @@ public class AttendancePresenter
         }
     }
 
-    public void OnPopupShow()
+    public void OnPopupShow(CancellationToken token)
     {
-        _cts = new CancellationTokenSource();
-        _attendanceManager.CheckAttendance(_cts.Token);
+        _attendanceManager.CheckAttendance(token);
     }
 
     public void OnPopupClose()
     {
-        ResetCTS();
+ 
     }
 
     private void HandleAttendanceManagerReady()
@@ -56,7 +54,6 @@ public class AttendancePresenter
 
     private void HandleDataLoaded(AttendanceRecord record)
     {
-        ResetCTS();
 
         int totalRewardCount = _rewardRepository.GetRewardCount();
 
@@ -86,13 +83,6 @@ public class AttendancePresenter
         _view.SetName(name);
     }
 
-    private void ResetCTS()
-    {
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = null;
-    }
-
     public void AttendancePopupOpen()
     {
         _attendancePopup.Show();
@@ -105,6 +95,5 @@ public class AttendancePresenter
         _attendanceManager.OnAttendanceChecked -= HandleAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady -= HandleAttendanceManagerReady;
         PlayerDataManager.Instance.OnNicknameChanged -= SetName;
-        ResetCTS();
     }
 }

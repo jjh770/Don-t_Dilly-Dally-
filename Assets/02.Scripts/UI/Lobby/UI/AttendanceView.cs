@@ -1,3 +1,4 @@
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -58,7 +59,7 @@ public class AttendanceView : UIPopupBase
 
     protected override void OnShow()
     {
-        _presenter.OnPopupShow();
+        _presenter.OnPopupShow(this.GetCancellationTokenOnDestroy());
     }
 
     public void SetName(string name)
