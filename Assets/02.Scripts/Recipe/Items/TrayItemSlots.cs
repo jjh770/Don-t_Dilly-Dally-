@@ -96,6 +96,10 @@ namespace DontDillyDally.Data
                     continue;
                 }
 
+                // 트레이가 먼저 파괴되더라도 자식 PhotonView가 로컬에서 함께 지워지지 않도록
+                // 보관 중이던 아이템을 먼저 트레이 계층에서 분리합니다.
+                storedItem.transform.SetParent(null, true);
+
                 PhotonView photonView = storedItem.GetComponent<PhotonView>();
                 if (PhotonNetwork.InRoom && photonView != null)
                 {
