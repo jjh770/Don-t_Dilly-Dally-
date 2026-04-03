@@ -105,24 +105,7 @@ namespace DontDillyDally.StageFlow
             }
 
             LastSubmitterActorNumber = submitterActorNumber;
-            SyncSubmittedTrayReset(trayViewId);
             return _traySubmissionTcs.TrySetResult(tray);
-        }
-
-        private void SyncSubmittedTrayReset(int trayViewId)
-        {
-            if (trayViewId < 0)
-            {
-                return;
-            }
-
-            PhotonView trayView = PhotonView.Find(trayViewId);
-            if (trayView == null || !trayView.TryGetComponent(out TrayItem trayItem))
-            {
-                return;
-            }
-
-            trayItem.ClearContentsAndSync();
         }
 
         // ── 정리 ──────────────────────────────────────────────────────
