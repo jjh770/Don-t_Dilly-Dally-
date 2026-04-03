@@ -2,7 +2,7 @@ using ExitGames.Client.Photon;
 using Photon.Pun;
 using UnityEngine;
 
-public class RoomProperties : MonoBehaviour
+public static class RoomProperties
 {
     public const string SelectedStageKey = "SelectedStage";
 

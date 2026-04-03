@@ -97,21 +97,21 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
         _roomWallet = wallet;
 
-        if (RoomProperties.GetSelectedStage() == -1)
+
+        int selectedStage = RoomProperties.GetSelectedStage();
+        if (selectedStage == -1)
         {
             SelectHighestAvailableStage();
         }
         else
         {
-            int stage = RoomProperties.GetSelectedStage();
-
-            if (_stageCatalog == null || !_stageCatalog.TryGetStageDefinition(stage, out StageDefinitionSO stageDefinition))
+            if (_stageCatalog == null || !_stageCatalog.TryGetStageDefinition(selectedStage, out StageDefinitionSO stageDefinition))
             {
                 return;
             }
         
-            _selectedStageIndex = stage;
-            OnSelectedStageChanged?.Invoke(stage, stageDefinition);
+            _selectedStageIndex = selectedStage;
+            OnSelectedStageChanged?.Invoke(selectedStage, stageDefinition);
         }     
     }
 
