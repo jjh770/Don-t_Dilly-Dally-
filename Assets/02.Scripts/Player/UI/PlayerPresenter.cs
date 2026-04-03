@@ -54,6 +54,11 @@ public class PlayerPresenter
     {
         _view.SetNickname(PlayerProperty.GetNickname(_owner));
 
+        bool isInProgress = RoomProperties.GetGameInProgress();
+        _view.SetVisible(!isInProgress);
+
+        if (isInProgress) return;
+
         if (_owner.IsMasterClient)
         {
             _view.SetMasterNickname();

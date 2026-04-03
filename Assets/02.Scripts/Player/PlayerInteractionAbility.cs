@@ -228,6 +228,12 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (interactable is IPushable)
         {
             interactable.Interact(transform);
+
+            if (!interactable.IsInteracting)
+            {
+                return;
+            }
+
             _currentPushInteractable = interactable;
             _playerAnimator.PlayGrabAnimation(true);
             _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);

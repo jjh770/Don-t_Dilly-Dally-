@@ -9,12 +9,12 @@ namespace DontDillyDally.Data
         Sterilized = 1
     }
 
-    // 트레이의 도메인 상태만 관리하는 월드 오브젝트 컴포넌트입니다.
+    // 트레이의 종류와 제출 데이터를 관리하는 월드 아이템 컴포넌트입니다.
     [RequireComponent(typeof(TrayItemSlots))]
     public class TrayItem : ItemObject, IPunInstantiateMagicCallback
     {
         [Header("트레이 상태")]
-        [Tooltip("이 트레이가 들고 있는 실제 제출 데이터입니다.")]
+        [Tooltip("현재 트레이가 담고 있는 실제 제출 데이터입니다.")]
         public SubmittedTray TrayData = new SubmittedTray();
 
         public bool HasTrayData => TrayData != null;
@@ -36,6 +36,14 @@ namespace DontDillyDally.Data
         public override void PrepareForRecycle()
         {
             base.PrepareForRecycle();
+
+            bool hasStoredItems = Slots != null && Slots.HasStoredItems();
+            bool hasTrayItems = TrayData != null && TrayData.HasAnyItems();
+            if (!hasStoredItems && !hasTrayItems)
+            {
+                return;
+            }
+
             ClearContentsAndSync();
         }
 
@@ -80,7 +88,7 @@ namespace DontDillyDally.Data
             int[] undestroyedViewIds = Slots?.ClearStoredItems();
             ResetTrayDataAndSync(isSterilized);
 
-            // 로컬에서 파괴할 수 없는 아이템(소유권 없음)을 마스터에게 파괴 요청
+            // 로컬에서 직접 회수하지 못한 아이템은 마스터에게 정리를 요청합니다.
             if (undestroyedViewIds != null && undestroyedViewIds.Length > 0 && PhotonNetwork.InRoom)
             {
                 PhotonView pv = GetComponent<PhotonView>();
@@ -102,10 +110,17 @@ namespace DontDillyDally.Data
             foreach (int viewId in viewIds)
             {
                 PhotonView targetView = PhotonView.Find(viewId);
-                if (targetView != null && (targetView.IsMine || targetView.AmController))
+                if (targetView == null)
                 {
-                    PhotonNetwork.Destroy(targetView.gameObject);
+                    continue;
                 }
+
+                if (!targetView.TryGetComponent(out ItemObject targetItem))
+                {
+                    continue;
+                }
+
+                ItemRecycleUtility.TryRecycle(targetItem);
             }
         }
 

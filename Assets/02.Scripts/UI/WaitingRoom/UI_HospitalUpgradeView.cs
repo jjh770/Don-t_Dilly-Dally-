@@ -36,7 +36,7 @@ public class UI_HospitalUpgradeView : MonoBehaviour
         _presenter = presenter;
     }
 
-    public void Render(int currentCoin, int requiredCoin, int currentStar, int requiredStar, bool canUpgrade, bool hasNextLevel)
+    public void Render(int currentCoin, int requiredCoin, int currentStar, int requiredStar, bool canUpgrade, bool hasNextLevel, bool isMaster)
     {
         SetRequirementSection(_coinRequirementRoot, _coinRequirementText, _coinSlider, currentCoin, requiredCoin);
         SetRequirementSection(_starRequirementRoot, _starRequirementText, _starSlider, currentStar, requiredStar);
@@ -49,7 +49,7 @@ public class UI_HospitalUpgradeView : MonoBehaviour
         if (_upgradeButton != null)
         {
             _upgradeButton.interactable = hasNextLevel && canUpgrade;
-            _upgradeButton.gameObject.SetActive(hasNextLevel);
+            _upgradeButton.gameObject.SetActive(hasNextLevel && isMaster);
         }
     }
 
@@ -69,7 +69,7 @@ public class UI_HospitalUpgradeView : MonoBehaviour
 
         if (requirementText != null)
         {
-            requirementText.text = $"<color=#111111>{currentValue}</color> / {requiredValue} ";
+            requirementText.text = $"{requiredValue}";
         }
 
         if (slider != null)

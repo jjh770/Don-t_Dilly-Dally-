@@ -10,7 +10,7 @@ public readonly struct RoomCurrency
     public RoomCurrency(ERoomCurrencyType type, int value)
     {
         Type = type;
-        if (value < 0) { throw new Exception("Value 값은 0보다 작을 수 없습니다."); }
+        if (value < 0) { throw new InvalidOperationException("Value 값은 0보다 작을 수 없습니다."); }
         ;
         Value = value;    
     }

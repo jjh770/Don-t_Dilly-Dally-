@@ -12,9 +12,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     [SerializeField] private BaseEquipmentCatalogSO _baseEquipmentCatalog;
     [SerializeField] private AttendanceRewardSO _attendanceRewardTable;
 
-    [Header("세팅")]
-    [SerializeField] private string _userId = "local_user";
-
     private Customizing _domain;
     private ICustomizingRepository _repository;
     private CustomizingState _savedState;
@@ -55,13 +52,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         }
     }
 
-    private void Start()
-    {
-        Initialize();
-        Load();
-    }
-
-    public void Initialize()
+    public void Initialize(ICustomizingRepository repository)
     {
         if (_catalog == null) return;
         if (_baseEquipmentCatalog == null) return;
@@ -69,7 +60,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         _catalog.Initialize();
         _baseEquipmentCatalog.Initialize();
 
-        _repository = new LocalCustomizingRepository(_userId);
+        _repository = repository;
         _domain = new Customizing(_catalog);
         _savedState = new CustomizingState();
 
@@ -97,6 +88,8 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         _unlockManager.OnItemUnlocked += itemId => OnItemUnlocked?.Invoke(itemId);
 
         OnInitialized?.Invoke();
+
+        Load();
     }
 
     // ========== 저장/로드 ==========
@@ -149,7 +142,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         var result = _domain.TryEquip(item);
 
-        if (result.HasChanged())
+        if (result.HasChanged() == true)
         {
             OnItemChanged?.Invoke(item.Category, item);
         }
@@ -164,7 +157,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
 
         var result = _domain.ToggleEquip(item);
 
-        if (result.HasChanged())
+        if (result.HasChanged() == true)
         {
             if (result == EEquipResult.Equipped)
             {
@@ -209,7 +202,7 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
     public void SaveToSlot(int index) => _slotManager?.SaveToSlot(index);
     public void LoadFromSlot(int index) => _slotManager?.LoadFromSlot(index);
     public void SetSlotName(int index, string name) => _slotManager?.SetSlotName(index, name);
-    public string GetSlotName(int index) => _slotManager?.GetSlotName(index) ?? $"Slot {index + 1}";
+    public string GetSlotName(int index) => _slotManager?.GetSlotName(index) ?? $"슬롯 {index + 1}";
     public CustomizingSlotData GetSlot(int index) => _slotManager?.GetSlot(index);
     public IReadOnlyList<CustomizingSlotData> GetAllSlots() => _slotManager?.GetAllSlots();
     public bool IsSlotEmpty(int index) => _slotManager?.IsSlotEmpty(index) ?? true;

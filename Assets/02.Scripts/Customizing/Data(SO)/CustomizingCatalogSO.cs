@@ -52,13 +52,13 @@ public class CustomizingCatalogSO : ScriptableObject, ICustomizingCatalog
                 if (item == null) continue;
 
                 // ID별 캐시
-                if (!string.IsNullOrEmpty(item.ItemId))
+                if (string.IsNullOrEmpty(item.ItemId) == false)
                 {
                     _itemsById[item.ItemId] = item;
                 }
 
                 // 기본 아이템 캐시
-                if (item.IsDefault && !_defaultItems.ContainsKey(type))
+                if (item.IsDefault == true && _defaultItems.ContainsKey(type) == false)
                 {
                     _defaultItems[type] = item;
                 }

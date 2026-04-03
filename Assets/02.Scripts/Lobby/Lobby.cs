@@ -70,13 +70,9 @@ public class Lobby : MonoBehaviour
         if (_customizingUI == null) return;
 
         var manager = CustomizingManager.Instance;
-        if (manager == null)
-        {
-            Debug.LogError("[Lobby] CustomizingManager가 없습니다.");
-            return;
-        }
+        if (manager == null) return;
 
-        // ViewModel 생성 및 주입
+        // UI에 ViewModel 생성 및 주입
         _viewModel = new CustomizingUIViewModel(manager);
         _customizingUI.Initialize(_viewModel);
 

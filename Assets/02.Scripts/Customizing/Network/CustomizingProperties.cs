@@ -63,7 +63,7 @@ public static class CustomizingProperties
     // Photon LocalPlayer의 커스텀 프로퍼티에 저장
     public static void SetLocalPlayerCustomizing(Dictionary<CustomizingType, string> items)
     {
-        if (!PhotonNetwork.IsConnected || PhotonNetwork.LocalPlayer == null)
+        if (PhotonNetwork.IsConnected == false || PhotonNetwork.LocalPlayer == null)
         {
             Debug.LogWarning("[CustomizingProperties] Photon에 연결되지 않음");
             return;
