@@ -42,10 +42,14 @@ namespace DontDillyDally.StageFlow
         public CraftedMaterialType CurrentTrayTarget => Controller?.CurrentTrayTarget ?? CraftedMaterialType.None;
         public DiagnosisScanType CurrentDiagnosisTarget => Controller?.CurrentDiagnosisTarget ?? DiagnosisScanType.None;
 
+        // ── 현재 긴급 이벤트 상태 조회 ───────────────────────────────
+
         public bool CanSubmitTrayToPatient()
         {
             return Controller == null || Controller.CanSubmitTrayToPatient();
         }
+
+        // ── 공개 흐름 진입점 ─────────────────────────────────────────
 
         // 현재 상태에서 긴급 이벤트를 시작할 수 있으면 시작과 브로드캐스트를 함께 처리합니다.
         public bool TryStartEmergencyEvent(
@@ -149,6 +153,8 @@ namespace DontDillyDally.StageFlow
             return true;
         }
 
+        // ── 정리 ────────────────────────────────────────────────────
+
         public void Dispose()
         {
             _emergencyResultTcs?.TrySetCanceled();
@@ -164,6 +170,8 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnEmergencyEndedReceived -= HandleEmergencyEndedReceived;
             }
         }
+
+        // ── 내부 완료 / RPC 수신 처리 ────────────────────────────────
 
         private static EmergencyEventKind SelectEmergencyKind()
         {

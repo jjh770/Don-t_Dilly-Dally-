@@ -86,6 +86,8 @@ namespace DontDillyDally.StageFlow
         //  공개 조회 API
         // ================================================================
 
+        // ── 역할 조회 ────────────────────────────────────────────────
+
         // 로컬 플레이어의 현재 역할을 반환합니다.
         public EStageRole GetLocalRole()
         {
@@ -118,6 +120,8 @@ namespace DontDillyDally.StageFlow
                 _ => "역할 미정"
             };
         }
+
+        // ── 현재 치료 대상 조회 ──────────────────────────────────────
 
         // 현재 환자에게 할당된 질병 데이터를 가져옵니다.
         public bool TryGetCurrentDisease(out DiseaseData disease)
@@ -157,6 +161,8 @@ namespace DontDillyDally.StageFlow
             double elapsed = PhotonNetwork.Time - _rpc.CountdownStartTime.Value;
             return Mathf.Max(0f, duration - (float)elapsed);
         }
+
+        // ── UI 표시용 텍스트 ────────────────────────────────────────
 
         public string GetEmergencyObjectiveText()
         {
@@ -202,12 +208,14 @@ namespace DontDillyDally.StageFlow
         //  코디네이터 호스트 구현
         // ================================================================
 
+        // ── 공통 스테이지 상태 제공 ──────────────────────────────────
         StageRuntimeData IStageFlowState.StageData => _stageData;
         bool IStageFlowState.IsGameOver => _isGameOver;
         EStagePhase IStageFlowState.CurrentPhase => _rpc != null ? _rpc.CurrentPhase.Value : EStagePhase.None;
         float IStageFlowState.RemainingTime => _timer != null ? _timer.RemainingTime : 0f;
         float IStageFlowState.PatientHealth => _rpc != null ? _rpc.PatientHealth.Value : 0f;
 
+        // ── 공통 스테이지 명령 제공 ──────────────────────────────────
         void IStageFlowCommands.MarkGameOver()
         {
             _isGameOver = true;
@@ -238,6 +246,7 @@ namespace DontDillyDally.StageFlow
             OnStageRewardGranted?.Invoke(reward, result);
         }
 
+        // ── 환자 상태 제어 제공 ──────────────────────────────────────
         float IStagePatientFlow.CurrentHealth => _patientStatusCoordinator?.CurrentHealth ?? 0f;
 
         void IStagePatientFlow.Initialize(float maxHealth, float drainPerSecond, EStagePhase currentPhase)
@@ -274,6 +283,7 @@ namespace DontDillyDally.StageFlow
             _patientStatusCoordinator?.Tick(deltaTime);
         }
 
+        // ── 레시피 미니게임 실행 제공 ────────────────────────────────
         UniTask<bool> IStageMiniGameRunner.RunRecipeMiniGame(CancellationToken ct)
         {
             return RunRecipeMiniGame(ct);
@@ -406,8 +416,6 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        // ── 트레이 제출 (외부 API — TraySubmissionHandler에 위임) ──
-
         // ================================================================
         //  공개 제출 API
         // ================================================================
@@ -475,9 +483,9 @@ namespace DontDillyDally.StageFlow
             _rpc.SetTimer(_timer.RemainingTime);
         }
 
-        // ── 레시피 성공 미니게임 ──────────────────────────────────────
+        // ── 레시피 성공 후처리 ───────────────────────────────────────
 
-        // 정답 레시피 이후 집도의 대상 미니게임을 실행하고 결과를 반영합니다.
+        // 정답 레시피 이후 집도의 대상 미니게임을 실행하고 성공/실패 결과를 반영합니다.
         private async UniTask<bool> RunRecipeMiniGame(CancellationToken ct)
         {
             MiniGameType type = MiniGameTypeExtensions.GetRandom();
@@ -528,6 +536,7 @@ namespace DontDillyDally.StageFlow
             return false;
         }
 
+        // ── 내부 보조 메서드 ─────────────────────────────────────────
 
         // 미니게임을 수행할 집도의 ActorNumber를 계산합니다.
         private int GetMiniGameTargetActorNumber()

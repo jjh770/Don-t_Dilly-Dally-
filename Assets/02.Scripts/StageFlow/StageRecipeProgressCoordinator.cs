@@ -31,12 +31,16 @@ namespace DontDillyDally.StageFlow
             _recipeJudge = new SurgeryRecipeJudge();
         }
 
+        // ── 레시피 진행 상태 ─────────────────────────────────────────
+
         public bool IsWaitingForSubmission { get; private set; }
 
         public void PrepareForDisease(DiseaseData disease)
         {
             _recipeJudge.SetDisease(disease);
         }
+
+        // ── 레시피 루프 ──────────────────────────────────────────────
 
         public async UniTask RunRecipeLoop(DiseaseData disease, UniTask<bool> forceSuccessTask, CancellationToken ct)
         {

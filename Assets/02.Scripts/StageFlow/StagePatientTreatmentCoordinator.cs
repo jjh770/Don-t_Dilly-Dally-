@@ -31,7 +31,11 @@ namespace DontDillyDally.StageFlow
             _recipeProgressCoordinator = recipeProgressCoordinator;
         }
 
+        // ── 환자 치료 상태 ───────────────────────────────────────────
+
         public bool HasActivePatientLoop => _forcePatientSuccessTcs != null;
+
+        // ── 환자 치료 루프 ───────────────────────────────────────────
 
         public async UniTask RunGameLoop(float patientTransitionDelaySec, CancellationToken ct)
         {
@@ -80,6 +84,8 @@ namespace DontDillyDally.StageFlow
             _forcePatientSuccessTcs.TrySetResult(true);
             return true;
         }
+
+        // ── 내부 환자 단위 처리 ─────────────────────────────────────
 
         private async UniTask RunPatientLoop(int patientIndex, StageRuntimeData stageData, CancellationToken ct)
         {

@@ -18,6 +18,8 @@ namespace DontDillyDally.StageFlow
             _retryDelayMs = retryDelayMs;
         }
 
+        // ── ACK 대기 ────────────────────────────────────────────────
+
         public async UniTask BroadcastAndWaitAck(
             Action broadcast,
             Action<Action<int>> subscribe,

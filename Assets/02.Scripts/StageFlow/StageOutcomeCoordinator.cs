@@ -29,6 +29,8 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // ── 공개 흐름 진입점 ─────────────────────────────────────────
+
         public bool TryTriggerGameOver(
             EGameOverReason reason,
             CancellationTokenSource flowCts,
@@ -93,6 +95,8 @@ namespace DontDillyDally.StageFlow
             Debug.Log($"별: {reward.Stars} / 돈: {reward.Money} / 신기록: {reward.IsNewBest}");
         }
 
+        // ── 정리 ────────────────────────────────────────────────────
+
         public void Dispose()
         {
             if (_rpc != null)
@@ -101,6 +105,8 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageRewardGrantedReceived -= HandleStageRewardGrantedReceived;
             }
         }
+
+        // ── 내부 완료 / 수신 처리 ────────────────────────────────────
 
         private async UniTaskVoid BroadcastGameOverAndRewardAsync(
             EGameOverReason reason,

@@ -14,6 +14,8 @@ namespace DontDillyDally.StageFlow
             _rpc = rpc;
         }
 
+        // ── 구독 시작 / 해제 ─────────────────────────────────────────
+
         public void Initialize()
         {
             if (_rpc == null)
@@ -33,6 +35,8 @@ namespace DontDillyDally.StageFlow
             _phaseSubscription = null;
             PlayerRegistry.OnPlayerRegistered -= HandlePlayerRegistered;
         }
+
+        // ── 내부 상태 반영 ───────────────────────────────────────────
 
         private void HandlePhaseChanged(EStagePhase phase)
         {

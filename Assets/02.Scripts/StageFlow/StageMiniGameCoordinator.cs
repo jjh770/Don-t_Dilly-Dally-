@@ -32,6 +32,8 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // ── 공개 흐름 진입점 ─────────────────────────────────────────
+
         // 대상 Actor가 로컬이면 직접 실행하고, 원격이면 RPC 요청 후 결과를 기다립니다.
         public async UniTask<bool> RunRecipeMiniGame(int targetActorNumber, MiniGameType type, CancellationToken ct)
         {
@@ -42,6 +44,8 @@ namespace DontDillyDally.StageFlow
 
             return await LaunchRemoteMiniGame(targetActorNumber, type, ct);
         }
+
+        // ── 정리 ────────────────────────────────────────────────────
 
         public void Dispose()
         {
@@ -54,6 +58,8 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnMiniGameResultReceived -= HandleMiniGameResultReceived;
             }
         }
+
+        // ── 내부 실행 / 수신 처리 ────────────────────────────────────
 
         private async UniTask<bool> LaunchLocalMiniGame(MiniGameType type, CancellationToken ct)
         {

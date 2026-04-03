@@ -25,6 +25,8 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // ── 환자 상태 제어 ───────────────────────────────────────────
+
         public float CurrentHealth => _controller?.CurrentHealth ?? 0f;
 
         public void Initialize(float maxHealth, float drainPerSecond, EStagePhase currentPhase)
@@ -82,6 +84,8 @@ namespace DontDillyDally.StageFlow
             _controller?.Tick(deltaTime);
         }
 
+        // ── 정리 ────────────────────────────────────────────────────
+
         public void Dispose()
         {
             if (_controller == null)
@@ -93,6 +97,8 @@ namespace DontDillyDally.StageFlow
             _controller.OnHealthDepleted -= HandleHealthDepleted;
             _controller.Reset();
         }
+
+        // ── 내부 이벤트 전달 ─────────────────────────────────────────
 
         private void HandleHealthChanged(float health)
         {

@@ -33,6 +33,8 @@ namespace DontDillyDally.StageFlow
             }
         }
 
+        // ── 시작 동기화 ──────────────────────────────────────────────
+
         public async UniTask SynchronizeStageStart(
             StageRuntimeData stageData,
             int surgeonActorNumber,
@@ -75,6 +77,8 @@ namespace DontDillyDally.StageFlow
             await UniTask.Delay(TimeSpan.FromSeconds(countdownSeconds), cancellationToken: ct);
         }
 
+        // ── 정리 ────────────────────────────────────────────────────
+
         public void Dispose()
         {
             if (_rpc != null)
@@ -82,6 +86,8 @@ namespace DontDillyDally.StageFlow
                 _rpc.OnStageDataReceived -= HandleStageDataReceived;
             }
         }
+
+        // ── 내부 수신 처리 ───────────────────────────────────────────
 
         private void HandleStageDataReceived(StageRuntimeData stageData)
         {
