@@ -32,18 +32,33 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action<string> OnNicknameChanged;
     public bool IsReady { get; private set; }
+
+    private CancellationTokenSource _cts;
     public void Initialize(IPlayerInformationRepository playerRoomRepository)
     {
         _playerRoomRepository = playerRoomRepository;
 
-        InitializeDataAsync(this.GetCancellationTokenOnDestroy()).Forget();
+        InitializeDataAsync().Forget();
     }
 
-    private async UniTask InitializeDataAsync(CancellationToken token)
+    private async UniTask InitializeDataAsync()
     {
-        await LoadPlayerInformation(token);
-        IsReady = true;
-        OnDataManagerReady?.Invoke();   
+        ResetCTS();
+
+        try
+        {
+            await LoadPlayerInformation(_cts.Token);
+            IsReady = true;
+            OnDataManagerReady?.Invoke();
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.Log("[PlayerDataManager] 초기화 작업이 취소되었습니다.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[PlayerDataManager] 초기화 중 오류 발생: {e}");
+        }
     }
 
     //닉넴 변경 이벤트 구현 필요
@@ -133,4 +148,19 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         SaveData();
     }
 
+    public void ResetCTS()
+    {
+        _cts?.Cancel();
+
+        _cts = new CancellationTokenSource();
+    }
+
+    private void OnDestroy()
+    {
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts = null;
+        }
+    }
 }

@@ -33,19 +33,28 @@ public class AttendancePresenter
         }
     }
 
-    public void OnPopupShow(CancellationToken token)
+    public void OnPopupShow()
     {
-        _attendanceManager.CheckAttendance(token);
+        ResetCTS();
+        _attendanceManager.CheckAttendance(_cts.Token);
     }
 
     public void OnPopupClose()
     {
- 
+        _cts?.Cancel();
+    }
+
+    public void ResetCTS()
+    {
+        _cts?.Cancel();
+
+        _cts = new CancellationTokenSource();
     }
 
     private void HandleAttendanceManagerReady()
     {
-        _cts = new CancellationTokenSource();
+        ResetCTS(); 
+
         SetName(PlayerDataManager.Instance.PlayerNickname);
 
         _attendanceManager.LoadAttendance(_cts.Token);
@@ -95,5 +104,11 @@ public class AttendancePresenter
         _attendanceManager.OnAttendanceChecked -= HandleAttendanceChecked;
         AttendanceManager.OnAttendanceManagerReady -= HandleAttendanceManagerReady;
         PlayerDataManager.Instance.OnNicknameChanged -= SetName;
+
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts = null;
+        }
     }
 }

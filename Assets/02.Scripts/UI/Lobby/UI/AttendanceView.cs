@@ -59,7 +59,7 @@ public class AttendanceView : UIPopupBase
 
     protected override void OnShow()
     {
-        _presenter.OnPopupShow(this.GetCancellationTokenOnDestroy());
+        _presenter.OnPopupShow();
     }
 
     public void SetName(string name)
