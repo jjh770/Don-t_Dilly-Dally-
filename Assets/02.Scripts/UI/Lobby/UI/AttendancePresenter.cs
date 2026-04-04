@@ -41,7 +41,7 @@ public class AttendancePresenter
 
     public void OnPopupClose()
     {
-        _cts?.Cancel();
+        ResetCTS();
     }
 
     private void ResetCTS()

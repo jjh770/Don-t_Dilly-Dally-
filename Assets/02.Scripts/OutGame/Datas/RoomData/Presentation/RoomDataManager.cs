@@ -328,7 +328,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         RoomProperties.SetSelectedStage(bestStageIndex);
     }
 
-    public void ResetCTS()
+    private void ResetCTS()
     {
         var oldCts = _cts;
 

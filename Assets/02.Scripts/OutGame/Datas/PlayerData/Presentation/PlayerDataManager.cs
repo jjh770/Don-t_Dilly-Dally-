@@ -160,7 +160,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         SaveData();
     }
 
-    public void ResetCTS()
+    private void ResetCTS()
     {
         var oldCts = _cts;
 
