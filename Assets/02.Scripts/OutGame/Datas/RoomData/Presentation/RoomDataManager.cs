@@ -1,10 +1,11 @@
-using System;
-using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DontDillyDally.StageFlow;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Collections.Generic;
+using System.Threading;
 using UnityEngine;
 
 public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
@@ -35,6 +36,8 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public event Action<HospitalLevelDefinitionSO> OnHospitalUpgraded;
     public event Action<int, StageDefinitionSO> OnSelectedStageChanged;
 
+    private CancellationTokenSource _cts;
+
     // ── 초기화 ────────────────────────────────────────────────────────────
     public void Initialize(IRoomCurrencyRepository roomDataRepository)
     {
@@ -56,11 +59,17 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     public override void OnJoinedRoom()
     {
-        LoadRoomDataAsync().Forget();
+        LoadRoomData();
     }
 
     public override void OnLeftRoom()
     {
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts = null;
+        }
+
         _currentRoomCode = null;
         _roomWallet = null;
         _selectedStageIndex = 0;
@@ -69,21 +78,40 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     // ── 로드 / 저장 ───────────────────────────────────────────────────────
     public void LoadRoomData()
     {
-        LoadRoomDataAsync().Forget();
+        ResetCTS();
+        LoadRoomDataAsync(_cts).Forget();
     }
 
-    private async UniTask LoadRoomDataAsync()
+    private async UniTask LoadRoomDataAsync(CancellationTokenSource cts)
     {
-        await LoadCurrentRoom(PhotonNetwork.CurrentRoom.Name);
-        OnRoomDataLoaded?.Invoke();
+        try
+        {
+            await LoadCurrentRoom(cts.Token, PhotonNetwork.CurrentRoom.Name);
+            OnRoomDataLoaded?.Invoke();
+        }
+        catch (OperationCanceledException) { }
+        catch (Exception e)
+        {
+            Debug.LogError($"[RoomDataManager] 데이터 로드 중 오류: {e}");
+        }
+        finally
+        {
+            // 🔥 핵심: “내가 아직 최신 CTS일 때만 Dispose”
+            if (_cts == cts)
+            {
+                _cts = null;
+            }
+
+            cts.Dispose();
+        }
     }
 
-    private async UniTask LoadCurrentRoom(string roomCode)
+    private async UniTask LoadCurrentRoom(CancellationToken token, string roomCode)
     {
         if (_roomDataRepository == null) return;
         _currentRoomCode = roomCode;
 
-        RoomWallet wallet = await _roomDataRepository.Load(roomCode);
+        RoomWallet wallet = await _roomDataRepository.Load(roomCode).AttachExternalCancellation(token);
 
         if (wallet == null)
         {
@@ -125,6 +153,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public async UniTask<bool> IsRoomDataExist(string roomCode)
     {
         if (_roomDataRepository == null) return false;
+
         return await _roomDataRepository.IsExist(roomCode);
     }
 
@@ -297,5 +326,24 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         }
 
         RoomProperties.SetSelectedStage(bestStageIndex);
+    }
+
+    private void ResetCTS()
+    {
+        var oldCts = _cts;
+
+        _cts = new CancellationTokenSource();
+
+        oldCts?.Cancel();
+    }
+
+    private void OnDestroy()
+    {
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts.Dispose(); 
+            _cts = null;
+        }
     }
 }
