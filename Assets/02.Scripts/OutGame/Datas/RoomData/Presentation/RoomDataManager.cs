@@ -64,8 +64,11 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     public override void OnLeftRoom()
     {
-        _cts?.Cancel();
-
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts = null;
+        }
 
         _currentRoomCode = null;
         _roomWallet = null;
@@ -76,20 +79,30 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public void LoadRoomData()
     {
         ResetCTS();
-        LoadRoomDataAsync(_cts.Token).Forget();
+        LoadRoomDataAsync(_cts).Forget();
     }
 
-    private async UniTask LoadRoomDataAsync(CancellationToken token)
+    private async UniTask LoadRoomDataAsync(CancellationTokenSource cts)
     {
         try
         {
-            await LoadCurrentRoom(token, PhotonNetwork.CurrentRoom.Name);
+            await LoadCurrentRoom(cts.Token, PhotonNetwork.CurrentRoom.Name);
             OnRoomDataLoaded?.Invoke();
         }
         catch (OperationCanceledException) { }
         catch (Exception e)
         {
             Debug.LogError($"[RoomDataManager] 데이터 로드 중 오류: {e}");
+        }
+        finally
+        {
+            // 🔥 핵심: “내가 아직 최신 CTS일 때만 Dispose”
+            if (_cts == cts)
+            {
+                _cts = null;
+            }
+
+            cts.Dispose();
         }
     }
 
@@ -139,9 +152,9 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     public async UniTask<bool> IsRoomDataExist(string roomCode)
     {
-       ResetCTS();
         if (_roomDataRepository == null) return false;
-        return await _roomDataRepository.IsExist(roomCode).AttachExternalCancellation(_cts.Token);
+
+        return await _roomDataRepository.IsExist(roomCode);
     }
 
     public bool IsStageAvailable(StageDefinitionSO stageDefinition)
@@ -317,9 +330,11 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
     public void ResetCTS()
     {
-        _cts?.Cancel();
+        var oldCts = _cts;
 
         _cts = new CancellationTokenSource();
+
+        oldCts?.Cancel();
     }
 
     private void OnDestroy()
@@ -327,6 +342,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         if (_cts != null)
         {
             _cts.Cancel();
+            _cts.Dispose(); 
             _cts = null;
         }
     }
