@@ -6,7 +6,6 @@ using Photon.Realtime;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 
 public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
@@ -142,7 +141,7 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     {
        ResetCTS();
         if (_roomDataRepository == null) return false;
-        return await _roomDataRepository.IsExist(roomCode).AttachExternalCancellation(_cts.Token); ;
+        return await _roomDataRepository.IsExist(roomCode).AttachExternalCancellation(_cts.Token);
     }
 
     public bool IsStageAvailable(StageDefinitionSO stageDefinition)
