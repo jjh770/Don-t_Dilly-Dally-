@@ -38,16 +38,20 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
     {
         _playerRoomRepository = playerRoomRepository;
 
-        InitializeDataAsync().Forget();
+        InitializeData();
     }
 
-    private async UniTask InitializeDataAsync()
+    private void InitializeData()
     {
         ResetCTS();
 
+        InitializeDataAsync(_cts).Forget();
+    }
+    private async UniTask InitializeDataAsync(CancellationTokenSource cts)
+    {
         try
         {
-            await LoadPlayerInformation(_cts.Token);
+            await LoadPlayerInformation(cts.Token);
             IsReady = true;
             OnDataManagerReady?.Invoke();
         }
@@ -59,9 +63,17 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         {
             Debug.LogError($"[PlayerDataManager] 초기화 중 오류 발생: {e}");
         }
-    }
+        finally
+        {
+            // 🔥 핵심: “내가 아직 최신 CTS일 때만 Dispose”
+            if (_cts == cts)
+            {
+                _cts = null;
+            }
 
-    //닉넴 변경 이벤트 구현 필요
+            cts.Dispose();
+        }
+    }
 
     private async UniTask LoadPlayerInformation(CancellationToken token)
     {
@@ -150,9 +162,11 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public void ResetCTS()
     {
-        _cts?.Cancel();
+        var oldCts = _cts;
 
         _cts = new CancellationTokenSource();
+
+        oldCts?.Cancel();
     }
 
     private void OnDestroy()
@@ -160,6 +174,7 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         if (_cts != null)
         {
             _cts.Cancel();
+            _cts.Dispose();
             _cts = null;
         }
     }

@@ -46,9 +46,11 @@ public class AttendancePresenter
 
     public void ResetCTS()
     {
-        _cts?.Cancel();
+        var oldCts = _cts;
 
         _cts = new CancellationTokenSource();
+
+        oldCts?.Cancel();
     }
 
     private void HandleAttendanceManagerReady()
@@ -108,6 +110,7 @@ public class AttendancePresenter
         if (_cts != null)
         {
             _cts.Cancel();
+            _cts.Dispose();
             _cts = null;
         }
     }
