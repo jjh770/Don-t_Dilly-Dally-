@@ -201,6 +201,10 @@ public class PatientEntranceDirector : MonoBehaviour
         {
             PlayEntranceByIndex(2);
         }
+        else if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            PlayEntranceByIndex(3);
+        }
 #endif
     }
 
