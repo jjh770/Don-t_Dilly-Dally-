@@ -1,7 +1,8 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
@@ -31,6 +32,8 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action<string> OnNicknameChanged;
     public bool IsReady { get; private set; }
+
+    private CancellationTokenSource _cts;
     public void Initialize(IPlayerInformationRepository playerRoomRepository)
     {
         _playerRoomRepository = playerRoomRepository;
@@ -40,18 +43,31 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     private async UniTask InitializeDataAsync()
     {
-        await LoadPlayerInformation();
-        IsReady = true;
-        OnDataManagerReady?.Invoke();   
+        ResetCTS();
+
+        try
+        {
+            await LoadPlayerInformation(_cts.Token);
+            IsReady = true;
+            OnDataManagerReady?.Invoke();
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.Log("[PlayerDataManager] 초기화 작업이 취소되었습니다.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[PlayerDataManager] 초기화 중 오류 발생: {e}");
+        }
     }
 
     //닉넴 변경 이벤트 구현 필요
 
-    private async UniTask LoadPlayerInformation()
+    private async UniTask LoadPlayerInformation(CancellationToken token)
     {
         if (_playerRoomRepository == null) return;
 
-        PlayerInformation information = await _playerRoomRepository.Load();
+        PlayerInformation information = await _playerRoomRepository.Load().AttachExternalCancellation(token);
 
         if (information == null)
         {
@@ -132,4 +148,19 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         SaveData();
     }
 
+    public void ResetCTS()
+    {
+        _cts?.Cancel();
+
+        _cts = new CancellationTokenSource();
+    }
+
+    private void OnDestroy()
+    {
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts = null;
+        }
+    }
 }
