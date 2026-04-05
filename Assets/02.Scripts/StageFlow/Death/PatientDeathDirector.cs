@@ -1,4 +1,3 @@
-using DG.Tweening;
 using DontDillyDally.StageFlow;
 using Photon.Pun;
 using UniRx;
@@ -26,7 +25,6 @@ public class PatientDeathDirector : MonoBehaviour
 
     [Header("Debug")]
     [SerializeField] private bool _debugMode;
-    [SerializeField] private float _debugDelay = 1.0f;
 
     private readonly CompositeDisposable _disposables = new();
 
@@ -36,13 +34,24 @@ public class PatientDeathDirector : MonoBehaviour
     private bool _isBound;
     private bool _isPatientDeath;
 
+    // 디버그 원복용 초기 상태 캐싱.
+    private Vector3 _initialRootPosition;
+    private Quaternion _initialRootRotation;
+    private Vector3 _initialBedLocalPosition;
+    private Vector3 _initialPatientLocalPosition;
+    private Vector3 _initialPatientLocalScale;
+    private Transform _initialPatientParent;
+
     private void Awake()
     {
         if (_patientRoot == null || _bedTransform == null || _patientTransform == null)
         {
             Debug.LogError("[PatientDeathDirector] Transform references are not assigned.");
             enabled = false;
+            return;
         }
+
+        CacheInitialState();
     }
 
     private void Start()
@@ -176,16 +185,17 @@ public class PatientDeathDirector : MonoBehaviour
         if (_deaths == null || _deaths.Length == 0)
         {
             Debug.LogWarning("[PatientDeathDirector] No deaths assigned for debug mode.");
-            return;
         }
-
-        DOVirtual.DelayedCall(_debugDelay, () => PlayDeathByIndex(0));
     }
 
     private void HandleDebugInput()
     {
 #if UNITY_EDITOR
-        if (Input.GetKeyDown(KeyCode.Alpha4))
+        if (Input.GetKeyDown(KeyCode.Alpha0))
+        {
+            ResetToInitialState();
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha4))
         {
             PlayDeathByIndex(0);
         }
@@ -198,6 +208,39 @@ public class PatientDeathDirector : MonoBehaviour
             PlayDeathByIndex(2);
         }
 #endif
+    }
+
+    private void CacheInitialState()
+    {
+        _initialRootPosition = _patientRoot.position;
+        _initialRootRotation = _patientRoot.rotation;
+        _initialBedLocalPosition = _bedTransform.localPosition;
+        _initialPatientLocalPosition = _patientTransform.localPosition;
+        _initialPatientLocalScale = _patientTransform.localScale;
+        _initialPatientParent = _patientTransform.parent;
+    }
+
+    private void ResetToInitialState()
+    {
+        ForceCompleteIfNeeded();
+
+        // 환자를 원래 부모로 복원 (천사 승천 등에서 분리된 경우).
+        if (_patientTransform.parent != _initialPatientParent)
+        {
+            _patientTransform.SetParent(_initialPatientParent, worldPositionStays: false);
+        }
+
+        _patientRoot.position = _initialRootPosition;
+        _patientRoot.rotation = _initialRootRotation;
+        _bedTransform.localPosition = _initialBedLocalPosition;
+        _patientTransform.localPosition = _initialPatientLocalPosition;
+        _patientTransform.localScale = _initialPatientLocalScale;
+
+        // 모든 오브젝트 다시 활성화.
+        _bedTransform.gameObject.SetActive(true);
+        _patientTransform.gameObject.SetActive(true);
+
+        Debug.Log("[PatientDeathDirector] Reset to initial state.");
     }
 
     private void PlayDeathByIndex(int index)

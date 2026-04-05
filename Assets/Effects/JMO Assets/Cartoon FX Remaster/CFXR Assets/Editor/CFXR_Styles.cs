@@ -267,7 +267,7 @@ namespace CartoonFX
 				_WhiteRectangleStyle.normal.background = EditorGUIUtility.whiteTexture;
 			}
 
-			if(Event.current != null && Event.current.type == UnityEngine.EventType.Repaint)
+			if(Event.current != null && Event.current.type == EventType.Repaint)
 			{
 				_WhiteRectangleStyle.Draw(position, false, false, false, false);
 			}
@@ -288,7 +288,7 @@ namespace CartoonFX
 		}
 		static public void DrawLine(Rect position, Color color)
 		{
-			if(Event.current.type == UnityEngine.EventType.Repaint)
+			if(Event.current.type == EventType.Repaint)
 			{
 				Color orgColor = GUI.color;
 				GUI.color = orgColor * color;
