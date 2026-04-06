@@ -84,27 +84,13 @@ public class PatientDeathDirector : MonoBehaviour
 
     private void TryBindToStageFlow()
     {
-        if (StageFlowManager.Instance == null)
+        if (StageFlowManager.Instance == null || EventManager.Instance == null)
         {
             return;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
         _isBound = true;
-
-        SubscribeToPatientDeathEvent();
-
-        _stageFlowManager.CurrentPhase
-            .Subscribe(OnPhaseChanged)
-            .AddTo(_disposables);
-    }
-
-    private void SubscribeToPatientDeathEvent()
-    {
-        if (EventManager.Instance == null)
-        {
-            return;
-        }
 
         EventManager.Instance.OnEventPublished += OnGameEventPublished;
         _disposables.Add(Disposable.Create(() =>
@@ -114,6 +100,18 @@ public class PatientDeathDirector : MonoBehaviour
                 EventManager.Instance.OnEventPublished -= OnGameEventPublished;
             }
         }));
+
+        // 늦은 바인딩 시 이미 GameOver 상태인 경우 대응.
+        EStagePhase currentPhase = _stageFlowManager.CurrentPhase.Value;
+        if (currentPhase >= EStagePhase.GameOver)
+        {
+            _hasPlayed = true;
+            return;
+        }
+
+        _stageFlowManager.CurrentPhase
+            .Subscribe(OnPhaseChanged)
+            .AddTo(_disposables);
     }
 
     private void OnGameEventPublished(GameEvent gameEvent)
