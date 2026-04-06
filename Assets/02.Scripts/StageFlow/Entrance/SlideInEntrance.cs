@@ -129,51 +129,19 @@ public class SlideInEntrance : PatientEntranceBase
 
     private void PlayBrakeSmoke()
     {
-        if (_brakeSmokeFx == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _brakeSmokeFx)
-        {
-            if (fx != null)
-            {
-                fx.Play();
-            }
-        }
+        if (_brakeSmokeFx == null) return;
+        foreach (ParticleSystem fx in _brakeSmokeFx) PlayFx(fx);
     }
 
-    // Emission stops but existing particles fade out naturally.
     private void StopBrakeSmoke()
     {
-        if (_brakeSmokeFx == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _brakeSmokeFx)
-        {
-            if (fx != null)
-            {
-                fx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-            }
-        }
+        if (_brakeSmokeFx == null) return;
+        foreach (ParticleSystem fx in _brakeSmokeFx) StopFx(fx);
     }
 
-    // Full clear for when animation restarts (ForceComplete).
     private void ClearBrakeSmoke()
     {
-        if (_brakeSmokeFx == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _brakeSmokeFx)
-        {
-            if (fx != null)
-            {
-                fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            }
-        }
+        if (_brakeSmokeFx == null) return;
+        foreach (ParticleSystem fx in _brakeSmokeFx) ClearFx(fx);
     }
 }
