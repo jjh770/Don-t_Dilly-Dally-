@@ -28,7 +28,10 @@ namespace DontDillyDally.Data
             for (int attempt = 0; attempt <= _maxRetries; attempt++)
             {
                 if (attempt > 0)
-                    Debug.Log($"[DiseaseGenerationManager] AI 생성 재시도 ({attempt}/{_maxRetries})...");
+                {
+                    Debug.Log($"[DiseaseGenerationManager] AI 생성 재시도 ({attempt}/{_maxRetries}), 3초 대기...");
+                    await Awaitable.WaitForSecondsAsync(3f);
+                }
 
                 DiseaseData result = await TryGenerateFromAI(userPrompt);
                 if (result != null)
