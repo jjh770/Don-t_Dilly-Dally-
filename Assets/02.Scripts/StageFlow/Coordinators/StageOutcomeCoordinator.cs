@@ -13,18 +13,24 @@ namespace DontDillyDally.StageFlow
         private readonly StageFlowRpcHandler _rpc;
         private readonly StageRpcAckCoordinator _ackCoordinator;
         private readonly IStageOutcomeHost _host;
-        private readonly RewardLLMEvaluator _rewardEvaluator;   
+        private readonly RewardLLMEvaluator _rewardEvaluator;
+        private readonly RewardMoneyPolicy _moneyPolicy;
+        private readonly RewardSettlementService _rewardSettlementService;
 
         public StageOutcomeCoordinator(
             StageFlowRpcHandler rpc,
             StageRpcAckCoordinator ackCoordinator,
             IStageOutcomeHost host,
-            RewardLLMEvaluator rewardEvaluator)
+            RewardLLMEvaluator rewardEvaluator,
+            RewardMoneyPolicy moneyPolicy,
+            RewardSettlementService rewardSettlementService)
         {
             _rpc = rpc;
             _ackCoordinator = ackCoordinator;
             _host = host;
             _rewardEvaluator = rewardEvaluator;
+            _moneyPolicy = moneyPolicy;
+            _rewardSettlementService = rewardSettlementService;
 
             if (_rpc != null)
             {
@@ -74,7 +80,7 @@ namespace DontDillyDally.StageFlow
             }
 
             float remainingTime = _host != null ? _host.RemainingTime : 0f;
-            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 타이머: {remainingTime:F1}초 | 5초 후 대기실 복귀 가능");
+            Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 시간: {remainingTime:F1}초");
 
             _host?.ClearRoles();
             BroadcastGameOverAndRewardAsync(
@@ -98,19 +104,31 @@ namespace DontDillyDally.StageFlow
                 patientCount: stageData.Settings.PatientSettings.PatientCount,
                 difficulty: stageData.Settings.PatientSettings.Difficulty);
 
+            StageStars previousStars = RoomDataManager.Instance.GetStageStars(stageData.StageId);
+            int currentMoney = RoomDataManager.Instance.Coin.Value;
+            RewardMoneyAdjustment adjustment = _moneyPolicy.Evaluate(
+                StageFlowManager.Instance.PerformanceTracker.Events,
+                currentMoney);
+
             RewardNarrativeResult narrative = await _rewardEvaluator.EvaluateAsync(
-               StageFlowManager.Instance.PerformanceTracker.Events,
-               stageData.SavedCount,
-               stageData.Settings.PatientSettings.PatientCount,
-               _host?.IsGameOver ?? false,
-               RoomDataManager.Instance.Coin.Value);
+                StageFlowManager.Instance.PerformanceTracker.Events,
+                stageData.SavedCount,
+                stageData.Settings.PatientSettings.PatientCount,
+                _host?.IsGameOver ?? false,
+                currentMoney,
+                adjustment);
 
+            StageReward finalReward = _rewardSettlementService.Build(
+                result,
+                previousStars,
+                adjustment,
+                narrative);
 
-            StageReward finalReward = RoomDataManager.Instance.ApplyReward(stageData.StageId, result, narrative);
-
+            finalReward = RoomDataManager.Instance.ApplyReward(stageData.StageId, finalReward);
             _rpc.BroadcastStageReward(finalReward, result);
 
-            Debug.Log($"별: {finalReward.Stars} / 돈: {finalReward.Money - narrative.moneyDelta} ({narrative.moneyDelta}) / 신기록: {finalReward.IsNewBest} \n {finalReward.SummaryText}");
+            Debug.Log($"[StageFlow] 보상 정산 => 별: {finalReward.Stars}, 코인: {finalReward.Money - finalReward.MoneyDelta} ({finalReward.MoneyDelta}), 최고기록 갱신: {finalReward.IsNewBest}");
+            Debug.Log(finalReward.SummaryText);
         }
 
         // ── 정리 ────────────────────────────────────────────────────
@@ -155,7 +173,6 @@ namespace DontDillyDally.StageFlow
             }
             catch (OperationCanceledException)
             {
-                Debug.LogWarning("[StageFlow] 게임 오버 ACK 대기 중 타임아웃");
             }
 
             await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
