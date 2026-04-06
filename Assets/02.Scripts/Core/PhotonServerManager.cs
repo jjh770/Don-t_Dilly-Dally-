@@ -207,6 +207,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public bool TryStartStage(out string message)
     {
+        if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient || PhotonNetwork.CurrentRoom == null)
+        {
+            message = "방장만 스테이지를 시작할 수 있습니다.";
+            return false;
+        }
+
         Player[] players = PhotonNetwork.PlayerList;
 
         foreach (Player player in players)
@@ -218,6 +224,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
                 return false;
             }
         }
+
         PhotonNetwork.CurrentRoom.IsOpen = false;
         RoomProperties.SetGameInProgress(true);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Cutscene);
