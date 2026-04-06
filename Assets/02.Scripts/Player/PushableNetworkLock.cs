@@ -1,4 +1,3 @@
-using DontDillyDally.StageFlow;
 using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
@@ -296,7 +295,7 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
         }
     }
 
-    private bool IsInteractingWithAnotherPlayer(int localActorNumber)
+    private bool IsLockedByAnotherPlayer(int localActorNumber)
     {
         return _interactingActorNumber > 0 && _interactingActorNumber != localActorNumber;
     }
