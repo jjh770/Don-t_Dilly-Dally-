@@ -49,6 +49,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     public override void OnLeftRoom()
     {
+        UnsubscribeFromRoleAssignment();
         _usedSpawnPoints.Clear();
         _surgeonSpawnActorNumber = -1;
         _player = null;
@@ -73,16 +74,15 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private void Start()
     {
-        SubscribeToRoleAssignment();
         TrySpawnLocalPlayer();
     }
 
-    private void OnEnable()
+    public override void OnEnable()
     {
         SubscribeToRoleAssignment();
     }
 
-    private void OnDisable()
+    public override void OnDisable()
     {
         UnsubscribeFromRoleAssignment();
     }
