@@ -5,48 +5,52 @@ namespace DontDillyDally.StageFlow
     [CreateAssetMenu(fileName = "StageDefinition", menuName = "DontDillyDally/Stage Flow/Stage Definition")]
     public class StageDefinitionSO : ScriptableObject
     {
-        [Header("스테이지 정보")]
+        [Header("Stage Info")]
         [SerializeField] private string _stageId = string.Empty;
         [SerializeField] private string _stageName = string.Empty;
         [SerializeField] private Sprite _stageThumbnail;
         [TextArea(minLines: 2, maxLines: 5)]
         [SerializeField] private string _description;
 
-        [Header("스테이지 설정")]
-        [SerializeField] private int _patientCount = 5;
-        [SerializeField] private float _totalTimeLimitSec = 600f;
-        [SerializeField] private float _initialPatientHealth = 100f;
-        [SerializeField] private float _patientHealthDrainPerSecond = 0.25f;
-        [SerializeField] private int _difficulty = 1;
+        [Header("Stage Settings")]
+        [SerializeField] private StageSettings _settings = new();
 
-        [Header("해금 조건")]
-        [SerializeField] private int _requiredHospitalLevel = 0;  // 0 = 기본 해금
+        [Header("Unlock Condition")]
+        [SerializeField] private int _requiredHospitalLevel = 0;
 
         public string StageId => _stageId;
         public string StageName => string.IsNullOrWhiteSpace(_stageName) ? _stageId : _stageName;
         public Sprite StageThumbnail => _stageThumbnail;
         public string Description => _description;
-        public int PatientCount => _patientCount;
-        public float TotalTimeLimitSec => _totalTimeLimitSec;
-        public float InitialPatientHealth => _initialPatientHealth;
-        public float PatientHealthDrainPerSecond => _patientHealthDrainPerSecond;
-        public int Difficulty => _difficulty;
-
+        public StageSettings Settings => _settings;
         public int RequiredHospitalLevel => _requiredHospitalLevel;
         public bool IsDefaultUnlocked => _requiredHospitalLevel == 0;
 
-        // SO는 원본 설정만 들고 있고, 실제 플레이에는 별도의 런타임 데이터를 생성해서 넘깁니다.
+        private void OnEnable()
+        {
+            EnsureSettingsInitialized();
+        }
+
+        private void OnValidate()
+        {
+            EnsureSettingsInitialized();
+        }
+
         public StageRuntimeData CreateRuntimeData()
         {
             return new StageRuntimeData
             {
                 StageId = _stageId,
-                PatientCount = _patientCount,
-                TotalTimeLimitSec = _totalTimeLimitSec,
-                MaxPatientHealth = _initialPatientHealth,
-                PatientHealthDrainPerSecond = _patientHealthDrainPerSecond,
-                Difficulty = _difficulty
+                Settings = new StageSettings(_settings)
             };
+        }
+
+        private void EnsureSettingsInitialized()
+        {
+            _settings ??= new StageSettings();
+            _settings.PatientSettings ??= new StagePatientSettings();
+            _settings.MiniGameSettings ??= new StageMiniGameSettings();
+            _settings.EmergencySettings ??= new StageEmergencySettings();
         }
     }
 }

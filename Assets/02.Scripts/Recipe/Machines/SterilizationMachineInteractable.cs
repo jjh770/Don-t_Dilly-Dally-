@@ -266,14 +266,7 @@ namespace DontDillyDally.Data
                     CraftedMaterialType resultMaterial = slot.PendingResultMaterial;
                     Transform slotTransform = GetSlotTransform(i);
 
-                    if (PhotonNetwork.InRoom)
-                    {
-                        PhotonNetwork.Destroy(mixToolItem.gameObject);
-                    }
-                    else
-                    {
-                        Destroy(mixToolItem.gameObject);
-                    }
+                    ItemRecycleUtility.TryRecycle(mixToolItem);
 
                     slot.Clear();
 

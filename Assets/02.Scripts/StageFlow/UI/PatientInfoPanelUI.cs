@@ -2,6 +2,7 @@ using DG.Tweening;
 using DontDillyDally.Data;
 using DontDillyDally.StageFlow;
 using System.Collections.Generic;
+using UniRx;
 using UnityEngine;
 
 /// <summary>
@@ -26,11 +27,13 @@ public class PatientInfoPanelUI : MonoBehaviour
     [SerializeField] private Ease _slideOutEase = Ease.InCubic;
 
     private StageFlowManager _stageFlowManager;
+    private readonly CompositeDisposable _disposables = new CompositeDisposable();
     private readonly List<PatientInfoEntry> _entries = new List<PatientInfoEntry>();
     private Vector2 _hiddenPos;
     private Vector2 _shownPos;
     private bool _isShowing;
     private bool _isBuilt;
+    private bool _isStageDataBound;
     private Tween _currentTween;
 
     private void Start()
@@ -41,6 +44,9 @@ public class PatientInfoPanelUI : MonoBehaviour
             _hiddenPos = new Vector2(_shownPos.x + _slideDistance, _shownPos.y);
             _panelRoot.anchoredPosition = _hiddenPos;
         }
+
+        TryBind();
+        RefreshUi();
     }
 
     private void Update()
@@ -48,6 +54,7 @@ public class PatientInfoPanelUI : MonoBehaviour
         if (_stageFlowManager == null)
         {
             TryBind();
+            RefreshUi();
         }
 
         if (_stageFlowManager == null)
@@ -67,6 +74,12 @@ public class PatientInfoPanelUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_stageFlowManager != null && _isStageDataBound)
+        {
+            _stageFlowManager.OnStageDataChanged -= HandleStageDataChanged;
+        }
+
+        _disposables.Dispose();
         _currentTween?.Kill();
     }
 
@@ -78,6 +91,48 @@ public class PatientInfoPanelUI : MonoBehaviour
         }
 
         _stageFlowManager = StageFlowManager.Instance;
+        _stageFlowManager.OnStageDataChanged += HandleStageDataChanged;
+        _isStageDataBound = true;
+
+        _stageFlowManager.CurrentPatientIndex
+            .Subscribe(_ => RefreshUi())
+            .AddTo(_disposables);
+
+        if (_stageFlowManager.CurrentStageData != null)
+        {
+            HandleStageDataChanged(_stageFlowManager.CurrentStageData);
+            return;
+        }
+
+        RefreshUi();
+    }
+
+    private void HandleStageDataChanged(StageRuntimeData _)
+    {
+        ClearEntries();
+        RefreshUi();
+    }
+
+    private void RefreshUi()
+    {
+        EnsureEntriesBuilt();
+        UpdateCurrentPatientHighlight();
+    }
+
+    private void EnsureEntriesBuilt()
+    {
+        if (_isBuilt || _stageFlowManager == null)
+        {
+            return;
+        }
+
+        StageRuntimeData stageData = _stageFlowManager.CurrentStageData;
+        if (stageData == null || stageData.Patients == null || stageData.Patients.Count == 0)
+        {
+            return;
+        }
+
+        BuildEntries();
     }
 
     // ================================================================
@@ -151,6 +206,11 @@ public class PatientInfoPanelUI : MonoBehaviour
 
     private void UpdateCurrentPatientHighlight()
     {
+        if (_stageFlowManager == null || _entries.Count == 0)
+        {
+            return;
+        }
+
         int currentIndex = _stageFlowManager.CurrentPatientIndex.Value;
 
         for (int i = 0; i < _entries.Count; i++)

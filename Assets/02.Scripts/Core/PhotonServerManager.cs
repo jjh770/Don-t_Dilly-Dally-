@@ -83,6 +83,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         Debug.Log($"[PhotonServerManager] Joined room: {PhotonNetwork.CurrentRoom.PlayerCount}");
 
         PlayerProperty.EnsureProperties();
+        RoomProperties.EnsureProperties();
     }
     public override void OnJoinRoomFailed(short returnCode, string message)
     {
@@ -218,6 +219,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
             }
         }
         PhotonNetwork.CurrentRoom.IsOpen = false;
+        RoomProperties.SetGameInProgress(true);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Cutscene);
         message = string.Empty;
         return true;
@@ -226,6 +228,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public void ReturnWaitingRoom()
     {
         PhotonNetwork.CurrentRoom.IsOpen = true;
+        RoomProperties.SetGameInProgress(false);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
     }
 

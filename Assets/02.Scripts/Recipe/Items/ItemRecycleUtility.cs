@@ -1,4 +1,4 @@
-using Photon.Pun;
+﻿using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -12,11 +12,17 @@ namespace DontDillyDally.Data
                 return false;
             }
 
+            if (itemObject.IsPendingRecycle)
+            {
+                return true;
+            }
+
             PhotonView photonView = itemObject.GetComponent<PhotonView>();
             if (PhotonNetwork.InRoom)
             {
                 if (photonView == null)
                 {
+                    Debug.LogWarning($"[ItemRecycle] Photon 룸 아이템 '{itemObject.name}'에 PhotonView가 없습니다.");
                     return false;
                 }
 
@@ -24,6 +30,11 @@ namespace DontDillyDally.Data
                 {
                     return false;
                 }
+            }
+
+            if (!itemObject.TryBeginRecycle())
+            {
+                return true;
             }
 
             PrepareForRecycle(itemObject);
@@ -50,3 +61,4 @@ namespace DontDillyDally.Data
         }
     }
 }
+
