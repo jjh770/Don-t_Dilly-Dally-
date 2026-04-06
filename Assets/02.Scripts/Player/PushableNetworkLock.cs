@@ -30,14 +30,7 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
         _pushableItem = GetComponent<PushableItem>();
         TryGetComponent(out _photonView);
 
-        foreach (Component component in GetComponents<Component>())
-        {
-            if (component is IPushInteractionHandler handler)
-            {
-                _pushInteractionHandler = handler;
-                break;
-            }
-        }
+        _pushInteractionHandler = GetComponent<IPushInteractionHandler>();
     }
 
     private void OnEnable()
