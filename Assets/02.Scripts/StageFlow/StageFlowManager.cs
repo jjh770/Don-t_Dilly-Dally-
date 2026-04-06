@@ -46,6 +46,8 @@ namespace DontDillyDally.StageFlow
         [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
 
+
+
         // ── 외부 구독용 (RpcHandler에 위임) ──────────────────────────
         public IReadOnlyReactiveProperty<EStagePhase> CurrentPhase => _rpc.CurrentPhase;
         public IReadOnlyReactiveProperty<float> PatientHealth => _rpc.PatientHealth;
@@ -384,7 +386,7 @@ namespace DontDillyDally.StageFlow
                    _emergencyCoordinator.RequestDiagnosisOperation(diagnosisType);
         }
 
-#if Unity_EDITOR
+#if UNITY_EDITOR
         [ContextMenu("Debug/Force Complete Current Patient")]
         public void ForceCompleteCurrentPatient()
         {

@@ -96,6 +96,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: 3c3669f43aa27b549a258284dbbe80d5, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 7a69ee5d63a74b245bc767a1d5e10116, type: 2}
     - target: {fileID: 919132149155446097, guid: 3c3669f43aa27b549a258284dbbe80d5, type: 3}
       propertyPath: m_Name
       value: Bandage
@@ -113,14 +117,14 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3c3669f43aa27b549a258284dbbe80d5, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -1941910815797760822}
+      addedObject: {fileID: 487042595910005068}
   m_SourcePrefab: {fileID: 100100000, guid: 3c3669f43aa27b549a258284dbbe80d5, type: 3}
 --- !u!1 &6929599249459357114 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3c3669f43aa27b549a258284dbbe80d5, type: 3}
   m_PrefabInstance: {fileID: 7848516431206127851}
   m_PrefabAsset: {fileID: 0}
---- !u!65 &-1941910815797760822
+--- !u!65 &487042595910005068
 BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -137,10 +141,10 @@ BoxCollider:
   m_LayerOverridePriority: 0
   m_IsTrigger: 0
   m_ProvidesContacts: 0
-  m_Enabled: 0
+  m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.1, y: 0.08, z: 0.2}
-  m_Center: {x: 9.313226e-10, y: 0, z: 0}
+  m_Size: {x: 0.1189591, y: 0.11895911, z: 0.31199998}
+  m_Center: {x: 0.0000000018626451, y: 0, z: 0}
 --- !u!4 &7737519927906991872 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3c3669f43aa27b549a258284dbbe80d5, type: 3}
