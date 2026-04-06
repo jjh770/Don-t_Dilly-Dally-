@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3307364569051888207}
   - component: {fileID: 887957816304897458}
+  - component: {fileID: 8817549547109822878}
   m_Layer: 0
   m_Name: BasicMaterialSource
   m_TagString: Untagged
@@ -47,5 +48,26 @@ MonoBehaviour:
   SpawnedItemPrefab: {fileID: 1712671143707488832, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
   SpawnPoint: {fileID: 3307364569051888207}
   AutoRespawn: 1
-  _leaveSourceDistance: 0.15
   MaterialType: 0
+--- !u!114 &8817549547109822878
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 566429801591986213}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0

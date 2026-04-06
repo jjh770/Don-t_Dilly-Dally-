@@ -5,7 +5,7 @@ using UnityEngine;
 
 // 아이템 공급원의 공통 동작을 담당하는 제네릭 베이스 클래스입니다.
 // 생성 위치 관리, 자동 리스폰, 현재 생성 아이템 추적을 공통으로 처리합니다.
-public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem : ItemObject
+public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks, IPunInstantiateMagicCallback where TItem : ItemObject
 {
     [Tooltip("이 공급원에서 생성할 아이템 프리팹")]
     public TItem SpawnedItemPrefab;
@@ -31,6 +31,16 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem 
     public override void OnMasterClientSwitched(Player newMasterClient)
     {
         TryEnsureSpawnedItem();
+    }
+
+    public virtual void OnPhotonInstantiate(PhotonMessageInfo info)
+    {
+        ApplySourceStateFromInstantiationData(photonView != null ? photonView.InstantiationData : null);
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            ForceRespawn();
+        }
     }
 
     protected virtual void Update()
@@ -71,6 +81,10 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks where TItem 
     protected abstract object[] GetInstantiationData();
 
     protected abstract string GetDefaultItemName();
+
+    protected virtual void ApplySourceStateFromInstantiationData(object[] data)
+    {
+    }
 
     protected Transform GetSpawnParent()
     {

@@ -18,10 +18,15 @@ public class StagePreloader : MonoBehaviour
     [Header("병 정보 생성")]
     [SerializeField] private DiseaseGenerationManager _diseaseGenManager;
 
+    [Header("생성 타임아웃")]
+    [Tooltip("이 시간(초) 내에 생성이 끝나지 않으면 나머지는 폴백 데이터로 채웁니다.")]
+    [SerializeField] private float _totalGenerationTimeoutSec = 25f;
+
     public StageRuntimeData StageData { get; private set; }
     public int SurgeonActorNumber { get; private set; } = -1;
     public bool IsRoleAssignmentComplete { get; private set; }
     public bool IsDataPrepComplete { get; private set; }
+    public event Action<int> RoleAssignmentCompleted;
 
     private UniTaskCompletionSource _dataPrepTcs;
     private CancellationTokenSource _cts;
@@ -57,7 +62,7 @@ public class StagePreloader : MonoBehaviour
         if (!PhotonNetwork.IsMasterClient) return;
 
         SurgeonActorNumber = SelectRoleManager.Instance?.AssignRoles() ?? -1;
-        IsRoleAssignmentComplete = true;
+        CompleteRoleAssignment();
 
         if (SurgeonActorNumber < 0)
         {
@@ -92,7 +97,7 @@ public class StagePreloader : MonoBehaviour
                 break;
             }
         }
-        IsRoleAssignmentComplete = true;
+        CompleteRoleAssignment();
     }
 
     // ── 데이터 사전 생성 ─────────────────────────────────────────
@@ -118,22 +123,42 @@ public class StagePreloader : MonoBehaviour
     {
         try
         {
-            // 1. 질병 데이터 생성
-            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {StageData.Settings.PatientSettings.PatientCount}명)");
+            // 1. 질병 데이터 순차 생성 (429 방지)
+            int patientCount = StageData.Settings.PatientSettings.PatientCount;
+            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {patientCount}명)");
             StageData.Patients.Clear();
 
-            var tasks = new List<UniTask<DiseaseData>>();
-            for (int i = 0; i < StageData.Settings.PatientSettings.PatientCount; i++)
+            float startTime = Time.realtimeSinceStartup;
+
+            for (int i = 0; i < patientCount; i++)
             {
-                tasks.Add(GenerateSingleDisease(ct));
+                ct.ThrowIfCancellationRequested();
+
+                float elapsed = Time.realtimeSinceStartup - startTime;
+                if (elapsed >= _totalGenerationTimeoutSec)
+                {
+                    Debug.LogWarning($"[StagePreloader] 타임아웃 ({_totalGenerationTimeoutSec}초) — 나머지 {patientCount - i}명은 폴백 사용");
+                    break;
+                }
+
+                // 두 번째 환자부터 API 요청 간격 확보 (429 방지)
+                if (i > 0)
+                    await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct);
+
+                DiseaseData disease = await GenerateSingleDisease(ct);
+                StageData.Patients.Add(disease);
+                Debug.Log($"[StagePreloader] 환자 {i + 1}/{patientCount} 생성 완료: {disease.DiseaseName} (출처: {disease.Source})");
             }
 
-            DiseaseData[] diseases = await UniTask.WhenAll(tasks);
-            foreach (var disease in diseases)
+            // 부족분 폴백으로 채우기
+            while (StageData.Patients.Count < patientCount)
             {
-                StageData.Patients.Add(disease);
+                DiseaseData fallback = FallbackDiseaseLoader.GetRandom();
+                StageData.Patients.Add(fallback);
+                Debug.Log($"[StagePreloader] 환자 {StageData.Patients.Count}/{patientCount} 폴백 사용: {fallback.DiseaseName}");
             }
-            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 완료: {StageData.Patients.Count}개");
+
+            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 완료: {StageData.Patients.Count}개 (소요: {Time.realtimeSinceStartup - startTime:F1}초)");
 
             // 2. 환자 소개 음성 사전 생성
             Debug.Log("[StagePreloader] (2/2) 환자 소개 음성 사전 생성 중...");
@@ -163,6 +188,12 @@ public class StagePreloader : MonoBehaviour
             var result = await _diseaseGenManager.GenerateDisease(StageData.Settings.PatientSettings.Difficulty);
         ct.ThrowIfCancellationRequested();
         return result;
+    }
+
+    private void CompleteRoleAssignment()
+    {
+        IsRoleAssignmentComplete = true;
+        RoleAssignmentCompleted?.Invoke(SurgeonActorNumber);
     }
 
     public void Cleanup()

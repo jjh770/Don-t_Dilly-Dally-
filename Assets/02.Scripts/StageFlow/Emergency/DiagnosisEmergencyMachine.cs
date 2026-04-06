@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DontDillyDally.StageFlow
 {
-    public class DiagnosisEmergencyMachine : MonoBehaviour
+    public class DiagnosisEmergencyMachine : MonoBehaviour, IPushInteractionHandler
     {
         [Header("Diagnosis")]
         [SerializeField] private DiagnosisScanType _machineType = DiagnosisScanType.None;
@@ -13,13 +13,8 @@ namespace DontDillyDally.StageFlow
 
         private readonly Dictionary<int, int> _patientZoneCounts = new Dictionary<int, int>();
 
-        public bool TryHandleEmergencyInteract(Transform interactor)
+        public bool TryHandlePushInteract()
         {
-            if (interactor == null)
-            {
-                return false;
-            }
-
             StageFlowManager stageFlowManager = StageFlowManager.Instance;
             if (stageFlowManager == null ||
                 !stageFlowManager.IsLocalSurgeon ||
