@@ -1,7 +1,8 @@
+using Cysharp.Threading.Tasks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Cysharp.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 
 public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
@@ -31,27 +32,54 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
 
     public event Action<string> OnNicknameChanged;
     public bool IsReady { get; private set; }
+
+    private CancellationTokenSource _cts;
     public void Initialize(IPlayerInformationRepository playerRoomRepository)
     {
         _playerRoomRepository = playerRoomRepository;
 
-        InitializeDataAsync().Forget();
+        InitializeData();
     }
 
-    private async UniTask InitializeDataAsync()
+    private void InitializeData()
     {
-        await LoadPlayerInformation();
-        IsReady = true;
-        OnDataManagerReady?.Invoke();   
+        ResetCTS();
+
+        InitializeDataAsync(_cts).Forget();
+    }
+    private async UniTask InitializeDataAsync(CancellationTokenSource cts)
+    {
+        try
+        {
+            await LoadPlayerInformation(cts.Token);
+            IsReady = true;
+            OnDataManagerReady?.Invoke();
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.Log("[PlayerDataManager] 초기화 작업이 취소되었습니다.");
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[PlayerDataManager] 초기화 중 오류 발생: {e}");
+        }
+        finally
+        {
+            // 🔥 핵심: “내가 아직 최신 CTS일 때만 Dispose”
+            if (_cts == cts)
+            {
+                _cts = null;
+            }
+
+            cts.Dispose();
+        }
     }
 
-    //닉넴 변경 이벤트 구현 필요
-
-    private async UniTask LoadPlayerInformation()
+    private async UniTask LoadPlayerInformation(CancellationToken token)
     {
         if (_playerRoomRepository == null) return;
 
-        PlayerInformation information = await _playerRoomRepository.Load();
+        PlayerInformation information = await _playerRoomRepository.Load().AttachExternalCancellation(token);
 
         if (information == null)
         {
@@ -132,4 +160,22 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         SaveData();
     }
 
+    private void ResetCTS()
+    {
+        var oldCts = _cts;
+
+        _cts = new CancellationTokenSource();
+
+        oldCts?.Cancel();
+    }
+
+    private void OnDestroy()
+    {
+        if (_cts != null)
+        {
+            _cts.Cancel();
+            _cts.Dispose();
+            _cts = null;
+        }
+    }
 }
