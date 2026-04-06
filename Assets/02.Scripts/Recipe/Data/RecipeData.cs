@@ -12,8 +12,8 @@ namespace DontDillyDally.Data
     {
         None = 0,
         Ultrasound,
-        XRay,
-        ECG
+        Radiograph,
+        Encephalograph
     }
 
     // 치료 레시피 데이터입니다.

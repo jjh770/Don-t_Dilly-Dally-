@@ -23,8 +23,9 @@ public class StageHealthUI : MonoBehaviour
     private StageFlowManager _stageFlowManager;
     private Tween _healthTween;
     private float _cachedHealth;
-    private float _maxHealth;
+    private float _maxHealth = 1f;
     private bool _hasAppliedGaugeValue;
+    private bool _isStageDataBound;
 
     private void Start()
     {
@@ -43,7 +44,7 @@ public class StageHealthUI : MonoBehaviour
 
     private void OnDestroy()
     {
-        if (_stageFlowManager != null)
+        if (_stageFlowManager != null && _isStageDataBound)
         {
             _stageFlowManager.OnStageDataChanged -= HandleStageDataChanged;
         }
@@ -62,6 +63,7 @@ public class StageHealthUI : MonoBehaviour
 
         _stageFlowManager = StageFlowManager.Instance;
         _stageFlowManager.OnStageDataChanged += HandleStageDataChanged;
+        _isStageDataBound = true;
 
         if (_stageFlowManager.CurrentStageData != null)
         {
@@ -69,6 +71,7 @@ public class StageHealthUI : MonoBehaviour
         }
         else
         {
+            _maxHealth = Mathf.Max(1f, _maxHealth);
             _cachedHealth = Mathf.Clamp(_stageFlowManager.PatientHealth.Value, 0f, _maxHealth);
         }
 
@@ -92,7 +95,7 @@ public class StageHealthUI : MonoBehaviour
             return;
         }
 
-        _maxHealth = Mathf.Max(1f, stageData.MaxPatientHealth);
+        _maxHealth = Mathf.Max(1f, stageData.Settings.PatientSettings.InitialPatientHealth);
         _cachedHealth = _stageFlowManager != null
             ? Mathf.Clamp(_stageFlowManager.PatientHealth.Value, 0f, _maxHealth)
             : Mathf.Clamp(_cachedHealth, 0f, _maxHealth);
@@ -171,14 +174,23 @@ public class StageHealthUI : MonoBehaviour
 
     private string GetPatientCountText()
     {
+        if (_stageFlowManager == null || _stageFlowManager.CurrentStageData == null)
+        {
+            return string.Empty;
+        }
+
         int displayPatientIndex = _stageFlowManager.CurrentPatientIndex.Value + 1;
-        int totalPatientCount = _stageFlowManager.CurrentStageData.PatientCount;
+        int totalPatientCount = _stageFlowManager.CurrentStageData.Settings.PatientSettings.PatientCount;
         return $"남은 환자 수 {displayPatientIndex} / {totalPatientCount}";
     }
 
     private string GetPatientInfoText()
     {
-        _stageFlowManager.TryGetCurrentDisease(out DiseaseData disease);
+        if (_stageFlowManager == null || !_stageFlowManager.TryGetCurrentDisease(out DiseaseData disease) || disease == null)
+        {
+            return string.Empty;
+        }
+
         string patientName = disease.PatientName;
         string diseaseName = disease.DiseaseName;
         return $"{patientName} 환자 / 병명 : {diseaseName}";
