@@ -102,14 +102,15 @@ namespace DontDillyDally.StageFlow
                StageFlowManager.Instance.PerformanceTracker.Events,
                stageData.SavedCount,
                stageData.Settings.PatientSettings.PatientCount,
-               _host?.IsGameOver ?? false);
+               _host?.IsGameOver ?? false,
+               RoomDataManager.Instance.Coin.Value);
 
 
             StageReward finalReward = RoomDataManager.Instance.ApplyReward(stageData.StageId, result, narrative);
 
             _rpc.BroadcastStageReward(finalReward, result);
 
-            Debug.Log($"별: {finalReward.Stars} / 돈: {finalReward.Money - narrative.coinDelta} ({narrative.coinDelta}) / 신기록: {finalReward.IsNewBest} \n {finalReward.SummaryText}");
+            Debug.Log($"별: {finalReward.Stars} / 돈: {finalReward.Money - narrative.moneyDelta} ({narrative.moneyDelta}) / 신기록: {finalReward.IsNewBest} \n {finalReward.SummaryText}");
         }
 
         // ── 정리 ────────────────────────────────────────────────────

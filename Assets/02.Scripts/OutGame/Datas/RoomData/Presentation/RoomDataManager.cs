@@ -298,7 +298,8 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
 
         StageReward finalReward = new StageReward(
         baseReward.Stars,
-        baseReward.Money + (narrativeResult?.coinDelta ?? 0),
+        baseReward.Money + (narrativeResult?.moneyDelta ?? 0),
+        narrativeResult?.moneyDelta ?? 0,
         baseReward.IsNewBest,
         narrativeResult?.summaryText ?? string.Empty);
 
