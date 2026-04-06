@@ -88,4 +88,56 @@ public abstract class PatientEntranceBase : MonoBehaviour
         panelA.DOKill();
         panelB.DOKill();
     }
+
+    // ── FX Helpers ───────────────────────────────────────────────
+
+    protected void PlayFx(ParticleSystem fx)
+    {
+        if (fx != null)
+        {
+            fx.Play();
+        }
+    }
+
+    protected void StopFx(ParticleSystem fx)
+    {
+        if (fx != null)
+        {
+            fx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+    }
+
+    protected void ClearFx(ParticleSystem fx)
+    {
+        if (fx != null)
+        {
+            fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+    }
+
+    protected void PlayAllFx(GameObject fxRoot)
+    {
+        if (fxRoot == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in fxRoot.GetComponentsInChildren<ParticleSystem>())
+        {
+            fx.Play();
+        }
+    }
+
+    protected void ClearAllFx(GameObject fxRoot)
+    {
+        if (fxRoot == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in fxRoot.GetComponentsInChildren<ParticleSystem>())
+        {
+            fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+    }
 }

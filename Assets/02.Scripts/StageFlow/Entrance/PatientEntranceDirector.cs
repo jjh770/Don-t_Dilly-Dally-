@@ -1,5 +1,6 @@
 using DG.Tweening;
 using DontDillyDally.StageFlow;
+using Photon.Pun;
 using UniRx;
 using UnityEngine;
 
@@ -147,7 +148,9 @@ public class PatientEntranceDirector : MonoBehaviour
             return _fixedEntrance;
         }
 
-        int index = Random.Range(0, _entrances.Length);
+        // 멀티플레이어 동기화를 위해 PhotonNetwork.Time 기반 시드 사용.
+        int seed = (int)(PhotonNetwork.Time * 1000);
+        int index = new System.Random(seed).Next(0, _entrances.Length);
         return _entrances[index];
     }
 

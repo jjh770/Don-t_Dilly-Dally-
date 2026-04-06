@@ -84,9 +84,9 @@ public class SkyLandingEntrance : PatientEntranceBase
         // VFX callbacks at user-specified times.
         _sequence.InsertCallback(_thrusterStartTime, PlayThrusters);
         _sequence.InsertCallback(_thrusterStopTime, StopThrusters);
-        _sequence.InsertCallback(_groundSmokeStartTime, () => PlaySingleFx(_groundSmokeFx));
-        _sequence.InsertCallback(_groundSmokeStopTime, () => StopSingleFx(_groundSmokeFx));
-        _sequence.InsertCallback(_landingSmokeStartTime, PlayLandingSmoke);
+        _sequence.InsertCallback(_groundSmokeStartTime, () => PlayFx(_groundSmokeFx));
+        _sequence.InsertCallback(_groundSmokeStopTime, () => StopFx(_groundSmokeFx));
+        _sequence.InsertCallback(_landingSmokeStartTime, () => PlayAllFx(_landingSmokeRoot));
 
         return _sequence;
     }
@@ -103,107 +103,25 @@ public class SkyLandingEntrance : PatientEntranceBase
         bedTransform.rotation = finalRotation;
 
         ClearThrusters();
-        ClearSingleFx(_groundSmokeFx);
-        ClearLandingSmoke();
+        ClearFx(_groundSmokeFx);
+        ClearAllFx(_landingSmokeRoot);
     }
 
     private void PlayThrusters()
     {
-        if (_thrusterFx == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _thrusterFx)
-        {
-            if (fx != null)
-            {
-                fx.Play();
-            }
-        }
+        if (_thrusterFx == null) return;
+        foreach (ParticleSystem fx in _thrusterFx) PlayFx(fx);
     }
 
     private void StopThrusters()
     {
-        if (_thrusterFx == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _thrusterFx)
-        {
-            if (fx != null)
-            {
-                fx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-            }
-        }
+        if (_thrusterFx == null) return;
+        foreach (ParticleSystem fx in _thrusterFx) StopFx(fx);
     }
 
     private void ClearThrusters()
     {
-        if (_thrusterFx == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _thrusterFx)
-        {
-            if (fx != null)
-            {
-                fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            }
-        }
-    }
-
-    private void PlaySingleFx(ParticleSystem fx)
-    {
-        if (fx != null)
-        {
-            fx.Play();
-        }
-    }
-
-    private void PlayLandingSmoke()
-    {
-        if (_landingSmokeRoot == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _landingSmokeRoot.GetComponentsInChildren<ParticleSystem>())
-        {
-            fx.Play();
-        }
-    }
-
-    private void ClearLandingSmoke()
-    {
-        if (_landingSmokeRoot == null)
-        {
-            return;
-        }
-
-        foreach (ParticleSystem fx in _landingSmokeRoot.GetComponentsInChildren<ParticleSystem>())
-        {
-            fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        }
-    }
-
-    // Emission stops, existing particles fade out naturally.
-    private void StopSingleFx(ParticleSystem fx)
-    {
-        if (fx != null)
-        {
-            fx.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-        }
-    }
-
-    // Full clear for animation restart.
-    private void ClearSingleFx(ParticleSystem fx)
-    {
-        if (fx != null)
-        {
-            fx.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-        }
+        if (_thrusterFx == null) return;
+        foreach (ParticleSystem fx in _thrusterFx) ClearFx(fx);
     }
 }
