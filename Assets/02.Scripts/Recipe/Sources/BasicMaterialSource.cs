@@ -36,5 +36,16 @@ namespace DontDillyDally.Data
         {
             return MaterialType.ToString();
         }
+
+        protected override void ApplySourceStateFromInstantiationData(object[] data)
+        {
+            if (data == null || data.Length == 0)
+                return;
+
+            if (data[0] is int materialTypeValue)
+            {
+                MaterialType = (CraftedMaterialType)materialTypeValue;
+            }
+        }
     }
 }

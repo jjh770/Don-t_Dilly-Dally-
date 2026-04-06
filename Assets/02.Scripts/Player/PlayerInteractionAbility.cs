@@ -254,12 +254,9 @@ public class PlayerInteractionAbility : MonoBehaviour
         if (_currentPushInteractable is IPushable)
         {
             _currentPushInteractable.StopInteract();
-            _playerAnimator.PlayGrabAnimation(false);
-            _playerAnimator.PlayPushAnimation(false);
-            _playerMovement.SetSpeedMultiplier(DefaultSpeedMultiplier, DefaultSpeedMultiplier);
         }
 
-        _currentPushInteractable = null;
+        ClearCurrentPushInteractable();
     }
 
     private void HandlePushableMovement()
@@ -269,9 +266,23 @@ public class PlayerInteractionAbility : MonoBehaviour
             return;
         }
 
+        if (!_currentPushInteractable.IsInteracting)
+        {
+            ClearCurrentPushInteractable();
+            return;
+        }
+
         Vector3 moveDirection = _playerMovement.MoveDirection;
         bool isMoving = moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
         _playerAnimator.PlayPushAnimation(isMoving);
+    }
+
+    private void ClearCurrentPushInteractable()
+    {
+        _playerAnimator.PlayGrabAnimation(false);
+        _playerAnimator.PlayPushAnimation(false);
+        _playerMovement.SetSpeedMultiplier(DefaultSpeedMultiplier, DefaultSpeedMultiplier);
+        _currentPushInteractable = null;
     }
 
     private void HandleHeldItemChanged(ItemObject heldItem)

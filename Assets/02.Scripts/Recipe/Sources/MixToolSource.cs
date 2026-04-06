@@ -36,5 +36,16 @@ namespace DontDillyDally.Data
         {
             return new object[] { (int)ToolType };
         }
+
+        protected override void ApplySourceStateFromInstantiationData(object[] data)
+        {
+            if (data == null || data.Length == 0)
+                return;
+
+            if (data[0] is int toolTypeValue)
+            {
+                ToolType = (ToolType)toolTypeValue;
+            }
+        }
     }
 }

@@ -22,6 +22,7 @@ public class StagePreloader : MonoBehaviour
     public int SurgeonActorNumber { get; private set; } = -1;
     public bool IsRoleAssignmentComplete { get; private set; }
     public bool IsDataPrepComplete { get; private set; }
+    public event Action<int> RoleAssignmentCompleted;
 
     private UniTaskCompletionSource _dataPrepTcs;
     private CancellationTokenSource _cts;
@@ -57,7 +58,7 @@ public class StagePreloader : MonoBehaviour
         if (!PhotonNetwork.IsMasterClient) return;
 
         SurgeonActorNumber = SelectRoleManager.Instance?.AssignRoles() ?? -1;
-        IsRoleAssignmentComplete = true;
+        CompleteRoleAssignment();
 
         if (SurgeonActorNumber < 0)
         {
@@ -92,7 +93,7 @@ public class StagePreloader : MonoBehaviour
                 break;
             }
         }
-        IsRoleAssignmentComplete = true;
+        CompleteRoleAssignment();
     }
 
     // ── 데이터 사전 생성 ─────────────────────────────────────────
@@ -163,6 +164,12 @@ public class StagePreloader : MonoBehaviour
             var result = await _diseaseGenManager.GenerateDisease(StageData.Settings.PatientSettings.Difficulty);
         ct.ThrowIfCancellationRequested();
         return result;
+    }
+
+    private void CompleteRoleAssignment()
+    {
+        IsRoleAssignmentComplete = true;
+        RoleAssignmentCompleted?.Invoke(SurgeonActorNumber);
     }
 
     public void Cleanup()
