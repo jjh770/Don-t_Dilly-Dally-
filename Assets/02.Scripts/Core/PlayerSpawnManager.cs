@@ -43,6 +43,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     public override void OnJoinedRoom()
     {
+        SubscribeToRoleAssignment();
         TrySpawnLocalPlayer();
     }
 
@@ -72,17 +73,18 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private void Start()
     {
+        SubscribeToRoleAssignment();
         TrySpawnLocalPlayer();
     }
 
-    private void Update()
+    private void OnEnable()
     {
-        if (_hasSpawnedLocalPlayer || _isSpawnRequestPending)
-        {
-            return;
-        }
+        SubscribeToRoleAssignment();
+    }
 
-        TrySpawnLocalPlayer();
+    private void OnDisable()
+    {
+        UnsubscribeFromRoleAssignment();
     }
 
     private void TrySpawnLocalPlayer()
@@ -331,5 +333,33 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         }
 
         _usedSpawnPoints[actorNumber] = selection.Index;
+    }
+
+    private void SubscribeToRoleAssignment()
+    {
+        StagePreloader preloader = StagePreloader.Instance;
+        if (preloader == null)
+        {
+            return;
+        }
+
+        preloader.RoleAssignmentCompleted -= HandleRoleAssignmentCompleted;
+        preloader.RoleAssignmentCompleted += HandleRoleAssignmentCompleted;
+    }
+
+    private void UnsubscribeFromRoleAssignment()
+    {
+        StagePreloader preloader = StagePreloader.Instance;
+        if (preloader == null)
+        {
+            return;
+        }
+
+        preloader.RoleAssignmentCompleted -= HandleRoleAssignmentCompleted;
+    }
+
+    private void HandleRoleAssignmentCompleted(int surgeonActorNumber)
+    {
+        TrySpawnLocalPlayer();
     }
 }
