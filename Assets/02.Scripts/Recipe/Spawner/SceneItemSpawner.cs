@@ -1,9 +1,10 @@
-using System;
-using System.Collections.Generic;
-using DontDillyDally.Data;
+using DontDillyDally.StageFlow;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -12,101 +13,225 @@ namespace DontDillyDally.Data
     // Photon 룸에서는 방장이 생성한 seed를 기준으로 모든 클라이언트가 같은 배치를 재현합니다.
     public class SceneItemSpawner : MonoBehaviourPunCallbacks
     {
-        private const string SpawnSeedPropertyKey = "SceneItemSpawnerSeed";
-
-        [Header("일반 아이템 카탈로그")]
-        [Tooltip("씬에 배치할 일반 공급원 목록을 담고 있는 카탈로그")]
-        public SceneItemSpawnCatalog SpawnCatalog;
+        private const string SCENE_SPAWN_SEED_PROPERTY_KEY = "SceneItemSpawnerSeed";
 
         [Header("공통 프리팹")]
         [Tooltip("조합 도구 공급원을 생성할 때 사용하는 공통 프리팹")]
-        public MixToolSource MixToolPrefab;
+        [SerializeField] private MixToolSource _mixToolPrefab;
 
         [Tooltip("기본 재료 공급원을 생성할 때 사용하는 공통 프리팹")]
-        public BasicMaterialSource BasicMaterialPrefab;
+        [SerializeField] private BasicMaterialSource _basicMaterialPrefab;
 
         [Tooltip("트레이 공급원을 생성할 때 사용하는 공통 프리팹")]
-        public TraySource TraySourcePrefab;
-
-        [Header("일반 아이템 배치 위치")]
-        [Tooltip("일반 공급원을 생성할 위치 목록")]
-        public List<Transform> SpawnPoints = new List<Transform>();
-
-        [Header("트레이 배치 위치")]
-        [Tooltip("트레이를 생성할 위치 목록")]
-        public List<Transform> TraySpawnPoints = new List<Transform>();
+        [SerializeField] private TraySource _traySourcePrefab;
 
         [Tooltip("생성된 오브젝트를 정리해서 둘 부모 Transform")]
-        public Transform SpawnedItemParent;
+        [SerializeField] private Transform _spawnedItemParent;
 
         [Header("실행 설정")]
         [Tooltip("씬 시작 시 자동으로 일반 공급원을 배치할지 여부")]
-        public bool SpawnItemsOnStart = true;
+        [SerializeField] private bool _spawnItemsOnStart = true;
 
         [Tooltip("씬 시작 시 자동으로 트레이를 배치할지 여부")]
-        public bool SpawnTraysOnStart = true;
+        [SerializeField] private bool _spawnTraysOnStart = true;
 
         [Tooltip("다시 배치하기 전에 기존 생성 오브젝트를 먼저 지울지 여부")]
-        public bool ClearBeforeSpawn = true;
+        [SerializeField] private bool _clearBeforeSpawn = true;
+
+        [Header("스테이지별 아이템 설정")]
+        [Tooltip("씬에 배치된 스테이지별 아이템 설정 목록")]
+        [SerializeField] private List<StageItemConfig> _stageItemConfigs = new List<StageItemConfig>();
+
+        private SceneItemSpawnCatalog _spawnCatalog;
+        private List<Transform> _spawnPoints = new List<Transform>();
+        private List<Transform> _traySpawnPoints = new List<Transform>();
 
         private readonly List<GameObject> _spawnedObjects = new();
 
         private bool _hasSpawnedSceneObjects;
+        private bool _isConfigured;
+
+        private bool _isSubscribed;
+
+        public static bool RefreshSpawnSeedForCurrentRoom()
+        {
+            if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom == null || !PhotonNetwork.IsMasterClient)
+                return false;
+
+            Hashtable properties = new Hashtable
+            {
+                { SCENE_SPAWN_SEED_PROPERTY_KEY, GenerateSeed() }
+            };
+
+            PhotonNetwork.CurrentRoom.SetCustomProperties(properties);
+            return true;
+        }
 
         private void Start()
         {
+            TrySubscribe();
+        }
+
+        public override void OnEnable()
+        {
+            TrySubscribe();
+        }
+
+        public override void OnDisable()
+        {
+            if (_isSubscribed && StageFlowManager.Instance != null)
+            {
+                StageFlowManager.Instance.OnStageDataChanged -= HandleStageDataChanged;
+                _isSubscribed = false;
+            }
+        }
+
+        private void TrySubscribe()
+        {
+            if (_isSubscribed || StageFlowManager.Instance == null)
+                return;
+
+            StageFlowManager.Instance.OnStageDataChanged += HandleStageDataChanged;
+            _isSubscribed = true;
+        }
+
+        private void HandleStageDataChanged(StageRuntimeData stageData)
+        {
+            if (stageData == null)
+                return;
+
+            StageItemConfig config = _stageItemConfigs.FirstOrDefault(c => c != null && c.StageId == stageData.StageId);
+            if (config == null)
+            {
+                Debug.LogWarning($"[SceneItemSpawner] StageId '{stageData.StageId}'에 해당하는 StageItemConfig를 찾지 못했습니다.");
+                return;
+            }
+
+            TryApplyConfig(config);
+        }
+
+        private void TryApplyConfig(StageItemConfig config)
+        {
+            ClearSpawnedItems();
+
+            if (!ValidateConfig(config))
+            {
+                _spawnCatalog = null;
+                _spawnPoints = new List<Transform>();
+                _traySpawnPoints = new List<Transform>();
+                _isConfigured = false;
+                return;
+            }
+
+            _spawnCatalog = config.SpawnCatalog;
+            _spawnPoints = config.SpawnPoints;
+            _traySpawnPoints = config.TraySpawnPoints;
+            _isConfigured = true;
+
             TryInitializeSpawnLayout();
+        }
+
+        private bool ValidateConfig(StageItemConfig config)
+        {
+            if (config == null)
+            {
+                Debug.LogWarning("[SceneItemSpawner] StageItemConfig가 비어 있습니다.");
+                return false;
+            }
+
+            if (_spawnItemsOnStart)
+            {
+                if (config.SpawnCatalog == null)
+                {
+                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{config.StageId}'의 SpawnCatalog가 비어 있습니다.");
+                    return false;
+                }
+
+                if (!config.SpawnCatalog.Validate())
+                    return false;
+
+                if (config.SpawnPoints == null || config.SpawnPoints.Count == 0)
+                {
+                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{config.StageId}'의 SpawnPoints가 비어 있습니다.");
+                    return false;
+                }
+
+                if (config.SpawnCatalog.HasKind(SpawnItemKind.MixTool) && _mixToolPrefab == null)
+                {
+                    Debug.LogWarning("[SceneItemSpawner] MixToolSource 프리팹이 연결되지 않았습니다.");
+                    return false;
+                }
+
+                if (config.SpawnCatalog.HasKind(SpawnItemKind.BasicMaterial) && _basicMaterialPrefab == null)
+                {
+                    Debug.LogWarning("[SceneItemSpawner] BasicMaterialSource 프리팹이 연결되지 않았습니다.");
+                    return false;
+                }
+            }
+
+            if (_spawnTraysOnStart)
+            {
+                if (_traySourcePrefab == null)
+                {
+                    Debug.LogWarning("[SceneItemSpawner] TraySource 프리팹이 연결되지 않았습니다.");
+                    return false;
+                }
+
+                if (config.TraySpawnPoints == null || config.TraySpawnPoints.Count == 0)
+                {
+                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{config.StageId}'의 TraySpawnPoints가 비어 있습니다.");
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public override void OnJoinedRoom()
         {
-            TryInitializeSpawnLayout();
+            if (_isConfigured)
+                TryInitializeSpawnLayout();
         }
 
         public override void OnMasterClientSwitched(Player newMasterClient)
         {
-            TryInitializeSpawnLayout();
+            if (_isConfigured)
+                TryInitializeSpawnLayout();
         }
 
         public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
         {
-            if (propertiesThatChanged == null || !propertiesThatChanged.ContainsKey(SpawnSeedPropertyKey))
+            if (!_isConfigured)
+                return;
+
+            if (propertiesThatChanged == null || !propertiesThatChanged.ContainsKey(SCENE_SPAWN_SEED_PROPERTY_KEY))
                 return;
 
             TryInitializeSpawnLayout();
-        }
-
-        [ContextMenu("중복 없이 일반 아이템 배치")]
-        public void SpawnUniqueItems()
-        {
-            if (!ValidateItemSpawner())
-                return;
-
-            SpawnUniqueItems(CreateShuffledEntries(GenerateSeed()));
         }
 
         [ContextMenu("트레이 배치")]
         public void SpawnTrays()
         {
-            if (TraySourcePrefab == null)
+            if (_traySourcePrefab == null)
             {
                 Debug.LogWarning("[SceneItemSpawner] TraySourcePrefab이 연결되지 않았습니다.");
                 return;
             }
 
-            if (TraySpawnPoints == null || TraySpawnPoints.Count == 0)
+            if (_traySpawnPoints == null || _traySpawnPoints.Count == 0)
             {
                 Debug.LogWarning("[SceneItemSpawner] TraySpawnPoints가 비어 있습니다.");
                 return;
             }
 
-            for (int i = 0; i < TraySpawnPoints.Count; i++)
+            for (int i = 0; i < _traySpawnPoints.Count; i++)
             {
-                Transform spawnPoint = TraySpawnPoints[i];
+                Transform spawnPoint = _traySpawnPoints[i];
                 if (spawnPoint == null)
                     continue;
 
-                SpawnTray(spawnPoint, i + 1);
+                SpawnTraySource(spawnPoint, i + 1);
             }
         }
 
@@ -129,7 +254,7 @@ namespace DontDillyDally.Data
             if (_hasSpawnedSceneObjects)
                 return;
 
-            if (!SpawnItemsOnStart && !SpawnTraysOnStart)
+            if (!_spawnItemsOnStart && !_spawnTraysOnStart)
                 return;
 
             if (!PhotonNetwork.IsConnected || !PhotonNetwork.InRoom)
@@ -150,7 +275,7 @@ namespace DontDillyDally.Data
             int newSeed = GenerateSeed();
             Hashtable properties = new Hashtable
             {
-                { SpawnSeedPropertyKey, newSeed }
+                { SCENE_SPAWN_SEED_PROPERTY_KEY, newSeed }
             };
 
             PhotonNetwork.CurrentRoom.SetCustomProperties(properties);
@@ -164,7 +289,7 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.CustomProperties == null)
                 return false;
 
-            if (!PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(SpawnSeedPropertyKey, out object seedObject))
+            if (!PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(SCENE_SPAWN_SEED_PROPERTY_KEY, out object seedObject))
                 return false;
 
             if (seedObject is int intSeed)
@@ -181,130 +306,86 @@ namespace DontDillyDally.Data
             if (_hasSpawnedSceneObjects)
                 return;
 
-            if (ClearBeforeSpawn)
+            if (_clearBeforeSpawn)
                 ClearSpawnedItems();
 
-            if (SpawnItemsOnStart)
+            if (_spawnItemsOnStart)
                 SpawnUniqueItems(CreateShuffledEntries(seed));
 
-            if (SpawnTraysOnStart)
+            if (_spawnTraysOnStart)
                 SpawnTrays();
 
             _hasSpawnedSceneObjects = true;
         }
 
-        private bool ValidateItemSpawner()
-        {
-            if (SpawnCatalog == null)
-            {
-                Debug.LogWarning("[SceneItemSpawner] SpawnCatalog가 연결되지 않았습니다.");
-                return false;
-            }
-
-            if (!SpawnCatalog.Validate())
-                return false;
-
-            if (SpawnPoints == null || SpawnPoints.Count == 0)
-            {
-                Debug.LogWarning("[SceneItemSpawner] SpawnPoints가 비어 있습니다.");
-                return false;
-            }
-
-            if (SpawnCatalog.HasKind(SpawnItemKind.MixTool) && MixToolPrefab == null)
-            {
-                Debug.LogWarning("[SceneItemSpawner] MixToolPrefab이 연결되지 않았습니다.");
-                return false;
-            }
-
-            if (SpawnCatalog.HasKind(SpawnItemKind.BasicMaterial) && BasicMaterialPrefab == null)
-            {
-                Debug.LogWarning("[SceneItemSpawner] BasicMaterialPrefab이 연결되지 않았습니다.");
-                return false;
-            }
-
-            return true;
-        }
-
         private void SpawnUniqueItems(List<SceneItemSpawnEntry> entries)
         {
-            int spawnCount = Mathf.Min(entries.Count, SpawnPoints.Count);
+            int spawnCount = Mathf.Min(entries.Count, _spawnPoints.Count);
 
             for (int i = 0; i < spawnCount; i++)
             {
                 SceneItemSpawnEntry entry = entries[i];
-                Transform spawnPoint = SpawnPoints[i];
+                Transform spawnPoint = _spawnPoints[i];
 
                 if (spawnPoint == null)
                     continue;
 
-                SpawnEntry(entry, spawnPoint);
+                SpawnEntrySource(entry, spawnPoint);
             }
 
-            if (SpawnPoints.Count < entries.Count)
+            if (_spawnPoints.Count < entries.Count)
             {
                 Debug.LogWarning(
-                    $"[SceneItemSpawner] 일반 아이템 스폰 위치가 부족해 {entries.Count - SpawnPoints.Count}개를 배치하지 못했습니다.");
+                    $"[SceneItemSpawner] 일반 아이템 스폰 위치가 부족해 {entries.Count - _spawnPoints.Count}개를 배치하지 못했습니다.");
             }
         }
 
         private List<SceneItemSpawnEntry> CreateShuffledEntries(int seed)
         {
-            List<SceneItemSpawnEntry> entries = SpawnCatalog.GetValidEntries();
+            List<SceneItemSpawnEntry> entries = _spawnCatalog.GetValidEntries();
             ShuffleEntries(entries, seed);
             return entries;
         }
 
-        private void SpawnEntry(SceneItemSpawnEntry entry, Transform spawnPoint)
+        private void SpawnEntrySource(SceneItemSpawnEntry entry, Transform spawnPoint)
         {
             switch (entry.Kind)
             {
                 case SpawnItemKind.MixTool:
-                    SpawnMixTool(entry, spawnPoint);
+                    SpawnMixToolSource(entry, spawnPoint);
                     break;
 
                 case SpawnItemKind.BasicMaterial:
-                    SpawnBasicMaterial(entry, spawnPoint);
+                    SpawnBasicMaterialSource(entry, spawnPoint);
                     break;
             }
         }
 
-        private void SpawnMixTool(SceneItemSpawnEntry entry, Transform spawnPoint)
+        private void SpawnMixToolSource(SceneItemSpawnEntry entry, Transform spawnPoint)
         {
-            MixToolSource prefab = entry.SourcePrefabOverride != null ? entry.SourcePrefabOverride : MixToolPrefab;
-            Transform parent = SpawnedItemParent != null ? SpawnedItemParent : null;
-            MixToolSource spawnedToolSource = Instantiate(
-                prefab,
-                spawnPoint.position,
-                spawnPoint.rotation,
-                parent);
+            MixToolSource prefab = entry.SourcePrefabOverride != null ? entry.SourcePrefabOverride : _mixToolPrefab;
+            Transform parent = _spawnedItemParent != null ? _spawnedItemParent : null;
+            MixToolSource spawnedToolSource = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation, parent);
 
             spawnedToolSource.name = $"{entry.GetDefaultName()}Source";
             spawnedToolSource.Initialize(entry.ToolType);
             _spawnedObjects.Add(spawnedToolSource.gameObject);
         }
 
-        private void SpawnBasicMaterial(SceneItemSpawnEntry entry, Transform spawnPoint)
+        private void SpawnBasicMaterialSource(SceneItemSpawnEntry entry, Transform spawnPoint)
         {
-            Transform parent = SpawnedItemParent != null ? SpawnedItemParent : null;
-            BasicMaterialSource spawnedMaterialSource = Instantiate(
-                BasicMaterialPrefab,
-                spawnPoint.position,
-                spawnPoint.rotation,
-                parent);
+            Transform parent = _spawnedItemParent != null ? _spawnedItemParent : null;
+            BasicMaterialSource spawnedMaterialSource = Instantiate(_basicMaterialPrefab, spawnPoint.position, spawnPoint.rotation, parent);
 
             spawnedMaterialSource.name = $"{entry.GetDefaultName()}Source";
             spawnedMaterialSource.Initialize(entry.MaterialType);
             _spawnedObjects.Add(spawnedMaterialSource.gameObject);
         }
 
-        private void SpawnTray(Transform spawnPoint, int trayIndex)
+        private void SpawnTraySource(Transform spawnPoint, int trayIndex)
         {
-            Transform parent = SpawnedItemParent != null ? SpawnedItemParent : null;
-            TraySource spawnedTraySource = Instantiate(
-                TraySourcePrefab,
-                spawnPoint.position,
-                spawnPoint.rotation,
-                parent);
+            Transform parent = _spawnedItemParent != null ? _spawnedItemParent : null;
+            TraySource spawnedTraySource = Instantiate(_traySourcePrefab, spawnPoint.position, spawnPoint.rotation, parent);
 
             spawnedTraySource.name = $"TraySource_{trayIndex}";
             spawnedTraySource.ForceRespawn();

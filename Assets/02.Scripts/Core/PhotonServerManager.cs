@@ -1,4 +1,5 @@
 using Cysharp.Threading.Tasks;
+using DontDillyDally.Data;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -207,6 +208,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public bool TryStartStage(out string message)
     {
+        if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient || PhotonNetwork.CurrentRoom == null)
+        {
+            message = "방장만 스테이지를 시작할 수 있습니다.";
+            return false;
+        }
+
         Player[] players = PhotonNetwork.PlayerList;
 
         foreach (Player player in players)
@@ -218,6 +225,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
                 return false;
             }
         }
+
+        if (!SceneItemSpawner.RefreshSpawnSeedForCurrentRoom())
+        {
+            message = "아이템 배치 시드를 갱신하지 못했습니다.";
+            return false;
+        }
+
         PhotonNetwork.CurrentRoom.IsOpen = false;
         RoomProperties.SetGameInProgress(true);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Cutscene);
