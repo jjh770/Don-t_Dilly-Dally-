@@ -1,5 +1,4 @@
 using DontDillyDally.StageFlow;
-using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
@@ -10,11 +9,9 @@ using UnityEngine;
 namespace DontDillyDally.Data
 {
     // 씬 시작 시 일반 공급원과 트레이 공급원을 배치하는 스포너입니다.
-    // Photon 룸에서는 방장이 생성한 seed를 기준으로 모든 클라이언트가 같은 배치를 재현합니다.
+    // Photon 룸에서는 방장이 공급원을 RoomObject로 생성하고 모든 클라이언트가 같은 오브젝트를 공유합니다.
     public class SceneItemSpawner : MonoBehaviourPunCallbacks
     {
-        private const string SCENE_SPAWN_SEED_PROPERTY_KEY = "SceneItemSpawnerSeed";
-
         [Header("공통 프리팹")]
         [Tooltip("조합 도구 공급원을 생성할 때 사용하는 공통 프리팹")]
         [SerializeField] private MixToolSource _mixToolPrefab;
@@ -53,20 +50,6 @@ namespace DontDillyDally.Data
 
         private bool _isSubscribed;
 
-        public static bool RefreshSpawnSeedForCurrentRoom()
-        {
-            if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom == null || !PhotonNetwork.IsMasterClient)
-                return false;
-
-            Hashtable properties = new Hashtable
-            {
-                { SCENE_SPAWN_SEED_PROPERTY_KEY, GenerateSeed() }
-            };
-
-            PhotonNetwork.CurrentRoom.SetCustomProperties(properties);
-            return true;
-        }
-
         private void Start()
         {
             TrySubscribe();
@@ -104,6 +87,10 @@ namespace DontDillyDally.Data
             if (config == null)
             {
                 Debug.LogWarning($"[SceneItemSpawner] StageId '{stageData.StageId}'에 해당하는 StageItemConfig를 찾지 못했습니다.");
+                _spawnCatalog = null;
+                _spawnPoints = new List<Transform>();
+                _traySpawnPoints = new List<Transform>();
+                _isConfigured = false;
                 return;
             }
 
@@ -199,17 +186,6 @@ namespace DontDillyDally.Data
                 TryInitializeSpawnLayout();
         }
 
-        public override void OnRoomPropertiesUpdate(Hashtable propertiesThatChanged)
-        {
-            if (!_isConfigured)
-                return;
-
-            if (propertiesThatChanged == null || !propertiesThatChanged.ContainsKey(SCENE_SPAWN_SEED_PROPERTY_KEY))
-                return;
-
-            TryInitializeSpawnLayout();
-        }
-
         [ContextMenu("트레이 배치")]
         public void SpawnTrays()
         {
@@ -242,7 +218,19 @@ namespace DontDillyDally.Data
             {
                 GameObject spawnedObject = _spawnedObjects[i];
                 if (spawnedObject != null)
-                    Destroy(spawnedObject);
+                {
+                    if (PhotonNetwork.InRoom)
+                    {
+                        if (PhotonNetwork.IsMasterClient)
+                        {
+                            PhotonNetwork.Destroy(spawnedObject);
+                        }
+                    }
+                    else
+                    {
+                        Destroy(spawnedObject);
+                    }
+                }
             }
 
             _spawnedObjects.Clear();
@@ -259,49 +247,23 @@ namespace DontDillyDally.Data
 
             if (!PhotonNetwork.IsConnected || !PhotonNetwork.InRoom)
             {
-                SpawnSceneObjects(GenerateSeed());
+                SpawnSceneObjects();
                 return;
             }
 
-            if (TryGetSpawnSeed(out int existingSeed))
+            if (HasExistingSpawnSources())
             {
-                SpawnSceneObjects(existingSeed);
+                _hasSpawnedSceneObjects = true;
                 return;
             }
 
             if (!PhotonNetwork.IsMasterClient)
                 return;
 
-            int newSeed = GenerateSeed();
-            Hashtable properties = new Hashtable
-            {
-                { SCENE_SPAWN_SEED_PROPERTY_KEY, newSeed }
-            };
-
-            PhotonNetwork.CurrentRoom.SetCustomProperties(properties);
-            SpawnSceneObjects(newSeed);
+            SpawnSceneObjects();
         }
 
-        private bool TryGetSpawnSeed(out int seed)
-        {
-            seed = default;
-
-            if (PhotonNetwork.CurrentRoom == null || PhotonNetwork.CurrentRoom.CustomProperties == null)
-                return false;
-
-            if (!PhotonNetwork.CurrentRoom.CustomProperties.TryGetValue(SCENE_SPAWN_SEED_PROPERTY_KEY, out object seedObject))
-                return false;
-
-            if (seedObject is int intSeed)
-            {
-                seed = intSeed;
-                return true;
-            }
-
-            return false;
-        }
-
-        private void SpawnSceneObjects(int seed)
+        private void SpawnSceneObjects()
         {
             if (_hasSpawnedSceneObjects)
                 return;
@@ -310,7 +272,7 @@ namespace DontDillyDally.Data
                 ClearSpawnedItems();
 
             if (_spawnItemsOnStart)
-                SpawnUniqueItems(CreateShuffledEntries(seed));
+                SpawnUniqueItems(CreateShuffledEntries());
 
             if (_spawnTraysOnStart)
                 SpawnTrays();
@@ -340,10 +302,10 @@ namespace DontDillyDally.Data
             }
         }
 
-        private List<SceneItemSpawnEntry> CreateShuffledEntries(int seed)
+        private List<SceneItemSpawnEntry> CreateShuffledEntries()
         {
             List<SceneItemSpawnEntry> entries = _spawnCatalog.GetValidEntries();
-            ShuffleEntries(entries, seed);
+            ShuffleEntries(entries);
             return entries;
         }
 
@@ -364,42 +326,74 @@ namespace DontDillyDally.Data
         private void SpawnMixToolSource(SceneItemSpawnEntry entry, Transform spawnPoint)
         {
             MixToolSource prefab = entry.SourcePrefabOverride != null ? entry.SourcePrefabOverride : _mixToolPrefab;
-            Transform parent = _spawnedItemParent != null ? _spawnedItemParent : null;
-            MixToolSource spawnedToolSource = Instantiate(prefab, spawnPoint.position, spawnPoint.rotation, parent);
+            MixToolSource spawnedToolSource = CreateRoomSourceObject(
+                prefab,
+                spawnPoint.position,
+                spawnPoint.rotation,
+                new object[] { (int)entry.ToolType });
 
             spawnedToolSource.name = $"{entry.GetDefaultName()}Source";
-            spawnedToolSource.Initialize(entry.ToolType);
             _spawnedObjects.Add(spawnedToolSource.gameObject);
         }
 
         private void SpawnBasicMaterialSource(SceneItemSpawnEntry entry, Transform spawnPoint)
         {
-            Transform parent = _spawnedItemParent != null ? _spawnedItemParent : null;
-            BasicMaterialSource spawnedMaterialSource = Instantiate(_basicMaterialPrefab, spawnPoint.position, spawnPoint.rotation, parent);
+            BasicMaterialSource spawnedMaterialSource = CreateRoomSourceObject(
+                _basicMaterialPrefab,
+                spawnPoint.position,
+                spawnPoint.rotation,
+                new object[] { (int)entry.MaterialType });
 
             spawnedMaterialSource.name = $"{entry.GetDefaultName()}Source";
-            spawnedMaterialSource.Initialize(entry.MaterialType);
             _spawnedObjects.Add(spawnedMaterialSource.gameObject);
         }
 
         private void SpawnTraySource(Transform spawnPoint, int trayIndex)
         {
-            Transform parent = _spawnedItemParent != null ? _spawnedItemParent : null;
-            TraySource spawnedTraySource = Instantiate(_traySourcePrefab, spawnPoint.position, spawnPoint.rotation, parent);
+            TraySource spawnedTraySource = CreateRoomSourceObject(
+                _traySourcePrefab,
+                spawnPoint.position,
+                spawnPoint.rotation,
+                null);
 
             spawnedTraySource.name = $"TraySource_{trayIndex}";
-            spawnedTraySource.ForceRespawn();
             _spawnedObjects.Add(spawnedTraySource.gameObject);
         }
 
-        private static int GenerateSeed()
+        private TSource CreateRoomSourceObject<TSource>(TSource prefab, Vector3 position, Quaternion rotation, object[] instantiationData)
+            where TSource : MonoBehaviour
         {
-            return Environment.TickCount ^ Guid.NewGuid().GetHashCode();
+            if (PhotonNetwork.InRoom)
+            {
+                GameObject spawnedObject = PhotonNetwork.InstantiateRoomObject(
+                    prefab.name,
+                    position,
+                    rotation,
+                    0,
+                    instantiationData);
+
+                return spawnedObject.GetComponent<TSource>();
+            }
+
+            TSource spawnedSource = Instantiate(prefab, position, rotation);
+            if (_spawnedItemParent != null)
+            {
+                spawnedSource.transform.SetParent(_spawnedItemParent, true);
+            }
+
+            return spawnedSource;
         }
 
-        private static void ShuffleEntries(List<SceneItemSpawnEntry> entries, int seed)
+        private bool HasExistingSpawnSources()
         {
-            System.Random random = new(seed);
+            return FindObjectsOfType<MixToolSource>().Length > 0 ||
+                   FindObjectsOfType<BasicMaterialSource>().Length > 0 ||
+                   FindObjectsOfType<TraySource>().Length > 0;
+        }
+
+        private static void ShuffleEntries(List<SceneItemSpawnEntry> entries)
+        {
+            System.Random random = new();
 
             for (int i = entries.Count - 1; i > 0; i--)
             {

@@ -1,5 +1,4 @@
 using Cysharp.Threading.Tasks;
-using DontDillyDally.Data;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -224,12 +223,6 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
                 message = "모든 플레이어가 준비해야 합니다.";
                 return false;
             }
-        }
-
-        if (!SceneItemSpawner.RefreshSpawnSeedForCurrentRoom())
-        {
-            message = "아이템 배치 시드를 갱신하지 못했습니다.";
-            return false;
         }
 
         PhotonNetwork.CurrentRoom.IsOpen = false;
