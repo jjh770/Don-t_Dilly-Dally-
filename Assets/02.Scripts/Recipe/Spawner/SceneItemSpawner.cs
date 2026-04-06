@@ -1,7 +1,6 @@
 using DontDillyDally.StageFlow;
 using Photon.Pun;
 using Photon.Realtime;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -217,19 +216,25 @@ namespace DontDillyDally.Data
             for (int i = _spawnedObjects.Count - 1; i >= 0; i--)
             {
                 GameObject spawnedObject = _spawnedObjects[i];
-                if (spawnedObject != null)
+                if (spawnedObject == null)
                 {
-                    if (PhotonNetwork.InRoom)
+                    continue;
+                }
+
+                if (PhotonNetwork.InRoom)
+                {
+                    if (PhotonNetwork.IsMasterClient)
                     {
-                        if (PhotonNetwork.IsMasterClient)
+                        PhotonView view = spawnedObject.GetComponent<PhotonView>();
+                        if (view != null && view.ViewID > 0)
                         {
                             PhotonNetwork.Destroy(spawnedObject);
                         }
                     }
-                    else
-                    {
-                        Destroy(spawnedObject);
-                    }
+                }
+                else
+                {
+                    Destroy(spawnedObject);
                 }
             }
 
@@ -386,9 +391,9 @@ namespace DontDillyDally.Data
 
         private bool HasExistingSpawnSources()
         {
-            return FindObjectsOfType<MixToolSource>().Length > 0 ||
-                   FindObjectsOfType<BasicMaterialSource>().Length > 0 ||
-                   FindObjectsOfType<TraySource>().Length > 0;
+            return FindAnyObjectByType<MixToolSource>() != null ||
+                   FindAnyObjectByType<BasicMaterialSource>() != null ||
+                   FindAnyObjectByType<TraySource>() != null;
         }
 
         private static void ShuffleEntries(List<SceneItemSpawnEntry> entries)

@@ -296,7 +296,7 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
         }
     }
 
-    private bool IsLockedByAnotherPlayer(int localActorNumber)
+    private bool IsInteractingWithAnotherPlayer(int localActorNumber)
     {
         return _interactingActorNumber > 0 && _interactingActorNumber != localActorNumber;
     }
