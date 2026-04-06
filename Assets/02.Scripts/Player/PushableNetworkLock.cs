@@ -17,7 +17,7 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
 
     private PushableItem _pushableItem;
     private PhotonView _photonView;
-    private DiagnosisEmergencyMachine _diagnosisEmergencyMachine;
+    private IPushInteractionHandler _pushInteractionHandler;
     private Transform _pendingLocalInteractor;
     private int _interactingActorNumber = NoInteractorActorNumber;
     private bool _isPendingLocalInteract;
@@ -29,7 +29,15 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
     {
         _pushableItem = GetComponent<PushableItem>();
         TryGetComponent(out _photonView);
-        TryGetComponent(out _diagnosisEmergencyMachine);
+
+        foreach (Component component in GetComponents<Component>())
+        {
+            if (component is IPushInteractionHandler handler)
+            {
+                _pushInteractionHandler = handler;
+                break;
+            }
+        }
     }
 
     private void OnEnable()
@@ -55,8 +63,8 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
             return;
         }
 
-        if (_diagnosisEmergencyMachine != null &&
-            _diagnosisEmergencyMachine.TryHandleEmergencyInteract(interactor))
+        if (_pushInteractionHandler != null &&
+            _pushInteractionHandler.TryHandlePushInteract())
         {
             return;
         }

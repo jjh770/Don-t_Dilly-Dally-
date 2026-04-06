@@ -7,11 +7,24 @@ using UnityEngine;
 [RequireComponent(typeof(PhotonView))]
 public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 {
+    private struct SpawnSelection
+    {
+        public bool UseSurgeonSpawnPoint;
+        public int Index;
+
+        public SpawnSelection(bool useSurgeonSpawnPoint, int index)
+        {
+            UseSurgeonSpawnPoint = useSurgeonSpawnPoint;
+            Index = index;
+        }
+    }
+
     [Header("Spawn Mode")]
     [SerializeField] private bool _useSpawnArrange;
 
     [Header("Point Spawn")]
     [SerializeField] private Transform[] _spawnPoints;
+    [SerializeField] private Transform _surgeonSpawnPoint;
 
     [Header("Area Spawn")]
     [SerializeField] private Collider _spawnArrange;
@@ -24,6 +37,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     private GameObject _player;
     private bool _hasSpawnedLocalPlayer;
     private bool _isSpawnRequestPending;
+    private int _surgeonSpawnActorNumber = -1;
 
     public event Action<GameObject> OnPlayerSpawned;
 
@@ -35,6 +49,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     public override void OnLeftRoom()
     {
         _usedSpawnPoints.Clear();
+        _surgeonSpawnActorNumber = -1;
         _player = null;
         _hasSpawnedLocalPlayer = false;
         _isSpawnRequestPending = false;
@@ -48,10 +63,25 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         }
 
         _usedSpawnPoints.Remove(otherPlayer.ActorNumber);
+
+        if (_surgeonSpawnActorNumber == otherPlayer.ActorNumber)
+        {
+            _surgeonSpawnActorNumber = -1;
+        }
     }
 
     private void Start()
     {
+        TrySpawnLocalPlayer();
+    }
+
+    private void Update()
+    {
+        if (_hasSpawnedLocalPlayer || _isSpawnRequestPending)
+        {
+            return;
+        }
+
         TrySpawnLocalPlayer();
     }
 
@@ -70,6 +100,11 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         if (_useSpawnArrange)
         {
             SpawnFromArrange();
+            return;
+        }
+
+        if (!IsSpawnRoleResolved())
+        {
             return;
         }
 
@@ -96,26 +131,22 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     }
 
     [PunRPC]
-    private void RPC_AssignAndSpawn(int actorNumber, int spawnIndex)
+    private void RPC_AssignAndSpawn(int actorNumber, bool useSurgeonSpawnPoint, int spawnIndex)
     {
-        _usedSpawnPoints[actorNumber] = spawnIndex;
+        ApplySpawnSelection(actorNumber, new SpawnSelection(useSurgeonSpawnPoint, spawnIndex));
 
         if (PhotonNetwork.LocalPlayer == null || actorNumber != PhotonNetwork.LocalPlayer.ActorNumber)
         {
             return;
         }
 
-        SpawnAtIndex(spawnIndex);
-    }
-
-    public void Spawn()
-    {
-        TrySpawnLocalPlayer();
+        SpawnAtIndex(useSurgeonSpawnPoint, spawnIndex);
     }
 
     private void TryAssignSpawnPointAndBroadcast(int actorNumber)
     {
-        int spawnIndex = GetAvailableSpawnPointIndex();
+        bool useSurgeonSpawnPoint = ShouldUseSurgeonSpawnPoint(actorNumber);
+        int spawnIndex = GetAvailableSpawnPointIndex(useSurgeonSpawnPoint);
         if (spawnIndex < 0)
         {
             Debug.LogError($"[PlayerSpawnManager] 플레이어 {actorNumber}에게 스폰 포인트를 할당할 수 없습니다.");
@@ -128,22 +159,25 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
             return;
         }
 
-        _usedSpawnPoints[actorNumber] = spawnIndex;
-        photonView.RPC(nameof(RPC_AssignAndSpawn), RpcTarget.All, actorNumber, spawnIndex);
+        ApplySpawnSelection(actorNumber, new SpawnSelection(useSurgeonSpawnPoint, spawnIndex));
+        photonView.RPC(nameof(RPC_AssignAndSpawn), RpcTarget.All, actorNumber, useSurgeonSpawnPoint, spawnIndex);
     }
 
-    private int GetAvailableSpawnPointIndex()
+    private int GetAvailableSpawnPointIndex(bool useSurgeonSpawnPoint)
     {
-        if (_spawnPoints == null || _spawnPoints.Length == 0)
+        Transform[] targetSpawnPoints = GetTargetSpawnPoints(useSurgeonSpawnPoint);
+        if (targetSpawnPoints == null || targetSpawnPoints.Length == 0)
         {
-            Debug.LogError("[PlayerSpawnManager] 스폰 포인트가 설정되지 않았습니다.");
+            Debug.LogError(useSurgeonSpawnPoint
+                ? "[PlayerSpawnManager] 집도의 스폰 포인트가 설정되지 않았습니다."
+                : "[PlayerSpawnManager] 스폰 포인트가 설정되지 않았습니다.");
             return -1;
         }
 
         List<int> availableIndices = new List<int>();
-        for (int i = 0; i < _spawnPoints.Length; i++)
+        for (int i = 0; i < targetSpawnPoints.Length; i++)
         {
-            if (!_usedSpawnPoints.ContainsValue(i))
+            if (IsSpawnPointAvailable(useSurgeonSpawnPoint, i))
             {
                 availableIndices.Add(i);
             }
@@ -168,16 +202,20 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         SpawnAtPosition(GetRandomPointInSpawnArrange());
     }
 
-    private void SpawnAtIndex(int spawnIndex)
+    private void SpawnAtIndex(bool useSurgeonSpawnPoint, int spawnIndex)
     {
-        if (_spawnPoints == null || spawnIndex < 0 || spawnIndex >= _spawnPoints.Length || _spawnPoints[spawnIndex] == null)
+        Transform[] targetSpawnPoints = GetTargetSpawnPoints(useSurgeonSpawnPoint);
+        if (targetSpawnPoints == null ||
+            spawnIndex < 0 ||
+            spawnIndex >= targetSpawnPoints.Length ||
+            targetSpawnPoints[spawnIndex] == null)
         {
             Debug.LogError($"[PlayerSpawnManager] 잘못된 스폰 인덱스입니다: {spawnIndex}.");
             _isSpawnRequestPending = false;
             return;
         }
 
-        SpawnAtPosition(_spawnPoints[spawnIndex].position);
+        SpawnAtPosition(targetSpawnPoints[spawnIndex].position);
     }
 
     private void SpawnAtPosition(Vector3 spawnPosition)
@@ -214,5 +252,84 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         float randomZ = UnityEngine.Random.Range(bounds.min.z, bounds.max.z);
 
         return new Vector3(randomX, bounds.center.y, randomZ);
+    }
+
+    private bool IsSpawnRoleResolved()
+    {
+        if (_surgeonSpawnPoint == null)
+        {
+            return true;
+        }
+
+        StagePreloader preloader = StagePreloader.Instance;
+        return preloader == null || preloader.IsRoleAssignmentComplete;
+    }
+
+    private bool ShouldUseSurgeonSpawnPoint(int actorNumber)
+    {
+        if (_surgeonSpawnPoint == null)
+        {
+            return false;
+        }
+
+        int surgeonActorNumber = ResolveSurgeonActorNumber();
+        return surgeonActorNumber > 0 && surgeonActorNumber == actorNumber;
+    }
+
+    private int ResolveSurgeonActorNumber()
+    {
+        StagePreloader preloader = StagePreloader.Instance;
+        if (preloader != null && preloader.IsRoleAssignmentComplete && preloader.SurgeonActorNumber > 0)
+        {
+            return preloader.SurgeonActorNumber;
+        }
+
+        foreach (Player player in PhotonNetwork.PlayerList)
+        {
+            if (RoleProperties.GetPlayerRole(player) == RoleType.Surgeon)
+            {
+                return player.ActorNumber;
+            }
+        }
+
+        return -1;
+    }
+
+    private Transform[] GetTargetSpawnPoints(bool useSurgeonSpawnPoint)
+    {
+        if (useSurgeonSpawnPoint && _surgeonSpawnPoint != null)
+        {
+            return new[] { _surgeonSpawnPoint };
+        }
+
+        return _spawnPoints;
+    }
+
+    private bool IsSpawnPointAvailable(bool useSurgeonSpawnPoint, int index)
+    {
+        if (useSurgeonSpawnPoint)
+        {
+            return _surgeonSpawnActorNumber <= 0;
+        }
+
+        return !_usedSpawnPoints.ContainsValue(index);
+    }
+
+    private void ApplySpawnSelection(int actorNumber, SpawnSelection selection)
+    {
+        _usedSpawnPoints.Remove(actorNumber);
+
+        if (_surgeonSpawnActorNumber == actorNumber)
+        {
+            _surgeonSpawnActorNumber = -1;
+        }
+
+        if (selection.UseSurgeonSpawnPoint)
+        {
+            _surgeonSpawnActorNumber = actorNumber;
+            return;
+        }
+
+        _usedSpawnPoints[actorNumber] = selection.Index;
     }
 }
