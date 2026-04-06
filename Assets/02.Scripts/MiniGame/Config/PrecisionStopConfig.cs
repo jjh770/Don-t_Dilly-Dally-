@@ -22,6 +22,10 @@ namespace DontDillyDally.MiniGame
         [Range(1f, 2f)]
         public float SpeedMultiplierPerRound = 1.15f;
 
+        [Tooltip("라운드마다 목표 구간 축소 배율 (1 이하일수록 점점 좁아짐)")]
+        [Range(0.5f, 1f)]
+        public float TargetZoneMultiplierPerRound = 1f;
+
         [Tooltip("정지 입력 키")]
         public KeyCode InputKey = KeyCode.Space;
 

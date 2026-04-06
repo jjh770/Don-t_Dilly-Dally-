@@ -10,7 +10,7 @@ namespace DontDillyDally.MiniGame
 
         public float CursorPosition { get; private set; }
         public float TargetZoneCenter { get; private set; }
-        public float TargetZoneWidth => _config?.TargetZoneWidth ?? 0f;
+        public float TargetZoneWidth => _currentTargetZoneWidth;
         public int CurrentRound { get; private set; }
         public int TotalRounds => _config?.RoundCount ?? 0;
         public int SuccessfulRounds { get; private set; }
@@ -35,6 +35,7 @@ namespace DontDillyDally.MiniGame
         private int _movingDirection = 1;
         private bool _isRoundActive;
         private float _roundCooldown;
+        private float _currentTargetZoneWidth;
 
         public PrecisionStopMiniGame(IInputProvider input)
         {
@@ -56,6 +57,7 @@ namespace DontDillyDally.MiniGame
             _elapsedTime = 0f;
             LastRoundResult = null;
             _currentSpeed = _config.CursorSpeed;
+            _currentTargetZoneWidth = _config.TargetZoneWidth;
 
             StartNewRound();
             CurrentState = EMiniGameState.Playing;
@@ -125,7 +127,7 @@ namespace DontDillyDally.MiniGame
         private void StartNewRound()
         {
             float padding = _config.TargetZonePadding;
-            float halfWidth = _config.TargetZoneWidth * 0.5f;
+            float halfWidth = _currentTargetZoneWidth * 0.5f;
             float minCenter = padding + halfWidth;
             float maxCenter = 1f - padding - halfWidth;
             TargetZoneCenter = Random.Range(minCenter, maxCenter);
@@ -135,10 +137,13 @@ namespace DontDillyDally.MiniGame
             _isRoundActive = true;
             LastRoundResult = null;
 
-            // 2라운드부터 속도 증가
+            // 2라운드부터 속도 증가 및 목표 구간 축소
             if (CurrentRound > 0)
             {
                 _currentSpeed *= _config.SpeedMultiplierPerRound;
+                _currentTargetZoneWidth = Mathf.Max(
+                    _currentTargetZoneWidth * _config.TargetZoneMultiplierPerRound,
+                    0.03f);
             }
         }
 
@@ -146,7 +151,7 @@ namespace DontDillyDally.MiniGame
         private void EvaluateStop()
         {
             _isRoundActive = false;
-            float halfWidth = _config.TargetZoneWidth * 0.5f;
+            float halfWidth = _currentTargetZoneWidth * 0.5f;
             float min = TargetZoneCenter - halfWidth;
             float max = TargetZoneCenter + halfWidth;
 
