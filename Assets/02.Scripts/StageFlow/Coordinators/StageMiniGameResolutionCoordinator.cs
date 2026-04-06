@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
 using DontDillyDally.MiniGame;
 using Photon.Pun;
+using Photon.Realtime;
 using System.Threading;
 using UnityEngine;
 
@@ -35,16 +36,22 @@ namespace DontDillyDally.StageFlow
                 await _dependencies.MiniGameCoordinator.RunRecipeMiniGame(surgeonActorNumber, type, ct);
             Debug.Log($"[StageFlow] 레시피 미니게임 결과: {(success ? "성공" : "실패")}");
 
+            DiseaseData disease = null;
+            StageFlowManager.Instance?.TryGetCurrentDisease(out disease);
+            Player player = GetMiniGameTargetPlayer();
+
             if (success)
             {
                 float recoveredHealth = _host != null ? _host.ApplyHeal(_dependencies?.MiniGameSuccessHeal ?? 0f) : 0f;
                 Debug.Log($"[StageFlow] 미니게임 성공. 체력 +{_dependencies?.MiniGameSuccessHeal ?? 0f} | 현재 체력: {recoveredHealth}");
+                StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.MiniGameSuccess);
                 EventManager.Instance?.OnSurgerySuccess();
                 return true;
             }
 
             float newHealth = _host != null ? _host.ApplyDamage(_dependencies?.MiniGameFailPenalty ?? 0f) : 0f;
             Debug.Log($"[StageFlow] 미니게임 실패. 체력 -{_dependencies?.MiniGameFailPenalty ?? 0f} | 현재 체력: {newHealth}");
+            StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.MiniGameFail);
             EventManager.Instance?.OnSurgeryFail(SurgeryFailureReason.MiniGameFailure);
 
             if (_host != null && _host.IsGameOver)
@@ -85,6 +92,19 @@ namespace DontDillyDally.StageFlow
             }
 
             return -1;
+        }
+
+        private Player GetMiniGameTargetPlayer()
+        {
+            int actorNumber = GetMiniGameTargetActorNumber();
+
+            if (PhotonServerManager.Instance != null &&
+                PhotonServerManager.Instance.TryGetPlayerByActorNumber(actorNumber, out Player player))
+            {
+                return player;
+            }
+
+            return null;
         }
     }
 }

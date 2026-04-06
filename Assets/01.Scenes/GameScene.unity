@@ -1101,7 +1101,7 @@ PrefabInstance:
     - target: {fileID: 1572009220914191406, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
       propertyPath: _apiKeyConfig
       value: 
-      objectReference: {fileID: 11400000, guid: ced10cf59ef81f442a723c017edac1ea, type: 2}
+      objectReference: {fileID: 11400000, guid: 4e808d3476cdf304ab1532c0720d9c47, type: 2}
     - target: {fileID: 3241995776377645875, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
       propertyPath: _modelId
       value: eleven_multilingual_v2
@@ -1109,7 +1109,7 @@ PrefabInstance:
     - target: {fileID: 3241995776377645875, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
       propertyPath: _apiKeyConfig
       value: 
-      objectReference: {fileID: 11400000, guid: ced10cf59ef81f442a723c017edac1ea, type: 2}
+      objectReference: {fileID: 11400000, guid: 4e808d3476cdf304ab1532c0720d9c47, type: 2}
     - target: {fileID: 7223633189095976347, guid: d49fed9d3616316459ad45faf1c163b2, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -7118,7 +7118,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: -0.0009838681, y: 0}
+  m_AnchoredPosition: {x: -0.000058079524, y: 0}
   m_SizeDelta: {x: 0, y: 200}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1898351497
@@ -7867,6 +7867,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6089632567339909238}
   - component: {fileID: 870949452324898431}
+  - component: {fileID: 6089632567339909239}
   m_Layer: 0
   m_Name: StageFlowManager
   m_TagString: Untagged
@@ -7888,14 +7889,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.StageFlow.StageFlowManager
   _rpc: {fileID: 6200453417244408440}
   _timer: {fileID: 5743564389663226927}
-  _emergencyPolicy:
-    _recipeFailChance: 0.7
-    _failHealthPenalty: 15
-    _randomCheckIntervalSec: 30
-    _randomChance: 0.05
   _miniGameLauncher: {fileID: 896054925268187014}
-  _miniGameFailPenalty: 10
-  _miniGameSuccessHeal: 20
 --- !u!114 &896054925268187014 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 2623965147032813138, guid: 627a8b4d1ef75d74d96369aef808ad98, type: 3}
@@ -7974,6 +7968,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6089632567339909239
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 781572708556241044}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73898e7de459ccf4eb6438a5d8937e24, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LLMService
+  _apiKeyConfig: {fileID: 11400000, guid: 4e808d3476cdf304ab1532c0720d9c47, type: 2}
+  _model: gemini-3.1-flash-lite-preview
+  _maxTokens: 100
+  _temperature: 0.7
+  _timeout: 10
 --- !u!1 &6156425315336342788
 GameObject:
   m_ObjectHideFlags: 0

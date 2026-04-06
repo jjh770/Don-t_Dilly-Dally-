@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
+using Photon.Realtime;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -12,15 +13,18 @@ namespace DontDillyDally.StageFlow
         private readonly StageFlowRpcHandler _rpc;
         private readonly StageRpcAckCoordinator _ackCoordinator;
         private readonly IStageOutcomeHost _host;
+        private readonly RewardLLMEvaluator _rewardEvaluator;   
 
         public StageOutcomeCoordinator(
             StageFlowRpcHandler rpc,
             StageRpcAckCoordinator ackCoordinator,
-            IStageOutcomeHost host)
+            IStageOutcomeHost host,
+            RewardLLMEvaluator rewardEvaluator)
         {
             _rpc = rpc;
             _ackCoordinator = ackCoordinator;
             _host = host;
+            _rewardEvaluator = rewardEvaluator;
 
             if (_rpc != null)
             {
@@ -54,13 +58,18 @@ namespace DontDillyDally.StageFlow
 
             _rpc?.SetPhase(EStagePhase.GameOver);
             _host?.PublishGameOver(reason);
+            DiseaseData disease = null;
+            StageFlowManager.Instance?.TryGetCurrentDisease(out disease);
+            Player player = GetSurgeonPlayer();
 
             if (reason == EGameOverReason.PatientDeath)
             {
+                StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.PatientDied);
                 EventManager.Instance?.OnPatientDeath();
             }
             else if (reason == EGameOverReason.TimeExpired)
             {
+                StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.Timeout);
                 EventManager.Instance?.OnTimeOut();
             }
 
@@ -76,7 +85,7 @@ namespace DontDillyDally.StageFlow
             return true;
         }
 
-        public void ApplyReward()
+        public async UniTask ApplyReward()
         {
             StageRuntimeData stageData = _host?.StageData;
             if (stageData == null || _rpc == null)
@@ -89,10 +98,18 @@ namespace DontDillyDally.StageFlow
                 patientCount: stageData.Settings.PatientSettings.PatientCount,
                 difficulty: stageData.Settings.PatientSettings.Difficulty);
 
-            StageReward reward = RoomDataManager.Instance.ApplyReward(stageData.StageId, result);
-            _rpc.BroadcastStageReward(reward, result);
+            RewardNarrativeResult narrative = await _rewardEvaluator.EvaluateAsync(
+               StageFlowManager.Instance.PerformanceTracker.Events,
+               stageData.SavedCount,
+               stageData.Settings.PatientSettings.PatientCount,
+               _host?.IsGameOver ?? false);
 
-            Debug.Log($"별: {reward.Stars} / 돈: {reward.Money} / 신기록: {reward.IsNewBest}");
+
+            StageReward finalReward = RoomDataManager.Instance.ApplyReward(stageData.StageId, result, narrative);
+
+            _rpc.BroadcastStageReward(finalReward, result);
+
+            Debug.Log($"별: {finalReward.Stars} / 돈: {finalReward.Money - narrative.coinDelta} ({narrative.coinDelta}) / 신기록: {finalReward.IsNewBest} \n {finalReward.SummaryText}");
         }
 
         // ── 정리 ────────────────────────────────────────────────────
@@ -141,7 +158,7 @@ namespace DontDillyDally.StageFlow
             }
 
             await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
-            ApplyReward();
+            await ApplyReward();
         }
 
         private void HandleGameOverReceived(EGameOverReason reason)
@@ -152,6 +169,21 @@ namespace DontDillyDally.StageFlow
         private void HandleStageRewardGrantedReceived(StageReward reward, StageResult result)
         {
             _host?.PublishReward(reward, result);
+        }
+
+        private Player GetSurgeonPlayer()
+        {
+            int actorNumber = StageFlowManager.Instance != null
+                ? StageFlowManager.Instance.SurgeonActorNumber.Value
+                : -1;
+
+            if (PhotonServerManager.Instance != null &&
+                PhotonServerManager.Instance.TryGetPlayerByActorNumber(actorNumber, out Player player))
+            {
+                return player;
+            }
+
+            return null;
         }
     }
 }

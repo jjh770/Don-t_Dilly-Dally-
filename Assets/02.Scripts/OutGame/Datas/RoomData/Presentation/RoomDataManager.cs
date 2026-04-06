@@ -288,6 +288,26 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         SaveData();
         return reward;
     }
+
+    public StageReward ApplyReward(string stageId, StageResult result, RewardNarrativeResult narrativeResult)
+    {
+        if (!PhotonNetwork.InRoom) throw new InvalidOperationException("병원 접속 상태가 아닙니다.");
+
+        StageStars previousStars = _roomWallet.GetStageStars(stageId);
+        StageReward baseReward = StageRewardCalculator.Calculate(result, previousStars);
+
+        StageReward finalReward = new StageReward(
+        baseReward.Stars,
+        baseReward.Money + (narrativeResult?.coinDelta ?? 0),
+        baseReward.IsNewBest,
+        narrativeResult?.summaryText ?? string.Empty);
+
+        _roomWallet = _roomWallet.ApplyReward(stageId, finalReward);
+
+        SaveData();
+        return finalReward;
+    }
+
     private void SelectHighestAvailableStage()
     {
         if (_stageCatalog == null || _stageCatalog.StageCount <= 0)

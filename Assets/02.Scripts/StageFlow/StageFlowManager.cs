@@ -16,6 +16,8 @@ namespace DontDillyDally.StageFlow
         Assistant
     }
 
+    [RequireComponent(typeof(LLMService))]
+
     public class StageFlowManager : PunSingleton<StageFlowManager>,
         IStageFlowState,
         IStageFlowCommands,
@@ -42,9 +44,12 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private StageFlowRpcHandler _rpc;
         [SerializeField] private StageTimer _timer;
         private EmergencyEventPolicy _emergencyPolicy = new();
+        private LLMService _llmService;
+        private StagePerformanceTracker _performanceTracker = new();
 
         [Header("미니게임 참조")]
         [SerializeField] private MiniGameLauncher _miniGameLauncher;
+
 
         // ── 외부 구독용 (RpcHandler에 위임) ──────────────────────────
         public IReadOnlyReactiveProperty<EStagePhase> CurrentPhase => _rpc.CurrentPhase;
@@ -76,6 +81,9 @@ namespace DontDillyDally.StageFlow
             IsEmergencyActive &&
             (_emergencyCoordinator == null || !_emergencyCoordinator.IsDiagnosisOperating) &&
             (_rpc == null || _rpc.CurrentPhase.Value == EStagePhase.Playing);
+
+
+        public StagePerformanceTracker PerformanceTracker => _performanceTracker;
 
         // ================================================================
         //  공개 조회 API
@@ -269,6 +277,12 @@ namespace DontDillyDally.StageFlow
         public event Action<StageRuntimeData> OnStageDataChanged;
         public event Action<StageReward, StageResult> OnStageRewardGranted;
 
+
+        protected override void Awake()
+        {
+            base.Awake();
+            _llmService = GetComponent<LLMService>();
+        }
         // ================================================================
         //  초기화
         // ================================================================
@@ -277,6 +291,7 @@ namespace DontDillyDally.StageFlow
         public void Initialize(StageRuntimeData stageData)
         {
             _rpc.ResetState();
+
             _stageData = stageData;
             _isGameOver = false;
             OnStageDataChanged?.Invoke(_stageData);
@@ -306,13 +321,15 @@ namespace DontDillyDally.StageFlow
             _miniGameCoordinator = new StageMiniGameCoordinator(_rpc, _miniGameLauncher, () => IsLocalSurgeon);
             _emergencyCoordinator = new StageEmergencyCoordinator(_rpc, () => _flowCts.Token, _stageData?.Settings, this);
             _movementCoordinator = new StageMovementCoordinator(_rpc);
-            _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this);
+            _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this, new(_llmService));
             _patientStatusCoordinator = new StagePatientStatusCoordinator(_patientHealthController, _rpc, TriggerGameOver);
             _miniGameResolutionCoordinator = new StageMiniGameResolutionCoordinator(_rpc, this, this);
             _recipeProgressCoordinator = new StageRecipeProgressCoordinator(_rpc, _trayHandler, _emergencyPolicy, _emergencyCoordinator, this);
             _patientTreatmentCoordinator = new StagePatientTreatmentCoordinator(_rpc, _timer, _emergencyPolicy, this, _recipeProgressCoordinator);
 
             _movementCoordinator.Initialize();
+
+            _performanceTracker.Clear();
 
             if (PhotonNetwork.IsMasterClient)
             {
@@ -354,7 +371,7 @@ namespace DontDillyDally.StageFlow
                 await UniTask.Delay(TimeSpan.FromSeconds(STAGE_CLEAR_DELAY_SEC), cancellationToken: ct);
 
                 Debug.Log("[StageFlow] 보상을 지급합니다.");
-                _outcomeCoordinator?.ApplyReward();
+                await _outcomeCoordinator.ApplyReward();
             }
             catch (OperationCanceledException)
             {

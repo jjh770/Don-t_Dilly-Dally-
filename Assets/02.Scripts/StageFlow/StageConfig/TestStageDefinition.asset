@@ -17,14 +17,24 @@ MonoBehaviour:
   _stageThumbnail: {fileID: -1549021634, guid: f7d404d4353767346930fa3d4921b66e, type: 3}
   _description: 
   _settings:
-    PatientCount: 1
-    TotalTimeLimitSec: 120
-    InitialPatientHealth: 100
-    PatientHealthDrainPerSecond: 0.25
-    Difficulty: 1
+    TotalTimeLimitSec: 300
+    PatientSettings:
+      PatientCount: 3
+      InitialPatientHealth: 100
+      PatientHealthDrainPerSecond: 0.25
+      Difficulty: 1
+      RecipeFailPenalty: 20
+    MiniGameSettings:
+      FailPenalty: 10
+      SuccessHeal: 5
     EmergencySettings:
+      TrayDurationSec: 20
+      DiagnosisDurationSec: 15
+      DiagnosisOperationDurationSec: 5
+      TrayEventSelectionChance: 0.5
       RecipeFailTriggerChance: 0.7
       MiniGameFailTriggerChance: 0.7
       RandomCheckIntervalSec: 30
       RandomTriggerChance: 0.05
+      EmergencyFailPenalty: 10
   _requiredHospitalLevel: 0

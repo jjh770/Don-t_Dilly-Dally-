@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,7 @@ public class RewardView : UIPopupBase
     [SerializeField] private UI_NumberCounterTween _coin;
     [SerializeField] private UI_NumberCounterTween _star;
     [SerializeField] private float _rewardUpdateInterval = 0.18f;
+    [SerializeField] private TextMeshProUGUI _summaryText;
 
     [Header("Stars")]
     [SerializeField] private GameObject[] _stars;
@@ -60,6 +62,11 @@ public class RewardView : UIPopupBase
     {
         _coin.SetValueImmediate(coin);
         _star.SetValueImmediate(star);
+    }
+
+    public void SetSummery(string text)
+    {
+        _summaryText.text = text;
     }
 
     public void PlayRewardSequence(int count, float ratio, int coin, int star)
