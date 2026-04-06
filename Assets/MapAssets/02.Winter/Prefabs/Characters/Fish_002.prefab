@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9095835178203732330}
-  - component: {fileID: 5958946367762833663}
   - component: {fileID: 6431442341663119879}
+  - component: {fileID: 108545883477104868}
   m_Layer: 0
   m_Name: Fish_002
   m_TagString: Untagged
@@ -34,24 +34,6 @@ Transform:
   - {fileID: 8129104651169108824}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5958946367762833663
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2264362864950575056}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b48a88d56ce5e224396077195906fe99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::FishMove
-  moveSpeed: 5
-  rotationSpeed: 3
-  wobbleSpeed: 5
-  wobbleAmount: 15
-  directionChangeInterval: 2
-  maxTurnAngle: 30
 --- !u!195 &6431442341663119879
 NavMeshAgent:
   m_ObjectHideFlags: 0
@@ -74,6 +56,29 @@ NavMeshAgent:
   m_BaseOffset: 0
   m_WalkableMask: 4294967295
   m_ObstacleAvoidanceType: 4
+--- !u!114 &108545883477104868
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2264362864950575056}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e7eabeae03f2f44aa8b4e6ebf1ab7ab, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CreatureMove
+  moveSpeed: 1
+  rotationSpeed: 5
+  wanderRadius: 10
+  minWaitTime: 0.1
+  maxWaitTime: 0.5
+  stuckCheckInterval: 0.5
+  stuckThreshold: 0.1
+  minAvoidancePriority: 30
+  maxAvoidancePriority: 70
+  smoothRotation: 1
+  smoothRotationSpeed: 5
 --- !u!1001 &8600424900308792499
 PrefabInstance:
   m_ObjectHideFlags: 0
