@@ -275,7 +275,14 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
     {
         if (SceneLoadManager.Instance != null)
         {
-            SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Gameplay);
+            if (RoomDataManager.Instance == null)
+            {
+                Debug.LogError("[CutsceneManager] RoomDataManager가 없음 - GameScene 전환 실패");
+                return;
+            }
+
+            string gameSceneName = RoomDataManager.Instance.CurrentStageSceneName;
+            SceneLoadManager.Instance.BeginStageSceneLoad(gameSceneName);
         }
         else
         {

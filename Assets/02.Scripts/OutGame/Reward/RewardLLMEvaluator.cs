@@ -75,7 +75,7 @@ public sealed class RewardLLMEvaluator
                 ? RewardNarrativeResult.Fallback
                 : result;
         }
-        catch
+        catch (System.ArgumentException)
         {
             return RewardNarrativeResult.Fallback;
         }
@@ -93,33 +93,16 @@ public sealed class RewardLLMEvaluator
 
         foreach (StagePerformanceEvent e in events)
         {
-            if (string.IsNullOrEmpty(e.PlayerNickname))
-            {
-                continue;
-            }
+            if (string.IsNullOrEmpty(e.PlayerNickname)) continue;
 
             if (!stats.ContainsKey(e.PlayerNickname))
-            {
                 stats[e.PlayerNickname] = (0, 0);
-            }
-
-            bool isSuccess = e.EventType is
-                EPerformanceEventType.TraySuccess or
-                EPerformanceEventType.MiniGameSuccess or
-                EPerformanceEventType.EmergencySuccess or
-                EPerformanceEventType.PatientSaved;
-
-            bool isFail = e.EventType is
-                EPerformanceEventType.TrayFail or
-                EPerformanceEventType.MiniGameFail or
-                EPerformanceEventType.EmergencyFail or
-                EPerformanceEventType.PatientDied or
-                EPerformanceEventType.Timeout;
 
             (int success, int fail) s = stats[e.PlayerNickname];
-            stats[e.PlayerNickname] = isSuccess ? (s.success + 1, s.fail)
-                : isFail ? (s.success, s.fail + 1)
-                : s;
+
+            stats[e.PlayerNickname] = IsSuccess(e.EventType) ? (s.success + 1, s.fail)
+                                    : IsFailure(e.EventType) ? (s.success, s.fail + 1)
+                                    : s;
         }
 
         List<StagePerformanceEvent> highlights = events
@@ -164,4 +147,17 @@ public sealed class RewardLLMEvaluator
 
         return sb.ToString();
     }
+    private static bool IsSuccess(EPerformanceEventType type) => type is
+    EPerformanceEventType.TraySuccess or
+    EPerformanceEventType.MiniGameSuccess or
+    EPerformanceEventType.EmergencySuccess or
+    EPerformanceEventType.PatientSaved;
+
+    private static bool IsFailure(EPerformanceEventType type) => type is
+        EPerformanceEventType.TrayFail or
+        EPerformanceEventType.MiniGameFail or
+        EPerformanceEventType.EmergencyFail or
+        EPerformanceEventType.PatientDied or
+        EPerformanceEventType.Timeout;
+
 }

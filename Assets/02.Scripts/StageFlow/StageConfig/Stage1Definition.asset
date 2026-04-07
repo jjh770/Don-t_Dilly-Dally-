@@ -20,15 +20,26 @@ MonoBehaviour:
     \uCC98\uCE58 \uC704\uC8FC\uC758 \uC758\uB8CC \uC11C\uBE44\uC2A4\uB97C \uC81C\uACF5\uD55C\uB2E4.\n\uC218\uC220\uC774\uB77C\uAE30\uBCF4\uB2E4\uB294
     \uC751\uAE09 \uCC98\uCE58\uC640 \uACBD\uBBF8\uD55C \uC2DC\uC220\uC774 \uAC00\uB2A5\uD55C
     \uC218\uC900\uC774\uB2E4."
+  _sceneName: GameScene
   _settings:
-    PatientCount: 2
     TotalTimeLimitSec: 300
-    InitialPatientHealth: 150
-    PatientHealthDrainPerSecond: 0.25
-    Difficulty: 1
+    PatientSettings:
+      PatientCount: 5
+      InitialPatientHealth: 100
+      PatientHealthDrainPerSecond: 0.25
+      Difficulty: 1
+      RecipeFailPenalty: 20
+    MiniGameSettings:
+      FailPenalty: 10
+      SuccessHeal: 5
     EmergencySettings:
+      TrayDurationSec: 20
+      DiagnosisDurationSec: 15
+      DiagnosisOperationDurationSec: 5
+      TrayEventSelectionChance: 0.5
       RecipeFailTriggerChance: 0.7
       MiniGameFailTriggerChance: 0.7
       RandomCheckIntervalSec: 30
       RandomTriggerChance: 0.05
+      EmergencyFailPenalty: 10
   _requiredHospitalLevel: 1

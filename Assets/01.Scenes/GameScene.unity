@@ -1166,51 +1166,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 349906392}
   m_Mesh: {fileID: 2780377793172694677, guid: 1e3a2be387036cd43bc774a9eb49f157, type: 3}
---- !u!1 &401670161
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 401670163}
-  - component: {fileID: 401670162}
-  m_Layer: 0
-  m_Name: StageBootstrapper
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &401670162
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 401670161}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e69a270a81ba47849a9c274d4bebbf0f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::StageBootstrapper
-  _rewardView: {fileID: 517442370}
---- !u!4 &401670163
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 401670161}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &427098088
 GameObject:
   m_ObjectHideFlags: 0
@@ -1990,6 +1945,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4547020794732631446, guid: 36805577f6f7c0547ad659f7ddc54c21, type: 3}
+      propertyPath: _returnWaitingRoomInterval
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 5379489428785242187, guid: 36805577f6f7c0547ad659f7ddc54c21, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 5442520129706756426, guid: 36805577f6f7c0547ad659f7ddc54c21, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -2081,10 +2044,6 @@ PrefabInstance:
     - target: {fileID: 8676618116160700233, guid: 36805577f6f7c0547ad659f7ddc54c21, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 8982789323867207343, guid: 36805577f6f7c0547ad659f7ddc54c21, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: -18
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9055,7 +9014,6 @@ SceneRoots:
   - {fileID: 8306698866093135175}
   - {fileID: 1094136508}
   - {fileID: 270361055}
-  - {fileID: 401670163}
   - {fileID: 712185601}
   - {fileID: 840406639}
   - {fileID: 633032280}
