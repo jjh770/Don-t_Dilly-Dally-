@@ -154,7 +154,10 @@ public class StagePreloader : MonoBehaviour
                 int requestCount = Mathf.Min(_batchSize, remaining);
 
                 Debug.Log($"[StagePreloader] 배치 {batchIndex + 1}: {requestCount}명 생성 요청...");
-                List<DiseaseData> batchResults = await _diseaseGenManager.GenerateDiseases(requestCount, difficulty);
+                List<DiseaseData> batchResults = await _diseaseGenManager.GenerateDiseases(
+                    requestCount,
+                    difficulty,
+                    stageId: StageData.StageId);
 
                 for (int i = 0; i < batchResults.Count; i++)
                 {
@@ -168,7 +171,7 @@ public class StagePreloader : MonoBehaviour
             // 부족분 폴백으로 채우기
             while (StageData.Patients.Count < patientCount)
             {
-                DiseaseData fallback = FallbackDiseaseLoader.GetRandom();
+                DiseaseData fallback = FallbackDiseaseLoader.GetRandom(StageData.StageId);
                 StageData.Patients.Add(fallback);
                 Debug.Log($"[StagePreloader] 환자 {StageData.Patients.Count}/{patientCount} 폴백 사용: {fallback.DiseaseName}");
             }
