@@ -1,16 +1,21 @@
 using UnityEngine;
 using System.Collections;
+using Photon.Pun;
 
 public class ScreenFadeController : MonoBehaviour
 {
     [Header("블랙아웃 설정")]
-    [SerializeField] private float minInterval = 120f; 
-    [SerializeField] private float maxInterval = 180f; 
+    [SerializeField] private float minInterval = 120f;
+    [SerializeField] private float maxInterval = 180f;
     [SerializeField] private float blackoutDuration = 15f;
-    [SerializeField] private float fadeSpeed = 2f; 
+    [SerializeField] private float fadeSpeed = 2f;
+
+    [Header("스포트라이트 설정")]
+    [SerializeField] private GameObject spotLightPrefab;
+    [SerializeField] private string playerTag = "Player";
 
     private float originalIntensity;
-    private bool isBlackout;
+    private PlayerSpotLightController activeSpotLight;
 
     private void Start()
     {
@@ -32,7 +37,7 @@ public class ScreenFadeController : MonoBehaviour
 
     private IEnumerator FadeToBlack()
     {
-        isBlackout = true;
+        SpawnSpotLightForLocalPlayer();
         float currentIntensity = RenderSettings.ambientIntensity;
 
         while (currentIntensity > 0f)
@@ -59,11 +64,53 @@ public class ScreenFadeController : MonoBehaviour
         }
 
         RenderSettings.ambientIntensity = originalIntensity;
-        isBlackout = false;
+        DestroySpotLight();
+    }
+
+    private void SpawnSpotLightForLocalPlayer()
+    {
+        if (spotLightPrefab == null) return;
+
+        // 로컬 플레이어 찾기
+        GameObject[] players = GameObject.FindGameObjectsWithTag(playerTag);
+        GameObject localPlayer = null;
+
+        foreach (GameObject player in players)
+        {
+            PhotonView pv = player.GetComponent<PhotonView>();
+            if (pv != null && pv.IsMine)
+            {
+                localPlayer = player;
+                break;
+            }
+        }
+
+        if (localPlayer == null) return;
+
+        GameObject spotLightObj = Instantiate(spotLightPrefab);
+        activeSpotLight = spotLightObj.GetComponent<PlayerSpotLightController>();
+
+        if (activeSpotLight == null)
+        {
+            activeSpotLight = spotLightObj.AddComponent<PlayerSpotLightController>();
+        }
+
+        activeSpotLight.SetTarget(localPlayer.transform);
+        activeSpotLight.SetActive(true);
+    }
+
+    private void DestroySpotLight()
+    {
+        if (activeSpotLight != null)
+        {
+            Destroy(activeSpotLight.gameObject);
+            activeSpotLight = null;
+        }
     }
 
     private void OnDestroy()
     {
         RenderSettings.ambientIntensity = originalIntensity;
+        DestroySpotLight();
     }
 }

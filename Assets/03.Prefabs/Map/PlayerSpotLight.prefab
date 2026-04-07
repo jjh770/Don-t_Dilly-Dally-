@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &7094829828538999022
+--- !u!1 &2366225511704376443
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,46 +8,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 4875260508355006555}
-  - component: {fileID: 7959038089328856329}
-  - component: {fileID: 3806712308452038949}
+  - component: {fileID: 3558418090063170576}
+  - component: {fileID: 6405519537775457695}
+  - component: {fileID: 5439824562890493037}
   m_Layer: 0
-  m_Name: Spot Light
+  m_Name: PlayerSpotLight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4875260508355006555
+--- !u!4 &3558418090063170576
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7094829828538999022}
+  m_GameObject: {fileID: 2366225511704376443}
   serializedVersion: 2
   m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: 0, y: 4.09, z: 4.05}
+  m_LocalPosition: {x: 0, y: 4, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
---- !u!108 &7959038089328856329
+--- !u!108 &6405519537775457695
 Light:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7094829828538999022}
+  m_GameObject: {fileID: 2366225511704376443}
   m_Enabled: 1
   serializedVersion: 12
   m_Type: 0
-  m_Color: {r: 1, g: 0.52619624, b: 0, a: 1}
-  m_Intensity: 15.1
+  m_Color: {r: 1, g: 0.5688141, b: 0.28773582, a: 1}
+  m_Intensity: 40.54
   m_Range: 5.6
-  m_SpotAngle: 70.790955
-  m_InnerSpotAngle: 63.71186
+  m_SpotAngle: 48.542366
+  m_InnerSpotAngle: 40.451973
   m_CookieSize2D: {x: 0.5, y: 0.5}
   m_Shadows:
     m_Type: 0
@@ -98,13 +98,13 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
---- !u!114 &3806712308452038949
+--- !u!114 &5439824562890493037
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7094829828538999022}
+  m_GameObject: {fileID: 2366225511704376443}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}

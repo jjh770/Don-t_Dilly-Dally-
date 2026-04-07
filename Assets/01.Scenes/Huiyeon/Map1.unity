@@ -4685,10 +4685,12 @@ MonoBehaviour:
   - {fileID: 1442957964}
   - {fileID: 374357809}
   - {fileID: 1342519714}
-  minSpawnInterval: 60
-  maxSpawnInterval: 100
+  minSpawnInterval: 30
+  maxSpawnInterval: 60
   moveDuration: 10
   moveSpeed: 4
+  maxShakeIntensity: 0.15
+  maxShakeDistance: 20
 --- !u!4 &243508488 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3117476195130231806, guid: f372dc92250b6a04896a1a6bedfe5549, type: 3}
@@ -5624,6 +5626,7 @@ GameObject:
   - component: {fileID: 325347774}
   - component: {fileID: 325347773}
   - component: {fileID: 325347776}
+  - component: {fileID: 325347777}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -5749,6 +5752,19 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &325347777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 325347772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9e597126b7d85ea4fa9c382e50d5cad7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraShakeManager
+  shakeFrequency: 10
 --- !u!4 &334082331 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 4714961210309781337, guid: b4e2b9b8cc90ed645bd03dc5232c4ee6, type: 3}
@@ -18574,10 +18590,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a519bf2294bf3f49afd7eb8a09a7e9b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ScreenFadeController
-  minInterval: 5
-  maxInterval: 10
+  minInterval: 30
+  maxInterval: 60
   blackoutDuration: 5
   fadeSpeed: 1
+  spotLightPrefab: {fileID: 2366225511704376443, guid: 8e8bcfe6e2cf5424a8b7e412ed41d49d, type: 3}
+  playerTag: Player
 --- !u!1001 &1078701779
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -41856,7 +41874,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4875260508355006555, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 4.09
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 4875260508355006555, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
       propertyPath: m_LocalPosition.z
@@ -41892,27 +41910,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7094829828538999022, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
       propertyPath: m_Name
-      value: Spot Light
+      value: SpotLight
       objectReference: {fileID: 0}
     - target: {fileID: 7959038089328856329, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
-      propertyPath: m_Color.b
-      value: 0.9103774
-      objectReference: {fileID: 0}
-    - target: {fileID: 7959038089328856329, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
-      propertyPath: m_Color.g
-      value: 0.95747316
-      objectReference: {fileID: 0}
-    - target: {fileID: 7959038089328856329, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
-      propertyPath: m_Color.r
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 7959038089328856329, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
-      propertyPath: m_SpotAngle
-      value: 48.542366
-      objectReference: {fileID: 0}
-    - target: {fileID: 7959038089328856329, guid: c89a34c4290fa0a4093d86bfe2ef14ff, type: 3}
-      propertyPath: m_InnerSpotAngle
-      value: 40.451973
+      propertyPath: m_Intensity
+      value: 20
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
