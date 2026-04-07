@@ -21,14 +21,24 @@ MonoBehaviour:
     \uD658\uC790\uC5D0 \uB300\uD55C \uB300\uC751 \uB2A5\uB825\uB3C4 \uD655\uBCF4\uB41C
     \uC0C1\uD0DC\uB2E4."
   _settings:
-    PatientCount: 4
     TotalTimeLimitSec: 300
-    InitialPatientHealth: 100
-    PatientHealthDrainPerSecond: 0.25
-    Difficulty: 1
+    PatientSettings:
+      PatientCount: 5
+      InitialPatientHealth: 100
+      PatientHealthDrainPerSecond: 0.25
+      Difficulty: 1
+      RecipeFailPenalty: 20
+    MiniGameSettings:
+      FailPenalty: 10
+      SuccessHeal: 5
     EmergencySettings:
+      TrayDurationSec: 20
+      DiagnosisDurationSec: 15
+      DiagnosisOperationDurationSec: 5
+      TrayEventSelectionChance: 0.5
       RecipeFailTriggerChance: 0.7
       MiniGameFailTriggerChance: 0.7
       RandomCheckIntervalSec: 30
       RandomTriggerChance: 0.05
+      EmergencyFailPenalty: 10
   _requiredHospitalLevel: 3

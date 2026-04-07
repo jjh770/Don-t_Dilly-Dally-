@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
+using Photon.Realtime;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -65,6 +66,8 @@ namespace DontDillyDally.StageFlow
                     return;
                 }
 
+                PhotonServerManager.Instance.TryGetPlayerByActorNumber(_trayHandler.LastSubmitterActorNumber, out Player player);
+
                 Debug.Log("[StageFlow]     트레이 제출됨 → 판정 중...");
                 SurgeryJudgeResult result = _recipeJudge.JudgeNextRecipe(tray, _host != null ? _host.PatientHealth : 0f);
 
@@ -79,6 +82,8 @@ namespace DontDillyDally.StageFlow
                     {
                         SurgeryJudgeResult completionResult = _recipeJudge.ConfirmRecipeCompletion(result.MatchedRecipeId);
                         Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 완료 확정! (ID: {completionResult.MatchedRecipeId}) | 질병완치={completionResult.DiseaseCured}");
+
+                        StageFlowManager.Instance.PerformanceTracker.Record(player, disease, EPerformanceEventType.TraySuccess);
 
                         if (completionResult.DiseaseCured)
                         {
@@ -100,6 +105,9 @@ namespace DontDillyDally.StageFlow
                 float recipeFailPenalty = _host?.StageData?.Settings?.PatientSettings?.RecipeFailPenalty ?? disease.FailHealthPenalty;
                 float newHealth = _host != null ? _host.ApplyDamage(recipeFailPenalty) : 0f;
                 Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{recipeFailPenalty} → 현재 체력: {newHealth}");
+
+                StageFlowManager.Instance.PerformanceTracker.Record(player, disease, EPerformanceEventType.TrayFail);
+
                 EventManager.Instance?.OnSurgeryFail(result.SurgeryFailure);
 
                 if (_host != null && _host.IsGameOver)

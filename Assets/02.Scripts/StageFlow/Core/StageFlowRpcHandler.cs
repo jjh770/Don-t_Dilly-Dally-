@@ -268,7 +268,7 @@ namespace DontDillyDally.StageFlow
             if (PhotonNetwork.IsMasterClient)
             {
                 photonView.RPC(nameof(RPC_StageRewardGranted), RpcTarget.All,
-                    reward.Stars, reward.Money, reward.IsNewBest,
+                    reward.Stars, reward.Money, reward.MoneyDelta, reward.IsNewBest, reward.SummaryText,
                     result.SavedCount, result.PatientCount, (int)result.Difficulty);
             }
         }
@@ -449,10 +449,10 @@ namespace DontDillyDally.StageFlow
 
         [PunRPC]
         private void RPC_StageRewardGranted(
-            int stars, int money, bool isNewBest,
+            int stars, int money, int moneyDelta, bool isNewBest, string summary,
             int savedCount, int patientCount, int difficulty)
         {
-            var reward = new StageReward (stars, money, isNewBest );
+            var reward = new StageReward (stars, money, moneyDelta, isNewBest, summary);
             var result = new StageResult(savedCount, patientCount, difficulty);
             OnStageRewardGrantedReceived?.Invoke(reward, result);
         }

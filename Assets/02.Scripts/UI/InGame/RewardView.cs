@@ -1,4 +1,5 @@
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -8,6 +9,10 @@ public class RewardView : UIPopupBase
     [SerializeField] private UI_NumberCounterTween _coin;
     [SerializeField] private UI_NumberCounterTween _star;
     [SerializeField] private float _rewardUpdateInterval = 0.18f;
+    [SerializeField] private TextMeshProUGUI _summaryText;
+    [SerializeField] private TextMeshProUGUI _moneyText;
+    [SerializeField] private Color _plusColor = Color.green;
+    [SerializeField] private Color _minusColor = Color.red;
 
     [Header("Stars")]
     [SerializeField] private GameObject[] _stars;
@@ -28,6 +33,7 @@ public class RewardView : UIPopupBase
 
 
 
+    private string ToHex(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
 
     private Sequence _starSequence;
 
@@ -60,6 +66,28 @@ public class RewardView : UIPopupBase
     {
         _coin.SetValueImmediate(coin);
         _star.SetValueImmediate(star);
+    }
+
+    public void ApplyRewardText(string summary, int defaultReward, int deltaReward)
+    {
+        _summaryText.text = summary;
+
+        string deltaRewardText = deltaReward.ToString();
+
+        if (deltaReward > 0)
+        {
+            deltaRewardText = $" (<color={ToHex(_plusColor)}>+{deltaReward}</color>)";
+        }
+        else if (deltaReward < 0)
+        {
+            deltaRewardText = $" (<color={ToHex(_minusColor)}>{deltaReward}</color>)";
+        }
+        else
+        {
+            deltaRewardText = ""; 
+        }
+
+        _moneyText.text = $"{defaultReward}{deltaRewardText}";
     }
 
     public void PlayRewardSequence(int count, float ratio, int coin, int star)

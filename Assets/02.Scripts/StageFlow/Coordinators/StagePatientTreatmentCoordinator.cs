@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
+using Photon.Realtime;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -115,7 +116,23 @@ namespace DontDillyDally.StageFlow
 
             float currentHealth = _host != null ? _host.CurrentHealth : 0f;
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 치료 완료! | 병명: {disease.DiseaseName} | 남은 체력: {currentHealth}");
+            StageFlowManager.Instance?.PerformanceTracker.Record(GetSurgeonPlayer(), disease, EPerformanceEventType.PatientSaved);
             stageData.SavedCount += 1;
+        }
+
+        private Player GetSurgeonPlayer()
+        {
+            int actorNumber = StageFlowManager.Instance != null
+                ? StageFlowManager.Instance.SurgeonActorNumber.Value
+                : -1;
+
+            if (PhotonServerManager.Instance != null &&
+                PhotonServerManager.Instance.TryGetPlayerByActorNumber(actorNumber, out Player player))
+            {
+                return player;
+            }
+
+            return null;
         }
     }
 }

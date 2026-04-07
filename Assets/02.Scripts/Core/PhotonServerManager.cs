@@ -205,6 +205,21 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         PlayerProperty.SetNickname(nickname);
     }
 
+    public bool TryGetPlayerByActorNumber(int actorNumber, out Player player)
+    {
+        player = null;
+
+        if (!PhotonNetwork.InRoom ||
+            PhotonNetwork.CurrentRoom == null ||
+            PhotonNetwork.CurrentRoom.Players == null ||
+            actorNumber <= 0)
+        {
+            return false;
+        }
+
+        return PhotonNetwork.CurrentRoom.Players.TryGetValue(actorNumber, out player);
+    }
+
     public bool TryStartStage(out string message)
     {
         if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient || PhotonNetwork.CurrentRoom == null)

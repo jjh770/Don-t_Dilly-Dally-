@@ -58,8 +58,16 @@ public class RoomWallet
     }
 
     // ── 보상 한 번에 적용 ─────────────────────────────────────────────────
-    public RoomWallet ApplyReward(string stageId, StageReward reward) =>
-        AddMoney(reward.Money).UpdateStars(stageId, reward.Stars);
+    public RoomWallet ApplyReward(string stageId, StageReward reward)
+    {
+        int nextCoinValue = System.Math.Max(0, _coin.Value + reward.Money);
+        RoomWallet rewardedWallet = new(
+            new RoomCurrency(_coin.Type, nextCoinValue),
+            _stagesStars,
+            _hospitalLevel);
+
+        return rewardedWallet.UpdateStars(stageId, reward.Stars);
+    }
 
 
 }

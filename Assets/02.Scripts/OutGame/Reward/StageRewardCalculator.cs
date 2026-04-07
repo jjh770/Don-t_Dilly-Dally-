@@ -29,6 +29,6 @@ public static class StageRewardCalculator
         bool isNewBest = earnedStars > previousStars.Best;
 
         // 별은 이번 클리어에서 더 높은 경우만 갱신 (차등 지급도 가능, 아래 주석 참고)
-        return new StageReward(earnedStars, earnedMoney, isNewBest);
+        return new StageReward(earnedStars, earnedMoney, 0, isNewBest);
     }
 }
