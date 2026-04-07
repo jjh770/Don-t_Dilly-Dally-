@@ -24,10 +24,9 @@ public class RewardPresenter
 
     private void HandleStageRewardGranted(StageReward reward, StageResult result)
     {
-        _view.ApplyRewardText(reward.SummaryText, reward.Money - reward.MoneyDelta, reward.MoneyDelta);
         _view.Show(() =>
         { 
-            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
+            //_view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
         });
     }
 

@@ -23,6 +23,8 @@ public class RewardView : UIPopupBase
     [SerializeField] private float _starStartScale = 0.65f;
     [SerializeField] private float _starOvershootScale = 1.2f;
     [SerializeField] private float _startRotation = -12f;
+    [SerializeField] private float _starPulseScale = 1.15f;
+    [SerializeField] private float _starPulseDuration = 0.5f;
 
     [Header("Progress")]
     [SerializeField] private Slider _progressSlider;
@@ -35,8 +37,10 @@ public class RewardView : UIPopupBase
 
     [Header("FadeIn")]
     [SerializeField] private float _fadeInDuration = 0.35f;
+    [SerializeField] private CanvasGroup _moneyGroup;
+    private RectTransform _moneyGroupRect;
 
-
+    [Header("etcInterval")]
     [SerializeField] private float _defaultInterval = 0.5f;
     [SerializeField] private float _returnWaitingRoomInterval = 1;
 
@@ -51,12 +55,18 @@ public class RewardView : UIPopupBase
     protected override void Awake()
     {
         base.Awake();
-        if (_progressSlider != null) _progressSlider.value = 0f;
         HideAllStars();
-        SetTextAlpha(_moneyText, 0f);
+
+        if (_progressSlider != null) _progressSlider.value = 0f;
+        if (_moneyGroup != null) _moneyGroup.alpha = 0f;
+        _summaryText.text = "";
+        _moneyGroupRect = _moneyGroup.GetComponent<RectTransform>();
     }
 
-    private void OnEnable() => HideAllStars();
+    private void OnEnable() 
+    {
+        HideAllStars();
+    } 
 
     private void OnDisable()
     {
@@ -68,7 +78,10 @@ public class RewardView : UIPopupBase
     //  Public API
     // ══════════════════════════════════════════════════════════════════
 
-    public void SetPresenter(RewardPresenter presenter) => _presenter = presenter;
+    public void SetPresenter(RewardPresenter presenter)
+    {
+        _presenter = presenter;
+    }
 
     public void InitializeReward(int coin, int star)
     {
@@ -79,19 +92,22 @@ public class RewardView : UIPopupBase
     /// <summary>
     /// 텍스트 내용만 세팅합니다. 애니메이션은 Builder로 제어합니다.
     /// </summary>
-    public void ApplyRewardText(string summary, int defaultReward, int deltaReward)
+    private void ApplyRewardText(string summary, int defaultReward, int deltaReward)
     {
         _summaryText.text = "";
         _summaryText.maxVisibleCharacters = 0;
 
-        SetTextAlpha(_moneyText, 0f);
         _moneyText.text = BuildMoneyString(defaultReward, deltaReward);
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(_moneyGroupRect);
 
         _pendingSummary = summary;
     }
 
-    public void PlayRewardSequence(int starCount, float sliderRatio, int coin, int star)
+    public void PlayRewardSequence(int starCount, float sliderRatio, int coin, int star, string summary, int defaultReward, int deltaReward)
     {
+        ApplyRewardText(summary, defaultReward, deltaReward);
+
         CreateSequence()
         .SliderFill(sliderRatio)
         .Interval(_defaultInterval)
@@ -160,7 +176,10 @@ public class RewardView : UIPopupBase
         }
 
         seq.AppendInterval(_starPopDuration);
+
+        seq.AppendCallback(() => PlayStarPulse(clamped));
     }
+
 
     internal void Step_CoinCount(Sequence seq, int coin)
     {
@@ -206,15 +225,16 @@ public class RewardView : UIPopupBase
 
     internal void Step_MoneyFadeIn(Sequence seq)
     {
-        if (_moneyText == null) return;
+        if (_moneyGroup == null) return;
 
         seq.AppendCallback(() =>
         {
-            SetTextAlpha(_moneyText, 0f);
-            _moneyText.DOFade(1f, _fadeInDuration)
-                      .SetEase(Ease.InOutSine)
-                      .SetUpdate(true);
+            _moneyGroup.alpha = 0f;
+            _moneyGroup.DOFade(1f, _fadeInDuration)
+                       .SetEase(Ease.InOutSine)
+                       .SetUpdate(true);
         });
+
         seq.AppendInterval(_fadeInDuration);
     }
 
@@ -234,9 +254,27 @@ public class RewardView : UIPopupBase
         DOTween.Kill(t);
 
         Sequence pop = DOTween.Sequence().SetTarget(t).SetUpdate(true);
+
+        // 등장 애니메이션
         pop.Append(t.DOScale(_starOvershootScale, _starPopDuration * 0.55f).SetEase(Ease.OutBack));
         pop.Join(t.DOLocalRotate(Vector3.zero, _starPopDuration).SetEase(Ease.OutCubic));
         pop.Append(t.DOScale(1f, _starPopDuration * 0.45f).SetEase(Ease.OutCubic));
+    }
+
+    private void PlayStarPulse(int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            if (_stars[i] == null) continue;
+
+            Transform t = _stars[i].transform;
+            DOTween.Kill(t);
+            t.localScale = Vector3.one;
+            t.DOScale(_starPulseScale, _starPulseDuration)
+             .SetEase(Ease.InOutSine)
+             .SetLoops(-1, LoopType.Yoyo)
+             .SetUpdate(true);
+        }
     }
 
     private void ResetStars()
@@ -260,14 +298,6 @@ public class RewardView : UIPopupBase
 
     private string ToHex(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
 
-    private void SetTextAlpha(TextMeshProUGUI tmp, float alpha)
-    {
-        if (tmp == null) return;
-        Color c = tmp.color;
-        c.a = alpha;
-        tmp.color = c;
-    }
-
     private string BuildMoneyString(int defaultReward, int deltaReward)
     {
         string delta = deltaReward switch
@@ -280,4 +310,11 @@ public class RewardView : UIPopupBase
     }
 
     protected override void OnShow() { }
+
+    [ContextMenu("Test Sequence")]
+    private void TestSequence()
+    {
+        Show(() =>
+        PlayRewardSequence(3, 0.75f, 1234, 5, "Mission Complete! You earned a reward for your performance.", 1000, 234));
+    }
 }
