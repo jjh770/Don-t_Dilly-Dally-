@@ -102,12 +102,10 @@ namespace DontDillyDally.Data
 
             if (count == 0)
             {
-                return null;
+                return [];
             }
 
-            int[] result = new int[count];
-            System.Array.Copy(viewIds, result, count);
-            return result;
+            return viewIds[..count];
         }
 
         /// <summary>
@@ -156,12 +154,10 @@ namespace DontDillyDally.Data
 
             if (undestroyedCount == 0)
             {
-                return null;
+                return [];
             }
 
-            int[] result = new int[undestroyedCount];
-            System.Array.Copy(undestroyedViewIds, result, undestroyedCount);
-            return result;
+            return undestroyedViewIds[..undestroyedCount];
         }
 
         private Transform GetSlotTransform(int slotIndex)

@@ -31,6 +31,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     private HoldableItemNetworkSync _networkSync;
     private Transform _currentHoldPoint;
     private Transform _holdAnchor;
+    private Collider[] _allColliders;
 
     // 누가 들었는가 확인용
     private const int InvalidActorNumber = -1;
@@ -52,19 +53,19 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         if (_networkSync == null)
             _networkSync = gameObject.AddComponent<HoldableItemNetworkSync>();
 
-        RefreshHoldAnchor();
+        RefreshCachedComponents();
     }
 
     private void OnEnable()
     {
         if (_itemObject != null)
-            _itemObject.ModelRefreshed += RefreshHoldAnchor;
+            _itemObject.ModelRefreshed += RefreshCachedComponents;
     }
 
     private void OnDisable()
     {
         if (_itemObject != null)
-            _itemObject.ModelRefreshed -= RefreshHoldAnchor;
+            _itemObject.ModelRefreshed -= RefreshCachedComponents;
     }
 
     private void LateUpdate()
@@ -152,8 +153,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _rigidbody.isKinematic = true;
 
         // 자식 콜라이더 포함 모두 비활성화 (홀드포인트로 이동 시 충돌 방지)
-        Collider[] allColliders = GetComponentsInChildren<Collider>(true);
-        foreach (Collider col in allColliders)
+        foreach (Collider col in GetAllColliders())
         {
             col.enabled = false;
         }
@@ -242,14 +242,29 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         {
             // 루트 콜라이더뿐 아니라 자식 콜라이더도 모두 비활성화
             // (자식 콜라이더가 남아있으면 소유권 이전 대기 중 플레이어를 밀어냄)
-            Collider[] allColliders = GetComponentsInChildren<Collider>(true);
-            foreach (Collider col in allColliders)
+            foreach (Collider col in GetAllColliders())
             {
                 col.enabled = false;
             }
 
             _rigidbody.isKinematic = true;
         }
+    }
+
+    private void RefreshCachedComponents()
+    {
+        _allColliders = GetComponentsInChildren<Collider>(true);
+        RefreshHoldAnchor();
+    }
+
+    private Collider[] GetAllColliders()
+    {
+        if (_allColliders == null || _allColliders.Length == 0)
+        {
+            _allColliders = GetComponentsInChildren<Collider>(true);
+        }
+
+        return _allColliders;
     }
 
     public void RefreshHoldAnchor()
