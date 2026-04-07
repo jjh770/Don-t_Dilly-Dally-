@@ -198,13 +198,6 @@ public class StagePreloader : MonoBehaviour
         }
     }
 
-    private async UniTask<DiseaseData> GenerateSingleDisease(CancellationToken ct)
-    {
-            var result = await _diseaseGenManager.GenerateDisease(StageData.Settings.PatientSettings.Difficulty);
-        ct.ThrowIfCancellationRequested();
-        return result;
-    }
-
     private void CompleteRoleAssignment()
     {
         IsRoleAssignmentComplete = true;

@@ -166,23 +166,6 @@ public class CutsceneCharacterSlot : MonoBehaviour
         }
     }
 
-    // 플레이어 미할당 슬롯용: 기본 장착(Outfit, Gloves, Pants) + 기본 커스터마이징만 적용
-    public void ApplyDefaultAppearance()
-    {
-        var manager = CustomizingManager.Instance;
-        if (manager == null || !manager.IsInitialized)
-        {
-            Debug.LogWarning("[CutsceneCharacterSlot] CustomizingManager가 준비되지 않음 - 기본 외형 적용 실패");
-            return;
-        }
-
-        // 기본 장착 적용
-        ApplyBaseEquipment(manager);
-
-        // 각 카테고리의 기본 아이템 적용 (IsDefault 플래그 기준)
-        _view.ApplyAll(type => FindDefaultItem(manager, type));
-    }
-
     private CustomizingItemSO FindDefaultItem(CustomizingManager manager, CustomizingType type)
     {
         var items = manager.GetUnlockedItemsByType(type);
