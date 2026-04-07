@@ -73,6 +73,42 @@ namespace DontDillyDally.Data
         }
 
         /// <summary>
+        /// 현재 보관 중인 아이템들의 PhotonView ID 목록을 반환합니다.
+        /// 아이템이 없으면 null을 반환합니다.
+        /// </summary>
+        public int[] GetStoredItemViewIds()
+        {
+            if (_storedSlotItems == null)
+            {
+                return null;
+            }
+
+            int count = 0;
+            int[] viewIds = new int[MaxItemSlots];
+
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                if (_storedSlotItems[i] == null)
+                {
+                    continue;
+                }
+
+                PhotonView pv = _storedSlotItems[i].PhotonView;
+                if (pv != null)
+                {
+                    viewIds[count++] = pv.ViewID;
+                }
+            }
+
+            if (count == 0)
+            {
+                return [];
+            }
+
+            return viewIds[..count];
+        }
+
+        /// <summary>
         /// 보관 중인 아이템을 모두 정리합니다.
         /// 로컬에서 직접 회수하지 못한 아이템은 ViewID 목록으로 반환합니다.
         /// </summary>
@@ -100,7 +136,7 @@ namespace DontDillyDally.Data
                 // 보관 중이던 아이템을 먼저 트레이 계층에서 분리합니다.
                 storedItem.transform.SetParent(null, true);
 
-                PhotonView photonView = storedItem.GetComponent<PhotonView>();
+                PhotonView photonView = storedItem.PhotonView;
                 if (PhotonNetwork.InRoom && photonView != null)
                 {
                     if (ItemRecycleUtility.TryRecycle(storedItem))
@@ -118,12 +154,10 @@ namespace DontDillyDally.Data
 
             if (undestroyedCount == 0)
             {
-                return null;
+                return [];
             }
 
-            int[] result = new int[undestroyedCount];
-            System.Array.Copy(undestroyedViewIds, result, undestroyedCount);
-            return result;
+            return undestroyedViewIds[..undestroyedCount];
         }
 
         private Transform GetSlotTransform(int slotIndex)
@@ -189,7 +223,7 @@ namespace DontDillyDally.Data
             }
             itemObject.transform.localPosition = localPosition;
 
-            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.GetComponent<PhotonView>());
+            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.PhotonView);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace DontDillyDally.Data
                 return true;
             }
 
-            PhotonView photonView = itemObject.GetComponent<PhotonView>();
+            PhotonView photonView = itemObject.PhotonView;
             if (PhotonNetwork.InRoom)
             {
                 if (photonView == null)
