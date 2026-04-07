@@ -1,6 +1,7 @@
 ﻿using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -18,6 +19,7 @@ namespace DontDillyDally.StageFlow
 
         private UniTaskCompletionSource<EmergencyResumeResult> _emergencyResultTcs;
         private CancellationTokenSource _diagnosisOperateCts;
+        private int _currentEmergencyActorNumber = -1;
 
         public StageEmergencyCoordinator(
             StageFlowRpcHandler rpc,
@@ -86,6 +88,7 @@ namespace DontDillyDally.StageFlow
 
             _emergencyResultTcs?.TrySetCanceled();
             _emergencyResultTcs = new UniTaskCompletionSource<EmergencyResumeResult>();
+            _currentEmergencyActorNumber = -1;
 
             EventManager.Instance?.OnPatientCritical("긴급 처치가 필요합니다.");
             _rpc.BroadcastEmergency(
@@ -201,11 +204,16 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            DiseaseData disease = null;
+            StageFlowManager.Instance?.TryGetCurrentDisease(out disease);
+            Player player = ResolvePerformancePlayer(_currentEmergencyActorNumber);
+            StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.EmergencySuccess);
             CancelDiagnosisOperateTask();
             EmergencyResumeResult result = Controller.ResolveSuccess();
             _rpc?.BroadcastEmergencyEnd();
             _emergencyResultTcs?.TrySetResult(result);
             _emergencyResultTcs = null;
+            _currentEmergencyActorNumber = -1;
         }
 
         private void CompleteEmergencyFailure()
@@ -215,6 +223,10 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            DiseaseData disease = null;
+            StageFlowManager.Instance?.TryGetCurrentDisease(out disease);
+            Player player = ResolvePerformancePlayer(_currentEmergencyActorNumber);
+            StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.EmergencyFail);
             CancelDiagnosisOperateTask();
             float newHealth = _patientFlow != null ? _patientFlow.ApplyDamage(_emergencyFailPenalty) : 0f;
             Debug.Log($"[StageFlow] 긴급 이벤트 실패. 체력 -{_emergencyFailPenalty} | 현재 체력: {newHealth}");
@@ -222,6 +234,7 @@ namespace DontDillyDally.StageFlow
             _rpc?.BroadcastEmergencyEnd();
             _emergencyResultTcs?.TrySetResult(result);
             _emergencyResultTcs = null;
+            _currentEmergencyActorNumber = -1;
         }
 
         private void HandleEmergencyStartedReceived(
@@ -260,6 +273,7 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            _currentEmergencyActorNumber = submitterActorNumber;
             if (Controller.EvaluateEmergencyMaterialSubmission(materialType))
             {
                 Debug.Log($"[StageFlow] 긴급 재료 제출 성공: Actor {submitterActorNumber}");
@@ -283,6 +297,7 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            _currentEmergencyActorNumber = submitterActorNumber;
             EmergencyDiagnosisOperationResult result = Controller.TryBeginDiagnosisOperation(diagnosisType);
             switch (result)
             {
@@ -296,6 +311,27 @@ namespace DontDillyDally.StageFlow
                     CompleteEmergencyFailure();
                     break;
             }
+        }
+
+        private Player ResolvePerformancePlayer(int actorNumber)
+        {
+            if (PhotonServerManager.Instance != null &&
+                PhotonServerManager.Instance.TryGetPlayerByActorNumber(actorNumber, out Player player))
+            {
+                return player;
+            }
+
+            int surgeonActorNumber = StageFlowManager.Instance != null
+                ? StageFlowManager.Instance.SurgeonActorNumber.Value
+                : -1;
+
+            if (PhotonServerManager.Instance != null &&
+                PhotonServerManager.Instance.TryGetPlayerByActorNumber(surgeonActorNumber, out player))
+            {
+                return player;
+            }
+
+            return null;
         }
 
         // 진단 긴급 이벤트는 일정 시간 장비 작동 유지 후 성공 처리합니다.
