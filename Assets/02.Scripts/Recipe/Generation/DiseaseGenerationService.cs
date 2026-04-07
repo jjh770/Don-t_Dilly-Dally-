@@ -11,12 +11,12 @@ namespace DontDillyDally.Data
     {
         [Header("API 설정")]
         [SerializeField] private KeyConfig _apiKeyConfig;
-        [SerializeField] private string _model = "gemini-3-flash-preview";
+        [SerializeField] private string _model = "gemini-3.1-flash-lite-preview";
 
         [Header("요청 설정")]
         [SerializeField] private int _maxTokens = 4096;
         [SerializeField] private float _temperature = 0.85f;
-        [SerializeField] private float _timeout = 15f;
+        [SerializeField] private float _timeout = 30f;
 
         [Header("프롬프트")]
         [SerializeField] private TextAsset _systemPromptFile;
