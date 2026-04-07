@@ -15,18 +15,18 @@ public class RespawnManager : MonoBehaviour
     [SerializeField] private float _overlapCheckRadius = 1f;
     [SerializeField] private float _randomOffsetRange = 1.5f;
 
-    private PhotonView photonView;
-    private bool isRespawning;
+    private PhotonView _photonView;
+    private bool _isRespawning;
 
     private void Awake()
     {
-        photonView = GetComponent<PhotonView>();
+        _photonView = GetComponent<PhotonView>();
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (photonView != null && !photonView.IsMine) return;
-        if (isRespawning) return;
+        if (_photonView != null && !_photonView.IsMine) return;
+        if (_isRespawning) return;
 
         if (other.CompareTag(_boundaryTag))
         {
@@ -36,7 +36,7 @@ public class RespawnManager : MonoBehaviour
 
     private IEnumerator RespawnAfterDelay()
     {
-        isRespawning = true;
+        _isRespawning = true;
 
         yield return new WaitForSeconds(_respawnDelay);
 
@@ -47,7 +47,7 @@ public class RespawnManager : MonoBehaviour
             transform.rotation = respawnPoint.rotation;
         }
 
-        isRespawning = false;
+        _isRespawning = false;
     }
 
     private Transform GetRespawnPointByRole()
