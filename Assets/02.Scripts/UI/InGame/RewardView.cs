@@ -17,50 +17,58 @@ public class RewardView : UIPopupBase
     [Header("Stars")]
     [SerializeField] private GameObject[] _stars;
 
-    [Header("RewardAnimation")]
+    [Header("StarAnimation")]
     [SerializeField] private float _starRevealInterval = 0.18f;
     [SerializeField] private float _starPopDuration = 0.22f;
     [SerializeField] private float _starStartScale = 0.65f;
     [SerializeField] private float _starOvershootScale = 1.2f;
     [SerializeField] private float _startRotation = -12f;
-    [SerializeField] private float _starToRewardInterval = 0.5f;
-    [SerializeField] private float _returnWaitingRoomInterval = 1;
 
     [Header("Progress")]
     [SerializeField] private Slider _progressSlider;
     [SerializeField] private float _sliderDuration = 0.6f;
-    [SerializeField] private float _sliderToStarInterval = 0.3f;
 
 
+    [Header("Typing")]
+    [SerializeField] private float _typingCharInterval = 0.04f;
 
-    private string ToHex(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
 
-    private Sequence _starSequence;
+    [Header("FadeIn")]
+    [SerializeField] private float _fadeInDuration = 0.35f;
+
+
+    [SerializeField] private float _defaultInterval = 0.5f;
+    [SerializeField] private float _returnWaitingRoomInterval = 1;
+
+    private Sequence _rewardSequence;
 
     private RewardPresenter _presenter;
+
+    // ══════════════════════════════════════════════════════════════════
+    //  Unity Lifecycle
+    // ══════════════════════════════════════════════════════════════════
 
     protected override void Awake()
     {
         base.Awake();
-        _progressSlider.value = 0;
+        if (_progressSlider != null) _progressSlider.value = 0f;
         HideAllStars();
+        SetTextAlpha(_moneyText, 0f);
     }
 
-    private void OnEnable()
-    {
-        HideAllStars();
-    }
+    private void OnEnable() => HideAllStars();
 
     private void OnDisable()
     {
-        _starSequence?.Kill();
+        _rewardSequence?.Kill();
         ResetStars();
     }
 
-    public void SetPresenter(RewardPresenter presenter)
-    {
-        _presenter = presenter;
-    }
+    // ══════════════════════════════════════════════════════════════════
+    //  Public API
+    // ══════════════════════════════════════════════════════════════════
+
+    public void SetPresenter(RewardPresenter presenter) => _presenter = presenter;
 
     public void InitializeReward(int coin, int star)
     {
@@ -68,128 +76,208 @@ public class RewardView : UIPopupBase
         _star.SetValueImmediate(star);
     }
 
+    /// <summary>
+    /// 텍스트 내용만 세팅합니다. 애니메이션은 Builder로 제어합니다.
+    /// </summary>
     public void ApplyRewardText(string summary, int defaultReward, int deltaReward)
     {
-        _summaryText.text = summary;
+        _summaryText.text = "";
+        _summaryText.maxVisibleCharacters = 0;
 
-        string deltaRewardText = deltaReward.ToString();
+        SetTextAlpha(_moneyText, 0f);
+        _moneyText.text = BuildMoneyString(defaultReward, deltaReward);
 
-        if (deltaReward > 0)
-        {
-            deltaRewardText = $" (<color={ToHex(_plusColor)}>+{deltaReward}</color>)";
-        }
-        else if (deltaReward < 0)
-        {
-            deltaRewardText = $" (<color={ToHex(_minusColor)}>{deltaReward}</color>)";
-        }
-        else
-        {
-            deltaRewardText = ""; 
-        }
-
-        _moneyText.text = $"{defaultReward}{deltaRewardText}";
+        _pendingSummary = summary;
     }
 
-    public void PlayRewardSequence(int count, float ratio, int coin, int star)
+    public void PlayRewardSequence(int starCount, float sliderRatio, int coin, int star)
     {
-        _starSequence?.Kill();
+        CreateSequence()
+        .SliderFill(sliderRatio)
+        .Interval(_defaultInterval)
+        .StarReveal(starCount)
+        .Interval(_defaultInterval)
+        .SummaryTyping()
+        .Interval(_defaultInterval)
+        .MoneyFadeIn()
+        .Interval(_defaultInterval)
+        .CoinCount(coin)
+        .StarCount(star)
+        .Interval(_returnWaitingRoomInterval)
+        .OnComplete(() => _presenter?.ReturnWaitingRoom())
+        .Play();
+    }
+
+    /// <summary>
+    /// 애니메이션 시퀀스 빌더를 반환합니다.
+    /// </summary>
+    public RewardSequenceBuilder CreateSequence()
+    {
+        _rewardSequence?.Kill();
         HideAllStars();
-
-        int clampedCount = Mathf.Clamp(count, 0, _stars.Length);
-
-        _starSequence = DOTween.Sequence().SetUpdate(true);
-
-        // 슬라이더 채우기
-        if (_progressSlider != null)
-        {
-            _progressSlider.value = 0f;
-            _starSequence.Append(
-                DOTween.To(() => _progressSlider.value, x => _progressSlider.value = x, ratio, _sliderDuration)
-                    .SetEase(Ease.OutCubic)
-            );
-            _starSequence.AppendInterval(_sliderToStarInterval);
-        }
-
-        for (int i = 0; i < clampedCount; i++)
-        {
-            if (_stars[i] == null) continue;
-
-            int index = i;
-            _starSequence.AppendCallback(() => PlayStarReveal(_stars[index]));
-
-            if (i < clampedCount - 1)
-                _starSequence.AppendInterval(_starRevealInterval);
-        }
-
-        // 마지막 별 팝 애니메이션 끝날 때까지 대기
-        _starSequence.AppendInterval(_starPopDuration);
-
-        _starSequence.AppendInterval(_starToRewardInterval);
-
-        // 코인 카운팅
-        _starSequence.AppendCallback(() => _coin.SetValue(coin));
-
-        // 인터벌 후 별 카운팅
-        _starSequence.AppendInterval(_rewardUpdateInterval);
-        _starSequence.AppendCallback(() => _star.SetValue(star));
-        _starSequence.AppendInterval(_returnWaitingRoomInterval);
-        _starSequence.OnComplete(() => _presenter.ReturnWaitingRoom());
+        _rewardSequence = DOTween.Sequence().SetUpdate(true);
+        return new RewardSequenceBuilder(this, _rewardSequence);
     }
 
     public void HideAllStars()
     {
-        _starSequence?.Kill();
+        _rewardSequence?.Kill();
         ResetStars();
     }
 
-    private void PlayStarReveal(GameObject star)
+    // ══════════════════════════════════════════════════════════════════
+    //  Builder Steps (internal — Builder에서만 호출)
+    // ══════════════════════════════════════════════════════════════════
+
+    internal void Step_SliderFill(Sequence seq, float ratio)
     {
-        if (star == null)
+        if (_progressSlider == null) return;
+
+        _progressSlider.value = 0f;
+        seq.Append(
+            DOTween.To(
+                () => _progressSlider.value,
+                x => _progressSlider.value = x,
+                ratio,
+                _sliderDuration
+            ).SetEase(Ease.OutCubic)
+        );
+    }
+
+    internal void Step_StarReveal(Sequence seq, int count)
+    {
+        int clamped = Mathf.Clamp(count, 0, _stars.Length);
+
+        for (int i = 0; i < clamped; i++)
         {
-            return;
+            if (_stars[i] == null) continue;
+
+            int index = i;
+            seq.AppendCallback(() => PlayStarReveal(_stars[index]));
+
+            if (i < clamped - 1)
+                seq.AppendInterval(_starRevealInterval);
         }
 
-        Transform starTransform = star.transform;
+        seq.AppendInterval(_starPopDuration);
+    }
+
+    internal void Step_CoinCount(Sequence seq, int coin)
+    {
+        seq.AppendCallback(() => _coin.SetValue(coin));
+        seq.AppendInterval(_rewardUpdateInterval);
+    }
+
+    internal void Step_StarCount(Sequence seq, int star)
+    {
+        seq.AppendCallback(() => _star.SetValue(star));
+        seq.AppendInterval(_rewardUpdateInterval);
+    }
+
+    internal void Step_SummaryTyping(Sequence seq)
+    {
+        if (_summaryText == null) return;
+
+        string fullText = _pendingSummary;
+
+        seq.AppendCallback(() =>
+        {
+            _summaryText.text = fullText;
+            _summaryText.maxVisibleCharacters = 0;
+            _summaryText.ForceMeshUpdate();
+
+            int total = _summaryText.textInfo.characterCount;
+
+            DOTween.To(
+                    () => _summaryText.maxVisibleCharacters,
+                    x => _summaryText.maxVisibleCharacters = x,
+                    total,
+                    total * _typingCharInterval
+                )
+                .SetEase(Ease.Linear)
+                .SetUpdate(true)
+                .OnComplete(() => _summaryText.maxVisibleCharacters = int.MaxValue);
+        });
+
+        // 타이핑 완료까지 시퀀스 대기
+        float typingDuration = _pendingSummary.Length * _typingCharInterval;
+        seq.AppendInterval(typingDuration);
+    }
+
+    internal void Step_MoneyFadeIn(Sequence seq)
+    {
+        if (_moneyText == null) return;
+
+        seq.AppendCallback(() =>
+        {
+            SetTextAlpha(_moneyText, 0f);
+            _moneyText.DOFade(1f, _fadeInDuration)
+                      .SetEase(Ease.InOutSine)
+                      .SetUpdate(true);
+        });
+        seq.AppendInterval(_fadeInDuration);
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    //  Star Helpers
+    // ══════════════════════════════════════════════════════════════════
+
+    private void PlayStarReveal(GameObject star)
+    {
+        if (star == null) return;
+
+        Transform t = star.transform;
         star.SetActive(true);
+        t.localScale = Vector3.one * _starStartScale;
+        t.localRotation = Quaternion.Euler(0f, 0f, _startRotation);
 
-        starTransform.localScale = Vector3.one * _starStartScale;
-        starTransform.localRotation = Quaternion.Euler(0f, 0f, _startRotation);
+        DOTween.Kill(t);
 
-        DOTween.Kill(starTransform);
-
-        Sequence popSequence = DOTween.Sequence().SetTarget(starTransform).SetUpdate(true);
-        popSequence.Append(starTransform.DOScale(_starOvershootScale, _starPopDuration * 0.55f).SetEase(Ease.OutBack));
-        popSequence.Join(starTransform.DOLocalRotate(Vector3.zero, _starPopDuration).SetEase(Ease.OutCubic));
-        popSequence.Append(starTransform.DOScale(1f, _starPopDuration * 0.45f).SetEase(Ease.OutCubic));
+        Sequence pop = DOTween.Sequence().SetTarget(t).SetUpdate(true);
+        pop.Append(t.DOScale(_starOvershootScale, _starPopDuration * 0.55f).SetEase(Ease.OutBack));
+        pop.Join(t.DOLocalRotate(Vector3.zero, _starPopDuration).SetEase(Ease.OutCubic));
+        pop.Append(t.DOScale(1f, _starPopDuration * 0.45f).SetEase(Ease.OutCubic));
     }
 
     private void ResetStars()
     {
         foreach (GameObject star in _stars)
         {
-            if (star == null)
-            {
-                continue;
-            }
-
-            Transform starTransform = star.transform;
-            DOTween.Kill(starTransform);
-            starTransform.localScale = Vector3.one;
-            starTransform.localRotation = Quaternion.identity;
+            if (star == null) continue;
+            Transform t = star.transform;
+            DOTween.Kill(t);
+            t.localScale = Vector3.one;
+            t.localRotation = Quaternion.identity;
             star.SetActive(false);
         }
     }
 
-    [ContextMenu("Debug/Show")]
-    private void DebugShow()
+    // ══════════════════════════════════════════════════════════════════
+    //  Helpers
+    // ══════════════════════════════════════════════════════════════════
+
+    private string _pendingSummary = "";
+
+    private string ToHex(Color color) => $"#{ColorUtility.ToHtmlStringRGB(color)}";
+
+    private void SetTextAlpha(TextMeshProUGUI tmp, float alpha)
     {
-        Show(() => PlayRewardSequence(10, 1, 10, 3));
-        
+        if (tmp == null) return;
+        Color c = tmp.color;
+        c.a = alpha;
+        tmp.color = c;
     }
 
-
-    protected override void OnShow()
+    private string BuildMoneyString(int defaultReward, int deltaReward)
     {
-        
+        string delta = deltaReward switch
+        {
+            > 0 => $" (<color={ToHex(_plusColor)}>+{deltaReward}</color>)",
+            < 0 => $" (<color={ToHex(_minusColor)}>{deltaReward}</color>)",
+            _ => ""
+        };
+        return $"{defaultReward}{delta}";
     }
+
+    protected override void OnShow() { }
 }
