@@ -102,7 +102,7 @@ namespace DontDillyDally.Data
 
             if (count == 0)
             {
-                return [];
+                return System.Array.Empty<int>();
             }
 
             return viewIds[..count];
@@ -154,7 +154,7 @@ namespace DontDillyDally.Data
 
             if (undestroyedCount == 0)
             {
-                return [];
+                return System.Array.Empty<int>();
             }
 
             return undestroyedViewIds[..undestroyedCount];
