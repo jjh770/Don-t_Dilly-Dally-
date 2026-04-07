@@ -73,7 +73,7 @@ namespace DontDillyDally.Data
         {
             ResetTrayData(isSterilized);
 
-            PhotonView photonView = GetComponent<PhotonView>();
+            PhotonView photonView = PhotonView;
             if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
             {
                 return;
@@ -85,16 +85,47 @@ namespace DontDillyDally.Data
         public void ClearContentsAndSync()
         {
             bool isSterilized = IsSterilizedTray;
+
+            // 트레이 Destroy 이벤트보다 먼저 도착하도록
+            // 다른 클라이언트에서 자식 아이템을 분리합니다.
+            int[] storedViewIds = Slots?.GetStoredItemViewIds();
+            if (storedViewIds != null && storedViewIds.Length > 0 && PhotonNetwork.InRoom)
+            {
+                PhotonView pv = PhotonView;
+                if (pv != null)
+                {
+                    pv.RPC(nameof(RPC_DetachStoredItems), RpcTarget.Others, storedViewIds);
+                }
+            }
+
             int[] undestroyedViewIds = Slots?.ClearStoredItems();
             ResetTrayDataAndSync(isSterilized);
 
             // 로컬에서 직접 회수하지 못한 아이템은 마스터에게 정리를 요청합니다.
             if (undestroyedViewIds != null && undestroyedViewIds.Length > 0 && PhotonNetwork.InRoom)
             {
-                PhotonView pv = GetComponent<PhotonView>();
+                PhotonView pv = PhotonView;
                 if (pv != null)
                 {
                     pv.RPC(nameof(RPC_RequestDestroyItems), RpcTarget.MasterClient, undestroyedViewIds);
+                }
+            }
+        }
+
+        [PunRPC]
+        private void RPC_DetachStoredItems(int[] viewIds)
+        {
+            if (viewIds == null)
+            {
+                return;
+            }
+
+            foreach (int viewId in viewIds)
+            {
+                PhotonView itemPV = PhotonView.Find(viewId);
+                if (itemPV != null)
+                {
+                    itemPV.transform.SetParent(null, true);
                 }
             }
         }
@@ -139,7 +170,7 @@ namespace DontDillyDally.Data
         {
             SetTrayKind(trayKind);
 
-            PhotonView photonView = GetComponent<PhotonView>();
+            PhotonView photonView = PhotonView;
             if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
             {
                 return;

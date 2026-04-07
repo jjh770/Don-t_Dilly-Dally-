@@ -45,6 +45,9 @@ public class PatientEntranceDirector : MonoBehaviour
         }
 
         CacheFinalPose();
+
+        // Hide bed until the entrance animation begins.
+        SetBedActive(false);
     }
 
     private void Start()
@@ -94,10 +97,11 @@ public class PatientEntranceDirector : MonoBehaviour
 
         EStagePhase currentPhase = _stageFlowManager.CurrentPhase.Value;
 
-        // Already past countdown: snap to final position.
+        // Already past countdown: snap to final position and show immediately.
         if (currentPhase >= EStagePhase.Playing)
         {
             _hasPlayed = true;
+            SetBedActive(true);
             SnapBedToFinalPose();
             return;
         }
@@ -128,10 +132,12 @@ public class PatientEntranceDirector : MonoBehaviour
         if (entrance == null)
         {
             Debug.LogWarning("[PatientEntranceDirector] No valid entrance found. Snapping to final position.");
+            SetBedActive(true);
             SnapBedToFinalPose();
             return;
         }
 
+        SetBedActive(true);
         _activeEntrance = entrance;
         _activeEntrance.Play(_bedTransform, _finalPosition, _finalRotation);
     }
@@ -176,6 +182,19 @@ public class PatientEntranceDirector : MonoBehaviour
         _bedTransform.rotation = _finalRotation;
     }
 
+    private void SetBedActive(bool active)
+    {
+        if (_bedTransform == null)
+        {
+            return;
+        }
+
+        if (_bedTransform.gameObject.activeSelf != active)
+        {
+            _bedTransform.gameObject.SetActive(active);
+        }
+    }
+
     // ── Debug Mode ───────────────────────────────────────────────
 
     private void StartDebugMode()
@@ -217,6 +236,7 @@ public class PatientEntranceDirector : MonoBehaviour
 
         ForceCompleteIfNeeded();
 
+        SetBedActive(true);
         _activeEntrance = _entrances[index];
         _activeEntrance.Play(_bedTransform, _finalPosition, _finalRotation);
 
