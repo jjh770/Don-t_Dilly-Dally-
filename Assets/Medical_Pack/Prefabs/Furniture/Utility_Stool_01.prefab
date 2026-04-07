@@ -172,6 +172,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Utility_Stool_01
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 7335625a49558304eaddcc1ba29dc558, type: 3}
+      propertyPath: m_Layer
+      value: 6
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
@@ -191,6 +195,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7335625a49558304eaddcc1ba29dc558, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1455834009641890225}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 7335625a49558304eaddcc1ba29dc558, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4763394879985986822}
   m_SourcePrefab: {fileID: 100100000, guid: 7335625a49558304eaddcc1ba29dc558, type: 3}
 --- !u!1 &5134553297133182934 stripped
 GameObject:
@@ -262,6 +269,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbenchInteractable
   _trayWorkbench: {fileID: 5302383649963144443}
   _traySlotPoint: {fileID: 7758053519564320495}
+--- !u!114 &4763394879985986822
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5134553297133182934}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonView
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!4 &5479272889286870380 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 7335625a49558304eaddcc1ba29dc558, type: 3}
