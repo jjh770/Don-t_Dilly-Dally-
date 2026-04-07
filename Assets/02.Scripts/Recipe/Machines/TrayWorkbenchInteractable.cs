@@ -317,7 +317,7 @@ namespace DontDillyDally.Data
 
             trayItem.transform.SetParent(_traySlotPoint, true);
 
-            NetworkItemOwnership.ReturnOwnershipToMaster(trayItem.GetComponent<PhotonView>());
+            NetworkItemOwnership.ReturnOwnershipToMaster(trayItem.PhotonView);
         }
 
         private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)
@@ -358,8 +358,7 @@ namespace DontDillyDally.Data
                 return -1;
             }
 
-            PhotonView pv = itemObject.GetComponent<PhotonView>();
-            return pv != null ? pv.ViewID : -1;
+            return itemObject.ViewId;
         }
         #endregion
     }
