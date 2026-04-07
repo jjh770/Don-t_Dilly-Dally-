@@ -33,21 +33,21 @@ namespace DontDillyDally.MiniGame
         [Tooltip("Idle ↔ Pressed 전환 간격(초)")]
         [SerializeField, Range(0.05f, 2f)] private float _hintInterval = 0.45f;
 
-        [Header("충격 흔들림 연출 (DOTween)")]
-        [Tooltip("스페이스바 입력에 맞춰 충격을 받을 RectTransform (비워두면 흔들림 비활성화). 미니게임 패널 루트를 지정하세요.")]
+        [Header("충격 펀치 연출 (DOTween PunchScale)")]
+        [Tooltip("스페이스바 입력에 맞춰 찌그러질 RectTransform (비워두면 연출 비활성화). 미니게임 패널 루트를 지정하세요.")]
         [SerializeField] private RectTransform _shakeRoot;
-        [Tooltip("한 번 누를 때 추가되는 충격 강도")]
-        [SerializeField, Range(0f, 50f)] private float _shakeKick = 6f;
-        [Tooltip("충격 강도 최댓값 (빠르게 연타해도 이 이상은 안 흔들림)")]
-        [SerializeField, Range(0f, 100f)] private float _shakeMaxStrength = 25f;
-        [Tooltip("충격 강도가 초당 감쇠되는 양 (클수록 빨리 잦아듦)")]
-        [SerializeField, Range(1f, 80f)] private float _shakeDecayPerSecond = 35f;
-        [Tooltip("한 번의 충격 지속 시간")]
-        [SerializeField, Range(0.05f, 1f)] private float _shakeDuration = 0.25f;
-        [Tooltip("Shake Vibrato (진동 횟수) — 클수록 파형이 조밀")]
-        [SerializeField, Range(4, 60)] private int _shakeVibrato = 18;
-        [Tooltip("Shake Randomness (방향 무작위성, 도) — 90이면 원형 충격 느낌")]
-        [SerializeField, Range(0f, 180f)] private float _shakeRandomness = 90f;
+        [Tooltip("한 번 누를 때 추가되는 펀치 강도 (축소 비율). 0.05면 5% 줄어듦")]
+        [SerializeField, Range(0f, 0.5f)] private float _punchKick = 0.05f;
+        [Tooltip("펀치 강도 최댓값 (빠르게 연타해도 이 이상은 안 찌그러짐)")]
+        [SerializeField, Range(0f, 1f)] private float _punchMaxStrength = 0.2f;
+        [Tooltip("펀치 강도가 초당 감쇠되는 양 (클수록 빨리 잦아듦)")]
+        [SerializeField, Range(0.05f, 2f)] private float _punchDecayPerSecond = 0.4f;
+        [Tooltip("한 번의 펀치 지속 시간")]
+        [SerializeField, Range(0.05f, 1f)] private float _punchDuration = 0.2f;
+        [Tooltip("Vibrato — 1이면 축소 후 원래 크기로 한 번만 복귀, 크면 튕기는 느낌")]
+        [SerializeField, Range(1, 10)] private int _punchVibrato = 1;
+        [Tooltip("Elasticity — 반대 방향으로 얼마나 튕길지 (0이면 튕기지 않고 원래 크기로만 복귀)")]
+        [SerializeField, Range(0f, 1f)] private float _punchElasticity = 0f;
 
         [Header("공통 결과 연출")]
         [SerializeField] private MiniGameResultEffect _resultEffect;
@@ -56,8 +56,8 @@ namespace DontDillyDally.MiniGame
         private float _hintTimer;
         private bool _hintShowPressed;
 
-        // 흔들림 상태
-        private Vector2 _shakeOriginalAnchoredPos;
+        // 펀치 상태
+        private Vector3 _shakeOriginalScale;
         private bool _shakeOriginCaptured;
         private float _shakeStrength;
         private Tween _shakeTween;
@@ -152,10 +152,10 @@ namespace DontDillyDally.MiniGame
                 SetSpaceBarHint(_hintShowPressed);
             }
 
-            // 충격 강도 감쇠 (연타가 멈추면 점점 잦아듦)
+            // 펀치 강도 감쇠 (연타가 멈추면 점점 잦아듦)
             if (_shakeStrength > 0f)
             {
-                _shakeStrength = Mathf.Max(0f, _shakeStrength - _shakeDecayPerSecond * Time.deltaTime);
+                _shakeStrength = Mathf.Max(0f, _shakeStrength - _punchDecayPerSecond * Time.deltaTime);
             }
         }
 
@@ -195,8 +195,8 @@ namespace DontDillyDally.MiniGame
             }
         }
 
-        // 스페이스바가 눌릴 때마다 원형 충격 shake를 새로 실행한다.
-        // 빠르게 연타하면 강도가 누적되어 더 격한 충격, 천천히 누르면 사이에 감쇠되어 약한 충격이 찍힌다.
+        // 스페이스바가 눌릴 때마다 UI를 살짝 줄였다가 원래 크기로 복귀시키는 펀치 연출을 실행한다.
+        // 빠르게 연타하면 강도가 누적되어 더 크게 찌그러지고, 천천히 누르면 감쇠되어 약하게만 찌그러진다.
         private void HandlePressed()
         {
             if (_shakeRoot == null)
@@ -205,23 +205,23 @@ namespace DontDillyDally.MiniGame
             }
 
             // 강도 누적 (최대치 캡)
-            _shakeStrength = Mathf.Min(_shakeMaxStrength, _shakeStrength + _shakeKick);
+            _shakeStrength = Mathf.Min(_punchMaxStrength, _shakeStrength + _punchKick);
 
-            // 이전 shake tween을 정리하고 원위치에서 다시 시작 (어긋남 방지)
+            // 이전 tween을 정리하고 원래 크기에서 다시 시작 (어긋남 방지)
             KillShakeTween();
+            if (_shakeOriginCaptured)
+            {
+                _shakeRoot.localScale = _shakeOriginalScale;
+            }
 
-            // DOShakeAnchorPos: UGUI용 원형 충격 흔들림. randomness=90 → 모든 방향으로 튐.
+            // 축소 방향(-)으로 punch → 끝나면 원래 크기로 복귀
+            Vector3 punch = -Vector3.one * _shakeStrength;
+
             _shakeTween = _shakeRoot
-                .DOShakeAnchorPos(
-                    duration: _shakeDuration,
-                    strength: _shakeStrength,
-                    vibrato: _shakeVibrato,
-                    randomness: _shakeRandomness,
-                    snapping: false,
-                    fadeOut: true)
+                .DOPunchScale(punch, _punchDuration, _punchVibrato, _punchElasticity)
                 .SetUpdate(true)
-                .OnKill(() => { if (_shakeOriginCaptured && _shakeRoot != null) _shakeRoot.anchoredPosition = _shakeOriginalAnchoredPos; })
-                .OnComplete(() => { if (_shakeOriginCaptured && _shakeRoot != null) _shakeRoot.anchoredPosition = _shakeOriginalAnchoredPos; });
+                .OnKill(() => { if (_shakeOriginCaptured && _shakeRoot != null) _shakeRoot.localScale = _shakeOriginalScale; })
+                .OnComplete(() => { if (_shakeOriginCaptured && _shakeRoot != null) _shakeRoot.localScale = _shakeOriginalScale; });
         }
 
         private void CaptureShakeOriginIfNeeded()
@@ -231,7 +231,7 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            _shakeOriginalAnchoredPos = _shakeRoot.anchoredPosition;
+            _shakeOriginalScale = _shakeRoot.localScale;
             _shakeOriginCaptured = true;
         }
 
@@ -256,7 +256,7 @@ namespace DontDillyDally.MiniGame
 
             if (_shakeRoot != null && _shakeOriginCaptured)
             {
-                _shakeRoot.anchoredPosition = _shakeOriginalAnchoredPos;
+                _shakeRoot.localScale = _shakeOriginalScale;
             }
         }
 
