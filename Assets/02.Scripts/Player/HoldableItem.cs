@@ -259,7 +259,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     private Collider[] GetAllColliders()
     {
-        if (_allColliders == null || _allColliders.Length == 0)
+        if (_allColliders == null)
         {
             _allColliders = GetComponentsInChildren<Collider>(true);
         }
