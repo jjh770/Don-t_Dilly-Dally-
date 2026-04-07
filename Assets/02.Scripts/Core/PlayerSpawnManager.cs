@@ -1,3 +1,4 @@
+using DontDillyDally.StageFlow;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
@@ -21,13 +22,8 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     [Header("Spawn Mode")]
     [SerializeField] private bool _useSpawnArrange;
-
-    [Header("Point Spawn")]
-    [SerializeField] private Transform[] _spawnPoints;
-    [SerializeField] private Transform _surgeonSpawnPoint;
-
-    [Header("Area Spawn")]
-    [SerializeField] private Collider _spawnArrange;
+    [Tooltip("UseSpawnArrange 모드에서 사용할 스폰 영역 (로비 등)")]
+    [SerializeField] private Collider _spawnArea;
 
     [Header("Player")]
     [SerializeField] private GameObject _playerPrefab;
@@ -197,13 +193,13 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private void SpawnFromArrange()
     {
-        if (_spawnArrange == null)
+        if (_spawnArea == null)
         {
-            Debug.LogWarning("[PlayerSpawnManager] 스폰 영역 콜라이더가 할당되지 않았습니다.");
+            Debug.LogWarning("[PlayerSpawnManager] 스폰 영역 콜라이더가 설정되지 않았습니다.");
             return;
         }
 
-        SpawnAtPosition(GetRandomPointInSpawnArrange());
+        SpawnAtPosition(GetRandomPointInSpawnArrange(_spawnArea));
     }
 
     private void SpawnAtIndex(bool useSurgeonSpawnPoint, int spawnIndex)
@@ -248,9 +244,9 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
         PlayerProperty.SetReadyState(false);
     }
 
-    private Vector3 GetRandomPointInSpawnArrange()
+    private Vector3 GetRandomPointInSpawnArrange(Collider spawnArrange)
     {
-        Bounds bounds = _spawnArrange.bounds;
+        Bounds bounds = spawnArrange.bounds;
 
         float randomX = UnityEngine.Random.Range(bounds.min.x, bounds.max.x);
         float randomZ = UnityEngine.Random.Range(bounds.min.z, bounds.max.z);
@@ -260,7 +256,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private bool IsSpawnRoleResolved()
     {
-        if (_surgeonSpawnPoint == null)
+        if (StageSceneConfig.Instance?.SurgeonSpawnPoint == null)
         {
             return true;
         }
@@ -271,7 +267,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private bool ShouldUseSurgeonSpawnPoint(int actorNumber)
     {
-        if (_surgeonSpawnPoint == null)
+        if (StageSceneConfig.Instance?.SurgeonSpawnPoint == null)
         {
             return false;
         }
@@ -301,12 +297,18 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     private Transform[] GetTargetSpawnPoints(bool useSurgeonSpawnPoint)
     {
-        if (useSurgeonSpawnPoint && _surgeonSpawnPoint != null)
+        if (StageSceneConfig.Instance == null)
         {
-            return new[] { _surgeonSpawnPoint };
+            Debug.LogError("[PlayerSpawnManager] StageSceneConfig 인스턴스가 없습니다.");
+            return null;
         }
 
-        return _spawnPoints;
+        if (useSurgeonSpawnPoint && StageSceneConfig.Instance.SurgeonSpawnPoint != null)
+        {
+            return new[] { StageSceneConfig.Instance.SurgeonSpawnPoint };
+        }
+
+        return StageSceneConfig.Instance.AssistantSpawnPoints;
     }
 
     private bool IsSpawnPointAvailable(bool useSurgeonSpawnPoint, int index)

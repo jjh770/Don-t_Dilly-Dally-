@@ -1,13 +1,10 @@
 using UnityEngine;
 using System.Collections;
 using Photon.Pun;
+using DontDillyDally.StageFlow;
 
 public class RespawnManager : MonoBehaviour
 {
-    [Header("리스폰 포인트")]
-    [SerializeField] private Transform _surgeonRespawnPoint;
-    [SerializeField] private Transform[] _assistantRespawnPoints;
-
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;
     [SerializeField] private string _boundaryTag = "Boundary";
@@ -52,32 +49,14 @@ public class RespawnManager : MonoBehaviour
 
     private Transform GetRespawnPointByRole()
     {
+        if (StageSceneConfig.Instance == null)
+        {
+            Debug.LogWarning("[RespawnManager] StageSceneConfig 인스턴스가 없습니다.");
+            return null;
+        }
+
         RoleType role = RoleProperties.GetPlayerRole(PhotonNetwork.LocalPlayer);
-
-        if (role == RoleType.Surgeon && _surgeonRespawnPoint != null)
-        {
-            return _surgeonRespawnPoint;
-        }
-
-        if (_assistantRespawnPoints != null && _assistantRespawnPoints.Length > 0)
-        {
-            return GetAvailableRespawnPoint(_assistantRespawnPoints);
-        }
-
-        return null;
-    }
-
-    private Transform GetAvailableRespawnPoint(Transform[] points)
-    {
-        foreach (Transform point in points)
-        {
-            if (!IsPointOccupied(point.position))
-            {
-                return point;
-            }
-        }
-
-        return points[Random.Range(0, points.Length)];
+        return StageSceneConfig.Instance.GetAvailableRespawnPoint(role, IsPointOccupied);
     }
 
     private bool IsPointOccupied(Vector3 position)
