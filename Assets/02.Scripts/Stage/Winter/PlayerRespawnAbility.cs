@@ -3,7 +3,7 @@ using System.Collections;
 using Photon.Pun;
 using DontDillyDally.StageFlow;
 
-public class RespawnAbility : MonoBehaviour
+public class PlayerRespawnAbility : MonoBehaviour
 {
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;

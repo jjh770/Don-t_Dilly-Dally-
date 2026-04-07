@@ -329,6 +329,7 @@ GameObject:
   - component: {fileID: 358850869462854782}
   - component: {fileID: -4021102608603386144}
   - component: {fileID: -2700233301973076585}
+  - component: {fileID: -919700509073650265}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -828,6 +829,20 @@ MonoBehaviour:
   _overlapCheckRadius: 1
   _randomOffsetRange: 1.5
   _sinkForce: 5
+--- !u!114 &-919700509073650265
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6536501996314029870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 74ea5acfbfa75724bbbc08df76c3ddb4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerBoundaryAbility
+  _camera: {fileID: 0}
+  _margin: 0.05
 --- !u!1 &8082944421811993182
 GameObject:
   m_ObjectHideFlags: 0
