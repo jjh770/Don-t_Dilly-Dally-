@@ -79,11 +79,13 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     public override void OnEnable()
     {
+        base.OnEnable();
         SubscribeToRoleAssignment();
     }
 
     public override void OnDisable()
     {
+        base.OnDisable();
         UnsubscribeFromRoleAssignment();
     }
 
