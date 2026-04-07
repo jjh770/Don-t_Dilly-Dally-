@@ -26,9 +26,15 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public RoomCurrency Coin => _roomWallet != null ? _roomWallet.Coin : RoomCurrency.Default(ERoomCurrencyType.Coin);
     public StageStars GetStageStars(string stageId) => _roomWallet != null ? _roomWallet.GetStageStars(stageId) : StageStars.Default;
     public int SelectedStageIndex => _selectedStageIndex;
+
     public IReadOnlyList<StageDefinitionSO> StageDefinitions => _stageCatalog != null ? _stageCatalog.StageDefinitions : Array.Empty<StageDefinitionSO>();
     public HospitalLevelDefinitionSO CurrentLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value) : null;
     public HospitalLevelDefinitionSO NextLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetNextLevel(_roomWallet.HospitalLevel.Value) : null;
+
+    public ESceneType CurrentStageSceneType =>
+    _stageCatalog.TryGetStageDefinition(_selectedStageIndex, out StageDefinitionSO stageDefinition)
+        ? stageDefinition.SceneType
+        : ESceneType.Gameplay;
 
     public event Action<int, int> OnRoomDataChanged;
     public event Action OnRoomDataLoaded;
