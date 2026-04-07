@@ -109,9 +109,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
     {
         _loadingProgress = 0f;
 
-        string sceneName = _nextSceneData.SceneName;
-
-        sceneName = overrideSceneName ?? _nextSceneData.SceneName;
+        string sceneName = overrideSceneName ?? _nextSceneData.SceneName;
 
         ESceneLoadMode loadMode = _nextSceneData.SceneLoadMode;
 
