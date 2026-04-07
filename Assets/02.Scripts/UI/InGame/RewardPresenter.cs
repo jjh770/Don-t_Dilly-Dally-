@@ -26,7 +26,7 @@ public class RewardPresenter
     {
         _view.Show(() =>
         { 
-            //_view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
+            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star, reward.SummaryText, reward.Money - reward.MoneyDelta, reward.MoneyDelta );
         });
     }
 

@@ -110,9 +110,9 @@ public class RewardView : UIPopupBase
 
         CreateSequence()
         .SliderFill(sliderRatio)
-        .Interval(_defaultInterval)
+        .Interval(sliderRatio > 0? _defaultInterval : 0)
         .StarReveal(starCount)
-        .Interval(_defaultInterval)
+        .Interval(starCount > 0? _defaultInterval : 0)
         .SummaryTyping()
         .Interval(_defaultInterval)
         .MoneyFadeIn()
