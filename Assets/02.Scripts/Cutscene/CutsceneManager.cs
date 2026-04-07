@@ -108,14 +108,7 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
         // 3. 할당된 슬롯에 커스터마이징 병렬 적용 (타임아웃 포함)
         await ApplyAllCustomizingAsync(ct);
 
-        // 4. 미할당 슬롯에 기본 외형 적용
-        foreach (var slot in _characterSlots)
-        {
-            if (!slot.IsAssigned)
-            {
-                slot.ApplyDefaultAppearance();
-            }
-        }
+        // 4. 미할당 슬롯은 이미 비활성 처리됨 (접속하지 않은 캐릭터 숨김)
 
         // 5. 질병/음성 데이터 사전 생성 시작 (MasterClient - 컷씬과 병렬)
         if (PhotonNetwork.IsMasterClient)
@@ -255,10 +248,10 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
             slotIndex++;
         }
 
-        // 나머지 슬롯: 미할당이지만 활성 유지 (기본 외형 표시용)
+        // 나머지 슬롯: 미할당 → 비활성 (접속하지 않은 캐릭터는 숨김)
         for (int i = slotIndex; i < _characterSlots.Length; i++)
         {
-            _characterSlots[i].SetVisible(true);
+            _characterSlots[i].SetVisible(false);
         }
     }
 
@@ -273,7 +266,7 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
             }
             else
             {
-                _characterSlots[i].SetVisible(true);
+                _characterSlots[i].SetVisible(false);
             }
         }
     }

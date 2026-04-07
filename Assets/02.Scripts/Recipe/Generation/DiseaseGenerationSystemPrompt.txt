@@ -4,29 +4,34 @@
 [출력 규칙]
 - 반드시 순수한 JSON만 출력하세요. 마크다운 코드 블록(```)이나 설명 텍스트를 절대 포함하지 마세요.
 - 아래 JSON 스키마를 정확히 따르세요.
+- 요청된 환자 수만큼 diseases 배열에 환자를 생성하세요.
 
 [JSON 스키마]
 {
-  "diseaseId": "AI_001",
-  "diseaseName": "질병 이름",
-  "description": "질병에 대한 의학적 설명 (1~2문장)",
-  "patientName": "환자 이름 (한국 이름, 재미있는 말장난)",
-  "backstory": "환자가 이 병에 걸린 웃긴 사연 (1~2문장)",
-  "patientQuote": "환자의 한마디 (웃기고 독특한 대사)",
-  "category": "카테고리",
-  "difficulty": 1,
-  "timeLimitSec": 120.0,
-  "recommendedPlayers": 2,
-  "successLine": "치료 성공 시 환자 대사",
-  "failLine": "치료 실패 시 환자 대사",
-  "failHealthPenalty": 10.0,
-  "recipes": [
+  "diseases": [
     {
-      "recipeId": "AI_001_step_01",
-      "displayName": "단계 표시 이름",
-      "requiredMaterials": ["재료이름"],
-      "order": 0,
-      "requiresSterilizedTray": true
+      "diseaseId": "AI_001_01",
+      "diseaseName": "질병 이름",
+      "description": "질병에 대한 의학적 설명 (1~2문장)",
+      "patientName": "환자 이름 (한국 이름, 재미있는 말장난)",
+      "backstory": "환자가 이 병에 걸린 웃긴 사연 (1~2문장)",
+      "patientQuote": "환자의 한마디 (웃기고 독특한 대사)",
+      "category": "카테고리",
+      "difficulty": 1,
+      "timeLimitSec": 120.0,
+      "recommendedPlayers": 2,
+      "successLine": "치료 성공 시 환자 대사",
+      "failLine": "치료 실패 시 환자 대사",
+      "failHealthPenalty": 10.0,
+      "recipes": [
+        {
+          "recipeId": "AI_001_01_step_01",
+          "displayName": "단계 표시 이름",
+          "requiredMaterials": ["재료이름"],
+          "order": 0,
+          "requiresSterilizedTray": true
+        }
+      ]
     }
   ]
 }
@@ -41,13 +46,19 @@ SterilizedScalpelGreen, SterilizedScalpelGray, SterilizedPincetteCurved, Sterili
 SedativeSyringe, Defibrillator, BloodPack
 
 [레시피 규칙 - 반드시 지키세요]
-1. 레시피는 4개 또는 5개여야 합니다.
+1. 각 환자의 레시피는 4개 또는 5개여야 합니다.
 2. 첫 번째 레시피(order: 0)는 반드시 requiredMaterials가 ["AnestheticSyringe"] 하나만 있어야 하고, requiresSterilizedTray는 true여야 합니다.
 3. 나머지 레시피(order: 1 이상)는 각각 requiredMaterials가 2개~4개여야 합니다.
 4. 모든 레시피의 requiresSterilizedTray는 true입니다.
 5. 각 레시피의 order는 0부터 순서대로 증가해야 합니다.
 6. recipeId는 "{diseaseId}_step_{순번(01부터)}" 형식입니다.
 7. 같은 재료를 한 레시피 안에 중복 사용하지 마세요.
+
+[다건 생성 규칙]
+1. diseases 배열에 요청된 수만큼 환자를 생성하세요.
+2. 각 환자의 diseaseId는 고유해야 합니다. 형식: "{baseId}_{순번(01부터)}"
+3. 환자 간 질병 이름과 환자 이름이 중복되면 안 됩니다.
+4. 각 환자는 서로 다른 질병이어야 합니다.
 
 [난이도별 설정]
 - 난이도 1~2: 레시피 4개, timeLimitSec 120~160, recommendedPlayers 2, failHealthPenalty 10~15
