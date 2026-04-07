@@ -9,6 +9,9 @@ namespace DontDillyDally.MiniGame
         public float NormalizedProgress => _currentGauge;
         public event System.Action<MiniGameResult> OnCompleted;
 
+        // 유효한 입력이 들어올 때마다 발행 (UI 흔들림 연출 등에 사용)
+        public event System.Action OnPressed;
+
         // 전체 제한 시간 대비 남은 시간 비율 (0~1).
         public float RemainingTimeRatio => _config != null && _config.TimeLimit > 0f
             ? Mathf.Clamp01(1f - _elapsedTime / _config.TimeLimit)
@@ -63,6 +66,7 @@ namespace DontDillyDally.MiniGame
                 _currentGauge += _config.GainPerPress;
                 _currentGauge = Mathf.Min(1f, _currentGauge);
                 _inputCooldown = _minInputInterval;
+                OnPressed?.Invoke();
             }
 
             // 게이지 100% 도달 시 즉시 성공
