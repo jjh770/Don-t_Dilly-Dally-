@@ -73,6 +73,44 @@ namespace DontDillyDally.Data
         }
 
         /// <summary>
+        /// 현재 보관 중인 아이템들의 PhotonView ID 목록을 반환합니다.
+        /// 아이템이 없으면 null을 반환합니다.
+        /// </summary>
+        public int[] GetStoredItemViewIds()
+        {
+            if (_storedSlotItems == null)
+            {
+                return null;
+            }
+
+            int count = 0;
+            int[] viewIds = new int[MaxItemSlots];
+
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                if (_storedSlotItems[i] == null)
+                {
+                    continue;
+                }
+
+                PhotonView pv = _storedSlotItems[i].GetComponent<PhotonView>();
+                if (pv != null)
+                {
+                    viewIds[count++] = pv.ViewID;
+                }
+            }
+
+            if (count == 0)
+            {
+                return null;
+            }
+
+            int[] result = new int[count];
+            System.Array.Copy(viewIds, result, count);
+            return result;
+        }
+
+        /// <summary>
         /// 보관 중인 아이템을 모두 정리합니다.
         /// 로컬에서 직접 회수하지 못한 아이템은 ViewID 목록으로 반환합니다.
         /// </summary>

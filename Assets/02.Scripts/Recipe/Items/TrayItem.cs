@@ -85,6 +85,19 @@ namespace DontDillyDally.Data
         public void ClearContentsAndSync()
         {
             bool isSterilized = IsSterilizedTray;
+
+            // 트레이 Destroy 이벤트보다 먼저 도착하도록
+            // 다른 클라이언트에서 자식 아이템을 분리합니다.
+            int[] storedViewIds = Slots?.GetStoredItemViewIds();
+            if (storedViewIds != null && storedViewIds.Length > 0 && PhotonNetwork.InRoom)
+            {
+                PhotonView pv = GetComponent<PhotonView>();
+                if (pv != null)
+                {
+                    pv.RPC(nameof(RPC_DetachStoredItems), RpcTarget.Others, storedViewIds);
+                }
+            }
+
             int[] undestroyedViewIds = Slots?.ClearStoredItems();
             ResetTrayDataAndSync(isSterilized);
 
@@ -95,6 +108,24 @@ namespace DontDillyDally.Data
                 if (pv != null)
                 {
                     pv.RPC(nameof(RPC_RequestDestroyItems), RpcTarget.MasterClient, undestroyedViewIds);
+                }
+            }
+        }
+
+        [PunRPC]
+        private void RPC_DetachStoredItems(int[] viewIds)
+        {
+            if (viewIds == null)
+            {
+                return;
+            }
+
+            foreach (int viewId in viewIds)
+            {
+                PhotonView itemPV = PhotonView.Find(viewId);
+                if (itemPV != null)
+                {
+                    itemPV.transform.SetParent(null, true);
                 }
             }
         }
