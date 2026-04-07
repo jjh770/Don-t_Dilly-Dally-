@@ -6,9 +6,9 @@ public class CameraShakeManager : MonoBehaviour
 
     [SerializeField] private float shakeFrequency = 25f;
 
-    private Transform cameraTransform;
-    private Vector3 originalLocalPos;
-    private float currentIntensity;
+    private Transform _cameraTransform;
+    private Vector3 _originalLocalPos;
+    private float _currentIntensity;
 
     private void Awake()
     {
@@ -27,43 +27,43 @@ public class CameraShakeManager : MonoBehaviour
     {
         if (Camera.main != null)
         {
-            cameraTransform = Camera.main.transform;
-            originalLocalPos = cameraTransform.localPosition;
+            _cameraTransform = Camera.main.transform;
+            _originalLocalPos = _cameraTransform.localPosition;
         }
     }
 
     private void LateUpdate()
     {
-        if (cameraTransform == null) return;
+        if (_cameraTransform == null) return;
 
-        if (currentIntensity > 0.001f)
+        if (_currentIntensity > 0.001f)
         {
             float shakeX = (Mathf.PerlinNoise(Time.time * shakeFrequency, 0f) * 2f - 1f);
             float shakeY = (Mathf.PerlinNoise(0f, Time.time * shakeFrequency) * 2f - 1f);
 
-            Vector3 shakeOffset = new Vector3(shakeX, shakeY, 0f) * currentIntensity;
-            cameraTransform.localPosition = originalLocalPos + shakeOffset;
+            Vector3 shakeOffset = new Vector3(shakeX, shakeY, 0f) * _currentIntensity;
+            _cameraTransform.localPosition = _originalLocalPos + shakeOffset;
         }
         else
         {
-            cameraTransform.localPosition = originalLocalPos;
+            _cameraTransform.localPosition = _originalLocalPos;
         }
 
         // 매 프레임 리셋 (외부에서 계속 SetIntensity 호출해야 유지됨)
-        currentIntensity = 0f;
+        _currentIntensity = 0f;
     }
 
     public void SetIntensity(float intensity)
     {
         // 가장 강한 쉐이크 유지
-        currentIntensity = Mathf.Max(currentIntensity, intensity);
+        _currentIntensity = Mathf.Max(_currentIntensity, intensity);
     }
 
     public void UpdateOriginalPosition()
     {
-        if (cameraTransform != null)
+        if (_cameraTransform != null)
         {
-            originalLocalPos = cameraTransform.localPosition;
+            _originalLocalPos = _cameraTransform.localPosition;
         }
     }
 }
