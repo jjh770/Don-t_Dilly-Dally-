@@ -3,7 +3,7 @@ using System.Collections;
 using Photon.Pun;
 using DontDillyDally.StageFlow;
 
-public class RespawnManager : MonoBehaviour
+public class RespawnAbility : MonoBehaviour
 {
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;
@@ -102,7 +102,7 @@ public class RespawnManager : MonoBehaviour
     {
         if (StageSceneConfig.Instance == null)
         {
-            Debug.LogWarning("[RespawnManager] StageSceneConfig 인스턴스가 없습니다.");
+            Debug.LogWarning("[RespawnAbility] StageSceneConfig 인스턴스가 없습니다.");
             return null;
         }
 
