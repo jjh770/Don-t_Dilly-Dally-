@@ -7,11 +7,10 @@ namespace DontDillyDally.StageFlow
     public class PatientInteractable : MonoBehaviour, IInteractable, IItemAcceptor
     {
         [Header("환자 설정")]
-        [SerializeField] private int _patientIndex;
-        [SerializeField] private bool _allowOnlyCurrentPatient = true;
         [SerializeField] private bool _surgeonOnly = true;
 
-        public int PatientIndex => _patientIndex;
+        public int PatientIndex =>
+            StageFlowManager.Instance != null ? StageFlowManager.Instance.CurrentPatientIndex.Value : 0;
         public bool IsInteracting => false;
         public Transform Transform => transform;
 
@@ -29,12 +28,6 @@ namespace DontDillyDally.StageFlow
             }
 
             if (_surgeonOnly && !stageFlowManager.IsLocalSurgeon)
-            {
-                return;
-            }
-
-            if (_allowOnlyCurrentPatient &&
-                stageFlowManager.CurrentPatientIndex.Value != _patientIndex)
             {
                 return;
             }
@@ -109,10 +102,6 @@ namespace DontDillyDally.StageFlow
                 return false;
 
             if (_surgeonOnly && !stageFlowManager.IsLocalSurgeon)
-                return false;
-
-            if (_allowOnlyCurrentPatient &&
-                stageFlowManager.CurrentPatientIndex.Value != _patientIndex)
                 return false;
 
             if (stageFlowManager.IsEmergencyActive &&
