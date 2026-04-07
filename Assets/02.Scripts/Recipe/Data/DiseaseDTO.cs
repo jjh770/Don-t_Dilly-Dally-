@@ -51,4 +51,14 @@ namespace DontDillyDally.Data
     {
         public List<DiseaseDTO> diseases;
     }
+
+    // AI 다건 생성 응답용 래퍼입니다.
+    // 폴백 래퍼와 동일한 구조이지만 용도가 다르므로 별도 타입으로 분리합니다.
+    //
+    // [명명 규칙 예외] JsonUtility 직렬화를 위해 camelCase 필드명을 사용합니다.
+    [Serializable]
+    public class GeneratedDiseaseCollection
+    {
+        public List<DiseaseDTO> diseases;
+    }
 }

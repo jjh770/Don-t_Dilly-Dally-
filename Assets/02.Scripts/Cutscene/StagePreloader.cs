@@ -18,9 +18,12 @@ public class StagePreloader : MonoBehaviour
     [Header("병 정보 생성")]
     [SerializeField] private DiseaseGenerationManager _diseaseGenManager;
 
-    [Header("생성 타임아웃")]
+    [Header("생성 설정")]
     [Tooltip("이 시간(초) 내에 생성이 끝나지 않으면 나머지는 폴백 데이터로 채웁니다.")]
     [SerializeField] private float _totalGenerationTimeoutSec = 25f;
+
+    [Tooltip("한 번의 API 호출로 생성할 최대 환자 수입니다.")]
+    [SerializeField] private int _batchSize = 4;
 
     public StageRuntimeData StageData { get; private set; }
     public int SurgeonActorNumber { get; private set; } = -1;
@@ -123,31 +126,43 @@ public class StagePreloader : MonoBehaviour
     {
         try
         {
-            // 1. 질병 데이터 순차 생성 (429 방지)
+            // 1. 질병 데이터 배치 생성 (429 방지 — 3명씩 묶어서 API 호출)
             int patientCount = StageData.Settings.PatientSettings.PatientCount;
-            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {patientCount}명)");
+            int difficulty = StageData.Settings.PatientSettings.Difficulty;
+            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {patientCount}명, 배치 크기 {_batchSize})");
             StageData.Patients.Clear();
 
             float startTime = Time.realtimeSinceStartup;
+            int batchIndex = 0;
 
-            for (int i = 0; i < patientCount; i++)
+            while (StageData.Patients.Count < patientCount)
             {
                 ct.ThrowIfCancellationRequested();
 
                 float elapsed = Time.realtimeSinceStartup - startTime;
                 if (elapsed >= _totalGenerationTimeoutSec)
                 {
-                    Debug.LogWarning($"[StagePreloader] 타임아웃 ({_totalGenerationTimeoutSec}초) — 나머지 {patientCount - i}명은 폴백 사용");
+                    Debug.LogWarning($"[StagePreloader] 타임아웃 ({_totalGenerationTimeoutSec}초) — 나머지 {patientCount - StageData.Patients.Count}명은 폴백 사용");
                     break;
                 }
 
-                // 두 번째 환자부터 API 요청 간격 확보 (429 방지)
-                if (i > 0)
+                // 두 번째 배치부터 API 요청 간격 확보 (429 방지)
+                if (batchIndex > 0)
                     await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct);
 
-                DiseaseData disease = await GenerateSingleDisease(ct);
-                StageData.Patients.Add(disease);
-                Debug.Log($"[StagePreloader] 환자 {i + 1}/{patientCount} 생성 완료: {disease.DiseaseName} (출처: {disease.Source})");
+                int remaining = patientCount - StageData.Patients.Count;
+                int requestCount = Mathf.Min(_batchSize, remaining);
+
+                Debug.Log($"[StagePreloader] 배치 {batchIndex + 1}: {requestCount}명 생성 요청...");
+                List<DiseaseData> batchResults = await _diseaseGenManager.GenerateDiseases(requestCount, difficulty);
+
+                for (int i = 0; i < batchResults.Count; i++)
+                {
+                    StageData.Patients.Add(batchResults[i]);
+                    Debug.Log($"[StagePreloader] 환자 {StageData.Patients.Count}/{patientCount} 생성 완료: {batchResults[i].DiseaseName} (출처: {batchResults[i].Source})");
+                }
+
+                batchIndex++;
             }
 
             // 부족분 폴백으로 채우기

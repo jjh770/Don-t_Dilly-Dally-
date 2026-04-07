@@ -134,17 +134,29 @@ public class CutsceneCharacterSlot : MonoBehaviour
         // 기본 장착 적용 (Outfit, Gloves, Pants)
         ApplyBaseEquipment(manager);
 
-        // 커스터마이징 데이터가 없으면 기본 장착만으로 종료
-        if (itemIds == null || itemIds.Count == 0) return;
-
         // 커스터마이징 아이템 비동기 적용
+        // Photon에 저장된 아이템이 있으면 그 아이템을, 없으면 해당 타입의 Default 아이템을 적용
+        // (ParrelSync 클론 등 커스터마이징 데이터가 비어있는 경우 Body/Face/Hair 누락 방지)
         var tasks = new List<UniTask>();
-        foreach (var kvp in itemIds)
+        foreach (CustomizingType type in Enum.GetValues(typeof(CustomizingType)))
         {
-            var item = manager.GetItemById(kvp.Value);
+            if (type == CustomizingType.None) continue;
+
+            CustomizingItemSO item = null;
+            if (itemIds != null && itemIds.TryGetValue(type, out var itemId))
+            {
+                item = manager.GetItemById(itemId);
+            }
+
+            // 저장된 아이템이 없거나 조회 실패 시 Default 아이템 폴백
+            if (item == null)
+            {
+                item = FindDefaultItem(manager, type);
+            }
+
             if (item != null)
             {
-                tasks.Add(_view.ApplyItemAsync(kvp.Key, item));
+                tasks.Add(_view.ApplyItemAsync(type, item));
             }
         }
 
