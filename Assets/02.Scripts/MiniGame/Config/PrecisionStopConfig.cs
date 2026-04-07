@@ -5,13 +5,19 @@ namespace DontDillyDally.MiniGame
     [CreateAssetMenu(menuName = "DontDillyDally/MiniGame/PrecisionStopConfig")]
     public sealed class PrecisionStopConfig : MiniGameConfig
     {
+        // 목표 구간 너비의 절대 한계값 (0~1 정규화 기준).
+        // Inspector Range slider 및 런타임 클램프에서 공통으로 사용.
+        // Range attribute는 컴파일 타임 상수가 필요해 const로 선언.
+        public const float MinTargetZoneWidth = 0.03f;
+        public const float MaxTargetZoneWidth = 0.6f;
+
         [Header("순발력 정지 설정")]
         [Tooltip("시도 횟수 (라운드)")]
         [Range(1, 10)]
         public int RoundCount = 3;
 
         [Tooltip("목표 구간의 너비 (0~1 기준). 작을수록 어려움")]
-        [Range(0.03f, 0.6f)]
+        [Range(MinTargetZoneWidth, MaxTargetZoneWidth)]
         public float TargetZoneWidth = 0.15f;
 
         [Tooltip("화살표 이동 속도 (0~1 기준 초당 이동량)")]

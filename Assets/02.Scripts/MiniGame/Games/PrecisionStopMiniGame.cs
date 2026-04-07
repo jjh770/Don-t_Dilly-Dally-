@@ -143,7 +143,7 @@ namespace DontDillyDally.MiniGame
                 _currentSpeed *= _config.SpeedMultiplierPerRound;
                 _currentTargetZoneWidth = Mathf.Max(
                     _currentTargetZoneWidth * _config.TargetZoneMultiplierPerRound,
-                    0.03f);
+                    PrecisionStopConfig.MinTargetZoneWidth);
             }
         }
 
