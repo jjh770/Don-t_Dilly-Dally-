@@ -1,3 +1,4 @@
+using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -26,6 +27,7 @@ namespace DontDillyDally.Data
         public BoxCollider TargetBoxCollider;
 
         protected GameObject CurrentModelInstance;
+        private PhotonView _photonView;
         private NetworkItemOwnership _networkItemOwnership;
         private NetworkItemState _networkItemState;
         private int _currentAssignedLayer = InvalidLayer;
@@ -34,12 +36,16 @@ namespace DontDillyDally.Data
         public event System.Action ModelRefreshed;
 
         public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
+        public PhotonView PhotonView => _photonView != null ? _photonView : _photonView = GetComponent<PhotonView>();
+        public int ViewId => PhotonView != null ? PhotonView.ViewID : -1;
+        public bool HasPhotonView => PhotonView != null;
         public NetworkItemOwnership NetworkOwnership => _networkItemOwnership;
         public NetworkItemState NetworkState => _networkItemState;
         public bool IsPendingRecycle => _isPendingRecycle;
 
         protected virtual void Awake()
         {
+            _photonView = GetComponent<PhotonView>();
             ResetRecycleState();
 
             if (ModelPrefab != null)

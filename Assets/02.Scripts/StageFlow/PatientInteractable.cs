@@ -50,11 +50,7 @@ namespace DontDillyDally.StageFlow
                     return;
                 }
 
-                int itemViewId = -1;
-                if (materialItem.TryGetComponent(out Photon.Pun.PhotonView itemView))
-                {
-                    itemViewId = itemView.ViewID;
-                }
+                int itemViewId = materialItem.ViewId;
 
                 if (!stageFlowManager.RequestEmergencyMaterialSubmission(materialItem.MaterialType, itemViewId))
                 {
@@ -77,11 +73,7 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            int trayViewId = -1;
-            if (trayItem.TryGetComponent(out Photon.Pun.PhotonView trayView))
-            {
-                trayViewId = trayView.ViewID;
-            }
+            int trayViewId = trayItem.ViewId;
 
             if (!stageFlowManager.RequestTraySubmission(traySnapshot, trayViewId))
             {

@@ -93,7 +93,7 @@ namespace DontDillyDally.Data
                     continue;
                 }
 
-                PhotonView pv = _storedSlotItems[i].GetComponent<PhotonView>();
+                PhotonView pv = _storedSlotItems[i].PhotonView;
                 if (pv != null)
                 {
                     viewIds[count++] = pv.ViewID;
@@ -138,7 +138,7 @@ namespace DontDillyDally.Data
                 // 보관 중이던 아이템을 먼저 트레이 계층에서 분리합니다.
                 storedItem.transform.SetParent(null, true);
 
-                PhotonView photonView = storedItem.GetComponent<PhotonView>();
+                PhotonView photonView = storedItem.PhotonView;
                 if (PhotonNetwork.InRoom && photonView != null)
                 {
                     if (ItemRecycleUtility.TryRecycle(storedItem))
@@ -227,7 +227,7 @@ namespace DontDillyDally.Data
             }
             itemObject.transform.localPosition = localPosition;
 
-            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.GetComponent<PhotonView>());
+            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.PhotonView);
         }
     }
 }

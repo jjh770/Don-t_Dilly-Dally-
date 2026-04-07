@@ -73,7 +73,7 @@ namespace DontDillyDally.Data
         {
             ResetTrayData(isSterilized);
 
-            PhotonView photonView = GetComponent<PhotonView>();
+            PhotonView photonView = PhotonView;
             if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
             {
                 return;
@@ -91,7 +91,7 @@ namespace DontDillyDally.Data
             int[] storedViewIds = Slots?.GetStoredItemViewIds();
             if (storedViewIds != null && storedViewIds.Length > 0 && PhotonNetwork.InRoom)
             {
-                PhotonView pv = GetComponent<PhotonView>();
+                PhotonView pv = PhotonView;
                 if (pv != null)
                 {
                     pv.RPC(nameof(RPC_DetachStoredItems), RpcTarget.Others, storedViewIds);
@@ -104,7 +104,7 @@ namespace DontDillyDally.Data
             // 로컬에서 직접 회수하지 못한 아이템은 마스터에게 정리를 요청합니다.
             if (undestroyedViewIds != null && undestroyedViewIds.Length > 0 && PhotonNetwork.InRoom)
             {
-                PhotonView pv = GetComponent<PhotonView>();
+                PhotonView pv = PhotonView;
                 if (pv != null)
                 {
                     pv.RPC(nameof(RPC_RequestDestroyItems), RpcTarget.MasterClient, undestroyedViewIds);
@@ -170,7 +170,7 @@ namespace DontDillyDally.Data
         {
             SetTrayKind(trayKind);
 
-            PhotonView photonView = GetComponent<PhotonView>();
+            PhotonView photonView = PhotonView;
             if (photonView == null || !PhotonNetwork.InRoom || !photonView.IsMine)
             {
                 return;
