@@ -17,12 +17,28 @@ public class ScreenFadeController : MonoBehaviour
     private Color _originalSkyColor;
     private Color _originalEquatorColor;
     private PlayerSpotLightController _activeSpotLight;
+    private PhotonView _photonView;
+    private Coroutine _blackoutCoroutine;
+
+    private void Awake()
+    {
+        _photonView = GetComponent<PhotonView>();
+        if (_photonView == null)
+        {
+            _photonView = gameObject.AddComponent<PhotonView>();
+        }
+    }
 
     private void Start()
     {
         _originalSkyColor = RenderSettings.ambientSkyColor;
         _originalEquatorColor = RenderSettings.ambientEquatorColor;
-        StartCoroutine(BlackoutCycle());
+
+        // 마스터 클라이언트만 블랙아웃 사이클 관리
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StartCoroutine(BlackoutCycle());
+        }
     }
 
     private IEnumerator BlackoutCycle()
@@ -31,10 +47,35 @@ public class ScreenFadeController : MonoBehaviour
         {
             float waitTime = Random.Range(_minInterval, _maxInterval);
             yield return new WaitForSeconds(waitTime);
-            yield return StartCoroutine(FadeToBlack());
+
+            // 모든 클라이언트에 블랙아웃 시작 알림
+            _photonView.RPC(nameof(RPC_StartBlackout), RpcTarget.All);
+
             yield return new WaitForSeconds(_blackoutDuration);
-            yield return StartCoroutine(FadeToNormal());
+
+            // 모든 클라이언트에 블랙아웃 종료 알림
+            _photonView.RPC(nameof(RPC_EndBlackout), RpcTarget.All);
         }
+    }
+
+    [PunRPC]
+    private void RPC_StartBlackout()
+    {
+        if (_blackoutCoroutine != null)
+        {
+            StopCoroutine(_blackoutCoroutine);
+        }
+        _blackoutCoroutine = StartCoroutine(FadeToBlack());
+    }
+
+    [PunRPC]
+    private void RPC_EndBlackout()
+    {
+        if (_blackoutCoroutine != null)
+        {
+            StopCoroutine(_blackoutCoroutine);
+        }
+        _blackoutCoroutine = StartCoroutine(FadeToNormal());
     }
 
     private IEnumerator FadeToBlack()
