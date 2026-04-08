@@ -281,8 +281,7 @@ public class CutsceneManager : MonoBehaviourPunCallbacks
                 return;
             }
 
-            ESceneType gameSceneType = RoomDataManager.Instance.CurrentStageSceneType;
-            SceneLoadManager.Instance.BeginSceneLoad(gameSceneType);
+            SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Gameplay);
         }
         else
         {

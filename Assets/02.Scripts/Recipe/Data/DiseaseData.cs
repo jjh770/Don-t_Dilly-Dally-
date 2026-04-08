@@ -14,6 +14,9 @@ namespace DontDillyDally.Data
         public const int MaxRecipeCount = 5;
 
         [Header("질병 정보")]
+        [Tooltip("이 질병이 속한 스테이지 ID")]
+        public string StageId;
+
         [Tooltip("질병을 식별하는 고유 ID")]
         [FormerlySerializedAs("diseaseId")]
         public string DiseaseId;
