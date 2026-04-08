@@ -14,9 +14,6 @@ namespace DontDillyDally.StageFlow
     {
         private const float StageFlowManagerWaitTimeoutSec = 5f;
 
-        [Header("스테이지 설정")]
-        [SerializeField] private int _stageIndex;
-
         private StageRuntimeData _stageData;
         private GameObject _stagePrefab;
 
@@ -68,10 +65,21 @@ namespace DontDillyDally.StageFlow
 
         private async UniTaskVoid InitializeGameplay()
         {
-            // 마스터만 컷씬 중 생성한 데이터 준비 완료를 기다립니다.
-            if (PhotonNetwork.IsMasterClient && StagePreloader.Instance != null)
+            
+            if (PhotonNetwork.IsMasterClient)
             {
-                await StagePreloader.Instance.WaitForDataPrep(destroyCancellationToken);
+                if (_stagePrefab == null)
+                {
+                    Debug.LogError("[StageFlowBootstrapper] Stage Prefab이 설정되지 않았습니다.");
+                    return;
+                }
+
+                // 마스터만 컷씬 중 생성한 데이터 준비 완료를 기다립니다.
+                if (StagePreloader.Instance != null)
+                {
+                    PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
+                    await StagePreloader.Instance.WaitForDataPrep(destroyCancellationToken);
+                }        
             }
 
             float deadline = Time.unscaledTime + StageFlowManagerWaitTimeoutSec;
@@ -87,14 +95,6 @@ namespace DontDillyDally.StageFlow
                 Debug.LogError("[StageFlowBootstrapper] Gameplay 씬에서 StageFlowManager 인스턴스가 준비되지 않았습니다.");
                 return;
             }
-
-            if (_stagePrefab == null)
-            {
-                Debug.LogError("[StageFlowBootstrapper] Stage Prefab이 설정되지 않았습니다.");
-                return;
-            }
-
-            PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
 
             StageFlowManager.Instance.Initialize(_stageData);
             StagePreloader.Instance?.Cleanup();
