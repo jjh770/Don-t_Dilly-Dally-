@@ -55,7 +55,8 @@ namespace DontDillyDally.StageFlow
 
         private void HandleSceneLoadComplete(ESceneType sceneType)
         {
-            if (IsStageScene(sceneType))
+            Debug.Log(sceneType);
+            if (sceneType == ESceneType.Gameplay)
             {
                 InitializeGameplay().Forget();
             }
@@ -63,11 +64,6 @@ namespace DontDillyDally.StageFlow
             {
                 Cleanup();
             }
-        }
-
-        private static bool IsStageScene(ESceneType sceneType)
-        {
-            return sceneType >= ESceneType.Stage1 && sceneType <= ESceneType.Stage4;
         }
 
         private async UniTaskVoid InitializeGameplay()
