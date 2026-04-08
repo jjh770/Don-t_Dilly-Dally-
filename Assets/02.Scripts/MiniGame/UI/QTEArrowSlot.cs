@@ -24,8 +24,10 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private Color _failedColor = new Color(1f, 0f, 0f, 1f);
 
         [Header("DOTween 설정")]
-        [SerializeField] private float _punchScale = 0.3f;
-        [SerializeField] private float _punchDuration = 0.25f;
+        [Tooltip("정답 시 슬롯 최대 확대 비율 (0.8이면 원래 크기의 180%까지)")]
+        [SerializeField] private float _punchScale = 0.8f;
+        [Tooltip("정답 펀치 전체 지속 시간 (초)")]
+        [SerializeField] private float _punchDuration = 0.4f;
         [SerializeField] private float _shakeStrength = 8f;
         [SerializeField] private float _shakeDuration = 0.3f;
         [SerializeField] private float _pulseDuration = 0.5f;
@@ -35,6 +37,8 @@ namespace DontDillyDally.MiniGame
         private Tween _fadeTween;
         private ESlotState _state;
         private Vector3 _originalScale;
+
+        public ESlotState State => _state;
 
         private void Awake()
         {
@@ -103,11 +107,32 @@ namespace DontDillyDally.MiniGame
 
         public void PlayClearEffect()
         {
+            // 펄스/이전 스케일 트윈을 완전히 정리하고 원래 크기로 강제 복구
+            // (호버링 펄스가 켜져 있어도 간섭 없이 딱! 펀치가 되도록)
             StopPulse();
-            _arrowImage.color = _clearedColor;
+            DOTween.Kill(transform);
             transform.localScale = _originalScale;
-            transform.DOPunchScale(Vector3.one * _punchScale, _punchDuration, 6, 0.5f)
-                .SetUpdate(true);
+
+            _arrowImage.color = _clearedColor;
+
+            // 명시적 스케일 시퀀스: 빠르게 커졌다가 원래 크기로 복귀.
+            Vector3 peakScale = _originalScale * (1f + _punchScale);
+            float upDuration = _punchDuration * 0.35f;
+            float downDuration = _punchDuration * 0.65f;
+
+            Sequence seq = DOTween.Sequence().SetUpdate(true);
+            seq.Append(transform.DOScale(peakScale, upDuration).SetEase(Ease.OutBack));
+            seq.Append(transform.DOScale(_originalScale, downDuration).SetEase(Ease.InOutQuad));
+
+            // 펀치가 내려오는 동안 빠르게 투명화 → 슬라이드 구간이 거의 안 보이게.
+            // Join은 직전 Append와 동시에 시작되도록 함.
+            if (_canvasGroup != null)
+            {
+                seq.Join(_canvasGroup.DOFade(0f, downDuration * 0.7f).SetEase(Ease.OutQuad));
+            }
+
+            seq.OnKill(() => { if (this != null) transform.localScale = _originalScale; });
+            seq.OnComplete(() => { if (this != null) transform.localScale = _originalScale; });
         }
 
         public void PlayFailEffect()
