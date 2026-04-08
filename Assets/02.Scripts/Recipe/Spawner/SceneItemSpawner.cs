@@ -44,6 +44,12 @@ namespace DontDillyDally.Data
             TrySubscribe();
         }
 
+        private void Update()
+        {
+            if (!_isSubscribed)
+                TrySubscribe();
+        }
+
         public override void OnEnable()
         {
             TrySubscribe();
@@ -65,6 +71,9 @@ namespace DontDillyDally.Data
 
             StageFlowManager.Instance.OnStageDataChanged += HandleStageDataChanged;
             _isSubscribed = true;
+
+            if (StageFlowManager.Instance.CurrentStageData != null)
+                HandleStageDataChanged(StageFlowManager.Instance.CurrentStageData);
         }
 
         private void HandleStageDataChanged(StageRuntimeData stageData)
