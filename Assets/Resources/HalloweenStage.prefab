@@ -2309,18 +2309,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: gravestone_010
       objectReference: {fileID: 0}
-    - target: {fileID: 1165324287247855933, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
-      propertyPath: m_Layer
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 1510107684517033538, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
-      propertyPath: m_Convex
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1510107684517033538, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
-      propertyPath: m_Enabled
-      value: 0
-      objectReference: {fileID: 0}
     - target: {fileID: 1974759095550045063, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -2364,58 +2352,13 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 1165324287247855933, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1790630603020045012}
-    - targetCorrespondingSourceObject: {fileID: 1165324287247855933, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 8543833952956716640}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
 --- !u!4 &1229304707953949089 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1974759095550045063, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
   m_PrefabInstance: {fileID: 750024096442749478}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1892794642802352923 stripped
-GameObject:
-  m_CorrespondingSourceObject: {fileID: 1165324287247855933, guid: 5da8be27d5a2b7d47b11715696ff5585, type: 3}
-  m_PrefabInstance: {fileID: 750024096442749478}
-  m_PrefabAsset: {fileID: 0}
---- !u!114 &1790630603020045012
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1892794642802352923}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59c41580550f5bc498df557b520e4e1c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.StageFlow.PatientInteractable
-  _surgeonOnly: 1
---- !u!65 &8543833952956716640
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1892794642802352923}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.2628127, y: 0.63572407, z: 2.5293758}
-  m_Center: {x: -0.00027832395, y: 0.3178618, z: -0.00028091675}
 --- !u!1001 &757881695745496296
 PrefabInstance:
   m_ObjectHideFlags: 0
