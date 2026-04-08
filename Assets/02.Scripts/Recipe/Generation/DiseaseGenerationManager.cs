@@ -222,14 +222,18 @@ namespace DontDillyDally.Data
             {
                 Debug.Log($"[DiseaseGenerationManager] AI 응답 JSON:\n{json}");
 
-                DiseaseDTO dto = JsonUtility.FromJson<DiseaseDTO>(json);
-                if (dto == null)
+                // 시스템 프롬프트가 항상 {"diseases": [...]} 형식을 반환하도록 지시하므로
+                // 단일 생성이라도 배치 래퍼로 파싱한 뒤 첫 요소를 사용한다.
+                GeneratedDiseaseCollection collection =
+                    JsonUtility.FromJson<GeneratedDiseaseCollection>(json);
+
+                if (collection?.diseases == null || collection.diseases.Count == 0)
                 {
-                    Debug.LogWarning("[DiseaseGenerationManager] JSON 파싱 결과가 null입니다.");
+                    Debug.LogWarning("[DiseaseGenerationManager] JSON 파싱 결과가 비어 있습니다.");
                     return null;
                 }
 
-                DiseaseData disease = DiseaseConverter.Convert(dto);
+                DiseaseData disease = DiseaseConverter.Convert(collection.diseases[0]);
                 if (disease == null)
                 {
                     Debug.LogWarning("[DiseaseGenerationManager] DiseaseConverter 검증 실패.");
@@ -328,12 +332,14 @@ namespace DontDillyDally.Data
             string categoryText = string.IsNullOrEmpty(category) ? "자유" : category;
             string stageContext = StagePromptHelper.GetStageContext(stageId);
 
+            // 시스템 프롬프트가 diseases 배열 래퍼를 요구하므로 단일 생성도 "환자 수: 1명" 을 명시한다.
             return $"[생성 조건]\n" +
                    $"{stageContext}\n" +
+                   $"- 환자 수: 1명\n" +
                    $"- 난이도: {difficulty}\n" +
                    $"- 카테고리: {categoryText}\n" +
                    $"- diseaseId: \"{diseaseId}\"\n\n" +
-                   $"위 [생성 조건]의 '목표 스테이지' 테마에 어울리는 새로운 환자 데이터를 생성해주세요. " +
+                   $"위 [생성 조건]의 '목표 스테이지' 테마에 어울리는 새로운 환자 데이터 1명을 diseases 배열에 생성해주세요. " +
                    $"레시피(recipes) 구성 시 반드시 '사용 가능 재료'에 명시된 재료만 사용해야 하며, [긴급 이벤트 전용 재료]는 절대 포함하지 마세요.";
         }
 
