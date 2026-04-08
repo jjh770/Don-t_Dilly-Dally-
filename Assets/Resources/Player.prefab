@@ -824,11 +824,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerRespawnAbility
   _respawnDelay: 3
-  _boundaryTag: Boundary
+  _safeZoneTag: SafeZone
   _playerTag: Player
   _overlapCheckRadius: 1
   _randomOffsetRange: 1.5
-  _sinkForce: 5
+  _sinkDuration: 1.5
+  _sinkSpeed: 3
 --- !u!114 &-919700509073650265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -842,7 +843,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerBoundaryAbility
   _camera: {fileID: 0}
-  _margin: 0.05
+  _margin: 0.01
 --- !u!1 &8082944421811993182
 GameObject:
   m_ObjectHideFlags: 0

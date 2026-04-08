@@ -7,19 +7,21 @@ public class PlayerRespawnAbility : MonoBehaviour
 {
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;
-    [SerializeField] private string _boundaryTag = "Boundary";
+    [SerializeField] private string _safeZoneTag = "SafeZone";
     [SerializeField] private string _playerTag = "Player";
     [SerializeField] private float _overlapCheckRadius = 1f;
     [SerializeField] private float _randomOffsetRange = 1.5f;
 
     [Header("물에 빠지는 연출")]
-    [SerializeField] private float _sinkForce = 5f;
+    [SerializeField] private float _sinkDuration = 1.5f;
+    [SerializeField] private float _sinkSpeed = 3f;
 
     private PhotonView _photonView;
     private Rigidbody _rigidbody;
     private PlayerMovementAbility _movementAbility;
     private RigidbodyConstraints _originalConstraints;
     private bool _isRespawning;
+    private int _safeZoneCount;
 
     private void Awake()
     {
@@ -36,36 +38,58 @@ public class PlayerRespawnAbility : MonoBehaviour
     private void OnTriggerEnter(Collider other)
     {
         if (_photonView != null && !_photonView.IsMine) return;
-        if (_isRespawning) return;
 
-        if (other.CompareTag(_boundaryTag))
+        if (other.CompareTag(_safeZoneTag))
         {
-            StartSinking();
-            StartCoroutine(RespawnAfterDelay());
+            _safeZoneCount++;
         }
     }
 
-    private void StartSinking()
+    private void OnTriggerExit(Collider other)
     {
+        if (_photonView != null && !_photonView.IsMine) return;
+
+        if (other.CompareTag(_safeZoneTag))
+        {
+            _safeZoneCount--;
+
+            if (_safeZoneCount <= 0 && !_isRespawning)
+            {
+                _safeZoneCount = 0;
+                StartCoroutine(SinkAndRespawn());
+            }
+        }
+    }
+
+    private IEnumerator SinkAndRespawn()
+    {
+        _isRespawning = true;
+
+        // 1. 싱크 시작
         if (_movementAbility != null)
         {
             _movementAbility.SetMovementLocked(true);
         }
 
-        // Y축 고정 해제
         if (_rigidbody != null)
         {
-            _rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
-            _rigidbody.AddForce(Vector3.down * _sinkForce, ForceMode.Impulse);
+            _rigidbody.linearVelocity = Vector3.zero;
+            _rigidbody.isKinematic = true;
         }
-    }
 
-    private IEnumerator RespawnAfterDelay()
-    {
-        _isRespawning = true;
+        // 2. 싱크 연출 - 강제로 아래로 이동 (Kinematic이라 바닥 충돌 무시)
+        float elapsed = 0f;
+        while (elapsed < _sinkDuration)
+        {
+            transform.position += Vector3.down * _sinkSpeed * Time.deltaTime;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
 
+        // 3. 리스폰 대기
         yield return new WaitForSeconds(_respawnDelay);
 
+        // 4. 리스폰 처리
         Transform respawnPoint = GetRespawnPointByRole();
         if (respawnPoint != null)
         {
@@ -80,6 +104,7 @@ public class PlayerRespawnAbility : MonoBehaviour
 
         if (_rigidbody != null)
         {
+            _rigidbody.isKinematic = false;
             _rigidbody.constraints = _originalConstraints;
         }
 
