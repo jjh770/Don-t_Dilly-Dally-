@@ -126,51 +126,40 @@ public class StagePreloader : MonoBehaviour
     {
         try
         {
-            // 1. 질병 데이터 배치 생성 (429 방지 — 3명씩 묶어서 API 호출)
+            // 1. 질병 데이터 병렬 생성 — 한 스테이지 환자 ≤5명 가정.
+            //    Gemini Free Tier RPM 한도(15) 안에서 모두 동시에 쏘는 것이 가장 빠르다.
+            //    1요청 ≈ 2~3초이므로 5요청 동시 발사 후 단일 웨이브로 ~3~5초 안에 종료.
             int patientCount = StageData.Settings.PatientSettings.PatientCount;
             int difficulty = StageData.Settings.PatientSettings.Difficulty;
-            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 중... (환자 {patientCount}명, 배치 크기 {_batchSize})");
+            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 병렬 생성 시작 (환자 {patientCount}명, 동시 발사)");
             StageData.Patients.Clear();
 
             float startTime = Time.realtimeSinceStartup;
-            int batchIndex = 0;
 
-            while (StageData.Patients.Count < patientCount)
+            // 모든 환자 생성 작업을 한 번에 발사 (Semaphore 불필요 — 5건 << 15 RPM)
+            // 각 환자 인덱스를 전달해 병렬 호출마다 서로 다른 힌트(신체 부위/소재)가 적용되도록 한다.
+            var tasks = new UniTask<DiseaseData>[patientCount];
+            for (int i = 0; i < patientCount; i++)
             {
-                ct.ThrowIfCancellationRequested();
-
-                float elapsed = Time.realtimeSinceStartup - startTime;
-                if (elapsed >= _totalGenerationTimeoutSec)
-                {
-                    Debug.LogWarning($"[StagePreloader] 타임아웃 ({_totalGenerationTimeoutSec}초) — 나머지 {patientCount - StageData.Patients.Count}명은 폴백 사용");
-                    break;
-                }
-
-                // 두 번째 배치부터 API 요청 간격 확보 (429 방지)
-                if (batchIndex > 0)
-                    await UniTask.Delay(TimeSpan.FromSeconds(2), cancellationToken: ct);
-
-                int remaining = patientCount - StageData.Patients.Count;
-                int requestCount = Mathf.Min(_batchSize, remaining);
-
-                Debug.Log($"[StagePreloader] 배치 {batchIndex + 1}: {requestCount}명 생성 요청...");
-                List<DiseaseData> batchResults = await _diseaseGenManager.GenerateDiseases(requestCount, difficulty);
-
-                for (int i = 0; i < batchResults.Count; i++)
-                {
-                    StageData.Patients.Add(batchResults[i]);
-                    Debug.Log($"[StagePreloader] 환자 {StageData.Patients.Count}/{patientCount} 생성 완료: {batchResults[i].DiseaseName} (출처: {batchResults[i].Source})");
-                }
-
-                batchIndex++;
+                tasks[i] = GenerateOnePatientAsync(difficulty, StageData.StageId, i, patientCount, ct);
             }
 
-            // 부족분 폴백으로 채우기
-            while (StageData.Patients.Count < patientCount)
+            DiseaseData[] results = await UniTask.WhenAll(tasks);
+
+            // 결과를 순서대로 등록 — null이면 폴백으로 즉시 대체
+            for (int i = 0; i < results.Length; i++)
             {
-                DiseaseData fallback = FallbackDiseaseLoader.GetRandom();
-                StageData.Patients.Add(fallback);
-                Debug.Log($"[StagePreloader] 환자 {StageData.Patients.Count}/{patientCount} 폴백 사용: {fallback.DiseaseName}");
+                DiseaseData disease = results[i];
+                if (disease == null)
+                {
+                    disease = FallbackDiseaseLoader.GetRandom(StageData.StageId);
+                    Debug.LogWarning($"[StagePreloader] 환자 {i + 1}/{patientCount} AI 실패 → 폴백 사용: {disease.DiseaseName}");
+                }
+                else
+                {
+                    Debug.Log($"[StagePreloader] 환자 {i + 1}/{patientCount}: {disease.DiseaseName} (출처: {disease.Source})");
+                }
+                StageData.Patients.Add(disease);
             }
 
             Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 완료: {StageData.Patients.Count}개 (소요: {Time.realtimeSinceStartup - startTime:F1}초)");
@@ -195,6 +184,31 @@ public class StagePreloader : MonoBehaviour
         catch (OperationCanceledException)
         {
             Debug.Log("[StagePreloader] 데이터 준비 취소됨");
+        }
+    }
+
+    /// <summary>
+    /// 단일 환자 1명을 생성합니다. 예외는 내부에서 흡수하고 실패 시 null을 반환합니다.
+    /// (호출부에서 null이면 폴백으로 대체)
+    /// </summary>
+    private async UniTask<DiseaseData> GenerateOnePatientAsync(
+        int difficulty, string stageId, int patientIndex, int totalPatients, CancellationToken ct)
+    {
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            DiseaseData disease = await _diseaseGenManager.GenerateDisease(
+                difficulty, null, stageId, patientIndex, totalPatients);
+            return disease;
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception e)
+        {
+            Debug.LogWarning($"[StagePreloader] 개별 환자 생성 예외: {e.Message}");
+            return null;
         }
     }
 
