@@ -172,7 +172,7 @@ namespace DontDillyDally.Data
         [SerializeField] private DiseaseGenerationService _generationService;
 
         [Header("재시도 설정")]
-        [SerializeField] private int _maxRetries = 1;
+        [SerializeField] private int _maxRetries = 2;
 
         // 지정된 난이도와 카테고리로 질병 데이터를 생성합니다.
         // AI 생성에 실패하면 폴백 데이터를 반환합니다.
@@ -190,8 +190,8 @@ namespace DontDillyDally.Data
             {
                 if (attempt > 0)
                 {
-                    Debug.Log($"[DiseaseGenerationManager] AI 생성 재시도 ({attempt}/{_maxRetries}), 3초 대기...");
-                    await Awaitable.WaitForSecondsAsync(3f);
+                    Debug.Log($"[DiseaseGenerationManager] AI 생성 재시도 ({attempt}/{_maxRetries}), 0.8초 대기...");
+                    await Awaitable.WaitForSecondsAsync(0.8f);
                 }
 
                 DiseaseData result = await TryGenerateFromAI(userPrompt);
