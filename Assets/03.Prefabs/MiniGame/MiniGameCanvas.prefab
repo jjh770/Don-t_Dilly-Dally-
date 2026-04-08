@@ -413,8 +413,8 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2357290357023322628}
-  - {fileID: 2517571022091913691}
   - {fileID: 7234068882467450941}
+  - {fileID: 2517571022091913691}
   m_Father: {fileID: 1359893702010130576}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -450,8 +450,7 @@ MonoBehaviour:
   _slotContainer: {fileID: 2517571022091913691}
   _slotSpacing: 120
   _slideDuration: 0.25
-  _fadeOutSlotCount: 3
-  _fadeDuration: 0.2
+  _slideDelay: 0.06
   _glowBorderRoot: {fileID: 7234068882467450941}
   _glowBorder2: {fileID: 8924349937187639143}
   _glowBorder3: {fileID: 8491377214554227764}
@@ -462,6 +461,11 @@ MonoBehaviour:
   _timerColorFull: {r: 0.4, g: 1, b: 0.2, a: 1}
   _timerColorMid: {r: 1, g: 0.6, b: 0, a: 1}
   _timerColorEmpty: {r: 1, g: 0.2, b: 0.2, a: 1}
+  _shakeRoot: {fileID: 5325434265425021966}
+  _failShakeStrength: 25
+  _failShakeDuration: 0.5
+  _failShakeVibrato: 20
+  _failShakeRandomness: 90
   _resultEffect: {fileID: 7783051922501697009}
 --- !u!1 &1700499571373633964
 GameObject:
@@ -1130,7 +1134,7 @@ Canvas:
   serializedVersion: 3
   m_RenderMode: 0
   m_Camera: {fileID: 0}
-  m_PlaneDistance: 100
+  m_PlaneDistance: 1
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
   m_OverrideSorting: 0
@@ -1309,11 +1313,11 @@ MonoBehaviour:
   _spaceBarEffect: {fileID: 1289037795480117228}
   _hintInterval: 0.1
   _shakeRoot: {fileID: 8628460177785641011}
-  _punchKick: 0.06
-  _punchMaxStrength: 0.2
+  _punchKick: 0.05
+  _punchMaxStrength: 0.17
   _punchDecayPerSecond: 0.4
   _punchDuration: 0.2
-  _punchVibrato: 1
+  _punchVibrato: 2
   _punchElasticity: 0.1
   _resultEffect: {fileID: 0}
 --- !u!1 &4678476972901749960
