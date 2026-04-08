@@ -34,12 +34,15 @@ namespace DontDillyDally.Data
 
         private SterilizationSlot[] _slots;
         private bool _isBatchCompleted;
+        private PhotonView _photonView;
 
         public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
         public Transform Transform => transform;
 
         private void Awake()
         {
+            _photonView = GetComponentInParent<PhotonView>();
+
             if (_sterilizationMachine == null)
             {
                 _sterilizationMachine = GetComponent<SterilizationMachine>();
@@ -193,7 +196,7 @@ namespace DontDillyDally.Data
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_SterilInsert), RpcTarget.Others,
+                _photonView.RPC(nameof(RPC_SterilInsert), RpcTarget.Others,
                     slotIndex, itemViewId, (int)pendingResultMaterial);
             }
         }
@@ -210,7 +213,7 @@ namespace DontDillyDally.Data
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_SterilStartBatch), RpcTarget.Others, _sterilizationDuration);
+                _photonView.RPC(nameof(RPC_SterilStartBatch), RpcTarget.Others, _sterilizationDuration);
             }
 
             if (_actionTimer == null)
@@ -227,7 +230,7 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
             {
                 // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
-                photonView.RPC(nameof(RPC_SterilRequestCompletion), RpcTarget.MasterClient);
+                _photonView.RPC(nameof(RPC_SterilRequestCompletion), RpcTarget.MasterClient);
                 return;
             }
 
@@ -288,7 +291,7 @@ namespace DontDillyDally.Data
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_SterilCompleteBatch), RpcTarget.Others, resultViewIds);
+                _photonView.RPC(nameof(RPC_SterilCompleteBatch), RpcTarget.Others, resultViewIds);
             }
         }
 
@@ -322,7 +325,7 @@ namespace DontDillyDally.Data
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
+                _photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
             }
 
             ItemObject itemToRestore = storedItem;
@@ -529,7 +532,7 @@ namespace DontDillyDally.Data
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
+                _photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
             }
         }
 
@@ -539,7 +542,7 @@ namespace DontDillyDally.Data
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_SterilCloseDoor), RpcTarget.Others);
+                _photonView.RPC(nameof(RPC_SterilCloseDoor), RpcTarget.Others);
             }
         }
 

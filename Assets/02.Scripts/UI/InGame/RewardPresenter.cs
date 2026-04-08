@@ -9,7 +9,10 @@ public class RewardPresenter
     {
         _view = view;
         SetupView();
-        StageFlowManager.Instance.OnStageRewardGranted += HandleStageRewardGranted;
+        if (StageFlowManager.Instance != null)
+        {
+            StageFlowManager.Instance.OnStageRewardGranted += HandleStageRewardGranted;
+        }
     }
 
     public void SetupView()

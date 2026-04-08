@@ -30,20 +30,18 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            var stageSceneDef = RoomDataManager.Instance.CurrentStageSceneDefinition;
-
-            if (stageSceneDef == null)
-            {
-                Debug.LogError($"[StageFlowBootstrapper] Stage Definition을 받아오지 못했습니다.");
-                return;
-            }
-
-            _stageData = stageSceneDef.CreateRuntimeData();
-            _stagePrefab = stageSceneDef.StagePrefab;
+            _stageData = RoomDataManager.Instance.CreateCurrentStageRuntimeData();
+            _stagePrefab = RoomDataManager.Instance.CurrentStagePrefab;
 
             if (StagePreloader.Instance == null)
             {
                 Debug.LogError("[StageFlowBootstrapper] StagePreloader 인스턴스가 아직 준비되지 않았습니다.");
+                return;
+            }
+
+            if (_stageData == null)
+            {
+                Debug.LogError("[StageFlowBootstrapper] StageRuntimeData 생성에 실패했습니다.");
                 return;
             }
 
@@ -53,6 +51,7 @@ namespace DontDillyDally.StageFlow
 
         private void HandleSceneLoadComplete(ESceneType sceneType)
         {
+            Debug.Log(sceneType);
             if (sceneType == ESceneType.Gameplay)
             {
                 InitializeGameplay().Forget();

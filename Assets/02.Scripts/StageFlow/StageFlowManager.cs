@@ -85,6 +85,7 @@ namespace DontDillyDally.StageFlow
 
 
         public StagePerformanceTracker PerformanceTracker => _performanceTracker;
+        public bool IsInitialized => _rpc != null;
 
         // ================================================================
         //  공개 조회 API
@@ -322,13 +323,7 @@ namespace DontDillyDally.StageFlow
             _miniGameCoordinator = new StageMiniGameCoordinator(_rpc, _miniGameLauncher, () => IsLocalSurgeon);
             _emergencyCoordinator = new StageEmergencyCoordinator(_rpc, () => _flowCts.Token, _stageData?.Settings, this);
             _movementCoordinator = new StageMovementCoordinator(_rpc);
-            _outcomeCoordinator = new StageOutcomeCoordinator(
-                _rpc,
-                _ackCoordinator,
-                this,
-                new RewardLLMEvaluator(_llmService),
-                new RewardMoneyPolicy(),
-                new RewardSettlementService());
+            _outcomeCoordinator = new StageOutcomeCoordinator(_rpc, _ackCoordinator, this, new RewardLLMEvaluator(_llmService), new RewardMoneyPolicy(), new RewardSettlementService());
             _patientStatusCoordinator = new StagePatientStatusCoordinator(_patientHealthController, _rpc, TriggerGameOver);
             _miniGameResolutionCoordinator = new StageMiniGameResolutionCoordinator(_rpc, this, this);
             _recipeProgressCoordinator = new StageRecipeProgressCoordinator(_rpc, _trayHandler, _emergencyPolicy, _emergencyCoordinator, this);

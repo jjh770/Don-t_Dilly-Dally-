@@ -44,6 +44,17 @@ namespace DontDillyDally.Data
             return all[Random.Range(0, all.Count)];
         }
 
+        public static DiseaseData GetRandom(string stageId)
+        {
+            List<DiseaseData> filtered = GetByStage(stageId);
+            if (filtered.Count > 0)
+            {
+                return filtered[Random.Range(0, filtered.Count)];
+            }
+
+            return GetRandom();
+        }
+
         // ID로 특정 폴백 질병 데이터를 검색합니다.
         public static DiseaseData GetById(string diseaseId)
         {
@@ -67,6 +78,40 @@ namespace DontDillyDally.Data
                 return cached;
 
             return new List<DiseaseData>();
+        }
+
+        public static List<DiseaseData> GetByStage(string stageId)
+        {
+            List<DiseaseData> all = LoadAll();
+            if (string.IsNullOrEmpty(stageId))
+                return all;
+
+            var results = new List<DiseaseData>();
+            for (int i = 0; i < all.Count; i++)
+            {
+                if (StagePromptHelper.IsDiseaseAllowedForStage(all[i], stageId))
+                {
+                    results.Add(all[i]);
+                }
+            }
+
+            return results;
+        }
+
+        public static List<DiseaseData> GetByStageAndDifficulty(string stageId, int difficulty)
+        {
+            List<DiseaseData> stageDiseases = GetByStage(stageId);
+            var results = new List<DiseaseData>();
+
+            for (int i = 0; i < stageDiseases.Count; i++)
+            {
+                if (stageDiseases[i].Difficulty == difficulty)
+                {
+                    results.Add(stageDiseases[i]);
+                }
+            }
+
+            return results;
         }
 
         // 랜덤으로 count개의 폴백 질병 데이터를 반환합니다.

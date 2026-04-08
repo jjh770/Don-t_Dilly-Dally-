@@ -12,6 +12,7 @@ namespace DontDillyDally.Data
     [Serializable]
     public class DiseaseDTO
     {
+        public string stageId;
         public string diseaseId;
         public string diseaseName;
         public string description;
