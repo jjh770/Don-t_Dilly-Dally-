@@ -85,7 +85,7 @@ public class PatientInfoPanelUI : MonoBehaviour
 
     private void TryBind()
     {
-        if (StageFlowManager.Instance == null)
+        if (StageFlowManager.Instance == null || !StageFlowManager.Instance.IsInitialized)
         {
             return;
         }

@@ -56,7 +56,7 @@ public class StageHealthUI : MonoBehaviour
 
     private void TryBind()
     {
-        if (_stageFlowManager != null || StageFlowManager.Instance == null)
+        if (_stageFlowManager != null || StageFlowManager.Instance == null || !StageFlowManager.Instance.IsInitialized)
         {
             return;
         }
