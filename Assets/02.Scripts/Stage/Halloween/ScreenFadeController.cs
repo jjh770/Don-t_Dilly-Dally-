@@ -14,13 +14,23 @@ public class ScreenFadeController : MonoBehaviour
     [SerializeField] private GameObject _spotLightPrefab;
     [SerializeField] private string _playerTag = "Player";
 
-    private float _originalIntensity;
+    private Color _originalSkyColor;
+    private Color _originalEquatorColor;
     private PlayerSpotLightController _activeSpotLight;
+    private PhotonView _photonView;
+    private Coroutine _blackoutCoroutine;
 
     private void Start()
     {
-        _originalIntensity = RenderSettings.ambientIntensity;
-        StartCoroutine(BlackoutCycle());
+        _photonView = GetComponent<PhotonView>();
+        _originalSkyColor = RenderSettings.ambientSkyColor;
+        _originalEquatorColor = RenderSettings.ambientEquatorColor;
+
+        // 마스터 클라이언트만 블랙아웃 사이클 관리
+        if (PhotonNetwork.IsMasterClient)
+        {
+            StartCoroutine(BlackoutCycle());
+        }
     }
 
     private IEnumerator BlackoutCycle()
@@ -29,41 +39,70 @@ public class ScreenFadeController : MonoBehaviour
         {
             float waitTime = Random.Range(_minInterval, _maxInterval);
             yield return new WaitForSeconds(waitTime);
-            yield return StartCoroutine(FadeToBlack());
+
+            // 모든 클라이언트에 블랙아웃 시작 알림
+            _photonView.RPC(nameof(RPC_StartBlackout), RpcTarget.All);
+
             yield return new WaitForSeconds(_blackoutDuration);
-            yield return StartCoroutine(FadeToNormal());
+
+            // 모든 클라이언트에 블랙아웃 종료 알림
+            _photonView.RPC(nameof(RPC_EndBlackout), RpcTarget.All);
         }
+    }
+
+    [PunRPC]
+    private void RPC_StartBlackout()
+    {
+        if (_blackoutCoroutine != null)
+        {
+            StopCoroutine(_blackoutCoroutine);
+        }
+        _blackoutCoroutine = StartCoroutine(FadeToBlack());
+    }
+
+    [PunRPC]
+    private void RPC_EndBlackout()
+    {
+        if (_blackoutCoroutine != null)
+        {
+            StopCoroutine(_blackoutCoroutine);
+        }
+        _blackoutCoroutine = StartCoroutine(FadeToNormal());
     }
 
     private IEnumerator FadeToBlack()
     {
         SpawnSpotLightForLocalPlayer();
-        float currentIntensity = RenderSettings.ambientIntensity;
+        float t = 0f;
 
-        while (currentIntensity > 0f)
+        while (t < 1f)
         {
-            currentIntensity -= Time.deltaTime * _fadeSpeed;
-            currentIntensity = Mathf.Max(0f, currentIntensity);
-            RenderSettings.ambientIntensity = currentIntensity;
+            t += Time.deltaTime * _fadeSpeed;
+            t = Mathf.Min(1f, t);
+            RenderSettings.ambientSkyColor = Color.Lerp(_originalSkyColor, Color.black, t);
+            RenderSettings.ambientEquatorColor = Color.Lerp(_originalEquatorColor, Color.black, t);
             yield return null;
         }
 
-        RenderSettings.ambientIntensity = 0f;
+        RenderSettings.ambientSkyColor = Color.black;
+        RenderSettings.ambientEquatorColor = Color.black;
     }
 
     private IEnumerator FadeToNormal()
     {
-        float currentIntensity = RenderSettings.ambientIntensity;
+        float t = 0f;
 
-        while (currentIntensity < _originalIntensity)
+        while (t < 1f)
         {
-            currentIntensity += Time.deltaTime * _fadeSpeed;
-            currentIntensity = Mathf.Min(_originalIntensity, currentIntensity);
-            RenderSettings.ambientIntensity = currentIntensity;
+            t += Time.deltaTime * _fadeSpeed;
+            t = Mathf.Min(1f, t);
+            RenderSettings.ambientSkyColor = Color.Lerp(Color.black, _originalSkyColor, t);
+            RenderSettings.ambientEquatorColor = Color.Lerp(Color.black, _originalEquatorColor, t);
             yield return null;
         }
 
-        RenderSettings.ambientIntensity = _originalIntensity;
+        RenderSettings.ambientSkyColor = _originalSkyColor;
+        RenderSettings.ambientEquatorColor = _originalEquatorColor;
         DestroySpotLight();
     }
 
@@ -110,7 +149,8 @@ public class ScreenFadeController : MonoBehaviour
 
     private void OnDestroy()
     {
-        RenderSettings.ambientIntensity = _originalIntensity;
+        RenderSettings.ambientSkyColor = _originalSkyColor;
+        RenderSettings.ambientEquatorColor = _originalEquatorColor;
         DestroySpotLight();
     }
 }
