@@ -108,6 +108,93 @@ namespace DontDillyDally.Data
             };
         }
 
+        // 환자 인덱스별로 순환하며 할당되는 신체 부위 힌트입니다.
+        // 병렬 단건 호출 시 각 환자가 서로 다른 부위를 갖도록 강제합니다.
+        private static readonly string[] s_bodyPartHints =
+        {
+            "머리/두부",
+            "복부/소화기",
+            "팔/다리/외상",
+            "호흡기/흉부",
+            "피부/감각",
+            "정형외과/뼈",
+        };
+
+        // 스테이지별 테마 영감 키워드 배열입니다.
+        // 인덱스별로 순환하며 각 환자에게 서로 다른 소재가 배정됩니다.
+        private static readonly string[] s_stage1ThemeKeywords =
+        {
+            "호박/잭오랜턴",
+            "좀비 바이러스",
+            "미라 붕대",
+            "마녀 주술/빗자루",
+            "박쥐/거미줄",
+            "유령/귀신",
+            "사탕 과다 섭취",
+            "코스튬 사고",
+        };
+
+        private static readonly string[] s_stage2ThemeKeywords =
+        {
+            "총상/탄피",
+            "수류탄 파편",
+            "낙하산/훈련 사고",
+            "전투식량 중독",
+            "탱크/전투기 동경병",
+            "위장크림 알레르기",
+            "군화 물집",
+            "행군 탈진",
+        };
+
+        private static readonly string[] s_stage3ThemeKeywords =
+        {
+            "동상/저체온",
+            "냉동참치병",
+            "얼죽아 증후군",
+            "눈싸움 사고",
+            "스키/스노보드 골절",
+            "고드름 낙하",
+            "털옷 정전기",
+            "핫팩 화상",
+        };
+
+        private static readonly string[] s_stage4ThemeKeywords =
+        {
+            "의사 번아웃",
+            "주사 공포증",
+            "병문안 피로",
+            "대기실 답답병",
+            "소독약 중독",
+            "의료차트 손목터널",
+            "청진기 귀막힘",
+            "링거 알러지",
+        };
+
+        private static string[] GetThemeKeywords(string stageId)
+        {
+            return stageId switch
+            {
+                "1" => s_stage1ThemeKeywords,
+                "2" => s_stage2ThemeKeywords,
+                "3" => s_stage3ThemeKeywords,
+                "4" => s_stage4ThemeKeywords,
+                _ => null,
+            };
+        }
+
+        // 주어진 인덱스에 해당하는 환자별 힌트(신체 부위 + 테마 소재)를 반환합니다.
+        public static string GetPatientHint(string stageId, int patientIndex)
+        {
+            string bodyPart = s_bodyPartHints[patientIndex % s_bodyPartHints.Length];
+
+            string[] themes = GetThemeKeywords(stageId);
+            if (themes == null || themes.Length == 0)
+                return $"신체 부위: {bodyPart}";
+
+            string theme = themes[patientIndex % themes.Length];
+            return $"신체 부위: {bodyPart} / 스테이지 소재: {theme}";
+        }
+
         public static string GetStageContext(string stageId)
         {
             string stageName = stageId switch
@@ -119,7 +206,13 @@ namespace DontDillyDally.Data
                 _ => $"{stageId} (기본 맵)",
             };
 
+            string[] themes = GetThemeKeywords(stageId);
+            string themeLine = themes != null
+                ? $"{stageName}의 테마 키워드 풀: {string.Join(", ", themes)}"
+                : "일반 테마";
+
             return $"목표 스테이지: {stageName}\n" +
+                   $"{themeLine}\n" +
                    $"사용 가능 재료: {string.Join(", ", GetAllowedMaterials(stageId))}";
         }
 
@@ -178,13 +271,19 @@ namespace DontDillyDally.Data
         // AI 생성에 실패하면 폴백 데이터를 반환합니다.
         // difficulty: 1~5 (0이면 랜덤), category: "외과"/"내과"/"피부과"/"정형외과" (null이면 자유)
         public async Awaitable<DiseaseData> GenerateDisease(
-            int difficulty = 0, string category = null, string stageId = null)
+            int difficulty = 0, string category = null, string stageId = null,
+            int patientIndex = 0, int totalPatients = 1)
         {
             if (difficulty <= 0 || difficulty > 5)
                 difficulty = UnityEngine.Random.Range(1, 6);
 
-            string diseaseId = $"AI_{DateTime.Now:yyyyMMddHHmmss}";
-            string userPrompt = BuildUserPrompt(difficulty, category, diseaseId, stageId);
+            string diseaseId = $"AI_{DateTime.Now:yyyyMMddHHmmss}_{patientIndex:D2}";
+            string userPrompt = BuildUserPrompt(difficulty, category, diseaseId, stageId, patientIndex, totalPatients);
+
+            Debug.Log($"[DiseaseGenerationManager] ===== 단건 요청 [{patientIndex + 1}/{totalPatients}] =====\n" +
+                      $"stageId='{stageId}', difficulty={difficulty}\n" +
+                      $"--- 유저 프롬프트 ---\n{userPrompt}\n" +
+                      $"=====================");
 
             for (int attempt = 0; attempt <= _maxRetries; attempt++)
             {
@@ -272,6 +371,11 @@ namespace DontDillyDally.Data
             string baseId = $"AI_{DateTime.Now:yyyyMMddHHmmss}";
             string userPrompt = BuildBatchUserPrompt(count, difficulty, category, baseId, stageId);
 
+            Debug.Log($"[DiseaseGenerationManager] ===== 배치 요청 =====\n" +
+                      $"count={count}, difficulty={difficulty}, stageId='{stageId}'\n" +
+                      $"--- 유저 프롬프트 ---\n{userPrompt}\n" +
+                      $"=====================");
+
             for (int attempt = 0; attempt <= _maxRetries; attempt++)
             {
                 if (attempt > 0)
@@ -354,20 +458,28 @@ namespace DontDillyDally.Data
                 return null;
             }
         }
-        private string BuildUserPrompt(int difficulty, string category, string diseaseId, string stageId)
+        private string BuildUserPrompt(int difficulty, string category, string diseaseId, string stageId,
+            int patientIndex, int totalPatients)
         {
             string categoryText = string.IsNullOrEmpty(category) ? "자유" : category;
             string stageContext = StagePromptHelper.GetStageContext(stageId);
+            string patientHint = StagePromptHelper.GetPatientHint(stageId, patientIndex);
 
             // 시스템 프롬프트가 diseases 배열 래퍼를 요구하므로 단일 생성도 "환자 수: 1명" 을 명시한다.
             return $"[생성 조건]\n" +
                    $"{stageContext}\n" +
-                   $"- 환자 수: 1명\n" +
+                   $"- 환자 수: 1명 (전체 {totalPatients}명 중 {patientIndex + 1}번째)\n" +
                    $"- 난이도: {difficulty}\n" +
                    $"- 카테고리: {categoryText}\n" +
                    $"- diseaseId: \"{diseaseId}\"\n\n" +
-                   $"위 [생성 조건]의 '목표 스테이지' 테마에 어울리는 새로운 환자 데이터 1명을 diseases 배열에 생성해주세요. " +
-                   $"레시피(recipes) 구성 시 반드시 '사용 가능 재료'에 명시된 재료만 사용해야 하며, [긴급 이벤트 전용 재료]는 절대 포함하지 마세요.";
+                   $"[이번 환자 전용 힌트]\n" +
+                   $"{patientHint}\n" +
+                   $"→ 위 힌트의 '신체 부위'를 중심으로 한 질병으로 만들고, '스테이지 소재'를 질병의 원인·배경·증상에 자연스럽게 녹여내세요. " +
+                   $"스테이지 소재가 잘 어울리지 않으면 평범한 일상 질병으로 풀어도 괜찮습니다.\n\n" +
+                   $"[금지]\n" +
+                   $"1. [긴급 이벤트 전용 재료] 레시피에 포함 금지.\n" +
+                   $"2. 레시피(recipes)는 반드시 '사용 가능 재료'에 명시된 재료만 사용.\n\n" +
+                   $"diseases 배열에 환자 1명을 생성해주세요.";
         }
 
         private string BuildBatchUserPrompt(int count, int difficulty, string category, string baseId, string stageId)
@@ -381,7 +493,11 @@ namespace DontDillyDally.Data
                    $"- 난이도: {difficulty}\n" +
                    $"- 카테고리: {categoryText}\n" +
                    $"- baseId: \"{baseId}\"\n\n" +
-                   $"위 [생성 조건]의 '목표 스테이지' 테마에 어울리는 사연을 만들고, " +
+                   $"'테마 영감'에 나열된 여러 소재 중에서 서로 다른 소재를 골라 환자마다 다르게 변주하세요. 일부는 평범한 일상 질병을 스테이지 배경 속 사고로 풀어내도 좋습니다.\n" +
+                   $"[다양성 필수] 환자 {count}명은 반드시 다음을 모두 만족:\n" +
+                   $"  1. 서로 다른 신체 부위(머리/복부/사지/호흡기/소화기/피부 등)\n" +
+                   $"  2. 서로 다른 증상 유형(외상/감염/내과/정형외과/피부과 등)\n" +
+                   $"  3. 같은 소재(예: 호박, 좀비, 동상 등)를 2명 이상 반복 사용 금지 — 각 환자는 '테마 영감'의 서로 다른 키워드를 사용\n" +
                    $"레시피(recipes) 구성 시 반드시 '사용 가능 재료'에 명시된 재료만 사용해야 합니다. ([긴급 이벤트 전용 재료] 절대 포함 금지)\n" +
                    $"서로 다른 질병을 가진 환자 {count}명의 데이터를 diseases 배열에 생성해주세요.";
         }

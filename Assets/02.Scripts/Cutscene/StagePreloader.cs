@@ -137,10 +137,11 @@ public class StagePreloader : MonoBehaviour
             float startTime = Time.realtimeSinceStartup;
 
             // 모든 환자 생성 작업을 한 번에 발사 (Semaphore 불필요 — 5건 << 15 RPM)
+            // 각 환자 인덱스를 전달해 병렬 호출마다 서로 다른 힌트(신체 부위/소재)가 적용되도록 한다.
             var tasks = new UniTask<DiseaseData>[patientCount];
             for (int i = 0; i < patientCount; i++)
             {
-                tasks[i] = GenerateOnePatientAsync(difficulty, StageData.StageId, ct);
+                tasks[i] = GenerateOnePatientAsync(difficulty, StageData.StageId, i, patientCount, ct);
             }
 
             DiseaseData[] results = await UniTask.WhenAll(tasks);
@@ -190,12 +191,14 @@ public class StagePreloader : MonoBehaviour
     /// 단일 환자 1명을 생성합니다. 예외는 내부에서 흡수하고 실패 시 null을 반환합니다.
     /// (호출부에서 null이면 폴백으로 대체)
     /// </summary>
-    private async UniTask<DiseaseData> GenerateOnePatientAsync(int difficulty, string stageId, CancellationToken ct)
+    private async UniTask<DiseaseData> GenerateOnePatientAsync(
+        int difficulty, string stageId, int patientIndex, int totalPatients, CancellationToken ct)
     {
         try
         {
             ct.ThrowIfCancellationRequested();
-            DiseaseData disease = await _diseaseGenManager.GenerateDisease(difficulty, null, stageId);
+            DiseaseData disease = await _diseaseGenManager.GenerateDisease(
+                difficulty, null, stageId, patientIndex, totalPatients);
             return disease;
         }
         catch (OperationCanceledException)
