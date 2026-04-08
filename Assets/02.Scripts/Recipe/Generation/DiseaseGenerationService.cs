@@ -56,7 +56,9 @@ namespace DontDillyDally.Data
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    Debug.LogWarning($"[DiseaseGenerationService] 요청 실패: {request.error}");
+                    long code = request.responseCode;
+                    string body = request.downloadHandler != null ? request.downloadHandler.text : null;
+                    Debug.LogWarning($"[DiseaseGenerationService] 요청 실패 ({code}) {request.error} | body: {body}");
                     return null;
                 }
 

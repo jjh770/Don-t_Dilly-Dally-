@@ -18,6 +18,7 @@ namespace DontDillyDally.Data
 
             var disease = new DiseaseData
             {
+                StageId = dto.stageId,
                 DiseaseId = dto.diseaseId,
                 DiseaseName = dto.diseaseName,
                 Description = dto.description,
@@ -25,12 +26,8 @@ namespace DontDillyDally.Data
                 Backstory = dto.backstory,
                 PatientQuote = dto.patientQuote,
                 Category = dto.category,
-                Difficulty = dto.difficulty,
-                TimeLimitSec = dto.timeLimitSec,
-                RecommendedPlayers = dto.recommendedPlayers,
                 SuccessLine = dto.successLine,
                 FailLine = dto.failLine,
-                FailHealthPenalty = dto.failHealthPenalty,
                 Source = RecipeSource.Predefined,
                 Recipes = new List<RecipeData>()
             };

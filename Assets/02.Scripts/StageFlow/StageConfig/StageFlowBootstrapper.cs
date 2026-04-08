@@ -51,6 +51,7 @@ namespace DontDillyDally.StageFlow
 
         private void HandleSceneLoadComplete(ESceneType sceneType)
         {
+            Debug.Log(sceneType);
             if (sceneType == ESceneType.Gameplay)
             {
                 InitializeGameplay().Forget();

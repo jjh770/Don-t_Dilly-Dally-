@@ -101,12 +101,14 @@ public class PatientDeathDirector : MonoBehaviour
             }
         }));
 
-        // 늦은 바인딩 시 이미 GameOver 상태인 경우 대응.
-        EStagePhase currentPhase = _stageFlowManager.CurrentPhase.Value;
-        if (currentPhase >= EStagePhase.GameOver)
+        // 늦은 바인딩 시 이미 PatientDeath 이벤트가 발행되었는지 로그에서 확인.
+        foreach (GameEvent loggedEvent in EventManager.Instance.EventLog)
         {
-            _hasPlayed = true;
-            return;
+            if (loggedEvent.Type == EventType.PatientDeath)
+            {
+                _isPatientDeath = true;
+                break;
+            }
         }
 
         _stageFlowManager.CurrentPhase
@@ -119,12 +121,23 @@ public class PatientDeathDirector : MonoBehaviour
         if (gameEvent.Type == EventType.PatientDeath)
         {
             _isPatientDeath = true;
+            TryPlayDeath();
         }
     }
 
     private void OnPhaseChanged(EStagePhase phase)
     {
-        if (phase != EStagePhase.GameOver || _hasPlayed || !_isPatientDeath)
+        TryPlayDeath();
+    }
+
+    private void TryPlayDeath()
+    {
+        if (_hasPlayed || !_isPatientDeath)
+        {
+            return;
+        }
+
+        if (_stageFlowManager == null || _stageFlowManager.CurrentPhase.Value != EStagePhase.GameOver)
         {
             return;
         }
@@ -160,8 +173,11 @@ public class PatientDeathDirector : MonoBehaviour
         }
 
         // 멀티플레이어 동기화를 위해 PhotonNetwork.Time 기반 시드 사용.
+        // 인접 시드의 첫 출력이 비슷한 .NET Random 특성 때문에 첫 호출은 버린다.
         int seed = (int)(PhotonNetwork.Time * 1000);
-        int index = new System.Random(seed).Next(0, _deaths.Length);
+        var rng = new System.Random(seed);
+        rng.Next();
+        int index = rng.Next(0, _deaths.Length);
         return _deaths[index];
     }
 
@@ -237,8 +253,6 @@ public class PatientDeathDirector : MonoBehaviour
         // 모든 오브젝트 다시 활성화.
         _bedTransform.gameObject.SetActive(true);
         _patientTransform.gameObject.SetActive(true);
-
-        Debug.Log("[PatientDeathDirector] Reset to initial state.");
     }
 
     private void PlayDeathByIndex(int index)
@@ -253,7 +267,5 @@ public class PatientDeathDirector : MonoBehaviour
 
         _activeDeath = _deaths[index];
         _activeDeath.Play(_patientRoot, _bedTransform, _patientTransform);
-
-        Debug.Log($"[PatientDeathDirector] Playing death: {_activeDeath.GetType().Name}");
     }
 }
