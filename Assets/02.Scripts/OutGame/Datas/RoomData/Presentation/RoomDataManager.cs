@@ -31,9 +31,10 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
     public HospitalLevelDefinitionSO CurrentLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetLevel(_roomWallet.HospitalLevel.Value) : null;
     public HospitalLevelDefinitionSO NextLevelDefinition => _roomWallet != null ? _hospitalLevelCatalog.GetNextLevel(_roomWallet.HospitalLevel.Value) : null;
 
-    public string CurrentStageSceneName =>
+    public StageDefinitionSO CurrentStageSceneDefinition =>
         _stageCatalog != null && _stageCatalog.TryGetStageDefinition(_selectedStageIndex, out StageDefinitionSO stageDefinition)
-            ? stageDefinition.SceneName : null;
+            ? stageDefinition
+            : null;
 
     public event Action<int, int> OnRoomDataChanged;
     public event Action OnRoomDataLoaded;
