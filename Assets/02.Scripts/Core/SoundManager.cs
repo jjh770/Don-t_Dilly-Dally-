@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Photon.Pun;
@@ -24,12 +25,10 @@ public enum SFXKey
     UIConfirm = 2,
 }
 
-/// <summary>
-/// 사운드 재생 타입
-/// - BGM    : 로컬 전용 배경음악
-/// - RPC    : PunRPC로 전체 클라이언트에 동기화되는 효과음
-/// - Local  : 로컬 전용 효과음 (자신에게만 들림)
-/// </summary>
+// 사운드 재생 타입.
+// - BGM    : 로컬 전용 배경음악.
+// - RPC    : PunRPC로 전체 클라이언트에 동기화되는 효과음.
+// - Local  : 로컬 전용 효과음 (자신에게만 들림).
 public enum SoundType
 {
     BGM,
@@ -40,7 +39,7 @@ public enum SoundType
 // ──────────────────────────────────────────
 //  인스펙터용 데이터 컨테이너
 // ──────────────────────────────────────────
-[System.Serializable]
+[Serializable]
 public class BGMEntry
 {
     public BGMKey Key;
@@ -49,7 +48,7 @@ public class BGMEntry
     [Range(0.5f, 2f)] public float Pitch = 1f;
 }
 
-[System.Serializable]
+[Serializable]
 public class SFXEntry
 {
     public SFXKey Key;
@@ -57,8 +56,11 @@ public class SFXEntry
     [Range(0f, 1f)] public float Volume = 1f;
     [Range(0.5f, 2f)] public float Pitch = 1f;
     public bool Loop = false;
+
+    public float Duration => (Clip != null && Pitch > 0) ? Clip.length / Pitch : 0f;
 }
 
+[RequireComponent(typeof(PhotonView))]
 public class SoundManager : PunPersistentSingleton<SoundManager>
 {
 
@@ -66,12 +68,12 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     //  인스펙터 설정
     // ──────────────────────────────────────────
     [Header("BGM")]
-    [SerializeField] private BGMEntry[] _bgmEntries;
+    [SerializeField] private BGMEntry[] _bgmEntries = Array.Empty<BGMEntry>();
     [SerializeField][Range(0f, 1f)] private float _bgmVolume = 0.5f;
     [SerializeField] private float _bgmFadeDuration = 1.0f;
 
     [Header("SFX (RPC + Local)")]
-    [SerializeField] private SFXEntry[] _sfxEntries;
+    [SerializeField] private SFXEntry[] _sfxEntries = Array.Empty<SFXEntry>();
     [SerializeField][Range(0f, 1f)] private float _sfxVolume = 1.0f;
     [SerializeField] private int _sfxPoolDefault = 8;
     [SerializeField] private int _sfxPoolMax = 20;
@@ -112,7 +114,12 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         _sfxPool = new ObjectPool<AudioSource>(
             createFunc: CreateSFXSource,
             actionOnGet: src => src.gameObject.SetActive(true),
-            actionOnRelease: src => { src.Stop(); src.clip = null; src.gameObject.SetActive(false); },
+            actionOnRelease: src =>
+            {
+                src.Stop();
+                src.clip = null;
+                src.gameObject.SetActive(false);
+            },
             actionOnDestroy: src => Destroy(src.gameObject),
             collectionCheck: true,
             defaultCapacity: _sfxPoolDefault,
@@ -123,10 +130,20 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     private void BuildDictionaries()
     {
         foreach (var e in _bgmEntries)
-            if (e.Key != BGMKey.None) _bgmDict[e.Key] = e;
+        {
+            if (e.Key != BGMKey.None)
+            {
+                _bgmDict[e.Key] = e;
+            }
+        }
 
         foreach (var e in _sfxEntries)
-            if (e.Key != SFXKey.None) _sfxDict[e.Key] = e;
+        {
+            if (e.Key != SFXKey.None)
+            {
+                _sfxDict[e.Key] = e;
+            }
+        }
     }
 
     private AudioSource CreateSFXSource()
@@ -184,10 +201,6 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
             Debug.LogWarning($"[SoundManager] BGM 키 없음: {key}");
             return;
         }
-
-        if (_bgmSource.isPlaying && _bgmSource.clip == data.Clip) return;
-
-        if (_bgmFadeCoroutine != null) StopCoroutine(_bgmFadeCoroutine);
 
         if (_bgmSource.isPlaying)
         {
@@ -250,7 +263,7 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         source.Play();
 
         if (!data.Loop)
-            StartCoroutine(ReleaseWhenDone(source, data.Clip.length / data.Pitch));
+            StartCoroutine(ReleaseWhenDone(source, data.Duration));
     }
 
     private IEnumerator ReleaseWhenDone(AudioSource source, float duration)
@@ -262,7 +275,7 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     // ══════════════════════════════════════════
     //  페이드 유틸리티
     // ══════════════════════════════════════════
-    private void StartFade(AudioSource source, float duration, float targetVolume, System.Action onComplete = null)
+    private void StartFade(AudioSource source, float duration, float targetVolume, Action onComplete = null)
     {
         if (_bgmFadeCoroutine != null) StopCoroutine(_bgmFadeCoroutine);
         _bgmFadeCoroutine = StartCoroutine(FadeRoutine(source, duration, targetVolume, onComplete));
@@ -270,7 +283,8 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
 
     private IEnumerator FadeRoutine(AudioSource source, float duration, float targetVolume, System.Action onComplete)
     {
-        float start = source.volume, elapsed = 0f;
+        float start = source.volume;
+        float elapsed = 0f;
         while (elapsed < duration)
         {
             elapsed += Time.deltaTime;
