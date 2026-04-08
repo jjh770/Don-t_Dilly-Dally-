@@ -56,7 +56,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 
     public bool TryPickupInteractable(IInteractable interactable, Action onFailed = null)
     {
-        if (interactable == null)
+        if (!TryResolveInteractableComponent(interactable, out _))
         {
             return false;
         }
@@ -234,16 +234,17 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         ownership.RequestOwnershipWithCallback(
             onAcquired: () =>
             {
-                if (_pendingHoldInteractable is IHoldable pendingHoldable && _pendingHeldItem != null)
+                if (!TryGetPendingHoldContext(out IInteractable pendingInteractable, out IHoldable pendingHoldable, out ItemObject pendingHeldItem))
                 {
-                    BeginHold(_pendingHoldInteractable, pendingHoldable, _pendingHeldItem);
+                    FailPendingHold();
+                    return;
                 }
+
+                BeginHold(pendingInteractable, pendingHoldable, pendingHeldItem);
             },
             onFailed: () =>
             {
-                Action failedCallback = _onPendingHoldFailed;
-                ClearPendingHold();
-                failedCallback?.Invoke();
+                FailPendingHold();
             }
         );
 
@@ -305,8 +306,57 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             return false;
         }
 
+        if (component == null)
+        {
+            return false;
+        }
+
         itemObject = component.GetComponent<ItemObject>();
         return itemObject != null;
+    }
+
+    private bool TryGetPendingHoldContext(out IInteractable interactable, out IHoldable holdable, out ItemObject itemObject)
+    {
+        interactable = null;
+        holdable = null;
+        itemObject = null;
+
+        if (_pendingOwnership == null || !_pendingOwnership.IsOwnedLocally)
+        {
+            return false;
+        }
+
+        if (!TryResolveInteractableComponent(_pendingHoldInteractable, out Component interactableComponent))
+        {
+            return false;
+        }
+
+        if (!interactableComponent.TryGetComponent(out holdable))
+        {
+            return false;
+        }
+
+        if (_pendingHeldItem == null)
+        {
+            return false;
+        }
+
+        interactable = _pendingHoldInteractable;
+        itemObject = _pendingHeldItem;
+        return true;
+    }
+
+    private void FailPendingHold()
+    {
+        Action failedCallback = _onPendingHoldFailed;
+        ClearPendingHold();
+        failedCallback?.Invoke();
+    }
+
+    private static bool TryResolveInteractableComponent(IInteractable interactable, out Component component)
+    {
+        component = interactable as Component;
+        return component != null;
     }
 
     private void ClearPendingHold()
