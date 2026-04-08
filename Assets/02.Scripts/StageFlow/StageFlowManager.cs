@@ -85,6 +85,7 @@ namespace DontDillyDally.StageFlow
 
 
         public StagePerformanceTracker PerformanceTracker => _performanceTracker;
+        public bool IsInitialized => _rpc != null;
 
         // ================================================================
         //  공개 조회 API
