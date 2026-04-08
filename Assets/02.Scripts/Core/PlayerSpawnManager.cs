@@ -303,12 +303,8 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
             return null;
         }
 
-        if (useSurgeonSpawnPoint && StageSceneConfig.Instance.SurgeonSpawnPoint != null)
-        {
-            return new[] { StageSceneConfig.Instance.SurgeonSpawnPoint };
-        }
-
-        return StageSceneConfig.Instance.AssistantSpawnPoints;
+        RoleType role = useSurgeonSpawnPoint ? RoleType.Surgeon : RoleType.None;
+        return StageSceneConfig.Instance.GetSpawnPointsByRole(role);
     }
 
     private bool IsSpawnPointAvailable(bool useSurgeonSpawnPoint, int index)

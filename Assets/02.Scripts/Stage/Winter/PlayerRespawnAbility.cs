@@ -47,15 +47,12 @@ public class PlayerRespawnAbility : MonoBehaviour
 
     private void StartSinking()
     {
-        Debug.Log("StartSinking");
-
-        // 이동 잠금
         if (_movementAbility != null)
         {
             _movementAbility.SetMovementLocked(true);
         }
 
-        // Y축 고정 해제 (Rotation만 유지)
+        // Y축 고정 해제
         if (_rigidbody != null)
         {
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotation;
@@ -69,11 +66,9 @@ public class PlayerRespawnAbility : MonoBehaviour
 
         yield return new WaitForSeconds(_respawnDelay);
 
-        // 리스폰 위치로 이동
         Transform respawnPoint = GetRespawnPointByRole();
         if (respawnPoint != null)
         {
-            // 속도 초기화
             if (_rigidbody != null)
             {
                 _rigidbody.linearVelocity = Vector3.zero;
@@ -83,13 +78,11 @@ public class PlayerRespawnAbility : MonoBehaviour
             transform.rotation = respawnPoint.rotation;
         }
 
-        // constraints 복원
         if (_rigidbody != null)
         {
             _rigidbody.constraints = _originalConstraints;
         }
 
-        // 이동 잠금 해제
         if (_movementAbility != null)
         {
             _movementAbility.SetMovementLocked(false);
