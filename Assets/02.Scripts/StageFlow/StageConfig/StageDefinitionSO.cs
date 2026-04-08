@@ -11,7 +11,7 @@ namespace DontDillyDally.StageFlow
         [SerializeField] private Sprite _stageThumbnail;
         [TextArea(minLines: 2, maxLines: 5)]
         [SerializeField] private string _description;
-        [SerializeField] private string _sceneName;
+        [SerializeField] private GameObject _stagePrefab;
 
         [Header("Stage Settings")]
         [SerializeField] private StageSettings _settings = new();
@@ -27,7 +27,7 @@ namespace DontDillyDally.StageFlow
         public int RequiredHospitalLevel => _requiredHospitalLevel;
         public bool IsDefaultUnlocked => _requiredHospitalLevel == 0;
 
-        public string SceneName => _sceneName;
+        public GameObject StagePrefab => _stagePrefab;
 
         private void OnEnable()
         {

@@ -1,7 +1,7 @@
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -63,53 +63,20 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             return;
         }
 
-        if (type == ESceneType.Gameplay)
-        {
-            Debug.LogWarning("[SceneLoadManager] Use BeginStageSceneLoad for Gameplay scenes to specify the stage scene name.");
-            return;
-        }
-
         _nextSceneData = _sceneDataMap[type];
         _isLoading = true;
         StartCoroutine(LoadSceneAsync());
-    }
-
-    // 스테이지용 로드 메서드 - 스테이지 정의에서 씬 이름을 받아와서 로드
-    public void BeginStageSceneLoad(string stageSceneName)
-    {
-        if (_isLoading)
-        {
-            Debug.LogWarning($"[SceneLoadManager] Already loading: {_nextSceneData?.name}");
-            return;
-        }
-
-        if (!_sceneDataMap.ContainsKey(ESceneType.Gameplay) || _sceneDataMap[ESceneType.Gameplay] == null)
-        {
-            Debug.LogWarning("[SceneLoadManager] No scene data provided.");
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(stageSceneName))
-        {
-            Debug.LogWarning("[SceneLoadManager] Scene Name is Null.");
-            return;
-        }
-
-        _nextSceneData = _sceneDataMap[ESceneType.Gameplay];
-
-        _isLoading = true;
-        StartCoroutine(LoadSceneAsync(stageSceneName));
     }
 
     #endregion
 
     #region Private Coroutine LoadSceneAsync
 
-    private IEnumerator LoadSceneAsync(string overrideSceneName = null)
+    private IEnumerator LoadSceneAsync()
     {
         _loadingProgress = 0f;
 
-        string sceneName = overrideSceneName ?? _nextSceneData.SceneName;
+        string sceneName = _nextSceneData.SceneName;
 
         ESceneLoadMode loadMode = _nextSceneData.SceneLoadMode;
 
