@@ -59,6 +59,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         if (_itemObject != null)
             _itemObject.ModelRefreshed += RefreshCachedComponents;
 
+        // 풀 재사용 시 이전 생명주기의 물리/홀드/캐시 상태가 남지 않도록 초기화합니다.
         ResetToNeutralState();
     }
 
@@ -257,11 +258,13 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         StopDynamicMotion();
         _rigidbody.isKinematic = true;
 
+        // 모델이 교체되었거나 풀에서 다시 나온 경우를 대비해 collider 캐시를 새로 수집합니다.
         RefreshCachedComponents();
     }
 
     private void RefreshCachedComponents()
     {
+        // 모델 Refresh 중 자식 collider가 교체될 수 있으므로 항상 현재 모델 기준으로 다시 수집합니다.
         _allColliders = GetComponentsInChildren<Collider>(true);
         RefreshHoldAnchor();
         ApplyColliderStateToCachedColliders();
@@ -374,16 +377,14 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     public void Drop()
     {
-        _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
-
         IsInteracting = false;
         _currentHoldPoint = null;
+        _holderActorNumber = InvalidActorNumber;
 
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
         SetAllCollidersEnabled(true);
-        _holderActorNumber = InvalidActorNumber;
 
         _isWaitingForOwnershipReturn = true;
     }

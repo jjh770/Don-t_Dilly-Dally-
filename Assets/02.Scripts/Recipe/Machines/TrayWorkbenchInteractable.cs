@@ -243,13 +243,45 @@ namespace DontDillyDally.Data
                 photonView.RPC(nameof(RPC_WorkbenchTakeTray), RpcTarget.Others);
             }
 
-            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            heldItemInteractor.TryPickupInteractable(holdable);
+            TrayItem trayToRestore = trayItem;
+            heldItemInteractor.TryPickupInteractable(holdable, () =>
+            {
+                RollbackTakeTray(trayToRestore);
+            });
+        }
+
+        private void RollbackTakeTray(TrayItem trayItem)
+        {
+            if (trayItem == null)
+                return;
+
+            // 트레이 픽업 실패 시에는 손에 들린 상태가 아니라 작업대에 놓인 상태로 다시 고정합니다.
+            _trayWorkbench.SetCurrentTrayItem(trayItem);
+            PlaceTrayAtSlot(trayItem);
+            SetTrayInteractionEnabled(trayItem, false);
+
+            if (PhotonNetwork.InRoom)
+            {
+                int viewId = GetPhotonViewId(trayItem);
+                photonView.RPC(nameof(RPC_WorkbenchRollbackTakeTray), RpcTarget.Others, viewId);
+            }
         }
 
         #endregion
 
         #region RPC Handlers
+
+        [PunRPC]
+        private void RPC_WorkbenchRollbackTakeTray(int trayViewId)
+        {
+            PhotonView trayPV = PhotonView.Find(trayViewId);
+            if (trayPV == null || !trayPV.TryGetComponent(out TrayItem trayItem))
+                return;
+
+            _trayWorkbench.SetCurrentTrayItem(trayItem);
+            PlaceTrayAtSlot(trayItem);
+            SetTrayInteractionEnabled(trayItem, false);
+        }
 
         [PunRPC]
         private void RPC_WorkbenchPlaceTray(int trayViewId)
