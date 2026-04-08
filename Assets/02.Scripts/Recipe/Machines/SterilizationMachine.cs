@@ -36,7 +36,7 @@ namespace DontDillyDally.Data
 
         public bool CanSterilizeTray(TrayItem trayItem)
         {
-            return trayItem != null && !trayItem.IsSterilizedTray && CanSterilizeTray(trayItem.TrayData);
+            return trayItem != null && trayItem.CanBeSterilized();
         }
 
         public bool TrySterilizeTray(SubmittedTray tray)
@@ -57,8 +57,7 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            trayItem.EnsureTrayData();
-            if (!TrySterilizeTray(trayItem.TrayData))
+            if (!trayItem.CanBeSterilized())
             {
                 return false;
             }
