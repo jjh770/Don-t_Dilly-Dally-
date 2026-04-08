@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DontDillyDally.MiniGame
 {
-    public sealed class DirectionQTEUIView : MonoBehaviour, IMiniGameUIView
+    public sealed class DirectionQTEUIView : MiniGameUIViewBase<DirectionQTEMiniGame>
     {
         [Header("화살표 이미지")]
         [SerializeField] private Sprite _upSprite;
@@ -40,12 +40,7 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private float _glowPunchDuration = 0.25f;
 
         [Header("타이머")]
-        [SerializeField] private Image _radialTimer;
-
-        [Header("타이머 그라디언트 색상")]
-        [SerializeField] private Color _timerColorFull = new Color(0.4f, 1f, 0.2f);
-        [SerializeField] private Color _timerColorMid = new Color(1f, 0.6f, 0f);
-        [SerializeField] private Color _timerColorEmpty = new Color(1f, 0.2f, 0.2f);
+        [SerializeField] private RadialTimerView _timer;
 
         [Header("오답 흔들림 연출")]
         [Tooltip("오답 시 흔들릴 전체 UI RectTransform (비워두면 흔들림 비활성화). QTE 패널 루트를 지정하세요.")]
@@ -59,10 +54,6 @@ namespace DontDillyDally.MiniGame
         [Tooltip("Shake Randomness (방향 무작위성, 도) — 90이면 원형")]
         [SerializeField, Range(0f, 180f)] private float _failShakeRandomness = 90f;
 
-        [Header("공통 결과 연출")]
-        [SerializeField] private MiniGameResultEffect _resultEffect;
-
-        private DirectionQTEMiniGame _game;
         private readonly List<QTEArrowSlot> _slots = new List<QTEArrowSlot>();
         private int _lastPromptIndex = -1;
         private bool _slotsBuilt;
@@ -72,22 +63,12 @@ namespace DontDillyDally.MiniGame
         private Vector2 _shakeRootOriginalPos;
         private bool _shakeRootOriginCaptured;
 
-        public void Initialize(IMiniGame game)
+        protected override void OnInitialize()
         {
-            _game = game as DirectionQTEMiniGame;
             _lastPromptIndex = -1;
             _slotsBuilt = false;
 
-            if (_radialTimer != null)
-            {
-                _radialTimer.fillAmount = 1f;
-                _radialTimer.color = _timerColorFull;
-            }
-
-            if (_resultEffect != null)
-            {
-                _resultEffect.Reset();
-            }
+            _timer.Initialize();
 
             TryBuildSlots();
             StartGlowPulse();
@@ -97,7 +78,7 @@ namespace DontDillyDally.MiniGame
             ResetFailShake();
         }
 
-        public void SetVisible(bool visible)
+        public override void SetVisible(bool visible)
         {
             // 비활성화 직전에 흔들림을 정리해 다음 활성화 시 어긋나지 않도록 한다.
             if (!visible)
@@ -115,9 +96,9 @@ namespace DontDillyDally.MiniGame
             }
         }
 
-        public void UpdateView()
+        public override void UpdateView()
         {
-            if (_game == null || _game.CurrentState != EMiniGameState.Playing)
+            if (Game == null || Game.CurrentState != EMiniGameState.Playing)
             {
                 return;
             }
@@ -127,11 +108,11 @@ namespace DontDillyDally.MiniGame
                 TryBuildSlots();
             }
 
-            UpdateRadialTimer();
+            _timer.SetRatio(Game.RemainingTimeRatio);
             UpdateSlotStates();
         }
 
-        public void ShowResult(bool isSuccess)
+        protected override void OnBeforeShowResult(bool isSuccess)
         {
             // 글로우 펄스 루프를 먼저 정리 (Kill이 뒤에서 찍을 펀치를 죽이지 않도록)
             StopGlowPulse();
@@ -157,18 +138,6 @@ namespace DontDillyDally.MiniGame
             {
                 PlayFailShake();
             }
-
-            if (_resultEffect != null)
-            {
-                if (isSuccess)
-                {
-                    _resultEffect.PlaySuccess();
-                }
-                else
-                {
-                    _resultEffect.PlayFail();
-                }
-            }
         }
 
         private void TryBuildSlots()
@@ -178,12 +147,12 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            if (_game == null || _slotPrefab == null || _slotContainer == null)
+            if (Game == null || _slotPrefab == null || _slotContainer == null)
             {
                 return;
             }
 
-            var prompts = _game.Prompts;
+            var prompts = Game.Prompts;
             if (prompts == null)
             {
                 return;
@@ -233,7 +202,7 @@ namespace DontDillyDally.MiniGame
 
         private void UpdateSlotStates()
         {
-            int currentIndex = _game.CurrentPromptIndex;
+            int currentIndex = Game.CurrentPromptIndex;
             if (currentIndex == _lastPromptIndex)
             {
                 return;
@@ -242,7 +211,7 @@ namespace DontDillyDally.MiniGame
             // 이전 슬롯 → Cleared 처리.
             if (_lastPromptIndex >= 0 && _lastPromptIndex < _slots.Count)
             {
-                bool wasSuccess = _game.LastInputResult == true;
+                bool wasSuccess = Game.LastInputResult == true;
                 _slots[_lastPromptIndex].SetState(wasSuccess ? ESlotState.Cleared : ESlotState.Failed);
 
                 // 정답 시 글로우 테두리 띠용 (전체 UI 펀치)
@@ -431,32 +400,6 @@ namespace DontDillyDally.MiniGame
             Color c = image.color;
             c.a = alpha;
             image.color = c;
-        }
-
-        // ── 타이머 ──
-
-        private void UpdateRadialTimer()
-        {
-            if (_radialTimer == null)
-            {
-                return;
-            }
-
-            float timeRatio = _game.RemainingTimeRatio;
-            _radialTimer.fillAmount = timeRatio;
-            _radialTimer.color = EvaluateTimerColor(timeRatio);
-        }
-
-        private Color EvaluateTimerColor(float t)
-        {
-            if (t >= 0.5f)
-            {
-                return Color.Lerp(_timerColorMid, _timerColorFull, (t - 0.5f) * 2f);
-            }
-            else
-            {
-                return Color.Lerp(_timerColorEmpty, _timerColorMid, t * 2f);
-            }
         }
 
         // ── 유틸 ──
