@@ -194,7 +194,7 @@ namespace DontDillyDally.Data
                     await Awaitable.WaitForSecondsAsync(0.8f);
                 }
 
-                DiseaseData result = await TryGenerateFromAI(userPrompt);
+                DiseaseData result = await TryGenerateFromAI(userPrompt, stageId);
                 if (result != null)
                 {
                     result.Source = RecipeSource.AIGenerated;
@@ -206,7 +206,7 @@ namespace DontDillyDally.Data
             return GetFallback(difficulty, stageId);
         }
 
-        private async Awaitable<DiseaseData> TryGenerateFromAI(string userPrompt)
+        private async Awaitable<DiseaseData> TryGenerateFromAI(string userPrompt, string stageId)
         {
             if (_generationService == null)
             {
@@ -240,6 +240,18 @@ namespace DontDillyDally.Data
                     return null;
                 }
 
+                // Stage 검증 — AI가 허용되지 않은 재료를 사용했는지 확인
+                if (!string.IsNullOrEmpty(stageId) &&
+                    !StagePromptHelper.IsDiseaseAllowedForStage(disease, stageId))
+                {
+                    Debug.LogWarning(
+                        $"[DiseaseGenerationManager] Stage '{stageId}'에 허용되지 않은 재료 포함: {disease.DiseaseName}");
+                    return null;
+                }
+
+                // AI 응답에는 stageId 필드가 없으므로 수동 할당
+                disease.StageId = stageId;
+
                 return disease;
             }
             catch (Exception e)
@@ -268,7 +280,7 @@ namespace DontDillyDally.Data
                     await Awaitable.WaitForSecondsAsync(1f);
                 }
 
-                List<DiseaseData> results = await TryGenerateBatchFromAI(userPrompt);
+                List<DiseaseData> results = await TryGenerateBatchFromAI(userPrompt, stageId);
                 if (results != null && results.Count > 0)
                 {
                     for (int i = 0; i < results.Count; i++)
@@ -283,7 +295,7 @@ namespace DontDillyDally.Data
             return new List<DiseaseData>();
         }
 
-        private async Awaitable<List<DiseaseData>> TryGenerateBatchFromAI(string userPrompt)
+        private async Awaitable<List<DiseaseData>> TryGenerateBatchFromAI(string userPrompt, string stageId)
         {
             if (_generationService == null)
             {
@@ -313,10 +325,25 @@ namespace DontDillyDally.Data
                 for (int i = 0; i < collection.diseases.Count; i++)
                 {
                     DiseaseData disease = DiseaseConverter.Convert(collection.diseases[i]);
-                    if (disease != null)
-                        results.Add(disease);
-                    else
-                        Debug.LogWarning($"[DiseaseGenerationManager] 배치 내 {i}번째 환자 검증 실패, 건너뜀.");
+                    if (disease == null)
+                    {
+                        Debug.LogWarning($"[DiseaseGenerationManager] 배치 내 {i}번째 환자 DTO 변환 실패, 건너뜀.");
+                        continue;
+                    }
+
+                    // Stage 검증 — AI가 허용되지 않은 재료를 사용했는지 확인
+                    if (!string.IsNullOrEmpty(stageId) &&
+                        !StagePromptHelper.IsDiseaseAllowedForStage(disease, stageId))
+                    {
+                        Debug.LogWarning(
+                            $"[DiseaseGenerationManager] 배치 내 {i}번째 환자 '{disease.DiseaseName}' — Stage '{stageId}'에 허용되지 않은 재료 포함, 건너뜀.");
+                        continue;
+                    }
+
+                    // AI 응답에는 stageId 필드가 없으므로 수동 할당
+                    disease.StageId = stageId;
+
+                    results.Add(disease);
                 }
 
                 return results;
