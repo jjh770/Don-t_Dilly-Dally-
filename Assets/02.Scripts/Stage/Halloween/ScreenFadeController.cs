@@ -20,17 +20,9 @@ public class ScreenFadeController : MonoBehaviour
     private PhotonView _photonView;
     private Coroutine _blackoutCoroutine;
 
-    private void Awake()
-    {
-        _photonView = GetComponent<PhotonView>();
-        if (_photonView == null)
-        {
-            _photonView = gameObject.AddComponent<PhotonView>();
-        }
-    }
-
     private void Start()
     {
+        _photonView = GetComponent<PhotonView>();
         _originalSkyColor = RenderSettings.ambientSkyColor;
         _originalEquatorColor = RenderSettings.ambientEquatorColor;
 
