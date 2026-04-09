@@ -79,7 +79,6 @@ namespace DontDillyDally.StageFlow
 
         private async UniTaskVoid InitializeGameplay()
         {
-            
             if (PhotonNetwork.IsMasterClient)
             {
                 if (_stagePrefab == null)
@@ -88,12 +87,13 @@ namespace DontDillyDally.StageFlow
                     return;
                 }
 
-                // 마스터만 컷씬 중 생성한 데이터 준비 완료를 기다립니다.
+                // 마스터는 스테이지 프리팹을 생성하고 데이터 준비 완료까지 보장합니다.
+                PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
+
                 if (StagePreloader.Instance != null)
                 {
-                    PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
                     await StagePreloader.Instance.WaitForDataPrep(destroyCancellationToken);
-                }        
+                }
             }
 
             float deadline = Time.unscaledTime + StageFlowManagerWaitTimeoutSec;

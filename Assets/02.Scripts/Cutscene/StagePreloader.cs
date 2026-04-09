@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
 using DontDillyDally.StageFlow;
 using Photon.Pun;
+using ExitGames.Client.Photon;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -11,7 +12,7 @@ using UnityEngine;
 /// 컷씬 씬에서 질병/음성 데이터를 사전 생성하여 Gameplay 씬의 StageFlowManager에 전달합니다.
 /// DontDestroyOnLoad로 씬 전환 간 데이터를 보존하며, PhotonView가 필요 없습니다.
 /// </summary>
-public class StagePreloader : MonoBehaviour
+public class StagePreloader : MonoBehaviourPunCallbacks
 {
     public static StagePreloader Instance { get; private set; }
 
@@ -53,6 +54,11 @@ public class StagePreloader : MonoBehaviour
         IsDataPrepComplete = false;
         _cts = new CancellationTokenSource();
         _dataPrepTcs = new UniTaskCompletionSource();
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            RoomProperties.SetStageDataPrepComplete(false);
+        }
     }
 
     // ── 집도의 선정 ─────────────────────────────────────────────
@@ -118,8 +124,20 @@ public class StagePreloader : MonoBehaviour
     /// </summary>
     public async UniTask WaitForDataPrep(CancellationToken ct)
     {
-        if (IsDataPrepComplete) return;
-        await _dataPrepTcs.Task.AttachExternalCancellation(ct);
+        if (IsDataPrepComplete || RoomProperties.GetStageDataPrepComplete())
+        {
+            CompleteDataPrep();
+            return;
+        }
+
+        if (PhotonNetwork.IsMasterClient)
+        {
+            await _dataPrepTcs.Task.AttachExternalCancellation(ct);
+            return;
+        }
+
+        await UniTask.WaitUntil(RoomProperties.GetStageDataPrepComplete, cancellationToken: ct);
+        CompleteDataPrep();
     }
 
     private async UniTaskVoid RunDataPrepAsync(CancellationToken ct)
@@ -177,8 +195,8 @@ public class StagePreloader : MonoBehaviour
             }
             Debug.Log("[StagePreloader] (2/2) 환자 소개 음성 사전 생성 완료");
 
-            IsDataPrepComplete = true;
-            _dataPrepTcs.TrySetResult();
+            CompleteDataPrep();
+            RoomProperties.SetStageDataPrepComplete(true);
             Debug.Log("[StagePreloader] ✓ 데이터 준비 완료");
         }
         catch (OperationCanceledException)
@@ -216,6 +234,29 @@ public class StagePreloader : MonoBehaviour
     {
         IsRoleAssignmentComplete = true;
         RoleAssignmentCompleted?.Invoke(SurgeonActorNumber);
+    }
+
+    private void CompleteDataPrep()
+    {
+        if (IsDataPrepComplete)
+        {
+            return;
+        }
+
+        IsDataPrepComplete = true;
+        _dataPrepTcs?.TrySetResult();
+    }
+
+    public override void OnRoomPropertiesUpdate(Hashtable changedProps)
+    {
+        if (!changedProps.TryGetValue(RoomProperties.IsStageDataPrepCompleteKey, out object value) ||
+            value is not bool isComplete ||
+            !isComplete)
+        {
+            return;
+        }
+
+        CompleteDataPrep();
     }
 
     public void Cleanup()

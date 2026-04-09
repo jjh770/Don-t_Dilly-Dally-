@@ -5,6 +5,7 @@ public static class RoomProperties
 {
     public const string SelectedStageKey = "SelectedStage";
     public const string IsGameInProgressKey = "IsGameInProgress";
+    public const string IsStageDataPrepCompleteKey = "IsStageDataPrepComplete";
 
     public static void EnsureProperties()
     {
@@ -18,6 +19,9 @@ public static class RoomProperties
 
         if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(IsGameInProgressKey))
             props[IsGameInProgressKey] = false;
+
+        if (!PhotonNetwork.CurrentRoom.CustomProperties.ContainsKey(IsStageDataPrepCompleteKey))
+            props[IsStageDataPrepCompleteKey] = false;
 
         if (props.Count > 0)
             PhotonNetwork.CurrentRoom.SetCustomProperties(props);
@@ -49,6 +53,19 @@ public static class RoomProperties
         PhotonNetwork.CurrentRoom.SetCustomProperties(props);
     }
 
+    public static void SetStageDataPrepComplete(bool isComplete)
+    {
+        if (PhotonNetwork.CurrentRoom == null) return;
+        if (!PhotonNetwork.IsMasterClient) return;
+
+        var props = new Hashtable
+        {
+            { IsStageDataPrepCompleteKey, isComplete },
+        };
+
+        PhotonNetwork.CurrentRoom.SetCustomProperties(props);
+    }
+
     public static int GetSelectedStage(int fallback = -1)
     {
         if (PhotonNetwork.CurrentRoom == null) return fallback;
@@ -70,6 +87,19 @@ public static class RoomProperties
             .TryGetValue(IsGameInProgressKey, out object value) && value is bool isInProgress)
         {
             return isInProgress;
+        }
+
+        return false;
+    }
+
+    public static bool GetStageDataPrepComplete()
+    {
+        if (PhotonNetwork.CurrentRoom == null) return false;
+
+        if (PhotonNetwork.CurrentRoom.CustomProperties
+            .TryGetValue(IsStageDataPrepCompleteKey, out object value) && value is bool isComplete)
+        {
+            return isComplete;
         }
 
         return false;
