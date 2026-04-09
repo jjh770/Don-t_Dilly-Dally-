@@ -16,30 +16,34 @@ public class StageWaitNoticeUI : MonoBehaviour
     private void Start()
     {
         EnsureReferences();
-        TryBind();
-        RefreshUi();
-    }
-
-    private void Update()
-    {
-        if (_stageFlowManager == null)
+        if (!TryBind())
         {
-            TryBind();
+            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
 
         RefreshUi();
     }
 
+    private void Update()
+    {
+        RefreshUi();
+    }
+
     private void OnDestroy()
     {
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
         _disposables.Dispose();
     }
 
-    private void TryBind()
+    private bool TryBind()
     {
-        if (_stageFlowManager != null || StageFlowManager.Instance == null || !StageFlowManager.Instance.IsInitialized)
+        if (_stageFlowManager != null ||
+            StageFlowBootstrapper.Instance == null ||
+            !StageFlowBootstrapper.Instance.IsStageFlowReady ||
+            StageFlowManager.Instance == null ||
+            !StageFlowManager.Instance.IsInitialized)
         {
-            return;
+            return false;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
@@ -64,6 +68,17 @@ public class StageWaitNoticeUI : MonoBehaviour
                 RefreshUi();
             })
             .AddTo(_disposables);
+
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        return true;
+    }
+
+    private void HandleStageFlowReady()
+    {
+        if (TryBind())
+        {
+            RefreshUi();
+        }
     }
 
     private void EnsureReferences()

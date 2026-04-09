@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using Photon.Pun;
+using System;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
@@ -14,11 +15,25 @@ namespace DontDillyDally.StageFlow
     {
         private const float StageFlowManagerWaitTimeoutSec = 5f;
 
+        public static StageFlowBootstrapper Instance { get; private set; }
+        public static event Action StageFlowReady;
+
+        public bool IsStageFlowReady { get; private set; }
+
         private StageRuntimeData _stageData;
         private GameObject _stagePrefab;
+        private bool _isCleaningUp;
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            IsStageFlowReady = false;
             DontDestroyOnLoad(gameObject);
         }
 
@@ -96,11 +111,21 @@ namespace DontDillyDally.StageFlow
             }
 
             StageFlowManager.Instance.Initialize(_stageData);
+            IsStageFlowReady = true;
+            StageFlowReady?.Invoke();
             StagePreloader.Instance?.Cleanup();
         }
 
         private void Cleanup()
         {
+            if (_isCleaningUp)
+            {
+                return;
+            }
+
+            _isCleaningUp = true;
+            IsStageFlowReady = false;
+
             if (SceneLoadManager.Instance != null)
             {
                 SceneLoadManager.Instance.OnSceneLoadComplete -= HandleSceneLoadComplete;
@@ -111,7 +136,11 @@ namespace DontDillyDally.StageFlow
 
         private void OnDestroy()
         {
-            Cleanup();
+            if (Instance == this)
+            {
+                Instance = null;
+                IsStageFlowReady = false;
+            }
         }
     }
 }

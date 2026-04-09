@@ -1,17 +1,21 @@
 using DontDillyDally.StageFlow;
+using UnityEngine;
 
 public class RewardPresenter
 {
     private readonly RewardView _view;
-
+    private readonly StageFlowManager _stageFlowManager;
 
     public RewardPresenter(RewardView view)
     {
         _view = view;
+        _stageFlowManager = StageFlowManager.Instance;
+
         SetupView();
-        if (StageFlowManager.Instance != null)
+
+        if (_stageFlowManager != null)
         {
-            StageFlowManager.Instance.OnStageRewardGranted += HandleStageRewardGranted;
+            _stageFlowManager.OnStageRewardGranted += HandleStageRewardGranted;
         }
     }
 
@@ -22,19 +26,22 @@ public class RewardPresenter
 
     public void ReturnWaitingRoom()
     {
-        PhotonServerManager.Instance.ReturnWaitingRoom();     
+        PhotonServerManager.Instance.ReturnWaitingRoom();
     }
 
     private void HandleStageRewardGranted(StageReward reward, StageResult result)
     {
         _view.Show(() =>
-        { 
-            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star, reward.SummaryText, reward.Money - reward.MoneyDelta, reward.MoneyDelta );
+        {
+            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star, reward.SummaryText, reward.Money - reward.MoneyDelta, reward.MoneyDelta);
         });
     }
 
     public void Dispose()
     {
-        StageFlowManager.Instance.OnStageRewardGranted -= HandleStageRewardGranted;
+        if (_stageFlowManager != null)
+        {
+            _stageFlowManager.OnStageRewardGranted -= HandleStageRewardGranted;
+        }
     }
 }
