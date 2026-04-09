@@ -141,7 +141,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 8400000, guid: b3aaee09df5618f4c9334d3d767ab03e, type: 2}
+  m_Texture: {fileID: 8400000, guid: d524c2f675427ee478ef015df1c7bd09, type: 2}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -1481,6 +1481,7 @@ GameObject:
   - component: {fileID: 9007048066165610552}
   - component: {fileID: 8669741786914898813}
   - component: {fileID: 623634650123447068}
+  - component: {fileID: 8169011576656686412}
   m_Layer: 5
   m_Name: UI_Customizing
   m_TagString: Untagged
@@ -1561,6 +1562,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 57fd296b6c874894297cdc4cbf89d879, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_Customizing
+  _canvasGroup: {fileID: 8169011576656686412}
+  _panel: {fileID: 5216111116875735621}
+  _fadeDuration: 0
+  _scaleDuration: 0.2
+  _overshootScale: 1
+  _settleDuration: 0.1
+  _scaleEase: 27
+  _hideEndScale: 1
   _categoryTabs:
   - Type: 0
     Button: {fileID: 7635836622635116772}
@@ -1587,6 +1596,18 @@ MonoBehaviour:
   _slotPanel: {fileID: 8977939471448742050}
   _tabSelectedColor: {r: 0.447, g: 0.612, b: 0.945, a: 1}
   _tabNormalColor: {r: 0.7647059, g: 0.7647059, b: 0.7647059, a: 1}
+--- !u!225 &8169011576656686412
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6112466472773071802}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
 --- !u!1 &6590219015559881367
 GameObject:
   m_ObjectHideFlags: 0

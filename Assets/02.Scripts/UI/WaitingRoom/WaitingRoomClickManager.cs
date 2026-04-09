@@ -10,6 +10,7 @@ public class WaitingRoomClickManager : MonoBehaviour
     private WaitingRoomPresenter _presenter;
 
     [SerializeField] private string _playerTag = "Player";
+    [SerializeField] private string _blockerTag = "Blocker";
     void Update()
     {
         if (_presenter == null) return;
@@ -54,11 +55,25 @@ public class WaitingRoomClickManager : MonoBehaviour
         target = null;
 
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-        if (!Physics.Raycast(ray, out RaycastHit hit)) return false;
+        RaycastHit[] hits = Physics.RaycastAll(ray);
+        if (hits.Length == 0) return false;
 
-        if (!hit.collider.CompareTag(_playerTag)) return false;
-        target = hit.collider.GetComponent<PhotonView>();
-        return target != null;
+        Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider.CompareTag(_blockerTag))
+                continue;
+
+            if (!hit.collider.CompareTag(_playerTag))
+                continue;
+
+            target = hit.collider.GetComponent<PhotonView>();
+            if (target != null)
+                return true;
+        }
+
+        return false;
     }
 
     private GameObject GetTopClickedUI()

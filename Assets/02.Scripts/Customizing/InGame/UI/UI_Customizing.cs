@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 
-public class UI_Customizing : MonoBehaviour
+public class UI_Customizing : UIPopupBase
 {
     [Header("카테고리 탭")]
     [SerializeField] private List<CategoryTab> _categoryTabs = new();
@@ -164,7 +164,7 @@ public class UI_Customizing : MonoBehaviour
         }
         else
         {
-            gameObject.SetActive(false);
+            Hide();
         }
     }
 
@@ -253,9 +253,9 @@ public class UI_Customizing : MonoBehaviour
         _tabSelectionIndicator.gameObject.SetActive(true);
     }
 
-    public void Show()
+
+    protected override void OnShow()
     {
-        gameObject.SetActive(true);
         _viewModel?.OpenCustomizingUI();
     }
 
