@@ -46,21 +46,18 @@ public class StageCurrentRecipeUI : MonoBehaviour
 
     private void Start()
     {
-        TryBind();
-        RefreshUi(false);
-    }
-
-    private void Update()
-    {
-        if (_stageFlowManager == null)
+        if (!TryBind())
         {
-            TryBind();
-            RefreshUi(false);
+            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
+
+        RefreshUi(false);
     }
 
     private void OnDestroy()
     {
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+
         if (_stageFlowManager != null && _isStageDataBound)
         {
             _stageFlowManager.OnStageDataChanged -= HandleStageDataChanged;
@@ -70,11 +67,15 @@ public class StageCurrentRecipeUI : MonoBehaviour
         DOTween.Kill(this);
     }
 
-    private void TryBind()
+    private bool TryBind()
     {
-        if (_stageFlowManager != null || StageFlowManager.Instance == null || !StageFlowManager.Instance.IsInitialized)
+        if (_stageFlowManager != null ||
+            StageFlowBootstrapper.Instance == null ||
+            !StageFlowBootstrapper.Instance.IsStageFlowReady ||
+            StageFlowManager.Instance == null ||
+            !StageFlowManager.Instance.IsInitialized)
         {
-            return;
+            return false;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
@@ -94,6 +95,13 @@ public class StageCurrentRecipeUI : MonoBehaviour
             .AddTo(_disposables);
 
         RefreshUi(false);
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        return true;
+    }
+
+    private void HandleStageFlowReady()
+    {
+        TryBind();
     }
 
     private void HandleStageDataChanged(StageRuntimeData _)

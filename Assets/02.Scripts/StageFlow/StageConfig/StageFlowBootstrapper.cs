@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using Photon.Pun;
+using System;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
@@ -14,11 +15,25 @@ namespace DontDillyDally.StageFlow
     {
         private const float StageFlowManagerWaitTimeoutSec = 5f;
 
+        public static StageFlowBootstrapper Instance { get; private set; }
+        public static event Action StageFlowReady;
+
+        public bool IsStageFlowReady { get; private set; }
+
         private StageRuntimeData _stageData;
         private GameObject _stagePrefab;
+        private bool _isCleaningUp;
 
         private void Awake()
         {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+            IsStageFlowReady = false;
             DontDestroyOnLoad(gameObject);
         }
 
@@ -64,7 +79,6 @@ namespace DontDillyDally.StageFlow
 
         private async UniTaskVoid InitializeGameplay()
         {
-            
             if (PhotonNetwork.IsMasterClient)
             {
                 if (_stagePrefab == null)
@@ -73,12 +87,13 @@ namespace DontDillyDally.StageFlow
                     return;
                 }
 
-                // 마스터만 컷씬 중 생성한 데이터 준비 완료를 기다립니다.
+                // 마스터는 스테이지 프리팹을 생성하고 데이터 준비 완료까지 보장합니다.
+                PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
+
                 if (StagePreloader.Instance != null)
                 {
-                    PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
                     await StagePreloader.Instance.WaitForDataPrep(destroyCancellationToken);
-                }        
+                }
             }
 
             float deadline = Time.unscaledTime + StageFlowManagerWaitTimeoutSec;
@@ -96,22 +111,42 @@ namespace DontDillyDally.StageFlow
             }
 
             StageFlowManager.Instance.Initialize(_stageData);
+            IsStageFlowReady = true;
+            StageFlowReady?.Invoke();
             StagePreloader.Instance?.Cleanup();
         }
 
         private void Cleanup()
         {
-            if (SceneLoadManager.Instance != null)
-            {
-                SceneLoadManager.Instance.OnSceneLoadComplete -= HandleSceneLoadComplete;
-            }
-
+            ReleaseResources();
             Destroy(gameObject);
         }
 
         private void OnDestroy()
         {
-            Cleanup();
+            ReleaseResources();
+
+            if (Instance == this)
+            {
+                Instance = null;
+                IsStageFlowReady = false;
+            }
+        }
+
+        private void ReleaseResources()
+        {
+            if (_isCleaningUp)
+            {
+                return;
+            }
+
+            _isCleaningUp = true;
+            IsStageFlowReady = false;
+
+            if (SceneLoadManager.Instance != null)
+            {
+                SceneLoadManager.Instance.OnSceneLoadComplete -= HandleSceneLoadComplete;
+            }
         }
     }
 }
