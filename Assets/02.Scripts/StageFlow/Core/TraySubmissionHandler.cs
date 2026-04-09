@@ -59,11 +59,6 @@ namespace DontDillyDally.StageFlow
 
         // ── 제출 요청 (외부 → 마스터) ─────────────────────────────────
 
-        public void OnTraySubmitted(TrayItem trayItem)
-        {
-            RequestSubmission(trayItem, null, null);
-        }
-
         public bool RequestSubmission(TrayItem trayItem, Action onAccepted, Action onRejected = null)
         {
             if (trayItem == null)

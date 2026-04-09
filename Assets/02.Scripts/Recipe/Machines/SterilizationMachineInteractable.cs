@@ -137,8 +137,8 @@ namespace DontDillyDally.Data
 
             if (item is MixToolItem mixToolItem)
             {
-                int playerId = Photon.Pun.PhotonNetwork.LocalPlayer != null
-                    ? Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber : 0;
+                int playerId = PhotonNetwork.LocalPlayer != null
+                    ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
                 return _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId).Success;
             }
 

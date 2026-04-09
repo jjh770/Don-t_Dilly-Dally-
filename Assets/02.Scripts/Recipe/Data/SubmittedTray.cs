@@ -60,11 +60,6 @@ namespace DontDillyDally.Data
             _kind = trayKind;
         }
 
-        public void MarkSterilized()
-        {
-            _kind = TrayKind.Sterilized;
-        }
-
         public bool HasAnyItems()
         {
             return _containedItems != null && _containedItems.Count > 0;
