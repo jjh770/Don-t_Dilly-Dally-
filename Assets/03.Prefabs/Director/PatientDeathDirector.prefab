@@ -1,0 +1,241 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1865616957185434162
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5067878338663212583}
+  - component: {fileID: 3869426498028316752}
+  m_Layer: 0
+  m_Name: PoofSkeleton
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5067878338663212583
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865616957185434162}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7320435725740438646}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3869426498028316752
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1865616957185434162}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 222d8c109eadf8f48a3ecf4d6cd82e00, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PoofSkeletonDeath
+  _trembleDuration: 0.3
+  _trembleStrength: 0.05
+  _smokeFx: {fileID: 0}
+  _smokeStartTime: 0.3
+  _skeletonModel: {fileID: 0}
+  _swapTime: 0.4
+  _skeletonShakeTime: 2
+  _skeletonShakeDuration: 0.5
+  _skeletonShakeStrength: 15
+--- !u!1 &4112282870942431779
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7320435725740438646}
+  - component: {fileID: 7992620694487802544}
+  m_Layer: 0
+  m_Name: PatientDeathDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7320435725740438646
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4112282870942431779}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 5067878338663212583}
+  - {fileID: 118538040078216564}
+  - {fileID: 6855021948686445115}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7992620694487802544
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4112282870942431779}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29607c769188aea469191135d80e6e14, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PatientDeathDirector
+  _selectionMode: 0
+  _fixedDeath: {fileID: 0}
+  _deaths:
+  - {fileID: 3869426498028316752}
+  - {fileID: 4915325942403413438}
+  - {fileID: 8444797332002147602}
+  _patientRoot: {fileID: 0}
+  _bedTransform: {fileID: 0}
+  _patientTransform: {fileID: 0}
+  _debugMode: 0
+--- !u!1 &6356798857981047966
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6855021948686445115}
+  - component: {fileID: 8444797332002147602}
+  m_Layer: 0
+  m_Name: AngelAscension
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6855021948686445115
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6356798857981047966}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7320435725740438646}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8444797332002147602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6356798857981047966}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40dc942963e382c4eacdcd1ba38bf7b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AngelAscensionDeath
+  _lightBeam: {fileID: 0}
+  _magicCircle: {fileID: 0}
+  _halo: {fileID: 0}
+  _haloAppearTime: 0.3
+  _haloScaleDuration: 0.3
+  _wings: {fileID: 0}
+  _wingsAppearTime: 0.5
+  _wingsScaleDuration: 0.3
+  _flapStartTime: 0.7
+  _flapScaleAmount: 0.3
+  _flapDuration: 0.4
+  _ascensionStartTime: 1.5
+  _ascensionHeight: 10
+  _ascensionDuration: 4
+  _sparkleFx: {fileID: 0}
+  _beamFadeInDuration: 0.5
+  _beamFadeTime: 5
+  _beamFadeDuration: 1
+--- !u!1 &8647751316317333240
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 118538040078216564}
+  - component: {fileID: 4915325942403413438}
+  m_Layer: 0
+  m_Name: CoffinRise
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &118538040078216564
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647751316317333240}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7320435725740438646}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4915325942403413438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8647751316317333240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5999e02f5a39ea42b72d726aab935ad, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoffinRiseDeath
+  _trembleDuration: 0.3
+  _trembleStrength: 0.05
+  _smokeFx: {fileID: 0}
+  _smokeStartTime: 0.3
+  _coffinTransform: {fileID: 0}
+  _coffinLid: {fileID: 0}
+  _bedHideTime: 0.5
+  _coffinAppearTime: 1.5
+  _coffinStartDepth: 1
+  _coffinFinalY: 0.5
+  _riseDuration: 1.7
+  _riseShakeStrength: 0.03
+  _patientMergeTime: 3
+  _patientGroundY: 0.185
+  _patientFinalY: 0.25
+  _lidCloseStartTime: 2.8
+  _lidCloseDuration: 0.7
+  _lidOpenLocalPosition: {x: -93.95571, y: 10.425243, z: -23.473967}
+  _lidOpenLocalEuler: {x: 0, y: 180, z: 14.804}
+  _lidClosedLocalPosition: {x: 0, y: 0, z: 0}
+  _lidClosedLocalEuler: {x: 0, y: 0, z: 0}
+  _dirtFx: {fileID: 0}
+  _lidDustFx: {fileID: 0}

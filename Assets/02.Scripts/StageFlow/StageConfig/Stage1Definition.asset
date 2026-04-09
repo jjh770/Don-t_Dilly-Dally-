@@ -20,26 +20,26 @@ MonoBehaviour:
     \uCC98\uCE58 \uC704\uC8FC\uC758 \uC758\uB8CC \uC11C\uBE44\uC2A4\uB97C \uC81C\uACF5\uD55C\uB2E4.\n\uC218\uC220\uC774\uB77C\uAE30\uBCF4\uB2E4\uB294
     \uC751\uAE09 \uCC98\uCE58\uC640 \uACBD\uBBF8\uD55C \uC2DC\uC220\uC774 \uAC00\uB2A5\uD55C
     \uC218\uC900\uC774\uB2E4."
-  _stagePrefab: {fileID: 6232478142468332855, guid: 23e550fc5f114e24f831f979a23d8017, type: 3}
+  _stagePrefab: {fileID: 8852781512331424258, guid: 3193587cdfc8a3a46a0bc445fc9c0523, type: 3}
   _settings:
     TotalTimeLimitSec: 300
     PatientSettings:
-      PatientCount: 5
+      PatientCount: 4
       InitialPatientHealth: 100
       PatientHealthDrainPerSecond: 0.25
-      Difficulty: 1
+      Difficulty: 5
       RecipeFailPenalty: 20
     MiniGameSettings:
       FailPenalty: 10
-      SuccessHeal: 5
+      SuccessHeal: 15
     EmergencySettings:
-      TrayDurationSec: 20
-      DiagnosisDurationSec: 15
-      DiagnosisOperationDurationSec: 5
+      TrayDurationSec: 15
+      DiagnosisDurationSec: 20
+      DiagnosisOperationDurationSec: 3
       TrayEventSelectionChance: 0.5
-      RecipeFailTriggerChance: 0.7
-      MiniGameFailTriggerChance: 0.7
-      RandomCheckIntervalSec: 30
-      RandomTriggerChance: 0.05
-      EmergencyFailPenalty: 10
+      RecipeFailTriggerChance: 0.8
+      MiniGameFailTriggerChance: 0.8
+      RandomCheckIntervalSec: 60
+      RandomTriggerChance: 0.1
+      EmergencyFailPenalty: 5
   _requiredHospitalLevel: 1

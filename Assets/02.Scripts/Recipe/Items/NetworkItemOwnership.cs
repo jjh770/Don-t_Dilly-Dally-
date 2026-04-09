@@ -47,6 +47,7 @@ namespace DontDillyDally.Data
         private void OnEnable()
         {
             PhotonNetwork.AddCallbackTarget(this);
+            _grantedOwnerActorNumber = NoActorNumber;
         }
 
         private void OnDisable()

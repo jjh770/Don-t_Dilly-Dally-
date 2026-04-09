@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using System.Threading;
 using UnityEngine;
@@ -13,10 +14,18 @@ namespace DontDillyDally.StageFlow
     /// </summary>
     public class TraySubmissionHandler : IDisposable
     {
+        private const int SubmissionResponseTimeoutMs = 5000;
+
         private readonly StageFlowRpcHandler _rpc;
         private readonly Func<bool> _isGameOverCheck;
 
         private UniTaskCompletionSource<SubmittedTray> _traySubmissionTcs;
+        private int _pendingSubmissionTrayViewId = -1;
+        private int _pendingSubmissionSequenceId = -1;
+        private int _nextSequenceId;
+        private Action _onPendingSubmissionAccepted;
+        private Action _onPendingSubmissionRejected;
+        private CancellationTokenSource _pendingSubmissionTimeoutCts;
 
         /// <summary>가장 최근 트레이를 제출한 플레이어의 ActorNumber</summary>
         public int LastSubmitterActorNumber { get; private set; } = -1;
@@ -26,7 +35,8 @@ namespace DontDillyDally.StageFlow
             _rpc = rpc;
             _isGameOverCheck = isGameOverCheck;
 
-            _rpc.OnTraySubmittedReceived += HandleTraySubmittedReceived;
+            _rpc.OnTraySubmissionRequestedReceived += HandleTraySubmissionRequestedReceived;
+            _rpc.OnTraySubmissionResponseReceived += HandleTraySubmissionResponseReceived;
         }
 
         public bool CanSubmit =>
@@ -51,14 +61,9 @@ namespace DontDillyDally.StageFlow
 
         // ── 제출 요청 (외부 → 마스터) ─────────────────────────────────
 
-        public void OnTraySubmitted(SubmittedTray tray)
+        public bool RequestSubmission(TrayItem trayItem, Action onAccepted, Action onRejected = null)
         {
-            RequestSubmission(tray);
-        }
-
-        public bool RequestSubmission(SubmittedTray tray, int trayViewId = -1)
-        {
-            if (tray == null)
+            if (trayItem == null)
             {
                 Debug.LogWarning("[StageFlow] 제출할 트레이가 없습니다.");
                 return false;
@@ -70,42 +75,169 @@ namespace DontDillyDally.StageFlow
                 return false;
             }
 
-            if (PhotonNetwork.IsMasterClient)
+            int trayViewId = trayItem.ViewId;
+            if (trayViewId < 0)
             {
-                return TryAccept(tray, trayViewId, PhotonNetwork.LocalPlayer.ActorNumber);
+                Debug.LogWarning("[StageFlow] 제출할 트레이 ViewId가 올바르지 않습니다.");
+                return false;
             }
 
-            _rpc.SubmitTray(tray, trayViewId);
+            if (_pendingSubmissionTrayViewId >= 0)
+            {
+                Debug.LogWarning("[StageFlow] 이미 처리 중인 트레이 제출 요청이 있습니다.");
+                return false;
+            }
+
+            int sequenceId = _nextSequenceId++;
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                bool accepted = TryAcceptAuthoritative(
+                    trayViewId,
+                    sequenceId,
+                    PhotonNetwork.LocalPlayer?.ActorNumber ?? -1,
+                    PhotonNetwork.LocalPlayer);
+
+                if (accepted)
+                {
+                    onAccepted?.Invoke();
+                }
+                else
+                {
+                    onRejected?.Invoke();
+                }
+
+                return accepted;
+            }
+
+            _pendingSubmissionTrayViewId = trayViewId;
+            _pendingSubmissionSequenceId = sequenceId;
+            _onPendingSubmissionAccepted = onAccepted;
+            _onPendingSubmissionRejected = onRejected;
+            ResetPendingSubmissionTimeout(trayViewId, sequenceId).Forget();
+            _rpc.SubmitTrayRequest(trayViewId, sequenceId);
             return true;
         }
 
         // ── 마스터 측 수락 ────────────────────────────────────────────
 
-        private void HandleTraySubmittedReceived(SubmittedTray tray, int trayViewId, int submitterActorNumber)
+        private void HandleTraySubmissionRequestedReceived(int trayViewId, int sequenceId, int submitterActorNumber)
         {
             if (!PhotonNetwork.IsMasterClient)
             {
                 return;
             }
 
-            TryAccept(tray, trayViewId, submitterActorNumber);
+            Player submitterPlayer = PhotonNetwork.CurrentRoom?.GetPlayer(submitterActorNumber);
+            TryAcceptAuthoritative(trayViewId, sequenceId, submitterActorNumber, submitterPlayer);
         }
 
-        private bool TryAccept(SubmittedTray tray, int trayViewId, int submitterActorNumber)
+        private bool TryAcceptAuthoritative(int trayViewId, int sequenceId, int submitterActorNumber, Player submitterPlayer)
         {
-            if (tray == null)
+            bool accepted = false;
+
+            // 제출 판정은 제출자가 보내온 JSON이 아니라,
+            // 마스터가 실제 트레이 오브젝트에서 읽은 최신 스냅샷을 기준으로 합니다.
+            if (!TryResolveAuthoritativeTraySnapshot(trayViewId, submitterActorNumber, out SubmittedTray tray))
             {
+                _rpc?.SendTraySubmissionResponse(submitterPlayer, trayViewId, sequenceId, false);
                 return false;
             }
 
             if (_traySubmissionTcs == null)
             {
                 Debug.LogWarning("[StageFlow] 현재는 트레이 제출을 기다리고 있지 않습니다.");
+                _rpc?.SendTraySubmissionResponse(submitterPlayer, trayViewId, sequenceId, false);
                 return false;
             }
 
             LastSubmitterActorNumber = submitterActorNumber;
-            return _traySubmissionTcs.TrySetResult(tray);
+            accepted = _traySubmissionTcs.TrySetResult(tray);
+            _rpc?.SendTraySubmissionResponse(submitterPlayer, trayViewId, sequenceId, accepted);
+            return accepted;
+        }
+
+        private static bool TryResolveAuthoritativeTraySnapshot(int trayViewId, int submitterActorNumber, out SubmittedTray tray)
+        {
+            tray = null;
+
+            PhotonView trayView = PhotonView.Find(trayViewId);
+            if (trayView == null || !trayView.TryGetComponent(out TrayItem trayItem))
+            {
+                Debug.LogWarning($"[StageFlow] 제출된 트레이를 찾을 수 없습니다. ViewId={trayViewId}");
+                return false;
+            }
+
+            // 제출 요청자가 실제로 해당 트레이를 들고 있는지 검증합니다.
+            if (trayView.TryGetComponent(out HoldableItem holdable)
+                && holdable.HolderActorNumber != submitterActorNumber)
+            {
+                Debug.LogWarning($"[StageFlow] 트레이를 들고 있는 플레이어가 아닙니다. " +
+                    $"ViewId={trayViewId} | Holder={holdable.HolderActorNumber} | Submitter={submitterActorNumber}");
+                return false;
+            }
+
+            tray = trayItem.GetTraySnapshot();
+            if (tray == null)
+            {
+                Debug.LogWarning($"[StageFlow] 트레이 스냅샷 생성에 실패했습니다. ViewId={trayViewId}");
+                return false;
+            }
+
+            return true;
+        }
+
+        private void HandleTraySubmissionResponseReceived(int trayViewId, int sequenceId, bool accepted)
+        {
+            if (_pendingSubmissionTrayViewId != trayViewId || _pendingSubmissionSequenceId != sequenceId)
+            {
+                return;
+            }
+
+            Action callback = accepted
+                ? _onPendingSubmissionAccepted
+                : _onPendingSubmissionRejected;
+
+            ClearPendingSubmission();
+            callback?.Invoke();
+        }
+
+        private void ClearPendingSubmission()
+        {
+            _pendingSubmissionTimeoutCts?.Cancel();
+            _pendingSubmissionTimeoutCts?.Dispose();
+            _pendingSubmissionTimeoutCts = null;
+            _pendingSubmissionTrayViewId = -1;
+            _pendingSubmissionSequenceId = -1;
+            _onPendingSubmissionAccepted = null;
+            _onPendingSubmissionRejected = null;
+        }
+
+        private async UniTaskVoid ResetPendingSubmissionTimeout(int trayViewId, int sequenceId)
+        {
+            _pendingSubmissionTimeoutCts?.Cancel();
+            _pendingSubmissionTimeoutCts?.Dispose();
+            _pendingSubmissionTimeoutCts = new CancellationTokenSource();
+            CancellationToken token = _pendingSubmissionTimeoutCts.Token;
+
+            try
+            {
+                await UniTask.Delay(SubmissionResponseTimeoutMs, cancellationToken: token);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            if (_pendingSubmissionTrayViewId != trayViewId || _pendingSubmissionSequenceId != sequenceId)
+            {
+                return;
+            }
+
+            Debug.LogWarning($"[StageFlow] 트레이 제출 응답이 제한 시간 내에 도착하지 않았습니다. ViewId={trayViewId} | Seq={sequenceId}");
+            Action rejectedCallback = _onPendingSubmissionRejected;
+            ClearPendingSubmission();
+            rejectedCallback?.Invoke();
         }
 
         // ── 정리 ──────────────────────────────────────────────────────
@@ -114,8 +246,11 @@ namespace DontDillyDally.StageFlow
         {
             if (_rpc != null)
             {
-                _rpc.OnTraySubmittedReceived -= HandleTraySubmittedReceived;
+                _rpc.OnTraySubmissionRequestedReceived -= HandleTraySubmissionRequestedReceived;
+                _rpc.OnTraySubmissionResponseReceived -= HandleTraySubmissionResponseReceived;
             }
+
+            ClearPendingSubmission();
         }
     }
 }

@@ -3,11 +3,10 @@ using UnityEngine;
 public class PlayerSpotLightController : MonoBehaviour
 {
     [Header("추적 설정")]
-    [SerializeField] private float _followSpeed = 3f;
-    [SerializeField] private float _heightOffset = 4f;
+    [SerializeField] private float _followSpeed = 5f;
+    [SerializeField] private float _fixedHeight = 4f;
 
     private Transform targetPlayer;
-    private Vector3 currentVelocity;
     private bool isActive;
 
     public void SetTarget(Transform player)
@@ -22,7 +21,7 @@ public class PlayerSpotLightController : MonoBehaviour
 
         if (active && targetPlayer != null)
         {
-            transform.position = targetPlayer.position + Vector3.up * _heightOffset;
+            transform.position = new Vector3(targetPlayer.position.x, _fixedHeight, targetPlayer.position.z);
         }
     }
 
@@ -30,27 +29,9 @@ public class PlayerSpotLightController : MonoBehaviour
     {
         if (!isActive || targetPlayer == null) return;
 
-        Vector3 targetPosition = targetPlayer.position + Vector3.up * _heightOffset;
+        Vector3 targetPosition = new Vector3(targetPlayer.position.x, _fixedHeight, targetPlayer.position.z);
 
-        Vector3 direction = targetPosition - transform.position;
-        if (direction.magnitude > 0.01f)
-        {
-            Quaternion targetRotation = Quaternion.LookRotation(direction);
-            Vector3 slerpedDirection = Vector3.Slerp(
-                transform.position - targetPlayer.position,
-                targetPosition - targetPlayer.position,
-                Time.deltaTime * _followSpeed
-            );
-            transform.position = targetPlayer.position + slerpedDirection.normalized * direction.magnitude;
-
-            /*
-            transform.position = Vector3.SmoothDamp(
-                transform.position,
-                targetPosition,
-                ref currentVelocity,
-                1f / _followSpeed
-            );
-            */
-        }
+        transform.position = Vector3.Lerp(transform.position, targetPosition, Time.deltaTime * _followSpeed);
+        transform.position = new Vector3(transform.position.x, _fixedHeight, transform.position.z);
     }
 }

@@ -34,11 +34,12 @@ public class DiagnosisEmergencyMachineWorldUI : MonoBehaviour
         if (_stageFlowManager == null)
         {
             _stageFlowManager = StageFlowManager.Instance;
-            if (_stageFlowManager == null)
-            {
-                SetVisible(false);
-                return;
-            }
+        }
+
+        if (_stageFlowManager == null || !_stageFlowManager.IsInitialized)
+        {
+            SetVisible(false);
+            return;
         }
 
         bool shouldShow = _machine != null && _machine.ShouldShowOperationTimerUi(_stageFlowManager);

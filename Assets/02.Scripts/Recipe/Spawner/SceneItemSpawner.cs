@@ -2,7 +2,6 @@ using DontDillyDally.StageFlow;
 using Photon.Pun;
 using Photon.Realtime;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -34,24 +33,21 @@ namespace DontDillyDally.Data
         [Tooltip("다시 배치하기 전에 기존 생성 오브젝트를 먼저 지울지 여부")]
         [SerializeField] private bool _clearBeforeSpawn = true;
 
-        [Header("스테이지별 아이템 설정")]
-        [Tooltip("씬에 배치된 스테이지별 아이템 설정 목록")]
-        [SerializeField] private List<StageItemConfig> _stageItemConfigs = new List<StageItemConfig>();
-
-        private SceneItemSpawnCatalog _spawnCatalog;
-        private List<Transform> _spawnPoints = new List<Transform>();
-        private List<Transform> _traySpawnPoints = new List<Transform>();
-
         private readonly List<GameObject> _spawnedObjects = new();
 
         private bool _hasSpawnedSceneObjects;
-        private bool _isConfigured;
 
         private bool _isSubscribed;
 
         private void Start()
         {
             TrySubscribe();
+        }
+
+        private void Update()
+        {
+            if (!_isSubscribed)
+                TrySubscribe();
         }
 
         public override void OnEnable()
@@ -75,6 +71,9 @@ namespace DontDillyDally.Data
 
             StageFlowManager.Instance.OnStageDataChanged += HandleStageDataChanged;
             _isSubscribed = true;
+
+            if (StageFlowManager.Instance.CurrentStageData != null)
+                HandleStageDataChanged(StageFlowManager.Instance.CurrentStageData);
         }
 
         private void HandleStageDataChanged(StageRuntimeData stageData)
@@ -82,73 +81,45 @@ namespace DontDillyDally.Data
             if (stageData == null)
                 return;
 
-            StageItemConfig config = _stageItemConfigs.FirstOrDefault(c => c != null && c.StageId == stageData.StageId);
-            if (config == null)
-            {
-                Debug.LogWarning($"[SceneItemSpawner] StageId '{stageData.StageId}'에 해당하는 StageItemConfig를 찾지 못했습니다.");
-                _spawnCatalog = null;
-                _spawnPoints = new List<Transform>();
-                _traySpawnPoints = new List<Transform>();
-                _isConfigured = false;
-                return;
-            }
-
-            TryApplyConfig(config);
-        }
-
-        private void TryApplyConfig(StageItemConfig config)
-        {
             ClearSpawnedItems();
-
-            if (!ValidateConfig(config))
-            {
-                _spawnCatalog = null;
-                _spawnPoints = new List<Transform>();
-                _traySpawnPoints = new List<Transform>();
-                _isConfigured = false;
-                return;
-            }
-
-            _spawnCatalog = config.SpawnCatalog;
-            _spawnPoints = config.SpawnPoints;
-            _traySpawnPoints = config.TraySpawnPoints;
-            _isConfigured = true;
+            _hasSpawnedSceneObjects = false;
 
             TryInitializeSpawnLayout();
         }
 
-        private bool ValidateConfig(StageItemConfig config)
+        private bool ValidateSceneConfig()
         {
-            if (config == null)
+            StageSceneConfig sceneConfig = StageSceneConfig.Instance;
+            if (sceneConfig == null)
             {
-                Debug.LogWarning("[SceneItemSpawner] StageItemConfig가 비어 있습니다.");
+                Debug.LogWarning("[SceneItemSpawner] StageSceneConfig 인스턴스가 없습니다.");
                 return false;
             }
 
             if (_spawnItemsOnStart)
             {
-                if (config.SpawnCatalog == null)
+                if (sceneConfig.ItemSpawnCatalog == null)
                 {
-                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{config.StageId}'의 SpawnCatalog가 비어 있습니다.");
+                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{sceneConfig.StageId}'의 ItemSpawnCatalog가 비어 있습니다.");
                     return false;
                 }
 
-                if (!config.SpawnCatalog.Validate())
+                if (!sceneConfig.ItemSpawnCatalog.Validate())
                     return false;
 
-                if (config.SpawnPoints == null || config.SpawnPoints.Count == 0)
+                if (sceneConfig.ItemSpawnPoints == null || sceneConfig.ItemSpawnPoints.Count == 0)
                 {
-                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{config.StageId}'의 SpawnPoints가 비어 있습니다.");
+                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{sceneConfig.StageId}'의 ItemSpawnPoints가 비어 있습니다.");
                     return false;
                 }
 
-                if (config.SpawnCatalog.HasKind(SpawnItemKind.MixTool) && _mixToolPrefab == null)
+                if (sceneConfig.ItemSpawnCatalog.HasKind(SpawnItemKind.MixTool) && _mixToolPrefab == null)
                 {
                     Debug.LogWarning("[SceneItemSpawner] MixToolSource 프리팹이 연결되지 않았습니다.");
                     return false;
                 }
 
-                if (config.SpawnCatalog.HasKind(SpawnItemKind.BasicMaterial) && _basicMaterialPrefab == null)
+                if (sceneConfig.ItemSpawnCatalog.HasKind(SpawnItemKind.BasicMaterial) && _basicMaterialPrefab == null)
                 {
                     Debug.LogWarning("[SceneItemSpawner] BasicMaterialSource 프리팹이 연결되지 않았습니다.");
                     return false;
@@ -163,9 +134,9 @@ namespace DontDillyDally.Data
                     return false;
                 }
 
-                if (config.TraySpawnPoints == null || config.TraySpawnPoints.Count == 0)
+                if (sceneConfig.TraySpawnPoints == null || sceneConfig.TraySpawnPoints.Count == 0)
                 {
-                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{config.StageId}'의 TraySpawnPoints가 비어 있습니다.");
+                    Debug.LogWarning($"[SceneItemSpawner] 스테이지 '{sceneConfig.StageId}'의 TraySpawnPoints가 비어 있습니다.");
                     return false;
                 }
             }
@@ -175,14 +146,12 @@ namespace DontDillyDally.Data
 
         public override void OnJoinedRoom()
         {
-            if (_isConfigured)
-                TryInitializeSpawnLayout();
+            TryInitializeSpawnLayout();
         }
 
         public override void OnMasterClientSwitched(Player newMasterClient)
         {
-            if (_isConfigured)
-                TryInitializeSpawnLayout();
+            TryInitializeSpawnLayout();
         }
 
         [ContextMenu("트레이 배치")]
@@ -194,15 +163,16 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (_traySpawnPoints == null || _traySpawnPoints.Count == 0)
+            StageSceneConfig sceneConfig = StageSceneConfig.Instance;
+            if (sceneConfig == null || sceneConfig.TraySpawnPoints == null || sceneConfig.TraySpawnPoints.Count == 0)
             {
                 Debug.LogWarning("[SceneItemSpawner] TraySpawnPoints가 비어 있습니다.");
                 return;
             }
 
-            for (int i = 0; i < _traySpawnPoints.Count; i++)
+            for (int i = 0; i < sceneConfig.TraySpawnPoints.Count; i++)
             {
-                Transform spawnPoint = _traySpawnPoints[i];
+                Transform spawnPoint = sceneConfig.TraySpawnPoints[i];
                 if (spawnPoint == null)
                     continue;
 
@@ -250,6 +220,9 @@ namespace DontDillyDally.Data
             if (!_spawnItemsOnStart && !_spawnTraysOnStart)
                 return;
 
+            if (!ValidateSceneConfig())
+                return;
+
             if (!PhotonNetwork.IsConnected || !PhotonNetwork.InRoom)
             {
                 SpawnSceneObjects();
@@ -287,12 +260,13 @@ namespace DontDillyDally.Data
 
         private void SpawnUniqueItems(List<SceneItemSpawnEntry> entries)
         {
-            int spawnCount = Mathf.Min(entries.Count, _spawnPoints.Count);
+            List<Transform> spawnPoints = StageSceneConfig.Instance.ItemSpawnPoints;
+            int spawnCount = Mathf.Min(entries.Count, spawnPoints.Count);
 
             for (int i = 0; i < spawnCount; i++)
             {
                 SceneItemSpawnEntry entry = entries[i];
-                Transform spawnPoint = _spawnPoints[i];
+                Transform spawnPoint = spawnPoints[i];
 
                 if (spawnPoint == null)
                     continue;
@@ -300,16 +274,16 @@ namespace DontDillyDally.Data
                 SpawnEntrySource(entry, spawnPoint);
             }
 
-            if (_spawnPoints.Count < entries.Count)
+            if (spawnPoints.Count < entries.Count)
             {
                 Debug.LogWarning(
-                    $"[SceneItemSpawner] 일반 아이템 스폰 위치가 부족해 {entries.Count - _spawnPoints.Count}개를 배치하지 못했습니다.");
+                    $"[SceneItemSpawner] 일반 아이템 스폰 위치가 부족해 {entries.Count - spawnPoints.Count}개를 배치하지 못했습니다.");
             }
         }
 
         private List<SceneItemSpawnEntry> CreateShuffledEntries()
         {
-            List<SceneItemSpawnEntry> entries = _spawnCatalog.GetValidEntries();
+            List<SceneItemSpawnEntry> entries = StageSceneConfig.Instance.ItemSpawnCatalog.GetValidEntries();
             ShuffleEntries(entries);
             return entries;
         }
