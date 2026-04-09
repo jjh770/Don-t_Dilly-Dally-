@@ -51,11 +51,12 @@ public class EmergencyWorldUI : MonoBehaviour
         if (_stageFlowManager == null)
         {
             _stageFlowManager = StageFlowManager.Instance;
-            if (_stageFlowManager == null)
-            {
-                SetVisible(false);
-                return;
-            }
+        }
+
+        if (_stageFlowManager == null || !_stageFlowManager.IsInitialized)
+        {
+            SetVisible(false);
+            return;
         }
 
         bool isCurrentPatient = _stageFlowManager.CurrentPatientIndex.Value == _patientIndex;

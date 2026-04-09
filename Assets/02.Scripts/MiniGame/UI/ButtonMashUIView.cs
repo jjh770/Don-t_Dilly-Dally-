@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace DontDillyDally.MiniGame
 {
-    public sealed class ButtonMashUIView : MonoBehaviour, IMiniGameUIView
+    public sealed class ButtonMashUIView : MiniGameUIViewBase<ButtonMashMiniGame>
     {
         [Header("게이지")]
         [SerializeField] private Image _gaugeBarFill;
@@ -15,13 +15,7 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private Color _colorFull = new Color(0.4f, 1f, 0.2f);     // 연두색 (100%)
 
         [Header("타이머 (Radial)")]
-        [Tooltip("Image Type을 Filled, Fill Method를 Radial 360으로 설정하세요")]
-        [SerializeField] private Image _radialTimer;
-
-        [Header("타이머 그라디언트 색상")]
-        [SerializeField] private Color _timerColorFull = new Color(0.4f, 1f, 0.2f);     // 연두색 (시간 충분)
-        [SerializeField] private Color _timerColorMid = new Color(1f, 0.6f, 0f);        // 주황색 (절반)
-        [SerializeField] private Color _timerColorEmpty = new Color(1f, 0.2f, 0.2f);    // 빨간색 (시간 부족)
+        [SerializeField] private RadialTimerView _timer;
 
         [Header("스페이스바 힌트 애니메이션")]
         [Tooltip("기본 상태 스페이스바")]
@@ -49,10 +43,6 @@ namespace DontDillyDally.MiniGame
         [Tooltip("Elasticity — 반대 방향으로 얼마나 튕길지 (0이면 튕기지 않고 원래 크기로만 복귀)")]
         [SerializeField, Range(0f, 1f)] private float _punchElasticity = 0f;
 
-        [Header("공통 결과 연출")]
-        [SerializeField] private MiniGameResultEffect _resultEffect;
-
-        private ButtonMashMiniGame _game;
         private float _hintTimer;
         private bool _hintShowPressed;
 
@@ -62,19 +52,20 @@ namespace DontDillyDally.MiniGame
         private float _shakeStrength;
         private Tween _shakeTween;
 
-        public void Initialize(IMiniGame game)
+        protected override void OnBeforeGameChanged()
         {
-            // 이전 게임 이벤트 구독 해제 (동일 뷰가 재사용될 때 누수 방지)
-            if (_game != null)
+            // 이전 Game의 이벤트 구독 해제 (동일 뷰 재사용 시 누수 방지)
+            if (Game != null)
             {
-                _game.OnPressed -= HandlePressed;
+                Game.OnPressed -= HandlePressed;
             }
+        }
 
-            _game = game as ButtonMashMiniGame;
-
-            if (_game != null)
+        protected override void OnInitialize()
+        {
+            if (Game != null)
             {
-                _game.OnPressed += HandlePressed;
+                Game.OnPressed += HandlePressed;
             }
 
             if (_gaugeBarFill != null)
@@ -83,16 +74,7 @@ namespace DontDillyDally.MiniGame
                 _gaugeBarFill.color = _colorEmpty;
             }
 
-            if (_radialTimer != null)
-            {
-                _radialTimer.fillAmount = 1f;
-                _radialTimer.color = _timerColorFull;
-            }
-
-            if (_resultEffect != null)
-            {
-                _resultEffect.Reset();
-            }
+            _timer.Initialize();
 
             // 힌트 애니메이션 초기화 — Idle 상태로 시작
             _hintTimer = 0f;
@@ -104,7 +86,7 @@ namespace DontDillyDally.MiniGame
             ResetShake();
         }
 
-        public void SetVisible(bool visible)
+        public override void SetVisible(bool visible)
         {
             // 비활성화 직전에 위치를 원복시켜 다음 활성화 시 어긋나지 않도록 한다.
             if (!visible)
@@ -115,9 +97,9 @@ namespace DontDillyDally.MiniGame
             gameObject.SetActive(visible);
         }
 
-        public void UpdateView()
+        public override void UpdateView()
         {
-            if (_game == null || _game.CurrentState != EMiniGameState.Playing)
+            if (Game == null || Game.CurrentState != EMiniGameState.Playing)
             {
                 // Playing 상태가 아니면 흔들림을 정리해 위치 어긋남을 방지한다.
                 if (_shakeStrength > 0f || (_shakeTween != null && _shakeTween.IsActive()))
@@ -130,18 +112,13 @@ namespace DontDillyDally.MiniGame
             // 게이지 바 업데이트
             if (_gaugeBarFill != null)
             {
-                float progress = _game.NormalizedProgress;
+                float progress = Game.NormalizedProgress;
                 _gaugeBarFill.fillAmount = progress;
                 _gaugeBarFill.color = EvaluateGaugeColor(progress);
             }
 
-            // Radial 타이머 (Game 로직에서 직접 비율을 가져옴)
-            if (_radialTimer != null)
-            {
-                float timeRatio = _game.RemainingTimeRatio;
-                _radialTimer.fillAmount = timeRatio;
-                _radialTimer.color = EvaluateTimerColor(timeRatio);
-            }
+            // Radial 타이머
+            _timer.SetRatio(Game.RemainingTimeRatio);
 
             // 스페이스바 힌트 반복 토글
             _hintTimer += Time.deltaTime;
@@ -159,7 +136,7 @@ namespace DontDillyDally.MiniGame
             }
         }
 
-        public void ShowResult(bool isSuccess)
+        protected override void OnBeforeShowResult(bool isSuccess)
         {
             // 성공 시 게이지를 꽉 찬 상태로 보정
             if (isSuccess && _gaugeBarFill != null)
@@ -170,28 +147,15 @@ namespace DontDillyDally.MiniGame
 
             // 결과 연출이 시작되기 전 흔들림을 멈추고 위치를 원복한다.
             ResetShake();
-
-            if (_resultEffect != null)
-            {
-                if (isSuccess)
-                {
-                    _resultEffect.PlaySuccess();
-                }
-                else
-                {
-                    _resultEffect.PlayFail();
-                }
-            }
         }
 
         private void OnDestroy()
         {
             KillShakeTween();
 
-            if (_game != null)
+            if (Game != null)
             {
-                _game.OnPressed -= HandlePressed;
-                _game = null;
+                Game.OnPressed -= HandlePressed;
             }
         }
 
@@ -257,21 +221,6 @@ namespace DontDillyDally.MiniGame
             if (_shakeRoot != null && _shakeOriginCaptured)
             {
                 _shakeRoot.localScale = _shakeOriginalScale;
-            }
-        }
-
-        // 0~1 남은 시간 비율을 연두 → 주황 → 빨강 그라디언트로 변환.
-        private Color EvaluateTimerColor(float t)
-        {
-            if (t >= 0.5f)
-            {
-                // 1.0~0.5 구간: 연두 → 주황
-                return Color.Lerp(_timerColorMid, _timerColorFull, (t - 0.5f) * 2f);
-            }
-            else
-            {
-                // 0.5~0.0 구간: 주황 → 빨강
-                return Color.Lerp(_timerColorEmpty, _timerColorMid, t * 2f);
             }
         }
 

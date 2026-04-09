@@ -508,7 +508,8 @@ MonoBehaviour:
   Synchronization: 3
   OwnershipTransfer: 0
   observableSearch: 2
-  ObservedComponents: []
+  ObservedComponents:
+  - {fileID: 117192487}
   sceneViewId: 8
   InstantiationId: 0
   isRuntimeInstantiated: 0
@@ -3179,18 +3180,6 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
-    - target: {fileID: 244347685147811187, guid: 78707dff5102169448a760e7d04c9820, type: 3}
-      propertyPath: _punchKick
-      value: 0.05
-      objectReference: {fileID: 0}
-    - target: {fileID: 244347685147811187, guid: 78707dff5102169448a760e7d04c9820, type: 3}
-      propertyPath: _punchVibrato
-      value: 2
-      objectReference: {fileID: 0}
-    - target: {fileID: 244347685147811187, guid: 78707dff5102169448a760e7d04c9820, type: 3}
-      propertyPath: _punchMaxStrength
-      value: 0.17
-      objectReference: {fileID: 0}
     - target: {fileID: 1359893702010130576, guid: 78707dff5102169448a760e7d04c9820, type: 3}
       propertyPath: m_Pivot.x
       value: 0
@@ -3275,6 +3264,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: MiniGameCanvas
       objectReference: {fileID: 0}
+    - target: {fileID: 3692666410324219649, guid: 78707dff5102169448a760e7d04c9820, type: 3}
+      propertyPath: m_Camera
+      value: 
+      objectReference: {fileID: 978896921}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
