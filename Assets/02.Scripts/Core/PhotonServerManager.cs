@@ -318,40 +318,62 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     private static int CleanupGameplayRoomObjects()
     {
-        PhotonView[] photonViews = FindObjectsOfType<PhotonView>(true);
-        HashSet<GameObject> targets = new HashSet<GameObject>();
+        int destroyedCount = 0;
+        HashSet<GameObject> destroyed = new HashSet<GameObject>();
 
-        foreach (PhotonView photonView in photonViews)
+        // 1) Photon에 등록된 네트워크 오브젝트 정리
+        // PhotonViewCollection은 Photon 내부 목록을 사용하므로 씬 전체 탐색이 불필요합니다.
+        List<PhotonView> registeredViews = new List<PhotonView>();
+        foreach (PhotonView photonView in PhotonNetwork.PhotonViewCollection)
         {
-            if (!ShouldDestroyBeforeWaitingRoom(photonView))
-            {
+            registeredViews.Add(photonView);
+        }
+
+        foreach (PhotonView photonView in registeredViews)
+        {
+            if (photonView == null || photonView.gameObject == null)
                 continue;
-            }
 
-            targets.Add(photonView.gameObject);
-        }
+            if (!photonView.IsRoomView)
+                continue;
 
-        foreach (GameObject target in targets)
-        {
+            GameObject target = photonView.gameObject;
+            if (!destroyed.Add(target))
+                continue;
+
+            if (!IsGameplayObject(target))
+                continue;
+
             PhotonNetwork.Destroy(target);
+            destroyedCount++;
         }
 
-        return targets.Count;
+        // 2) Photon에 미등록된 scene 오브젝트 정리 (ViewID 0 등)
+        PhotonView[] sceneViews = FindObjectsOfType<PhotonView>(true);
+        foreach (PhotonView photonView in sceneViews)
+        {
+            if (photonView == null || photonView.gameObject == null)
+                continue;
+
+            if (!photonView.IsRoomView)
+                continue;
+
+            GameObject target = photonView.gameObject;
+            if (!destroyed.Add(target))
+                continue;
+
+            if (!IsGameplayObject(target))
+                continue;
+
+            UnityEngine.Object.Destroy(target);
+            destroyedCount++;
+        }
+
+        return destroyedCount;
     }
 
-    private static bool ShouldDestroyBeforeWaitingRoom(PhotonView photonView)
+    private static bool IsGameplayObject(GameObject target)
     {
-        if (photonView == null || photonView.gameObject == null)
-        {
-            return false;
-        }
-
-        if (!photonView.IsRoomView)
-        {
-            return false;
-        }
-
-        GameObject target = photonView.gameObject;
         return target.GetComponent<ItemObject>() != null ||
                target.GetComponent<BasicMaterialSource>() != null ||
                target.GetComponent<MixToolSource>() != null ||
