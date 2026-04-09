@@ -118,6 +118,23 @@ namespace DontDillyDally.StageFlow
 
         private void Cleanup()
         {
+            ReleaseResources();
+            Destroy(gameObject);
+        }
+
+        private void OnDestroy()
+        {
+            ReleaseResources();
+
+            if (Instance == this)
+            {
+                Instance = null;
+                IsStageFlowReady = false;
+            }
+        }
+
+        private void ReleaseResources()
+        {
             if (_isCleaningUp)
             {
                 return;
@@ -129,17 +146,6 @@ namespace DontDillyDally.StageFlow
             if (SceneLoadManager.Instance != null)
             {
                 SceneLoadManager.Instance.OnSceneLoadComplete -= HandleSceneLoadComplete;
-            }
-
-            Destroy(gameObject);
-        }
-
-        private void OnDestroy()
-        {
-            if (Instance == this)
-            {
-                Instance = null;
-                IsStageFlowReady = false;
             }
         }
     }

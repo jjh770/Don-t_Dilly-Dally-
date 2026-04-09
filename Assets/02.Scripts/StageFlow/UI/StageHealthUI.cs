@@ -33,8 +33,6 @@ public class StageHealthUI : MonoBehaviour
         {
             StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
-
-        RefreshUi(snapGaugeValue: true);
     }
 
     private void OnDestroy()
@@ -94,10 +92,7 @@ public class StageHealthUI : MonoBehaviour
 
     private void HandleStageFlowReady()
     {
-        if (TryBind())
-        {
-            RefreshUi(snapGaugeValue: true);
-        }
+        TryBind();
     }
 
     private void HandleStageDataChanged(StageRuntimeData stageData)

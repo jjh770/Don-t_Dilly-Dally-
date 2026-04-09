@@ -49,8 +49,6 @@ public class PatientInfoPanelUI : MonoBehaviour
         {
             StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
-
-        RefreshUi();
     }
 
     private void Update()
@@ -116,10 +114,7 @@ public class PatientInfoPanelUI : MonoBehaviour
 
     private void HandleStageFlowReady()
     {
-        if (TryBind())
-        {
-            RefreshUi();
-        }
+        TryBind();
     }
 
     private void HandleStageDataChanged(StageRuntimeData _)

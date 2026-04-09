@@ -21,13 +21,14 @@ public class StageTimerUI : MonoBehaviour
         {
             StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
-
-        RefreshTimerText();
     }
 
     private void Update()
     {
-        RefreshTimerText();
+        if (_stageFlowManager != null)
+        {
+            RefreshTimerText();
+        }
     }
 
     private void OnDestroy()

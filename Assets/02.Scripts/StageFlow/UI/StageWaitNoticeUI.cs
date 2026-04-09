@@ -20,13 +20,14 @@ public class StageWaitNoticeUI : MonoBehaviour
         {
             StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
-
-        RefreshUi();
     }
 
     private void Update()
     {
-        RefreshUi();
+        if (_stageFlowManager != null)
+        {
+            RefreshUi();
+        }
     }
 
     private void OnDestroy()
@@ -75,10 +76,7 @@ public class StageWaitNoticeUI : MonoBehaviour
 
     private void HandleStageFlowReady()
     {
-        if (TryBind())
-        {
-            RefreshUi();
-        }
+        TryBind();
     }
 
     private void EnsureReferences()
