@@ -1,7 +1,5 @@
 using Photon.Pun;
 using UnityEngine;
-using static UnityEditor.Profiling.HierarchyFrameDataView;
-
 public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 {
     [SerializeField] private WaitingRoomClickManager _clickManager;
