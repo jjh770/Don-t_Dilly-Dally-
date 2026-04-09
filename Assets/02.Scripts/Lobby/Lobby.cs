@@ -102,9 +102,9 @@ public class Lobby : MonoBehaviour
         {
             _transition.TransitionToCustomizing();
         }
-        else if (_customizingUI != null)
+        if (_customizingUI != null)
         {
-            _customizingUI.gameObject.SetActive(true);
+            _customizingUI.ShowImmediate();
         }
     }
 
@@ -114,9 +114,9 @@ public class Lobby : MonoBehaviour
         {
             _transition.TransitionToLobby();
         }
-        else if (_customizingUI != null)
+        if (_customizingUI != null)
         {
-            _customizingUI.gameObject.SetActive(false);
+            _customizingUI.HideImmediate();
         }
     }
 
