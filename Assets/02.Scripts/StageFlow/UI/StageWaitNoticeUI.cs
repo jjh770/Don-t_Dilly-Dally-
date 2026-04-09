@@ -20,6 +20,7 @@ public class StageWaitNoticeUI : MonoBehaviour
     private StageFlowManager _stageFlowManager;
     private int _lastDisplayedCount = -1;
     private GameObject _currentCountdownObject;
+    private bool _isGoAnimationPlaying;
 
     private void Start()
     {
@@ -80,13 +81,18 @@ public class StageWaitNoticeUI : MonoBehaviour
                          _stageFlowManager.CurrentPhase.Value == EStagePhase.Loading;
         bool isCountdown = _stageFlowManager != null &&
                            _stageFlowManager.CurrentPhase.Value == EStagePhase.Countdown;
-        bool shouldShow = isLoading || isCountdown;
+        bool shouldShow = isLoading || isCountdown || _isGoAnimationPlaying;
 
         gameObject.SetActive(shouldShow);
         if (!shouldShow)
         {
             ClearCountdownObject();
             _lastDisplayedCount = -1;
+            return;
+        }
+
+        if (_isGoAnimationPlaying)
+        {
             return;
         }
 
@@ -146,14 +152,20 @@ public class StageWaitNoticeUI : MonoBehaviour
 
         rectTransform.localScale = Vector3.zero;
 
+        if (isGo)
+        {
+            _isGoAnimationPlaying = true;
+        }
+
         Sequence sequence = DOTween.Sequence();
 
         // Pop in
         sequence.Append(rectTransform.DOScale(_popScale, _animDuration * 0.5f).SetEase(Ease.OutBack));
         sequence.Append(rectTransform.DOScale(1f, _animDuration * 0.3f).SetEase(Ease.InOutSine));
 
-        // Hold
-        sequence.AppendInterval(0.3f);
+        // Hold 
+        float holdTime = 0.3f;
+        sequence.AppendInterval(holdTime);
 
         // Fade out
         CanvasGroup canvasGroup = obj.GetComponent<CanvasGroup>();
@@ -175,6 +187,12 @@ public class StageWaitNoticeUI : MonoBehaviour
             if (_currentCountdownObject == obj)
             {
                 _currentCountdownObject = null;
+            }
+
+            if (isGo)
+            {
+                _isGoAnimationPlaying = false;
+                gameObject.SetActive(false);
             }
         });
 

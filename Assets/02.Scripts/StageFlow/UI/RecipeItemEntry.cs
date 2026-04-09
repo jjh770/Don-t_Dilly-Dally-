@@ -23,9 +23,11 @@ public class RecipeItemEntry : MonoBehaviour
     [SerializeField] private RectTransform _iconContainer;
 
     [Header("아이콘 설정")]
+    [SerializeField] private Sprite _iconFrameSprite;
+    [SerializeField] private float _frameSize = 80f;
     [SerializeField] private float _materialIconSize = 60f;
-    [SerializeField] private float _actionIconSize = 50f;
-    [SerializeField] private float _slotSpacing = 10f;
+    [SerializeField] private float _actionIconSize = 40f;
+    [SerializeField] private float _slotSpacing = 5f;
 
     private readonly List<MaterialSlot> _slotPool = new List<MaterialSlot>();
 
@@ -116,7 +118,7 @@ public class RecipeItemEntry : MonoBehaviour
 
         // 재료 아이콘
         slot.MaterialIcon.sprite = materialSprite;
-        slot.MaterialIcon.color = tintColor;
+        slot.MaterialIcon.color = Color.white;
 
         // 액션 아이콘
         bool hasAction = action != ActionType.None && actionSprite != null;
@@ -124,14 +126,15 @@ public class RecipeItemEntry : MonoBehaviour
         if (hasAction)
         {
             slot.ActionIcon.sprite = actionSprite;
-            slot.ActionIcon.color = tintColor;
+            slot.ActionIcon.color = Color.white;
         }
 
-        // 슬롯 높이 조정 (액션 있으면 더 높게)
+        // 슬롯 높이 조정 (프레임 + 액션)
         float slotHeight = hasAction
-            ? _materialIconSize + _actionIconSize + 2f
-            : _materialIconSize;
-        slot.Root.sizeDelta = new Vector2(_materialIconSize, slotHeight);
+            ? _frameSize + _actionIconSize + _slotSpacing
+            : _frameSize;
+        slot.Root.sizeDelta = new Vector2(_frameSize, slotHeight);
+        slot.LayoutElement.preferredHeight = slotHeight;
     }
 
     // ================================================================
@@ -149,39 +152,75 @@ public class RecipeItemEntry : MonoBehaviour
 
     private MaterialSlot CreateSlot(int index)
     {
-        // 슬롯 루트 (재료 + 액션을 세로로 묶는 컨테이너)
-        GameObject slotObj = new GameObject($"Slot_{index}", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+        // 슬롯 루트 (프레임 + 액션을 세로로 묶는 컨테이너)
+        GameObject slotObj = new GameObject($"Slot_{index}", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(LayoutElement));
         slotObj.layer = gameObject.layer;
 
         RectTransform slotRt = slotObj.GetComponent<RectTransform>();
         slotRt.SetParent(_iconContainer, false);
-        slotRt.sizeDelta = new Vector2(_materialIconSize, _materialIconSize);
+        slotRt.sizeDelta = new Vector2(_frameSize, _frameSize);
 
         VerticalLayoutGroup vlg = slotObj.GetComponent<VerticalLayoutGroup>();
         vlg.childAlignment = TextAnchor.UpperCenter;
         vlg.childForceExpandWidth = false;
-        vlg.childForceExpandHeight = true;
+        vlg.childForceExpandHeight = false;
         vlg.childControlWidth = false;
         vlg.childControlHeight = false;
         vlg.spacing = _slotSpacing;
 
-        ContentSizeFitter contentSizeFitter = slotObj.GetComponent<ContentSizeFitter>();
-        contentSizeFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-        contentSizeFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        LayoutElement layoutElement = slotObj.GetComponent<LayoutElement>();
+        layoutElement.preferredWidth = _frameSize;
+        layoutElement.preferredHeight = _frameSize;
 
-        // 재료 아이콘
-        Image materialIcon = CreateIconImage(slotRt, $"Material_{index}", _materialIconSize);
+        // 아이콘 프레임 (배경 + 재료 아이콘 포함)
+        Image frameImage = CreateFrameWithIcon(slotRt, $"Frame_{index}", out Image materialIcon);
 
-        // 액션 아이콘 (기본 비활성화)
+        // 액션 아이콘 (프레임 아래, 기본 비활성화)
         Image actionIcon = CreateIconImage(slotRt, $"Action_{index}", _actionIconSize);
         actionIcon.gameObject.SetActive(false);
 
         return new MaterialSlot
         {
             Root = slotRt,
+            LayoutElement = layoutElement,
+            FrameImage = frameImage,
             MaterialIcon = materialIcon,
             ActionIcon = actionIcon
         };
+    }
+
+    private Image CreateFrameWithIcon(RectTransform parent, string objectName, out Image materialIcon)
+    {
+        // 프레임 오브젝트
+        GameObject frameObj = new GameObject(objectName, typeof(RectTransform), typeof(Image));
+        frameObj.layer = gameObject.layer;
+
+        RectTransform frameRt = frameObj.GetComponent<RectTransform>();
+        frameRt.SetParent(parent, false);
+        frameRt.sizeDelta = new Vector2(_frameSize, _frameSize);
+
+        Image frameImage = frameObj.GetComponent<Image>();
+        frameImage.sprite = _iconFrameSprite;
+        frameImage.type = Image.Type.Sliced;
+        frameImage.raycastTarget = false;
+
+        // 재료 아이콘 (프레임 안에 중앙 배치)
+        GameObject iconObj = new GameObject("MaterialIcon", typeof(RectTransform), typeof(Image));
+        iconObj.layer = gameObject.layer;
+
+        RectTransform iconRt = iconObj.GetComponent<RectTransform>();
+        iconRt.SetParent(frameRt, false);
+        iconRt.anchorMin = new Vector2(0.5f, 0.5f);
+        iconRt.anchorMax = new Vector2(0.5f, 0.5f);
+        iconRt.pivot = new Vector2(0.5f, 0.5f);
+        iconRt.anchoredPosition = Vector2.zero;
+        iconRt.sizeDelta = new Vector2(_materialIconSize, _materialIconSize);
+
+        materialIcon = iconObj.GetComponent<Image>();
+        materialIcon.preserveAspect = true;
+        materialIcon.raycastTarget = false;
+
+        return frameImage;
     }
 
     private Image CreateIconImage(RectTransform parent, string objectName, float size)
@@ -203,6 +242,8 @@ public class RecipeItemEntry : MonoBehaviour
     private struct MaterialSlot
     {
         public RectTransform Root;
+        public LayoutElement LayoutElement;
+        public Image FrameImage;
         public Image MaterialIcon;
         public Image ActionIcon;
     }
