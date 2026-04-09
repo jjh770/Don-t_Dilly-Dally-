@@ -67,20 +67,29 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            SubmittedTray traySnapshot = trayItem.GetTraySnapshot();
-            if (traySnapshot == null)
+            // 제출 응답이 올 때까지 다른 인터랙션을 잠급니다.
+            // 마스터가 실제 트레이 오브젝트를 확인해 접수한 뒤에만 손에서 제거합니다.
+            if (heldItemInteractor != null &&
+                !heldItemInteractor.TryBeginHeldItemInteractionLock(trayItem))
             {
                 return;
             }
 
-            int trayViewId = trayItem.ViewId;
-
-            if (!stageFlowManager.RequestTraySubmission(traySnapshot, trayViewId))
+            if (!stageFlowManager.RequestTraySubmission(
+                    trayItem,
+                    onAccepted: () =>
+                    {
+                        heldItemInteractor?.EndHeldItemInteractionLock();
+                        heldItemInteractor?.TryConsumeHeldItem(trayItem);
+                    },
+                    onRejected: () =>
+                    {
+                        heldItemInteractor?.EndHeldItemInteractionLock();
+                    }))
             {
+                heldItemInteractor?.EndHeldItemInteractionLock();
                 return;
             }
-
-            heldItemInteractor?.TryConsumeHeldItem(trayItem);
         }
 
         public void StopInteract()
