@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace DontDillyDally.MiniGame
 {
-    public sealed class PrecisionStopUIView : MonoBehaviour, IMiniGameUIView
+    public sealed class PrecisionStopUIView : MiniGameUIViewBase<PrecisionStopMiniGame>
     {
         [Header("게이지 바")]
         [SerializeField] private RectTransform _gaugeBar;
@@ -21,20 +21,11 @@ namespace DontDillyDally.MiniGame
         [Header("라운드 중간 피드백")]
         [SerializeField] private TextMeshProUGUI _feedbackText;
 
-        [Header("공통 결과 연출")]
-        [SerializeField] private MiniGameResultEffect _resultEffect;
-
         [Header("라운드 표시")]
         [SerializeField] private TextMeshProUGUI _roundText;
 
         [Header("타이머 (Radial)")]
-        [Tooltip("Image Type을 Filled, Fill Method를 Radial 360으로 설정하세요")]
-        [SerializeField] private Image _radialTimer;
-
-        [Header("타이머 그라디언트 색상")]
-        [SerializeField] private Color _timerColorFull = new Color(0.4f, 1f, 0.2f);
-        [SerializeField] private Color _timerColorMid = new Color(1f, 0.6f, 0f);
-        [SerializeField] private Color _timerColorEmpty = new Color(1f, 0.2f, 0.2f);
+        [SerializeField] private RadialTimerView _timer;
 
         [Header("DOTween 라운드 피드백")]
         [Tooltip("흔들림 대상 (미할당 시 게이지 바 사용)")]
@@ -48,14 +39,12 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private float _missShakeStrength = 12f;
         [SerializeField] private float _missShakeDuration = 0.35f;
 
-        private PrecisionStopMiniGame _game;
         private float _gaugeWidth;
         private bool? _lastRoundResult;
         private Tween _shakeTween;
 
-        public void Initialize(IMiniGame game)
+        protected override void OnInitialize()
         {
-            _game = game as PrecisionStopMiniGame;
             _lastRoundResult = null;
 
             KillShakeTween();
@@ -75,28 +64,24 @@ namespace DontDillyDally.MiniGame
                 _targetZoneImage.color = _defaultZoneColor;
             }
 
-            if (_radialTimer != null)
-            {
-                _radialTimer.fillAmount = 1f;
-                _radialTimer.color = _timerColorFull;
-            }
+            _timer.Initialize();
         }
 
-        public void SetVisible(bool visible)
+        public override void SetVisible(bool visible)
         {
             gameObject.SetActive(visible);
         }
 
-        public void UpdateView()
+        public override void UpdateView()
         {
-            if (_game == null)
+            if (Game == null)
             {
                 return;
             }
 
             UpdateCursorPosition();
             UpdateTargetZone();
-            UpdateRadialTimer();
+            _timer.SetRatio(Game.RemainingTimeRatio);
             UpdateRoundText();
             UpdateFeedback();
         }
@@ -108,7 +93,7 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            float xPos = _game.CursorPosition * _gaugeWidth - _gaugeWidth * 0.5f;
+            float xPos = Game.CursorPosition * _gaugeWidth - _gaugeWidth * 0.5f;
             _cursor.anchoredPosition = new Vector2(xPos, _cursor.anchoredPosition.y);
         }
 
@@ -119,26 +104,14 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            float center = _game.TargetZoneCenter;
-            float width = _game.TargetZoneWidth;
+            float center = Game.TargetZoneCenter;
+            float width = Game.TargetZoneWidth;
 
             float left = (center - width * 0.5f) * _gaugeWidth - _gaugeWidth * 0.5f;
             float zonePixelWidth = width * _gaugeWidth;
 
             _targetZone.anchoredPosition = new Vector2(left + zonePixelWidth * 0.5f, _targetZone.anchoredPosition.y);
             _targetZone.sizeDelta = new Vector2(zonePixelWidth, _targetZone.sizeDelta.y);
-        }
-
-        private void UpdateRadialTimer()
-        {
-            if (_radialTimer == null)
-            {
-                return;
-            }
-
-            float timeRatio = _game.RemainingTimeRatio;
-            _radialTimer.fillAmount = timeRatio;
-            _radialTimer.color = EvaluateTimerColor(timeRatio);
         }
 
         private void UpdateRoundText()
@@ -148,7 +121,7 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            _roundText.text = $"{_game.DisplayRound} / {_game.TotalRounds}";
+            _roundText.text = $"{Game.DisplayRound} / {Game.TotalRounds}";
         }
 
         private void UpdateFeedback()
@@ -158,7 +131,7 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            bool? currentResult = _game.LastRoundResult;
+            bool? currentResult = Game.LastRoundResult;
             if (currentResult == _lastRoundResult)
             {
                 return;
@@ -198,23 +171,6 @@ namespace DontDillyDally.MiniGame
                 {
                     _targetZoneImage.color = _defaultZoneColor;
                 }
-            }
-        }
-
-        public void ShowResult(bool isSuccess)
-        {
-            if (_resultEffect == null)
-            {
-                return;
-            }
-
-            if (isSuccess)
-            {
-                _resultEffect.PlaySuccess();
-            }
-            else
-            {
-                _resultEffect.PlayFail();
             }
         }
 
@@ -260,20 +216,6 @@ namespace DontDillyDally.MiniGame
             {
                 _shakeTween.Kill();
                 _shakeTween = null;
-            }
-        }
-
-        // ── 타이머 그라디언트 ──
-
-        private Color EvaluateTimerColor(float t)
-        {
-            if (t >= 0.5f)
-            {
-                return Color.Lerp(_timerColorMid, _timerColorFull, (t - 0.5f) * 2f);
-            }
-            else
-            {
-                return Color.Lerp(_timerColorEmpty, _timerColorMid, t * 2f);
             }
         }
 
