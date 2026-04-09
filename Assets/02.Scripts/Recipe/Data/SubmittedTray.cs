@@ -12,10 +12,14 @@ namespace DontDillyDally.Data
     {
         public const int MaxContainedItems = 4;
 
+        // StageFlow RPC 제출은 JsonUtility를 사용하므로,
+        // private 필드라도 직렬화 대상임을 명시해야 최신 트레이 상태가 그대로 전달됩니다.
         [FormerlySerializedAs("Kind")]
+        [UnityEngine.SerializeField]
         private TrayKind _kind = TrayKind.Normal;
 
         [FormerlySerializedAs("ContainedItems")]
+        [UnityEngine.SerializeField]
         private List<CraftedItem> _containedItems = new List<CraftedItem>();
 
         public TrayKind Kind => _kind;
