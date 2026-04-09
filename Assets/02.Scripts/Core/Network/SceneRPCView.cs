@@ -1,7 +1,6 @@
 using Photon.Pun;
 using UnityEngine;
 
-[RequireComponent(typeof(PhotonView))]
 public class SceneRPCView : PunSingleton<SceneRPCView>
 {
     public void PlaySfxForAll(SFXKey key)

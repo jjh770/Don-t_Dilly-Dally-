@@ -1,7 +1,9 @@
+using Photon.Pun;
 using UnityEngine;
 using UnityEngine.AI;
 
-public class CreatureMove : MonoBehaviour
+[RequireComponent(typeof(PhotonView))]
+public class CreatureMove : MonoBehaviourPunCallbacks, IPunObservable
 {
     [Header("이동")]
     [SerializeField] private float _moveSpeed = 3.5f;
@@ -20,12 +22,21 @@ public class CreatureMove : MonoBehaviour
     [SerializeField] private bool _smoothRotation = false;
     [SerializeField] private float _smoothRotationSpeed = 5f;
 
+    [Header("네트워크 보간")]
+    [SerializeField] private float _positionLerpSpeed = 10f;
+    [SerializeField] private float _rotationLerpSpeed = 10f;
+
     private NavMeshAgent _agent;
     private Animator _animator;
+    private PhotonView _photonView;
     private float _waitTimer;
     private float _stuckTimer;
     private bool _isWaiting;
     private Vector3 _lastPosition;
+
+    private Vector3 _networkPosition;
+    private Quaternion _networkRotation;
+    private bool _networkIsWaiting;
 
     private static readonly int IsWait = Animator.StringToHash("IsWait");
 
@@ -33,10 +44,14 @@ public class CreatureMove : MonoBehaviour
     {
         _agent = GetComponent<NavMeshAgent>();
         _animator = GetComponentInChildren<Animator>();
+        _photonView = GetComponent<PhotonView>();
     }
 
     private void Start()
     {
+        _networkPosition = transform.position;
+        _networkRotation = transform.rotation;
+
         if (_agent != null)
         {
             _agent.speed = _moveSpeed;
@@ -44,11 +59,31 @@ public class CreatureMove : MonoBehaviour
             _agent.avoidancePriority = Random.Range(_minAvoidancePriority, _maxAvoidancePriority);
             _agent.updateRotation = !_smoothRotation;
             _lastPosition = transform.position;
-            SetNewDestination();
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                SetNewDestination();
+            }
+            else
+            {
+                _agent.enabled = false;
+            }
         }
     }
 
     private void Update()
+    {
+        if (PhotonNetwork.IsMasterClient)
+        {
+            UpdateMaster();
+        }
+        else
+        {
+            UpdateRemote();
+        }
+    }
+
+    private void UpdateMaster()
     {
         if (_agent == null) return;
 
@@ -66,6 +101,48 @@ public class CreatureMove : MonoBehaviour
 
         CheckStuck();
         UpdateSmoothRotation();
+    }
+
+    private void UpdateRemote()
+    {
+        transform.position = Vector3.Lerp(transform.position, _networkPosition, _positionLerpSpeed * Time.deltaTime);
+        transform.rotation = Quaternion.Slerp(transform.rotation, _networkRotation, _rotationLerpSpeed * Time.deltaTime);
+
+        if (_animator != null && _isWaiting != _networkIsWaiting)
+        {
+            _isWaiting = _networkIsWaiting;
+            _animator.SetBool(IsWait, _isWaiting);
+        }
+    }
+
+    public override void OnMasterClientSwitched(Photon.Realtime.Player newMasterClient)
+    {
+        if (PhotonNetwork.IsMasterClient && _agent != null)
+        {
+            _agent.enabled = true;
+            _agent.Warp(transform.position);
+            SetNewDestination();
+        }
+        else if (_agent != null)
+        {
+            _agent.enabled = false;
+        }
+    }
+
+    public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+    {
+        if (stream.IsWriting)
+        {
+            stream.SendNext(transform.position);
+            stream.SendNext(transform.rotation);
+            stream.SendNext(_isWaiting);
+        }
+        else
+        {
+            _networkPosition = (Vector3)stream.ReceiveNext();
+            _networkRotation = (Quaternion)stream.ReceiveNext();
+            _networkIsWaiting = (bool)stream.ReceiveNext();
+        }
     }
 
     private void UpdateWaiting()
