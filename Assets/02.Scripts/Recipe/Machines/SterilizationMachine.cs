@@ -29,25 +29,9 @@ namespace DontDillyDally.Data
             return CraftingResult.Succeed(rule, tool, ActionType.Sterilize, playerId);
         }
 
-        public bool CanSterilizeTray(SubmittedTray tray)
-        {
-            return tray != null && !tray.IsSterilizedTray && !tray.HasAnyItems();
-        }
-
         public bool CanSterilizeTray(TrayItem trayItem)
         {
-            return trayItem != null && !trayItem.IsSterilizedTray && CanSterilizeTray(trayItem.TrayData);
-        }
-
-        public bool TrySterilizeTray(SubmittedTray tray)
-        {
-            if (!CanSterilizeTray(tray))
-            {
-                return false;
-            }
-
-            tray.MarkSterilized();
-            return true;
+            return trayItem != null && trayItem.CanBeSterilized();
         }
 
         public bool TrySterilizeTray(TrayItem trayItem)
@@ -57,8 +41,7 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            trayItem.EnsureTrayData();
-            if (!TrySterilizeTray(trayItem.TrayData))
+            if (!trayItem.CanBeSterilized())
             {
                 return false;
             }

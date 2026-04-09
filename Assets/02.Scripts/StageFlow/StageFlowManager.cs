@@ -386,9 +386,9 @@ namespace DontDillyDally.StageFlow
         // ================================================================
 
         // 환자 상호작용으로 만들어진 제출 요청을 검증 루프로 전달합니다.
-        public bool RequestTraySubmission(SubmittedTray tray, int trayViewId = -1)
+        public bool RequestTraySubmission(TrayItem trayItem, Action onAccepted, Action onRejected = null)
         {
-            return _trayHandler.RequestSubmission(tray, trayViewId);
+            return _trayHandler.RequestSubmission(trayItem, onAccepted, onRejected);
         }
 
         public bool RequestEmergencyMaterialSubmission(CraftedMaterialType materialType, int itemViewId = -1)

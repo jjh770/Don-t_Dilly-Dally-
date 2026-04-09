@@ -15,23 +15,9 @@ namespace DontDillyDally.Data
 
         public bool HasTray => GetResolvedTrayItem() != null;
 
-        public SubmittedTray CurrentTray
-        {
-            get
-            {
-                TrayItem trayItem = GetResolvedTrayItem();
-                return trayItem != null ? trayItem.TrayData : null;
-            }
-        }
-
         public void SetCurrentTrayItem(TrayItem trayItem)
         {
             CurrentTrayItem = trayItem;
-
-            if (CurrentTrayItem != null)
-            {
-                CurrentTrayItem.EnsureTrayData();
-            }
         }
 
         public bool CanPlaceTrayItem(TrayItem trayItem)
@@ -86,23 +72,7 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            if (trayItem.TrayData != null && trayItem.TrayData.ContainedItems.Count >= SubmittedTray.MaxContainedItems)
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        public bool TryPlaceItemOnTray(CraftedItem item)
-        {
-            if (!CanPlaceItemOnTray(item))
-            {
-                return false;
-            }
-
-            TrayItem trayItem = GetResolvedTrayItem();
-            return trayItem.TryAddItem(item);
+            return trayItem.CanStoreItem(item);
         }
 
         public bool CanPlaceBasicMaterialOnTray(CraftedMaterialType materialType)
@@ -116,33 +86,6 @@ namespace DontDillyDally.Data
             return CanPlaceItemOnTray(item);
         }
 
-        public bool TryPlaceBasicMaterialOnTray(CraftedMaterialType materialType, int playerId = 0)
-        {
-            if (!CanPlaceBasicMaterialOnTray(materialType))
-            {
-                return false;
-            }
-
-            CraftedItem item = CraftedItem.CreateBasicMaterial(materialType, playerId);
-            if (item == null)
-            {
-                return false;
-            }
-
-            return TryPlaceItemOnTray(item);
-        }
-
-        public CraftedItem TakeLastItemFromTray()
-        {
-            TrayItem trayItem = GetResolvedTrayItem();
-            if (trayItem == null)
-            {
-                return null;
-            }
-
-            return trayItem.TakeLastItem();
-        }
-
         public void LoadTray(SubmittedTray tray)
         {
             TrayItem trayItem = GetResolvedTrayItem();
@@ -151,7 +94,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            trayItem.LoadTrayData(tray);
+            trayItem.ApplyTraySnapshot(tray);
         }
 
         public SubmittedTray TakeTraySnapshot()
@@ -163,29 +106,6 @@ namespace DontDillyDally.Data
             }
 
             return trayItem.GetTraySnapshot();
-        }
-
-        public SubmittedTray TakeTrayAndReset()
-        {
-            SubmittedTray trayToSubmit = TakeTraySnapshot();
-            if (trayToSubmit == null)
-            {
-                return null;
-            }
-
-            ClearSubmittedTray();
-            return trayToSubmit;
-        }
-
-        public void ClearSubmittedTray()
-        {
-            TrayItem trayItem = GetResolvedTrayItem();
-            if (trayItem == null)
-            {
-                return;
-            }
-
-            trayItem.ClearContentsAndSync();
         }
 
         private TrayItem GetResolvedTrayItem()

@@ -48,6 +48,21 @@ namespace DontDillyDally.Data
             return false;
         }
 
+        public bool IsSlotAvailable(int slotIndex)
+        {
+            if (_storedSlotItems == null)
+            {
+                return false;
+            }
+
+            if (slotIndex < 0 || slotIndex >= _storedSlotItems.Length)
+            {
+                return false;
+            }
+
+            return _storedSlotItems[slotIndex] == null;
+        }
+
         public bool TryStoreItem(ItemObject itemObject, int slotIndex)
         {
             if (itemObject == null)

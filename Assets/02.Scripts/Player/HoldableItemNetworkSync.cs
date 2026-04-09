@@ -9,14 +9,12 @@ public class HoldableItemNetworkSync : MonoBehaviour
 {
     private PhotonView _photonView;
     private Rigidbody _rigidbody;
-    private Collider _collider;
     private HoldableItem _holdableItem;
 
     private void Awake()
     {
         _photonView = GetComponent<PhotonView>();
         _rigidbody = GetComponent<Rigidbody>();
-        _collider = GetComponent<Collider>();
         _holdableItem = GetComponent<HoldableItem>();
     }
 
@@ -55,7 +53,7 @@ public class HoldableItemNetworkSync : MonoBehaviour
         if (isStoredInContainer)
         {
             _rigidbody.isKinematic = true;
-            _collider.enabled = false;
+            _holdableItem.SetAllCollidersEnabled(false);
             return;
         }
 
@@ -66,6 +64,6 @@ public class HoldableItemNetworkSync : MonoBehaviour
         if (_holdableItem.IsStoredInContainer)
             return;
 
-        _collider.enabled = !isHeld;
+        _holdableItem.SetAllCollidersEnabled(!isHeld);
     }
 }

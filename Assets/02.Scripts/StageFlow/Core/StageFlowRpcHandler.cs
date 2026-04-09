@@ -1,6 +1,7 @@
 using DontDillyDally.Data;
 using DontDillyDally.MiniGame;
 using Photon.Pun;
+using Photon.Realtime;
 using System;
 using UniRx;
 using UnityEngine;
@@ -35,7 +36,8 @@ namespace DontDillyDally.StageFlow
 
         // ── 이벤트 (StageFlowManager가 구독) ────────────────────────
         public event Action<EGameOverReason> OnGameOverReceived;
-        public event Action<SubmittedTray, int, int> OnTraySubmittedReceived; // tray, trayViewId, submitterActorNumber
+        public event Action<int, int, int> OnTraySubmissionRequestedReceived; // trayViewId, sequenceId, submitterActorNumber
+        public event Action<int, int, bool> OnTraySubmissionResponseReceived; // trayViewId, sequenceId, accepted
         public event Action<CraftedMaterialType, int, int> OnEmergencyMaterialSubmittedReceived; // materialType, itemViewId, submitterActorNumber
         public event Action<DiagnosisScanType, int> OnEmergencyDiagnosisOperateReceived; // diagnosisType, submitterActorNumber
         public event Action<EmergencyEventKind, EmergencyTriggerSource, CraftedMaterialType, DiagnosisScanType> OnEmergencyStartedReceived;
@@ -184,22 +186,41 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        public void SubmitTray(SubmittedTray tray, int trayViewId = -1)
+        public void SubmitTrayRequest(int trayViewId, int sequenceId)
         {
-            if (tray == null)
+            if (trayViewId < 0)
             {
-                Debug.LogWarning("[StageFlow] [RPC] 제출할 트레이가 없습니다.");
+                Debug.LogWarning("[StageFlow] [RPC] 제출할 트레이 ViewId가 올바르지 않습니다.");
                 return;
             }
 
             if (PhotonNetwork.IsMasterClient)
             {
-                OnTraySubmittedReceived?.Invoke(tray, trayViewId, PhotonNetwork.LocalPlayer.ActorNumber);
+                OnTraySubmissionRequestedReceived?.Invoke(
+                    trayViewId,
+                    sequenceId,
+                    PhotonNetwork.LocalPlayer?.ActorNumber ?? -1);
                 return;
             }
 
-            string json = JsonUtility.ToJson(tray);
-            photonView.RPC(nameof(RPC_SubmitTray), RpcTarget.MasterClient, json, trayViewId);
+            photonView.RPC(nameof(RPC_SubmitTrayRequest), RpcTarget.MasterClient, trayViewId, sequenceId);
+        }
+
+        public void SendTraySubmissionResponse(Player targetPlayer, int trayViewId, int sequenceId, bool accepted)
+        {
+            if (targetPlayer == null)
+            {
+                Debug.LogWarning("[StageFlow] [RPC] 제출 응답 대상 플레이어가 없습니다.");
+                return;
+            }
+
+            if (targetPlayer.ActorNumber == PhotonNetwork.LocalPlayer?.ActorNumber)
+            {
+                OnTraySubmissionResponseReceived?.Invoke(trayViewId, sequenceId, accepted);
+                return;
+            }
+
+            photonView.RPC(nameof(RPC_TraySubmissionResponse), targetPlayer, trayViewId, sequenceId, accepted);
         }
 
         // ── 미니게임 RPC 전송 ─────────────────────────────────────────
@@ -395,18 +416,18 @@ namespace DontDillyDally.StageFlow
         }
 
         [PunRPC]
-        private void RPC_SubmitTray(string json, int trayViewId, PhotonMessageInfo info)
+        private void RPC_SubmitTrayRequest(int trayViewId, int sequenceId, PhotonMessageInfo info)
         {
-            SubmittedTray tray = JsonUtility.FromJson<SubmittedTray>(json);
-            if (tray == null)
-            {
-                Debug.LogWarning("[StageFlow] [RPC] 트레이 제출 데이터 역직렬화에 실패했습니다.");
-                return;
-            }
-
             int submitterActorNumber = info.Sender?.ActorNumber ?? -1;
-            Debug.Log($"[StageFlow] [RPC] 트레이 제출 수신: Actor {submitterActorNumber}");
-            OnTraySubmittedReceived?.Invoke(tray, trayViewId, submitterActorNumber);
+            Debug.Log($"[StageFlow] [RPC] 트레이 제출 요청 수신: ViewId={trayViewId} | Seq={sequenceId} | Actor {submitterActorNumber}");
+            OnTraySubmissionRequestedReceived?.Invoke(trayViewId, sequenceId, submitterActorNumber);
+        }
+
+        [PunRPC]
+        private void RPC_TraySubmissionResponse(int trayViewId, int sequenceId, bool accepted)
+        {
+            Debug.Log($"[StageFlow] [RPC] 트레이 제출 응답 수신: ViewId={trayViewId} | Seq={sequenceId} | accepted={accepted}");
+            OnTraySubmissionResponseReceived?.Invoke(trayViewId, sequenceId, accepted);
         }
 
         // ── 미니게임 RPC 수신 ─────────────────────────────────────────

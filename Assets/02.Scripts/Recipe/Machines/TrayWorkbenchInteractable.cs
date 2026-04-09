@@ -124,18 +124,23 @@ namespace DontDillyDally.Data
         private void TryPlaceBasicMaterial(IHeldItemInteractor heldItemInteractor, BasicMaterialItem basicMaterialItem)
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
-            if (trayItem == null || trayItem.Slots == null)
+            if (trayItem == null)
             {
                 return;
             }
 
-            if (!_trayWorkbench.CanPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType))
+            int playerId = PhotonNetwork.LocalPlayer != null
+                ? PhotonNetwork.LocalPlayer.ActorNumber
+                : 0;
+
+            CraftedItem craftedItem = CraftedItem.CreateBasicMaterial(basicMaterialItem.MaterialType, playerId);
+            if (craftedItem == null || !_trayWorkbench.CanPlaceItemOnTray(craftedItem))
             {
                 return;
             }
 
-            int availableSlotIndex = trayItem.Slots.GetFirstAvailableSlotIndex();
-            if (availableSlotIndex < 0)
+            int availableSlotIndex = trayItem.GetFirstAvailableSlotIndex();
+            if (availableSlotIndex < 0 || !trayItem.CanStoreItem(craftedItem, availableSlotIndex))
             {
                 return;
             }
@@ -146,14 +151,10 @@ namespace DontDillyDally.Data
             }
 
             int materialViewId = GetPhotonViewId(basicMaterialItem);
-
-            trayItem.Slots.TryStoreItem(basicMaterialItem, availableSlotIndex);
-
-            int playerId = PhotonNetwork.LocalPlayer != null
-                ? PhotonNetwork.LocalPlayer.ActorNumber
-                : 0;
-
-            _trayWorkbench.TryPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType, playerId);
+            if (!trayItem.TryStoreItem(basicMaterialItem, craftedItem, availableSlotIndex))
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
@@ -171,18 +172,23 @@ namespace DontDillyDally.Data
             }
 
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
-            if (trayItem == null || trayItem.Slots == null)
+            if (trayItem == null)
             {
                 return;
             }
 
-            if (!_trayWorkbench.CanPlaceBasicMaterialOnTray(materialType))
+            int playerId = PhotonNetwork.LocalPlayer != null
+                ? PhotonNetwork.LocalPlayer.ActorNumber
+                : 0;
+
+            CraftedItem craftedItem = CraftedItem.CreateBasicMaterial(materialType, playerId);
+            if (craftedItem == null || !_trayWorkbench.CanPlaceItemOnTray(craftedItem))
             {
                 return;
             }
 
-            int availableSlotIndex = trayItem.Slots.GetFirstAvailableSlotIndex();
-            if (availableSlotIndex < 0)
+            int availableSlotIndex = trayItem.GetFirstAvailableSlotIndex();
+            if (availableSlotIndex < 0 || !trayItem.CanStoreItem(craftedItem, availableSlotIndex))
             {
                 return;
             }
@@ -193,14 +199,10 @@ namespace DontDillyDally.Data
             }
 
             int itemViewId = GetPhotonViewId(mixToolItem);
-
-            trayItem.Slots.TryStoreItem(mixToolItem, availableSlotIndex);
-
-            int playerId = PhotonNetwork.LocalPlayer != null
-                ? PhotonNetwork.LocalPlayer.ActorNumber
-                : 0;
-
-            _trayWorkbench.TryPlaceBasicMaterialOnTray(materialType, playerId);
+            if (!trayItem.TryStoreItem(mixToolItem, craftedItem, availableSlotIndex))
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
@@ -243,13 +245,45 @@ namespace DontDillyDally.Data
                 photonView.RPC(nameof(RPC_WorkbenchTakeTray), RpcTarget.Others);
             }
 
-            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            heldItemInteractor.TryPickupInteractable(holdable);
+            TrayItem trayToRestore = trayItem;
+            heldItemInteractor.TryPickupInteractable(holdable, () =>
+            {
+                RollbackTakeTray(trayToRestore);
+            });
+        }
+
+        private void RollbackTakeTray(TrayItem trayItem)
+        {
+            if (trayItem == null)
+                return;
+
+            // 트레이 픽업 실패 시에는 손에 들린 상태가 아니라 작업대에 놓인 상태로 다시 고정합니다.
+            _trayWorkbench.SetCurrentTrayItem(trayItem);
+            PlaceTrayAtSlot(trayItem);
+            SetTrayInteractionEnabled(trayItem, false);
+
+            if (PhotonNetwork.InRoom)
+            {
+                int viewId = GetPhotonViewId(trayItem);
+                photonView.RPC(nameof(RPC_WorkbenchRollbackTakeTray), RpcTarget.Others, viewId);
+            }
         }
 
         #endregion
 
         #region RPC Handlers
+
+        [PunRPC]
+        private void RPC_WorkbenchRollbackTakeTray(int trayViewId)
+        {
+            PhotonView trayPV = PhotonView.Find(trayViewId);
+            if (trayPV == null || !trayPV.TryGetComponent(out TrayItem trayItem))
+                return;
+
+            _trayWorkbench.SetCurrentTrayItem(trayItem);
+            PlaceTrayAtSlot(trayItem);
+            SetTrayInteractionEnabled(trayItem, false);
+        }
 
         [PunRPC]
         private void RPC_WorkbenchPlaceTray(int trayViewId)
@@ -268,7 +302,7 @@ namespace DontDillyDally.Data
         private void RPC_WorkbenchPlaceMaterial(int materialViewId, int slotIndex, int materialType, int playerId)
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
-            if (trayItem == null || trayItem.Slots == null)
+            if (trayItem == null)
             {
                 return;
             }
@@ -279,8 +313,13 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            trayItem.Slots.TryStoreItem(itemObject, slotIndex);
-            _trayWorkbench.TryPlaceBasicMaterialOnTray((CraftedMaterialType)materialType, playerId);
+            CraftedItem craftedItem = CraftedItem.CreateBasicMaterial((CraftedMaterialType)materialType, playerId);
+            if (craftedItem == null)
+            {
+                return;
+            }
+
+            trayItem.TryStoreItem(itemObject, craftedItem, slotIndex);
         }
 
         [PunRPC]

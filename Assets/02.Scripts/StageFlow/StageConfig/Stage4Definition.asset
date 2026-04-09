@@ -27,19 +27,19 @@ MonoBehaviour:
       PatientCount: 5
       InitialPatientHealth: 100
       PatientHealthDrainPerSecond: 0.25
-      Difficulty: 1
-      RecipeFailPenalty: 20
+      Difficulty: 3
+      RecipeFailPenalty: 15
     MiniGameSettings:
-      FailPenalty: 10
-      SuccessHeal: 5
+      FailPenalty: 5
+      SuccessHeal: 10
     EmergencySettings:
-      TrayDurationSec: 20
-      DiagnosisDurationSec: 15
-      DiagnosisOperationDurationSec: 5
-      TrayEventSelectionChance: 0.5
-      RecipeFailTriggerChance: 0.7
+      TrayDurationSec: 0
+      DiagnosisDurationSec: 20
+      DiagnosisOperationDurationSec: 3
+      TrayEventSelectionChance: 0
+      RecipeFailTriggerChance: 0.8
       MiniGameFailTriggerChance: 0.7
-      RandomCheckIntervalSec: 30
-      RandomTriggerChance: 0.05
+      RandomCheckIntervalSec: 20
+      RandomTriggerChance: 0.1
       EmergencyFailPenalty: 10
   _requiredHospitalLevel: 4

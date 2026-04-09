@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.Serialization;
 
 namespace DontDillyDally.Data
 {
@@ -11,15 +12,23 @@ namespace DontDillyDally.Data
     {
         public const int MaxContainedItems = 4;
 
-        public TrayKind Kind = TrayKind.Normal;
-        public List<CraftedItem> ContainedItems = new List<CraftedItem>();
+        // StageFlow RPC 제출은 JsonUtility를 사용하므로,
+        // private 필드라도 직렬화 대상임을 명시해야 최신 트레이 상태가 그대로 전달됩니다.
+        [FormerlySerializedAs("Kind")]
+        [UnityEngine.SerializeField]
+        private TrayKind _kind = TrayKind.Normal;
 
-        public int ContainedItemCount => ContainedItems?.Count ?? 0;
-        public bool IsSterilizedTray => Kind == TrayKind.Sterilized;
+        [FormerlySerializedAs("ContainedItems")]
+        [UnityEngine.SerializeField]
+        private List<CraftedItem> _containedItems = new List<CraftedItem>();
+
+        public TrayKind Kind => _kind;
+        public IReadOnlyList<CraftedItem> ContainedItems => _containedItems;
+        public bool IsSterilizedTray => _kind == TrayKind.Sterilized;
 
         public bool CanAddItem()
         {
-            return ContainedItems != null && ContainedItems.Count < MaxContainedItems;
+            return _containedItems != null && _containedItems.Count < MaxContainedItems;
         }
 
         public bool TryAddItem(CraftedItem item)
@@ -29,46 +38,36 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            ContainedItems.Add(item);
+            _containedItems.Add(item);
             return true;
         }
 
         public CraftedItem TakeLastItem()
         {
-            if (ContainedItems == null || ContainedItems.Count == 0)
+            if (_containedItems == null || _containedItems.Count == 0)
             {
                 return null;
             }
 
-            int lastIndex = ContainedItems.Count - 1;
-            CraftedItem item = ContainedItems[lastIndex];
-            ContainedItems.RemoveAt(lastIndex);
+            int lastIndex = _containedItems.Count - 1;
+            CraftedItem item = _containedItems[lastIndex];
+            _containedItems.RemoveAt(lastIndex);
             return item;
         }
 
         public void SetTrayKind(TrayKind trayKind)
         {
-            Kind = trayKind;
-        }
-
-        public void MarkSterilized()
-        {
-            Kind = TrayKind.Sterilized;
-        }
-
-        public void MarkContaminated()
-        {
-            Kind = TrayKind.Normal;
+            _kind = trayKind;
         }
 
         public bool HasAnyItems()
         {
-            return ContainedItems != null && ContainedItems.Count > 0;
+            return _containedItems != null && _containedItems.Count > 0;
         }
 
         public List<CraftedMaterialType> GetContainedMaterialTypes()
         {
-            return ContainedItems?
+            return _containedItems?
                 .Select(item => item.MaterialType)
                 .ToList() ?? new List<CraftedMaterialType>();
         }
@@ -77,9 +76,9 @@ namespace DontDillyDally.Data
         {
             return new SubmittedTray
             {
-                Kind = Kind,
-                ContainedItems = ContainedItems != null
-                    ? new List<CraftedItem>(ContainedItems)
+                _kind = _kind,
+                _containedItems = _containedItems != null
+                    ? new List<CraftedItem>(_containedItems)
                     : new List<CraftedItem>()
             };
         }
