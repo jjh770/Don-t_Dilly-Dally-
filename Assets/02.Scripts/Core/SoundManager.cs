@@ -59,8 +59,6 @@ public class SFXEntry
 
     public float Duration => (Clip != null && Pitch > 0) ? Clip.length / Pitch : 0f;
 }
-
-[RequireComponent(typeof(PhotonView))]
 public class SoundManager : PunPersistentSingleton<SoundManager>
 {
 
@@ -231,13 +229,20 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     private void PlaySFX_RPC(SFXKey key)
     {
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
-            photonView.RPC(nameof(RPC_PlaySFX), RpcTarget.All, (int)key);
+        {
+            if (SceneRPCView.Instance != null)
+            {
+                Debug.LogWarning("[SoundManager] SceneRPCView가 씬에 존재하지 않습니다. RPC SFX를 재생할 수 없습니다.");
+                return;
+            }
+            SceneRPCView.Instance.PlaySfxForAll(key);
+        }      
         else
+        {
             PlaySFXInternal(key);
+        }
     }
 
-    [PunRPC]
-    private void RPC_PlaySFX(int keyInt) => PlaySFXInternal((SFXKey)keyInt);
 
     // ══════════════════════════════════════════
     //  SFX Local
