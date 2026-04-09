@@ -232,9 +232,9 @@ MonoBehaviour:
   ModelRoot: {fileID: 158517835468889614}
   ModelPrefab: {fileID: 0}
   TargetBoxCollider: {fileID: 7775463430676200893}
-  TrayData:
-    Kind: 0
-    ContainedItems: []
+  _trayData:
+    _kind: 0
+    _containedItems: []
 --- !u!54 &1888296344519209315
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -276,7 +276,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -378,8 +377,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
   _hasLeftSource: 0
-  _isHeld: 0
-  _holderActorNumber: -1
 --- !u!114 &-7736740239746226323
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -448,6 +445,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 158517835468889614}
     m_Modifications:
+    - target: {fileID: 4826444179538334402, guid: 5eb5843b254bfe34ea536bcdf1d32b4a, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: 4d0bfcd2e4d7b094494d2de56a8fcb28, type: 2}
     - target: {fileID: 5958778752362981805, guid: 5eb5843b254bfe34ea536bcdf1d32b4a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
