@@ -317,6 +317,9 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            // Clear 이후에는 ToolType이 None으로 지워지므로, 롤백용 메타데이터를 먼저 보관합니다.
+            ToolType capturedToolType = _slots[slotIndex].PotionToolType;
+
             // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _slots[slotIndex].Clear();
 
@@ -325,12 +328,12 @@ namespace DontDillyDally.Data
                 photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
             }
 
-            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
             ItemObject itemToRestore = storedItem;
+            int capturedSlotIndex = slotIndex;
+
             heldItemInteractor.TryPickupInteractable(interactable, () =>
             {
-                SetStoredItemInteractionEnabled(itemToRestore, true);
+                RollbackTakeInput(itemToRestore, capturedSlotIndex, capturedToolType);
             });
         }
 
@@ -351,12 +354,47 @@ namespace DontDillyDally.Data
                 photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
             }
 
-            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
             heldItemInteractor.TryPickupInteractable(interactable, () =>
             {
-                SetStoredItemInteractionEnabled(itemToRestore, true);
+                RollbackTakeOutput(itemToRestore);
             });
+        }
+
+        private void RollbackTakeInput(ItemObject item, int slotIndex, ToolType potionToolType)
+        {
+            if (item == null)
+                return;
+
+            // 픽업 실패 시 "안 집힌 상태"로 되돌리기 위해 위치/상호작용/슬롯 메타데이터를 모두 복구합니다.
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(item, slotTransform);
+            SetStoredItemInteractionEnabled(item, false);
+            _slots[slotIndex].Item = item;
+            _slots[slotIndex].PotionToolType = potionToolType;
+
+            if (PhotonNetwork.InRoom)
+            {
+                int viewId = GetPhotonViewId(item);
+                photonView.RPC(nameof(RPC_PotionRollbackTakeInput), RpcTarget.Others, slotIndex, viewId, (int)potionToolType);
+            }
+        }
+
+        private void RollbackTakeOutput(ItemObject item)
+        {
+            if (item == null)
+                return;
+
+            // 출력 아이템 픽업 실패 시에도 다른 클라이언트와 동일하게 출력 슬롯 상태를 되돌립니다.
+            Transform outputTransform = GetOutputTransform();
+            PlaceStoredItem(item, outputTransform);
+            SetStoredItemInteractionEnabled(item, false);
+            _storedOutputItem = item;
+
+            if (PhotonNetwork.InRoom)
+            {
+                int viewId = GetPhotonViewId(item);
+                photonView.RPC(nameof(RPC_PotionRollbackTakeOutput), RpcTarget.Others, viewId);
+            }
         }
 
         #endregion
@@ -464,6 +502,36 @@ namespace DontDillyDally.Data
             }
 
             _storedOutputItem = null;
+        }
+
+        [PunRPC]
+        private void RPC_PotionRollbackTakeInput(int slotIndex, int itemViewId, int potionToolType)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
+                return;
+
+            PhotonView itemPV = PhotonView.Find(itemViewId);
+            if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+                return;
+
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(itemObject, slotTransform);
+            SetStoredItemInteractionEnabled(itemObject, false);
+            _slots[slotIndex].Item = itemObject;
+            _slots[slotIndex].PotionToolType = (ToolType)potionToolType;
+        }
+
+        [PunRPC]
+        private void RPC_PotionRollbackTakeOutput(int itemViewId)
+        {
+            PhotonView itemPV = PhotonView.Find(itemViewId);
+            if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+                return;
+
+            Transform outputTransform = GetOutputTransform();
+            PlaceStoredItem(itemObject, outputTransform);
+            SetStoredItemInteractionEnabled(itemObject, false);
+            _storedOutputItem = itemObject;
         }
 
         [PunRPC]

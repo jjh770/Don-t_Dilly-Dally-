@@ -26,7 +26,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     [SerializeField] private float _ignoreCollisionDuration = 0.3f;
 
     private Rigidbody _rigidbody;
-    private Collider _collider;
     private PhotonView _photonView;
     private HoldableItemNetworkSync _networkSync;
     private Transform _currentHoldPoint;
@@ -45,7 +44,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     private void Awake()
     {
         _rigidbody = GetComponent<Rigidbody>();
-        _collider = GetComponent<Collider>();
         _photonView = GetComponent<PhotonView>();
         _networkSync = GetComponent<HoldableItemNetworkSync>();
         _itemObject = GetComponent<DontDillyDally.Data.ItemObject>();
@@ -60,6 +58,9 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     {
         if (_itemObject != null)
             _itemObject.ModelRefreshed += RefreshCachedComponents;
+
+        // 풀 재사용 시 이전 생명주기의 물리/홀드/캐시 상태가 남지 않도록 초기화합니다.
+        ResetToNeutralState();
     }
 
     private void OnDisable()
@@ -153,10 +154,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _rigidbody.isKinematic = true;
 
         // 자식 콜라이더 포함 모두 비활성화 (홀드포인트로 이동 시 충돌 방지)
-        foreach (Collider col in GetAllColliders())
-        {
-            col.enabled = false;
-        }
+        SetAllCollidersEnabled(false);
 
         transform.SetParent(null);
         ApplyHoldTransform(holdPoint);
@@ -185,7 +183,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
-        _collider.enabled = true;
+        SetAllCollidersEnabled(true);
 
         if (throwerColliders != null)
         {
@@ -216,7 +214,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         transform.SetParent(null);
         StopDynamicMotion();
         _rigidbody.isKinematic = true;
-        _collider.enabled = true;
+        SetAllCollidersEnabled(true);
         transform.SetPositionAndRotation(placePoint.position, placePoint.rotation);
 
         _isWaitingForOwnershipReturn = true;
@@ -242,29 +240,44 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         {
             // 루트 콜라이더뿐 아니라 자식 콜라이더도 모두 비활성화
             // (자식 콜라이더가 남아있으면 소유권 이전 대기 중 플레이어를 밀어냄)
-            foreach (Collider col in GetAllColliders())
-            {
-                col.enabled = false;
-            }
+            SetAllCollidersEnabled(false);
 
             _rigidbody.isKinematic = true;
         }
     }
 
+    private void ResetToNeutralState()
+    {
+        IsInteracting = false;
+        IsStoredInContainer = false;
+        _isWaitingForOwnershipReturn = false;
+        _settledTime = 0f;
+        _currentHoldPoint = null;
+        _holderActorNumber = InvalidActorNumber;
+
+        StopDynamicMotion();
+        _rigidbody.isKinematic = true;
+
+        // 모델이 교체되었거나 풀에서 다시 나온 경우를 대비해 collider 캐시를 새로 수집합니다.
+        RefreshCachedComponents();
+    }
+
     private void RefreshCachedComponents()
     {
+        // 모델 Refresh 중 자식 collider가 교체될 수 있으므로 항상 현재 모델 기준으로 다시 수집합니다.
         _allColliders = GetComponentsInChildren<Collider>(true);
         RefreshHoldAnchor();
+        ApplyColliderStateToCachedColliders();
     }
 
     private Collider[] GetAllColliders()
     {
         if (_allColliders == null)
         {
-            _allColliders = GetComponentsInChildren<Collider>(true);
+            RefreshCachedComponents();
         }
 
-        return _allColliders;
+        return _allColliders ?? System.Array.Empty<Collider>();
     }
 
     public void RefreshHoldAnchor()
@@ -312,13 +325,21 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     private void SetCollisionWithThrower(Collider[] colliders, bool isIgnore)
     {
-        if (_collider == null) return;
+        Collider[] itemColliders = GetAllColliders();
+        if (itemColliders.Length == 0)
+            return;
 
         foreach (Collider col in colliders)
         {
-            if (col != null)
+            if (col == null)
+                continue;
+
+            foreach (Collider itemCollider in itemColliders)
             {
-                Physics.IgnoreCollision(_collider, col, isIgnore);
+                if (itemCollider == null)
+                    continue;
+
+                Physics.IgnoreCollision(itemCollider, col, isIgnore);
             }
         }
     }
@@ -338,7 +359,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         if (IsInteracting || IsStoredInContainer)
             return;
 
-        _collider.enabled = true;
+        SetAllCollidersEnabled(true);
         _rigidbody.isKinematic = true;
     }
 
@@ -356,16 +377,14 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     public void Drop()
     {
-        _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
-
         IsInteracting = false;
         _currentHoldPoint = null;
+        _holderActorNumber = InvalidActorNumber;
 
         transform.SetParent(null);
         _rigidbody.isKinematic = false;
-        _collider.enabled = true;
-        _holderActorNumber = InvalidActorNumber;
+        SetAllCollidersEnabled(true);
 
         _isWaitingForOwnershipReturn = true;
     }
@@ -379,5 +398,33 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
             return null;
 
         return player.GetHoldPoint();
+    }
+
+    public void SetAllCollidersEnabled(bool isEnabled)
+    {
+        Collider[] colliders = GetAllColliders();
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null)
+                continue;
+
+            collider.enabled = isEnabled;
+        }
+    }
+
+    private void ApplyColliderStateToCachedColliders()
+    {
+        bool shouldEnableColliders = !IsInteracting && !IsStoredInContainer;
+        Collider[] colliders = _allColliders ?? System.Array.Empty<Collider>();
+
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (collider == null)
+                continue;
+
+            collider.enabled = shouldEnableColliders;
+        }
     }
 }

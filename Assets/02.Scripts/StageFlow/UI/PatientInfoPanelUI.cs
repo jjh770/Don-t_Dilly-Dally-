@@ -45,18 +45,14 @@ public class PatientInfoPanelUI : MonoBehaviour
             _panelRoot.anchoredPosition = _hiddenPos;
         }
 
-        TryBind();
-        RefreshUi();
+        if (!TryBind())
+        {
+            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
+        }
     }
 
     private void Update()
     {
-        if (_stageFlowManager == null)
-        {
-            TryBind();
-            RefreshUi();
-        }
-
         if (_stageFlowManager == null)
         {
             return;
@@ -74,6 +70,8 @@ public class PatientInfoPanelUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+
         if (_stageFlowManager != null && _isStageDataBound)
         {
             _stageFlowManager.OnStageDataChanged -= HandleStageDataChanged;
@@ -83,11 +81,15 @@ public class PatientInfoPanelUI : MonoBehaviour
         _currentTween?.Kill();
     }
 
-    private void TryBind()
+    private bool TryBind()
     {
-        if (StageFlowManager.Instance == null)
+        if (_stageFlowManager != null ||
+            StageFlowBootstrapper.Instance == null ||
+            !StageFlowBootstrapper.Instance.IsStageFlowReady ||
+            StageFlowManager.Instance == null ||
+            !StageFlowManager.Instance.IsInitialized)
         {
-            return;
+            return false;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
@@ -101,10 +103,18 @@ public class PatientInfoPanelUI : MonoBehaviour
         if (_stageFlowManager.CurrentStageData != null)
         {
             HandleStageDataChanged(_stageFlowManager.CurrentStageData);
-            return;
+            StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+            return true;
         }
 
         RefreshUi();
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        return true;
+    }
+
+    private void HandleStageFlowReady()
+    {
+        TryBind();
     }
 
     private void HandleStageDataChanged(StageRuntimeData _)

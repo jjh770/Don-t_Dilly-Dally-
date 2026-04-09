@@ -1,6 +1,5 @@
 using Photon.Pun;
 using UnityEngine;
-
 public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 {
     [SerializeField] private WaitingRoomClickManager _clickManager;
@@ -8,10 +7,14 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
     [SerializeField] private WaitingRoomView _defaultView;
 
     [SerializeField] private ContextMenuView _popupView;
+
+    [SerializeField] private UI_Customizing _customizingUI;
     [SerializeField] private UI_StagePanelView _stageUnlockPanelView;
     [SerializeField] private UI_HospitalUpgradeView _hospitalUpgradeView;
 
     private WaitingRoomModel _model;
+    private CustomizingUIViewModel _customizingViewModel;
+
     private WaitingRoomPresenter _presenter;
     private UI_StagePanelPresenter _stageUnlockPanelPresenter;
     private UI_HospitalUpgradePresenter _hospitalUpgradePresenter;
@@ -56,6 +59,20 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
             _hospitalUpgradePresenter = new UI_HospitalUpgradePresenter(_hospitalUpgradeView);
             _hospitalUpgradeView.Initialize(_hospitalUpgradePresenter);
             _hospitalUpgradePresenter.Initialize();
+        }
+
+        if (_customizingUI == null) return;
+
+        if (_customizingViewModel == null)
+        {
+            var manager = CustomizingManager.Instance;
+            if (manager == null)
+            {
+                Debug.LogError("[WaitingRoom] CustomizingManager가 없습니다.");
+                return;
+            }
+            _customizingViewModel = new CustomizingUIViewModel(manager);
+            _customizingUI.Initialize(_customizingViewModel);
         }
     }
 

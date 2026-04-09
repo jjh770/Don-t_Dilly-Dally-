@@ -1,6 +1,8 @@
+using Photon.Pun;
 using UnityEngine;
 
-public class AirEventSpawner : MonoBehaviour
+[RequireComponent(typeof(PhotonView))]
+public class AirEventSpawner : MonoBehaviourPun
 {
     [SerializeField] private GameObject[] _airEventPrefabs;
     [SerializeField] private Transform[] _spawnPoints;
@@ -17,14 +19,19 @@ public class AirEventSpawner : MonoBehaviour
 
     private void Start()
     {
-        SetNextSpawnTime();
+        if (PhotonNetwork.IsMasterClient)
+        {
+            SetNextSpawnTime();
+        }
     }
 
     private void Update()
     {
+        if (!PhotonNetwork.IsMasterClient) return;
+
         if (Time.time >= _nextSpawnTime)
         {
-            SpawnAirEvent();
+            RequestSpawnAirEvent();
             SetNextSpawnTime();
         }
     }
@@ -34,12 +41,24 @@ public class AirEventSpawner : MonoBehaviour
         _nextSpawnTime = Time.time + Random.Range(_minSpawnInterval, _maxSpawnInterval);
     }
 
-    private void SpawnAirEvent()
+    private void RequestSpawnAirEvent()
     {
         if (_spawnPoints.Length == 0 || _airEventPrefabs.Length == 0) return;
 
-        Transform spawnPoint = _spawnPoints[Random.Range(0, _spawnPoints.Length)];
-        GameObject prefab = _airEventPrefabs[Random.Range(0, _airEventPrefabs.Length)];
+        int spawnPointIndex = Random.Range(0, _spawnPoints.Length);
+        int prefabIndex = Random.Range(0, _airEventPrefabs.Length);
+
+        photonView.RPC(nameof(RPC_SpawnAirEvent), RpcTarget.All, spawnPointIndex, prefabIndex);
+    }
+
+    [PunRPC]
+    private void RPC_SpawnAirEvent(int spawnPointIndex, int prefabIndex)
+    {
+        if (spawnPointIndex < 0 || spawnPointIndex >= _spawnPoints.Length) return;
+        if (prefabIndex < 0 || prefabIndex >= _airEventPrefabs.Length) return;
+
+        Transform spawnPoint = _spawnPoints[spawnPointIndex];
+        GameObject prefab = _airEventPrefabs[prefabIndex];
         GameObject spawnedObject = Instantiate(prefab, spawnPoint.position, Quaternion.identity);
 
         Vector3 targetPosition = new Vector3(0f, spawnPoint.position.y, 0f);

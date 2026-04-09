@@ -17,23 +17,23 @@ public class StageTimerUI : MonoBehaviour
 
     private void Start()
     {
-        TryBind();
-        RefreshTimerText();
+        if (!TryBind())
+        {
+            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
+        }
     }
 
     private void Update()
     {
-        if (_stageFlowManager == null)
+        if (_stageFlowManager != null)
         {
-            TryBind();
-            return;
+            RefreshTimerText();
         }
-
-        RefreshTimerText();
     }
 
     private void OnDestroy()
     {
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
         _disposables.Dispose();
     }
 
@@ -41,11 +41,15 @@ public class StageTimerUI : MonoBehaviour
     /// StageFlowManager가 준비된 뒤 구독을 연결합니다.
     /// 클라이언트는 마지막 동기화 시각 기준으로 로컬 표시만 보간합니다.
     /// </summary>
-    private void TryBind()
+    private bool TryBind()
     {
-        if (_stageFlowManager != null || StageFlowManager.Instance == null)
+        if (_stageFlowManager != null ||
+            StageFlowBootstrapper.Instance == null ||
+            !StageFlowBootstrapper.Instance.IsStageFlowReady ||
+            StageFlowManager.Instance == null ||
+            !StageFlowManager.Instance.IsInitialized)
         {
-            return;
+            return false;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
@@ -75,6 +79,14 @@ public class StageTimerUI : MonoBehaviour
                 RefreshTimerText();
             })
             .AddTo(_disposables);
+
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        return true;
+    }
+
+    private void HandleStageFlowReady()
+    {
+        TryBind();
     }
 
     private void RefreshTimerText()

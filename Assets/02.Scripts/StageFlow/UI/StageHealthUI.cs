@@ -29,21 +29,16 @@ public class StageHealthUI : MonoBehaviour
 
     private void Start()
     {
-        TryBind();
-        RefreshUi(snapGaugeValue: true);
-    }
-
-    private void Update()
-    {
-        if (_stageFlowManager == null)
+        if (!TryBind())
         {
-            TryBind();
-            RefreshUi(snapGaugeValue: true);
+            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
     }
 
     private void OnDestroy()
     {
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+
         if (_stageFlowManager != null && _isStageDataBound)
         {
             _stageFlowManager.OnStageDataChanged -= HandleStageDataChanged;
@@ -54,11 +49,15 @@ public class StageHealthUI : MonoBehaviour
         _healthTween = null;
     }
 
-    private void TryBind()
+    private bool TryBind()
     {
-        if (_stageFlowManager != null || StageFlowManager.Instance == null)
+        if (_stageFlowManager != null ||
+            StageFlowBootstrapper.Instance == null ||
+            !StageFlowBootstrapper.Instance.IsStageFlowReady ||
+            StageFlowManager.Instance == null ||
+            !StageFlowManager.Instance.IsInitialized)
         {
-            return;
+            return false;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
@@ -86,6 +85,14 @@ public class StageHealthUI : MonoBehaviour
         _stageFlowManager.CurrentPatientIndex
             .Subscribe(_ => RefreshUi(snapGaugeValue: true))
             .AddTo(_disposables);
+
+        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        return true;
+    }
+
+    private void HandleStageFlowReady()
+    {
+        TryBind();
     }
 
     private void HandleStageDataChanged(StageRuntimeData stageData)

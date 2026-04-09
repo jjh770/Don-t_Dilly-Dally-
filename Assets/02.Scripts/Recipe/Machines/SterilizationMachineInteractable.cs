@@ -137,8 +137,8 @@ namespace DontDillyDally.Data
 
             if (item is MixToolItem mixToolItem)
             {
-                int playerId = Photon.Pun.PhotonNetwork.LocalPlayer != null
-                    ? Photon.Pun.PhotonNetwork.LocalPlayer.ActorNumber : 0;
+                int playerId = PhotonNetwork.LocalPlayer != null
+                    ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
                 return _sterilizationMachine.TrySterilizeTool(mixToolItem.ToolType, playerId).Success;
             }
 
@@ -328,13 +328,31 @@ namespace DontDillyDally.Data
                 _photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
             }
 
-            // 반환값 무시: 비마스터는 false를 반환하지만 pending hold로 자동 처리됨
-            // 소유권 획득 실패 시 아이템을 다시 인터랙션 가능 상태로 복원
             ItemObject itemToRestore = storedItem;
+            int capturedSlotIndex = slotIndex;
             heldItemInteractor.TryPickupInteractable(interactable, () =>
             {
-                SetStoredItemInteractionEnabled(itemToRestore, true);
+                RollbackTakeItem(itemToRestore, capturedSlotIndex);
             });
+        }
+
+        private void RollbackTakeItem(ItemObject item, int slotIndex)
+        {
+            if (item == null || slotIndex < 0 || slotIndex >= _slots.Length)
+                return;
+
+            // 소독 완료 아이템 픽업이 실패하면 슬롯과 완료 상태를 함께 되돌려야 클라이언트별 상태가 어긋나지 않습니다.
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(item, slotTransform);
+            SetStoredItemInteractionEnabled(item, false);
+            _slots[slotIndex].Item = item;
+            _isBatchCompleted = true;
+
+            if (PhotonNetwork.InRoom)
+            {
+                int viewId = GetPhotonViewId(item);
+                photonView.RPC(nameof(RPC_SterilRollbackTakeItem), RpcTarget.Others, slotIndex, viewId);
+            }
         }
 
         private void HandleOpenDoorEmptyHandInteraction(IHeldItemInteractor heldItemInteractor)
@@ -473,6 +491,23 @@ namespace DontDillyDally.Data
             {
                 _isBatchCompleted = false;
             }
+        }
+
+        [PunRPC]
+        private void RPC_SterilRollbackTakeItem(int slotIndex, int itemViewId)
+        {
+            if (slotIndex < 0 || slotIndex >= _slots.Length)
+                return;
+
+            PhotonView itemPV = PhotonView.Find(itemViewId);
+            if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+                return;
+
+            Transform slotTransform = GetSlotTransform(slotIndex);
+            PlaceStoredItem(itemObject, slotTransform);
+            SetStoredItemInteractionEnabled(itemObject, false);
+            _slots[slotIndex].Item = itemObject;
+            _isBatchCompleted = true;
         }
 
         [PunRPC]

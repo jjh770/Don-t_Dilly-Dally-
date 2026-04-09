@@ -141,10 +141,11 @@ namespace DontDillyDally.MiniGame
 
         private EQteDirection? ReadDirectionInput()
         {
-            if (_input.GetKeyDown(KeyCode.UpArrow)) return EQteDirection.Up;
-            if (_input.GetKeyDown(KeyCode.DownArrow)) return EQteDirection.Down;
-            if (_input.GetKeyDown(KeyCode.LeftArrow)) return EQteDirection.Left;
-            if (_input.GetKeyDown(KeyCode.RightArrow)) return EQteDirection.Right;
+            // 방향키와 WASD 모두 지원
+            if (_input.GetKeyDown(KeyCode.UpArrow) || _input.GetKeyDown(KeyCode.W)) return EQteDirection.Up;
+            if (_input.GetKeyDown(KeyCode.DownArrow) || _input.GetKeyDown(KeyCode.S)) return EQteDirection.Down;
+            if (_input.GetKeyDown(KeyCode.LeftArrow) || _input.GetKeyDown(KeyCode.A)) return EQteDirection.Left;
+            if (_input.GetKeyDown(KeyCode.RightArrow) || _input.GetKeyDown(KeyCode.D)) return EQteDirection.Right;
             return null;
         }
     }

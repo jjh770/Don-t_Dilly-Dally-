@@ -181,9 +181,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -459454010301767666}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 2915281947335105549}
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
       insertIndex: -1
@@ -191,6 +188,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
       insertIndex: -1
       addedObject: {fileID: 8613776000162027946}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3887822516438344199}
   m_SourcePrefab: {fileID: 100100000, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
 --- !u!4 &3474960614393829612 stripped
 Transform:
@@ -202,28 +202,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
   m_PrefabInstance: {fileID: 4013608017048616711}
   m_PrefabAsset: {fileID: 0}
---- !u!64 &-459454010301767666
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4283586148596089430}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: -9196134384542481607, guid: 0c55bb81694051e42b225707ffd6318a, type: 3}
 --- !u!114 &2915281947335105549
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -274,3 +252,24 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrayWorkbenchInteractable
   _trayWorkbench: {fileID: 6031194152223751873}
   _traySlotPoint: {fileID: 6762765545109755254}
+--- !u!65 &3887822516438344199
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4283586148596089430}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.955907, y: 0.6186508, z: 2.0876417}
+  m_Center: {x: -0.00956665, y: 0.30277622, z: -0.0000023245811}

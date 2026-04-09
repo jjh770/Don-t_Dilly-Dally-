@@ -50,13 +50,15 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 
     private void OnDisable()
     {
+        StopAllCoroutines();
+        _isThrowing = false;
         ClearPendingHold();
         EndHeldItemInteractionLock();
     }
 
     public bool TryPickupInteractable(IInteractable interactable, Action onFailed = null)
     {
-        if (interactable == null)
+        if (!TryResolveInteractableComponent(interactable, out _))
         {
             return false;
         }
@@ -163,6 +165,12 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 
         while (Quaternion.Angle(transform.rotation, targetRotation) > _rotationAngleThreshold)
         {
+            if (_currentHeldInteractable is not IHoldable)
+            {
+                _isThrowing = false;
+                yield break;
+            }
+
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _throwRotationSpeed * Time.deltaTime);
             yield return null;
         }
@@ -178,7 +186,15 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         _playerAnimator?.PlayThrowAnimation();
         yield return new WaitForSeconds(_throwDelay);
 
-        holdable.Throw(throwDirection, _throwForce, _playerColliders);
+        if (_currentHeldInteractable is not IHoldable holdableAfterDelay)
+        {
+            _playerAnimator?.ResetThrowAnimation();
+            _playerAnimator?.PlayHoldAnimation(false);
+            _isThrowing = false;
+            yield break;
+        }
+
+        holdableAfterDelay.Throw(throwDirection, _throwForce, _playerColliders);
         _currentHeldInteractable = null;
         SetCurrentHeldItem(null);
 
@@ -234,16 +250,18 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         ownership.RequestOwnershipWithCallback(
             onAcquired: () =>
             {
-                if (_pendingHoldInteractable is IHoldable pendingHoldable && _pendingHeldItem != null)
+                // 소유권 콜백은 늦게 도착할 수 있으므로, 아직도 같은 아이템을 정상적으로 집을 수 있는지 다시 확인합니다.
+                if (!TryGetPendingHoldContext(out IInteractable pendingInteractable, out IHoldable pendingHoldable, out ItemObject pendingHeldItem))
                 {
-                    BeginHold(_pendingHoldInteractable, pendingHoldable, _pendingHeldItem);
+                    FailPendingHold();
+                    return;
                 }
+
+                BeginHold(pendingInteractable, pendingHoldable, pendingHeldItem);
             },
             onFailed: () =>
             {
-                Action failedCallback = _onPendingHoldFailed;
-                ClearPendingHold();
-                failedCallback?.Invoke();
+                FailPendingHold();
             }
         );
 
@@ -305,8 +323,58 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             return false;
         }
 
+        if (component == null)
+        {
+            return false;
+        }
+
         itemObject = component.GetComponent<ItemObject>();
         return itemObject != null;
+    }
+
+    private bool TryGetPendingHoldContext(out IInteractable interactable, out IHoldable holdable, out ItemObject itemObject)
+    {
+        interactable = null;
+        holdable = null;
+        itemObject = null;
+
+        if (_pendingOwnership == null || !_pendingOwnership.IsOwnedLocally)
+        {
+            return false;
+        }
+
+        if (!TryResolveInteractableComponent(_pendingHoldInteractable, out Component interactableComponent))
+        {
+            return false;
+        }
+
+        if (!interactableComponent.TryGetComponent(out holdable))
+        {
+            return false;
+        }
+
+        if (_pendingHeldItem == null)
+        {
+            return false;
+        }
+
+        interactable = _pendingHoldInteractable;
+        itemObject = _pendingHeldItem;
+        return true;
+    }
+
+    private void FailPendingHold()
+    {
+        // 픽업이 실패하면 "이미 집은 것처럼" 남지 않도록 보류 상태와 실패 콜백을 함께 정리합니다.
+        Action failedCallback = _onPendingHoldFailed;
+        ClearPendingHold();
+        failedCallback?.Invoke();
+    }
+
+    private static bool TryResolveInteractableComponent(IInteractable interactable, out Component component)
+    {
+        component = interactable as Component;
+        return component != null;
     }
 
     private void ClearPendingHold()
