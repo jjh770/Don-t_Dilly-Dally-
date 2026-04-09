@@ -3,16 +3,19 @@ using Photon.Pun;
 using TMPro;
 using UniRx;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class StageTimerUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _timerText;
+    [SerializeField] private Slider _timerSlider;
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
     private StageFlowManager _stageFlowManager;
     private float _lastSyncedTime;
     private float _lastSyncRealtime;
+    private float _totalTimeLimit;
     private EStagePhase _currentPhase = EStagePhase.None;
 
     private void Start()
@@ -52,6 +55,7 @@ public class StageTimerUI : MonoBehaviour
         _lastSyncedTime = _stageFlowManager.StageTimer.Value;
         _lastSyncRealtime = Time.unscaledTime;
         _currentPhase = _stageFlowManager.CurrentPhase.Value;
+        _totalTimeLimit = _stageFlowManager.CurrentStageData?.Settings?.TotalTimeLimitSec ?? _lastSyncedTime;
 
         _stageFlowManager.StageTimer
             .Subscribe(time =>
@@ -79,28 +83,40 @@ public class StageTimerUI : MonoBehaviour
 
     private void RefreshTimerText()
     {
-        if (_timerText == null)
-        {
-            return;
-        }
-
         bool shouldShow = _stageFlowManager != null &&
                           (_currentPhase == EStagePhase.Playing ||
                            _currentPhase == EStagePhase.PatientTransition ||
                            _currentPhase == EStagePhase.StageClear);
 
-        _timerText.gameObject.SetActive(shouldShow);
+        if (_timerText != null)
+        {
+            _timerText.gameObject.SetActive(shouldShow);
+        }
+
+        if (_timerSlider != null)
+        {
+            _timerSlider.gameObject.SetActive(shouldShow);
+        }
+
         if (!shouldShow)
         {
             return;
         }
 
         float displayTime = GetDisplayTime();
-        int totalSeconds = Mathf.CeilToInt(displayTime);
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
 
-        _timerText.text = $"{minutes:00}:{seconds:00}";
+        if (_timerText != null)
+        {
+            int totalSeconds = Mathf.CeilToInt(displayTime);
+            int minutes = totalSeconds / 60;
+            int seconds = totalSeconds % 60;
+            _timerText.text = $"{minutes:00}:{seconds:00}";
+        }
+
+        if (_timerSlider != null && _totalTimeLimit > 0f)
+        {
+            _timerSlider.value = displayTime / _totalTimeLimit;
+        }
     }
 
     private float GetDisplayTime()
