@@ -12,7 +12,8 @@ public class StageHealthUI : MonoBehaviour
     [SerializeField] private GameObject _panelRoot;
     [SerializeField] private Slider _healthGauge;
     [SerializeField] private TextMeshProUGUI _patientCountText;
-    [SerializeField] private TextMeshProUGUI _patientInfoText;
+    [SerializeField] private TextMeshProUGUI _patientNameText;
+    [SerializeField] private TextMeshProUGUI _diseaseNameText;
 
     [Header("Health Tween")]
     [SerializeField] private float _healthTweenDuration = 0.25f;
@@ -161,9 +162,14 @@ public class StageHealthUI : MonoBehaviour
             }
         }
 
-        if (_patientInfoText != null)
+        if (_patientNameText != null)
         {
-            _patientInfoText.text = GetPatientInfoText();
+            _patientNameText.text = GetPatientNameText();
+        }
+
+        if (_diseaseNameText != null)
+        {
+            _diseaseNameText.text = GetDiseaseNameText();
         }
 
         if (_patientCountText != null)
@@ -181,19 +187,27 @@ public class StageHealthUI : MonoBehaviour
 
         int displayPatientIndex = _stageFlowManager.CurrentPatientIndex.Value + 1;
         int totalPatientCount = _stageFlowManager.CurrentStageData.Settings.PatientSettings.PatientCount;
-        return $"남은 환자 수 {displayPatientIndex} / {totalPatientCount}";
+        return $"남은 환자 수: {displayPatientIndex} / {totalPatientCount}";
     }
 
-    private string GetPatientInfoText()
+    private string GetPatientNameText()
     {
         if (_stageFlowManager == null || !_stageFlowManager.TryGetCurrentDisease(out DiseaseData disease) || disease == null)
         {
             return string.Empty;
         }
 
-        string patientName = disease.PatientName;
-        string diseaseName = disease.DiseaseName;
-        return $"{patientName} 환자 / 병명 : {diseaseName}";
+        return $"{disease.PatientName} 환자";
+    }
+
+    private string GetDiseaseNameText()
+    {
+        if (_stageFlowManager == null || !_stageFlowManager.TryGetCurrentDisease(out DiseaseData disease) || disease == null)
+        {
+            return string.Empty;
+        }
+
+        return $"병명: {disease.DiseaseName}";
     }
 
     private void AnimateGaugeTo(float targetValue)
