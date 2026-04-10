@@ -1,10 +1,8 @@
 using DG.Tweening;
 using UnityEngine;
 
-/// <summary>
-/// 수술 성공 클리어 연출 1: 드래그 레이싱 번아웃.
-/// 뒷바퀴가 번아웃하며 연기가 나고, 앞이 들리면서 드래그 레이싱처럼 튀어나간다.
-/// </summary>
+// 수술 성공 클리어 연출 1: 드래그 레이싱 번아웃.
+// 뒷바퀴가 번아웃하며 연기가 나고, 앞이 들리면서 드래그 레이싱처럼 튀어나간다.
 public class BurnoutLaunchClear : PatientClearBase
 {
     [Header("Phase 0: Burnout (뒷바퀴 공회전)")]
@@ -73,6 +71,9 @@ public class BurnoutLaunchClear : PatientClearBase
 
     private Sequence _sequence;
     private bool _hasCachedState;
+    private Vector3 _cachedRootPosition;
+    private Vector3 _cachedBedPosition;
+    private Quaternion _cachedBedRotation;
 
     public override Sequence Play(
         Transform patientRoot,
@@ -116,12 +117,10 @@ public class BurnoutLaunchClear : PatientClearBase
         Vector3 launchTarget = startPosition + _launchOffset;
         Quaternion launchRotation = startRotation * Quaternion.Euler(_launchTiltAngle);
 
-        // 발사 직전 추가 기울기.
         _sequence.Insert(_launchStartTime,
             bedTransform.DORotateQuaternion(launchRotation, _launchTiltDuration)
                 .SetEase(Ease.InQuad));
 
-        // 발사 이동.
         _sequence.Insert(_launchStartTime,
             bedTransform.DOMove(launchTarget, _launchDuration)
                 .SetEase(Ease.InQuart));
@@ -145,10 +144,6 @@ public class BurnoutLaunchClear : PatientClearBase
 
         return _sequence;
     }
-
-    private Vector3 _cachedRootPosition;
-    private Vector3 _cachedBedPosition;
-    private Quaternion _cachedBedRotation;
 
     public override void ForceComplete(
         Transform patientRoot,
@@ -176,19 +171,40 @@ public class BurnoutLaunchClear : PatientClearBase
 
     private void PlayBurnoutSmoke()
     {
-        if (_burnoutSmokeFx == null) return;
-        foreach (ParticleSystem fx in _burnoutSmokeFx) PlayFx(fx);
+        if (_burnoutSmokeFx == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in _burnoutSmokeFx)
+        {
+            PlayFx(fx);
+        }
     }
 
     private void StopBurnoutSmoke()
     {
-        if (_burnoutSmokeFx == null) return;
-        foreach (ParticleSystem fx in _burnoutSmokeFx) StopFx(fx);
+        if (_burnoutSmokeFx == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in _burnoutSmokeFx)
+        {
+            StopFx(fx);
+        }
     }
 
     private void ClearBurnoutSmoke()
     {
-        if (_burnoutSmokeFx == null) return;
-        foreach (ParticleSystem fx in _burnoutSmokeFx) ClearFx(fx);
+        if (_burnoutSmokeFx == null)
+        {
+            return;
+        }
+
+        foreach (ParticleSystem fx in _burnoutSmokeFx)
+        {
+            ClearFx(fx);
+        }
     }
 }

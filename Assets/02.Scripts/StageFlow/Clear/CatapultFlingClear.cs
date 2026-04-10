@@ -1,11 +1,9 @@
 using DG.Tweening;
 using UnityEngine;
 
-/// <summary>
-/// 수술 성공 클리어 연출 2: 투석기 사출.
-/// 침대가 바짝 세워지고, 환자가 공중제비하며 날아간다.
-/// 침대는 왼쪽으로 쓰러지며 퇴장.
-/// </summary>
+// 수술 성공 클리어 연출 2: 투석기 사출.
+// 침대가 바짝 세워지고, 환자가 공중제비하며 날아간다.
+// 침대는 바운스 복귀 후 왼쪽으로 퇴장.
 public class CatapultFlingClear : PatientClearBase
 {
     [Header("Phase 0: Charge (충전 떨림)")]

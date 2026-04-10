@@ -1,10 +1,8 @@
 using DG.Tweening;
 using UnityEngine;
 
-/// <summary>
-/// 수술 성공 클리어 연출 3: 헬기 인양.
-/// 헬기가 위에서 내려오고, 침대에 밧줄을 연결해서 그대로 인양해간다.
-/// </summary>
+// 수술 성공 클리어 연출 3: 헬기 인양.
+// 헬기가 위에서 내려오고, 침대에 밧줄을 연결해서 그대로 인양해간다.
 public class HelicopterLiftClear : PatientClearBase
 {
     [Header("Helicopter Object")]
@@ -159,9 +157,6 @@ public class HelicopterLiftClear : PatientClearBase
         _sequence.InsertCallback(_liftStartTime, () =>
         {
             PlayFx(_liftDustFx);
-
-            // 침대를 헬기 자식으로 묶어서 같이 올라가게.
-            // 대신 patientRoot를 통째로 올림 (환자 포함).
         });
 
         _sequence.Insert(_liftStartTime,

@@ -100,16 +100,14 @@ public class PatientClearDirector : MonoBehaviour
 
     private void OnPhaseChanged(EStagePhase phase)
     {
-        // 환자 1명의 모든 레시피 클리어 시 PatientTransition 또는 StageClear 페이즈 진입.
         if (!_hasPlayed &&
             (phase == EStagePhase.PatientTransition || phase == EStagePhase.StageClear))
         {
             PlaySelectedClear();
         }
 
-        // Playing으로 돌아오면 다음 퇴장을 위해 플래그만 리셋.
-        // ForceComplete 호출 금지 — EntranceDirector가 침대 위치를 이미 세팅했으므로
-        // 여기서 원복하면 덮어씀. 트윈만 안전하게 Kill.
+        // Playing 복귀 시 트윈만 Kill하고 플래그 리셋.
+        // 위치 원복은 EntranceDirector가 담당하므로 여기서 건드리지 않는다.
         if (phase == EStagePhase.Playing && _hasPlayed)
         {
             KillActiveTweensOnly();
@@ -130,33 +128,6 @@ public class PatientClearDirector : MonoBehaviour
 
         _activeClear = clear;
         _activeClear.Play(_patientRoot, _bedTransform, _patientTransform);
-    }
-
-    /// <summary>
-    /// 퇴장 연출 정리 + 위치/회전 원복.
-    /// 침대는 숨긴 상태로 유지 — EntranceDirector가 입장 연출로 다시 보여줌.
-    /// </summary>
-    private void ResetForNextPatient()
-    {
-        ForceCompleteIfNeeded();
-
-        // 환자를 원래 부모로 복원.
-        if (_patientTransform.parent != _initialPatientParent)
-        {
-            _patientTransform.SetParent(_initialPatientParent, worldPositionStays: false);
-        }
-
-        _patientRoot.position = _initialRootPosition;
-        _patientRoot.rotation = _initialRootRotation;
-        _bedTransform.localPosition = _initialBedLocalPosition;
-        _bedTransform.localRotation = _initialBedLocalRotation;
-        _patientTransform.localPosition = _initialPatientLocalPosition;
-        _patientTransform.localScale = _initialPatientLocalScale;
-
-        _bedTransform.gameObject.SetActive(true);
-        _patientTransform.gameObject.SetActive(true);
-
-        _hasPlayed = false;
     }
 
     private PatientClearBase SelectClear()
@@ -192,10 +163,8 @@ public class PatientClearDirector : MonoBehaviour
         _activeClear = null;
     }
 
-    /// <summary>
-    /// 위치 원복 없이 트윈만 Kill + 파티클 정리.
-    /// Playing 복귀 시 EntranceDirector와의 순서 경합 방지용.
-    /// </summary>
+    // 위치 원복 없이 트윈만 Kill.
+    // Playing 복귀 시 EntranceDirector와의 순서 경합 방지용.
     private void KillActiveTweensOnly()
     {
         if (_activeClear == null)
@@ -203,7 +172,6 @@ public class PatientClearDirector : MonoBehaviour
             return;
         }
 
-        // patientRoot, bedTransform의 활성 트윈만 Kill (위치 원복 안 함).
         _patientRoot.DOKill();
         _bedTransform.DOKill();
         _patientTransform.DOKill();
@@ -257,7 +225,6 @@ public class PatientClearDirector : MonoBehaviour
     {
         ForceCompleteIfNeeded();
 
-        // 환자를 원래 부모로 복원.
         if (_patientTransform.parent != _initialPatientParent)
         {
             _patientTransform.SetParent(_initialPatientParent, worldPositionStays: false);

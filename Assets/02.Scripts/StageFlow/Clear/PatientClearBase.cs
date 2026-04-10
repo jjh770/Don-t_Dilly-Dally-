@@ -3,6 +3,12 @@ using UnityEngine;
 
 public abstract class PatientClearBase : MonoBehaviour
 {
+    // 문 감쇠 스윙 비율 (열린 각도 대비).
+    private const float DOOR_SWING_1ST_RATIO = 0.4f;
+    private const float DOOR_SWING_2ND_RATIO = 0.2f;
+    private const float DOOR_SWING_3RD_RATIO = 0.08f;
+    private const int DOOR_SWING_PHASE_COUNT = 4;
+
     public abstract Sequence Play(
         Transform patientRoot,
         Transform bedTransform,
@@ -43,23 +49,20 @@ public abstract class PatientClearBase : MonoBehaviour
 
         doorSequence.AppendInterval(stayOpenDuration);
 
-        float swing1Ratio = 0.4f;
-        float swing2Ratio = 0.2f;
-        float swing3Ratio = 0.08f;
-        float singleSwingTime = swingDuration / 4f;
+        float singleSwingTime = swingDuration / DOOR_SWING_PHASE_COUNT;
 
-        Quaternion swingOut1A = originalA * Quaternion.Euler(0f, -openAngle * swing1Ratio, 0f);
-        Quaternion swingOut1B = originalB * Quaternion.Euler(0f, openAngle * swing1Ratio, 0f);
+        Quaternion swingOut1A = originalA * Quaternion.Euler(0f, -openAngle * DOOR_SWING_1ST_RATIO, 0f);
+        Quaternion swingOut1B = originalB * Quaternion.Euler(0f, openAngle * DOOR_SWING_1ST_RATIO, 0f);
         doorSequence.Append(panelA.DOLocalRotateQuaternion(swingOut1A, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(swingOut1B, singleSwingTime).SetEase(Ease.InOutSine));
 
-        Quaternion swingIn2A = originalA * Quaternion.Euler(0f, openAngle * swing2Ratio, 0f);
-        Quaternion swingIn2B = originalB * Quaternion.Euler(0f, -openAngle * swing2Ratio, 0f);
+        Quaternion swingIn2A = originalA * Quaternion.Euler(0f, openAngle * DOOR_SWING_2ND_RATIO, 0f);
+        Quaternion swingIn2B = originalB * Quaternion.Euler(0f, -openAngle * DOOR_SWING_2ND_RATIO, 0f);
         doorSequence.Append(panelA.DOLocalRotateQuaternion(swingIn2A, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(swingIn2B, singleSwingTime).SetEase(Ease.InOutSine));
 
-        Quaternion swingOut3A = originalA * Quaternion.Euler(0f, -openAngle * swing3Ratio, 0f);
-        Quaternion swingOut3B = originalB * Quaternion.Euler(0f, openAngle * swing3Ratio, 0f);
+        Quaternion swingOut3A = originalA * Quaternion.Euler(0f, -openAngle * DOOR_SWING_3RD_RATIO, 0f);
+        Quaternion swingOut3B = originalB * Quaternion.Euler(0f, openAngle * DOOR_SWING_3RD_RATIO, 0f);
         doorSequence.Append(panelA.DOLocalRotateQuaternion(swingOut3A, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(swingOut3B, singleSwingTime).SetEase(Ease.InOutSine));
 
