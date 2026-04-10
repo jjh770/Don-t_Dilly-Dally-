@@ -6,17 +6,22 @@ using UnityEngine.UI;
 namespace DontDillyDally.UI
 {
     /// <summary>
-    /// 재료 1개 단위 UI입니다.
-    /// Frame 안에 아이콘, 수량, 상태 정보를 배치합니다.
+    /// 레시피를 구성하는 개별 재료 조합 단위를 표현합니다.
+    /// 단일 재료 또는 재료 + 액션 아이템 조합을 표현할 수 있습니다.
     /// </summary>
     public class UI_RecipeItemEntry : MonoBehaviour
     {
-        [Header("필수 참조")]
+        [Header("프리팹")]
+        [SerializeField] private UI_ItemFrame _itemFramePrefab;
+        [SerializeField] private GameObject _plusIconPrefab;
+
+        [Header("컨테이너")]
+        [SerializeField] private RectTransform _itemContainer;
+
+        [Header("선택 참조 (기존 호환)")]
         [SerializeField] private Image _frame;
         [SerializeField] private Image _icon;
         [SerializeField] private TextMeshProUGUI _countText;
-
-        [Header("선택 참조")]
         [SerializeField] private TextMeshProUGUI _nameText;
         [SerializeField] private TextMeshProUGUI _ownedCountText;
         [SerializeField] private GameObject _completeMark;
@@ -30,9 +35,14 @@ namespace DontDillyDally.UI
         [SerializeField] private Color _disabledFrameColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
 
         private CraftedMaterialType _materialType;
+        private ActionType _actionType;
         private int _requiredCount;
         private int _ownedCount;
         private MaterialState _state;
+
+        private UI_ItemFrame _materialFrame;
+        private GameObject _plusIcon;
+        private UI_ItemFrame _actionFrame;
 
         public enum MaterialState
         {
@@ -44,15 +54,68 @@ namespace DontDillyDally.UI
         }
 
         public CraftedMaterialType MaterialType => _materialType;
+        public ActionType ActionType => _actionType;
         public int RequiredCount => _requiredCount;
         public int OwnedCount => _ownedCount;
         public MaterialState State => _state;
+        public bool HasAction => _actionType != ActionType.None;
 
-        public void SetData(CraftedMaterialType materialType, Sprite icon, int requiredCount, string displayName = null)
+        /// <summary>
+        /// 재료 데이터를 설정합니다. 액션 아이콘이 있으면 재료 + 플러스 + 액션 구조로 표시합니다.
+        /// </summary>
+        public void SetData(CraftedMaterialType materialType, Sprite materialIcon, int requiredCount,
+            ActionType actionType = ActionType.None, Sprite actionIcon = null, string displayName = null)
         {
             _materialType = materialType;
+            _actionType = actionType;
             _requiredCount = requiredCount;
 
+            ClearDynamicItems();
+
+            if (_itemContainer != null && _itemFramePrefab != null)
+            {
+                BuildDynamicLayout(materialIcon, actionType, actionIcon);
+            }
+            else
+            {
+                SetLegacyData(materialIcon, requiredCount, displayName);
+            }
+
+            SetState(MaterialState.Normal);
+        }
+
+        /// <summary>
+        /// 기존 호환용 SetData (액션 없음).
+        /// </summary>
+        public void SetData(CraftedMaterialType materialType, Sprite icon, int requiredCount, string displayName = null)
+        {
+            SetData(materialType, icon, requiredCount, ActionType.None, null, displayName);
+        }
+
+        private void BuildDynamicLayout(Sprite materialIcon, ActionType actionType, Sprite actionIcon)
+        {
+            _materialFrame = Instantiate(_itemFramePrefab, _itemContainer);
+            _materialFrame.gameObject.name = "MaterialFrame";
+            _materialFrame.SetIcon(materialIcon);
+
+            if (actionType != ActionType.None && actionIcon != null && _plusIconPrefab != null)
+            {
+                _plusIcon = Instantiate(_plusIconPrefab, _itemContainer);
+                _plusIcon.name = "PlusIcon";
+
+                _actionFrame = Instantiate(_itemFramePrefab, _itemContainer);
+                _actionFrame.gameObject.name = "ActionFrame";
+                _actionFrame.SetIcon(actionIcon);
+            }
+
+            if (_countText != null)
+            {
+                _countText.text = _requiredCount > 1 ? $"x{_requiredCount}" : "";
+            }
+        }
+
+        private void SetLegacyData(Sprite icon, int requiredCount, string displayName)
+        {
             if (_icon != null)
             {
                 _icon.sprite = icon;
@@ -66,10 +129,8 @@ namespace DontDillyDally.UI
 
             if (_nameText != null)
             {
-                _nameText.text = displayName ?? materialType.ToString();
+                _nameText.text = displayName ?? _materialType.ToString();
             }
-
-            SetState(MaterialState.Normal);
         }
 
         public void SetOwnedCount(int ownedCount)
@@ -117,6 +178,16 @@ namespace DontDillyDally.UI
                 _frame.color = frameColor;
             }
 
+            if (_materialFrame != null)
+            {
+                _materialFrame.SetFrameColor(frameColor);
+            }
+
+            if (_actionFrame != null)
+            {
+                _actionFrame.SetFrameColor(frameColor);
+            }
+
             if (_completeMark != null)
             {
                 _completeMark.SetActive(_state == MaterialState.Complete);
@@ -127,11 +198,22 @@ namespace DontDillyDally.UI
                 _lackOverlay.enabled = _state == MaterialState.Lack;
             }
 
+            bool isDisabled = _state == MaterialState.Disabled;
+            Color iconColor = isDisabled ? new Color(1f, 1f, 1f, 0.5f) : Color.white;
+
             if (_icon != null)
             {
-                _icon.color = _state == MaterialState.Disabled
-                    ? new Color(1f, 1f, 1f, 0.5f)
-                    : Color.white;
+                _icon.color = iconColor;
+            }
+
+            if (_materialFrame != null)
+            {
+                _materialFrame.SetDisabled(isDisabled);
+            }
+
+            if (_actionFrame != null)
+            {
+                _actionFrame.SetDisabled(isDisabled);
             }
         }
 
@@ -145,6 +227,32 @@ namespace DontDillyDally.UI
             {
                 SetOwnedCount(_ownedCount);
             }
+        }
+
+        private void ClearDynamicItems()
+        {
+            if (_materialFrame != null)
+            {
+                Destroy(_materialFrame.gameObject);
+                _materialFrame = null;
+            }
+
+            if (_plusIcon != null)
+            {
+                Destroy(_plusIcon);
+                _plusIcon = null;
+            }
+
+            if (_actionFrame != null)
+            {
+                Destroy(_actionFrame.gameObject);
+                _actionFrame = null;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            ClearDynamicItems();
         }
     }
 }

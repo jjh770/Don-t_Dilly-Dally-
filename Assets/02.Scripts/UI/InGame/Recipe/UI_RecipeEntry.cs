@@ -155,8 +155,13 @@ namespace DontDillyDally.UI
                 UI_RecipeItemEntry item = Instantiate(_itemPrefab, _recipeItems);
                 item.gameObject.name = $"Item_{materialType}";
 
-                Sprite icon = _iconTable.GetMaterialIcon(materialType);
-                item.SetData(materialType, icon, count);
+                Sprite materialIcon = _iconTable.GetMaterialIcon(materialType);
+                ActionType requiredAction = _iconTable.GetRequiredAction(materialType);
+                Sprite actionIcon = requiredAction != ActionType.None
+                    ? _iconTable.GetActionIcon(requiredAction)
+                    : null;
+
+                item.SetData(materialType, materialIcon, count, requiredAction, actionIcon);
 
                 _itemEntries.Add(item);
             }

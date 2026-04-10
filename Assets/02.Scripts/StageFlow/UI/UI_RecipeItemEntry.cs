@@ -15,7 +15,7 @@ using UnityEngine.UI;
 ///   │ 액션아이콘 │  ← 멸균/Fill/Mix 등 필요 시에만 표시
 ///   └──────────┘
 /// </summary>
-public class RecipeItemEntry : MonoBehaviour
+public class UI_RecipeItemEntry : MonoBehaviour
 {
     [Header("UI 참조")]
     [SerializeField] private Image _background;
@@ -120,9 +120,9 @@ public class RecipeItemEntry : MonoBehaviour
         slot.MaterialIcon.sprite = materialSprite;
         slot.MaterialIcon.color = Color.white;
 
-        // 액션 아이콘
+        // 액션 아이콘 (프레임 포함)
         bool hasAction = action != ActionType.None && actionSprite != null;
-        slot.ActionIcon.gameObject.SetActive(hasAction);
+        slot.ActionFrameImage.gameObject.SetActive(hasAction);
         if (hasAction)
         {
             slot.ActionIcon.sprite = actionSprite;
@@ -131,7 +131,7 @@ public class RecipeItemEntry : MonoBehaviour
 
         // 슬롯 높이 조정 (프레임 + 액션)
         float slotHeight = hasAction
-            ? _frameSize + _actionIconSize + _slotSpacing
+            ? _frameSize * 2 + _slotSpacing
             : _frameSize;
         slot.Root.sizeDelta = new Vector2(_frameSize, slotHeight);
         slot.LayoutElement.preferredHeight = slotHeight;
@@ -173,11 +173,11 @@ public class RecipeItemEntry : MonoBehaviour
         layoutElement.preferredHeight = _frameSize;
 
         // 아이콘 프레임 (배경 + 재료 아이콘 포함)
-        Image frameImage = CreateFrameWithIcon(slotRt, $"Frame_{index}", out Image materialIcon);
+        Image frameImage = CreateFrameWithIcon(slotRt, $"Frame_{index}", _frameSize, _materialIconSize, out Image materialIcon);
 
-        // 액션 아이콘 (프레임 아래, 기본 비활성화)
-        Image actionIcon = CreateIconImage(slotRt, $"Action_{index}", _actionIconSize);
-        actionIcon.gameObject.SetActive(false);
+        // 액션 아이콘 프레임 (프레임 아래, 기본 비활성화)
+        Image actionFrameImage = CreateFrameWithIcon(slotRt, $"ActionFrame_{index}", _frameSize, _materialIconSize, out Image actionIcon);
+        actionFrameImage.gameObject.SetActive(false);
 
         return new MaterialSlot
         {
@@ -185,11 +185,12 @@ public class RecipeItemEntry : MonoBehaviour
             LayoutElement = layoutElement,
             FrameImage = frameImage,
             MaterialIcon = materialIcon,
+            ActionFrameImage = actionFrameImage,
             ActionIcon = actionIcon
         };
     }
 
-    private Image CreateFrameWithIcon(RectTransform parent, string objectName, out Image materialIcon)
+    private Image CreateFrameWithIcon(RectTransform parent, string objectName, float frameSize, float iconSize, out Image innerIcon)
     {
         // 프레임 오브젝트
         GameObject frameObj = new GameObject(objectName, typeof(RectTransform), typeof(Image));
@@ -197,15 +198,15 @@ public class RecipeItemEntry : MonoBehaviour
 
         RectTransform frameRt = frameObj.GetComponent<RectTransform>();
         frameRt.SetParent(parent, false);
-        frameRt.sizeDelta = new Vector2(_frameSize, _frameSize);
+        frameRt.sizeDelta = new Vector2(frameSize, frameSize);
 
         Image frameImage = frameObj.GetComponent<Image>();
         frameImage.sprite = _iconFrameSprite;
         frameImage.type = Image.Type.Sliced;
         frameImage.raycastTarget = false;
 
-        // 재료 아이콘 (프레임 안에 중앙 배치)
-        GameObject iconObj = new GameObject("MaterialIcon", typeof(RectTransform), typeof(Image));
+        // 내부 아이콘 (프레임 안에 중앙 배치)
+        GameObject iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
         iconObj.layer = gameObject.layer;
 
         RectTransform iconRt = iconObj.GetComponent<RectTransform>();
@@ -214,11 +215,11 @@ public class RecipeItemEntry : MonoBehaviour
         iconRt.anchorMax = new Vector2(0.5f, 0.5f);
         iconRt.pivot = new Vector2(0.5f, 0.5f);
         iconRt.anchoredPosition = Vector2.zero;
-        iconRt.sizeDelta = new Vector2(_materialIconSize, _materialIconSize);
+        iconRt.sizeDelta = new Vector2(iconSize, iconSize);
 
-        materialIcon = iconObj.GetComponent<Image>();
-        materialIcon.preserveAspect = true;
-        materialIcon.raycastTarget = false;
+        innerIcon = iconObj.GetComponent<Image>();
+        innerIcon.preserveAspect = true;
+        innerIcon.raycastTarget = false;
 
         return frameImage;
     }
@@ -245,6 +246,7 @@ public class RecipeItemEntry : MonoBehaviour
         public LayoutElement LayoutElement;
         public Image FrameImage;
         public Image MaterialIcon;
+        public Image ActionFrameImage;
         public Image ActionIcon;
     }
 }

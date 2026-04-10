@@ -13,7 +13,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
     [SerializeField] private RectTransform _recipeListRoot;
 
     [Header("레시피 항목 프리팹")]
-    [SerializeField] private RecipeItemEntry _recipeItemPrefab;
+    [SerializeField] private UI_RecipeItemEntry _recipeItemPrefab;
 
     [Header("아이콘")]
     [SerializeField] private MaterialIconTable _iconTable;
@@ -37,7 +37,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
     [SerializeField] private Ease _enterEase = Ease.OutCubic;
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
-    private readonly List<RecipeItemEntry> _visibleItems = new List<RecipeItemEntry>();
+    private readonly List<UI_RecipeItemEntry> _visibleItems = new List<UI_RecipeItemEntry>();
 
     private StageFlowManager _stageFlowManager;
     private int _lastRecipeIndex = -1;
@@ -193,7 +193,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
 
         for (int i = currentRecipeIndex; i < recipeCount; i++)
         {
-            RecipeItemEntry item = Instantiate(_recipeItemPrefab, _recipeListRoot);
+            UI_RecipeItemEntry item = Instantiate(_recipeItemPrefab, _recipeListRoot);
             item.gameObject.name = $"RecipeItem_{i}";
 
             RecipeData recipe = disease.Recipes[i];
@@ -225,7 +225,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
     /// <summary>
     /// 등장: 아래에서 위로 슬라이드인 + 페이드인 (순차 딜레이)
     /// </summary>
-    private void AnimateItemEnter(RecipeItemEntry item, int order)
+    private void AnimateItemEnter(UI_RecipeItemEntry item, int order)
     {
         RectTransform rt = item.GetComponent<RectTransform>();
         CanvasGroup cg = item.GetComponent<CanvasGroup>();
@@ -267,7 +267,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
 
         _isAnimating = true;
 
-        RecipeItemEntry completedItem = _visibleItems[0];
+        UI_RecipeItemEntry completedItem = _visibleItems[0];
         _visibleItems.RemoveAt(0);
 
         RectTransform completedRt = completedItem.GetComponent<RectTransform>();
@@ -367,7 +367,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
         RefreshLayoutImmediate();
     }
 
-    private void RemoveItemFromLayout(RecipeItemEntry item)
+    private void RemoveItemFromLayout(UI_RecipeItemEntry item)
     {
         if (item == null)
         {
