@@ -131,6 +131,7 @@ public class SlideInEntrance : PatientEntranceBase
     {
         if (_brakeSmokeFx == null) return;
         foreach (ParticleSystem fx in _brakeSmokeFx) PlayFx(fx);
+        SoundManager.Instance.Play(SFXKey.PatientBrake, SoundType.Local);
     }
 
     private void StopBrakeSmoke()

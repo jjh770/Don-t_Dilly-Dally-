@@ -113,6 +113,7 @@ public class AngelAscensionDeath : PatientDeathBase
         Transform bedTransform,
         Transform patientTransform)
     {
+        SoundManager.Instance.Play(SFXKey.PatinetDeathAngel, SoundType.Local);
         CacheOriginalScales();
         ForceComplete(patientRoot, bedTransform, patientTransform);
 

@@ -153,6 +153,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         }
 
         StartCoroutine(ThrowSequence());
+        SoundManager.Instance.Play(SFXKey.PlayerThrow, SoundType.Local);
         return true;
     }
 
@@ -284,6 +285,8 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         ClearPendingHold();
 
         _playerAnimator?.PlayHoldAnimation(true);
+        SoundManager.Instance.Play(SFXKey.PlayerPickUp, SoundType.Local);
+
     }
 
     private bool TryReleaseHeldItemInternal(ItemObject expectedItem, out ItemObject releasedItem)
@@ -311,6 +314,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         _playerAnimator?.PlayHoldAnimation(false);
         _currentHeldInteractable = null;
         SetCurrentHeldItem(null);
+        SoundManager.Instance.Play(SFXKey.PlayerDrop, SoundType.Local);
         return true;
     }
 

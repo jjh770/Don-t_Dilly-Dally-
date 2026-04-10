@@ -1,6 +1,6 @@
+using Photon.Pun;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -39,6 +39,7 @@ namespace DontDillyDally.Data
 
             if (ItemRecycleUtility.TryRecycle(heldItem))
             {
+                SoundManager.Instance.Play(SFXKey.RecycleBin, SoundType.Local);
                 return;
             }
         }
@@ -99,6 +100,7 @@ namespace DontDillyDally.Data
 
             StartCoroutine(ReleaseProcessingLockNextFrame(itemInstanceId));
             ItemRecycleUtility.TryRecycle(itemObject);
+            SoundManager.Instance.Play(SFXKey.RecycleBin, SoundType.Local);
         }
 
         private IEnumerator ReleaseProcessingLockNextFrame(int itemInstanceId)

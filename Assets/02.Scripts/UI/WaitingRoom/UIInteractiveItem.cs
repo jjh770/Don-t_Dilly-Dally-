@@ -19,6 +19,7 @@ public class UIInteractiveItem : MonoBehaviour, IInteractable
     {
         _popUpUI.Show();
         _isInteracting = true;
+        SoundManager.Instance.Play(SFXKey.UIButtonConfirm, SoundType.Local);
     }
 
     public void StopInteract()
@@ -29,6 +30,7 @@ public class UIInteractiveItem : MonoBehaviour, IInteractable
     public void HandlePopupClosed()
     {
         _isInteracting = false;
+        SoundManager.Instance.Play(SFXKey.UIButtonConfirm, SoundType.Local);
     }
 
     public void OnDisable()

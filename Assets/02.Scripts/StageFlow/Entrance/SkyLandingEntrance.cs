@@ -55,6 +55,7 @@ public class SkyLandingEntrance : PatientEntranceBase
     [SerializeField] private float _landingSmokeStartTime = 3.1f;
 
     private Sequence _sequence;
+    private AudioSource _rocketHoverLoopSource;
 
     public override Sequence Play(
         Transform bedTransform,
@@ -67,7 +68,6 @@ public class SkyLandingEntrance : PatientEntranceBase
         Vector3 hoverPosition = finalPosition + Vector3.up * _hoverHeight;
         bedTransform.position = skyPosition;
         bedTransform.rotation = finalRotation;
-
         _sequence = DOTween.Sequence();
 
         // Phase 0: Dramatic pause in the sky.
@@ -102,6 +102,7 @@ public class SkyLandingEntrance : PatientEntranceBase
         bedTransform.position = finalPosition;
         bedTransform.rotation = finalRotation;
 
+        StopRocketHoverLoop();
         ClearThrusters();
         ClearFx(_groundSmokeFx);
         ClearAllFx(_landingSmokeRoot);
@@ -111,17 +112,30 @@ public class SkyLandingEntrance : PatientEntranceBase
     {
         if (_thrusterFx == null) return;
         foreach (ParticleSystem fx in _thrusterFx) PlayFx(fx);
+        StopRocketHoverLoop();
+        _rocketHoverLoopSource = SoundManager.Instance.PlayLoop(SFXKey.PatinetRocketHovering);
     }
 
     private void StopThrusters()
     {
-        if (_thrusterFx == null) return;
-        foreach (ParticleSystem fx in _thrusterFx) StopFx(fx);
+        if (_thrusterFx != null)
+        {
+            foreach (ParticleSystem fx in _thrusterFx) StopFx(fx);
+        }
+
+        StopRocketHoverLoop();
+        SoundManager.Instance.Play(SFXKey.PatientRocketLanding, SoundType.Local);
     }
 
     private void ClearThrusters()
     {
         if (_thrusterFx == null) return;
         foreach (ParticleSystem fx in _thrusterFx) ClearFx(fx);
+    }
+
+    private void StopRocketHoverLoop()
+    {
+        SoundManager.Instance.StopSFX(_rocketHoverLoopSource);
+        _rocketHoverLoopSource = null;
     }
 }
