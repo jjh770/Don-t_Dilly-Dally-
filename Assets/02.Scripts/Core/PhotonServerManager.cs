@@ -242,6 +242,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
         PhotonNetwork.CurrentRoom.IsOpen = false;
         RoomProperties.SetGameInProgress(true);
+        RoomProperties.SetStageDataPrepComplete(false);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Cutscene);
         message = string.Empty;
         return true;
@@ -251,6 +252,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         PhotonNetwork.CurrentRoom.IsOpen = true;
         RoomProperties.SetGameInProgress(false);
+        RoomProperties.SetStageDataPrepComplete(false);
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
     }
 

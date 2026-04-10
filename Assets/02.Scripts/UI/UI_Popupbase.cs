@@ -18,20 +18,22 @@ public abstract class UIPopupBase : MonoBehaviour
 
     protected Tween _tween;
 
+    public event Action OnPopupClosed;
     protected virtual void Awake()
     {
         HideImmediate();
     }
 
-    private void HideImmediate()
+    public void HideImmediate()
     {
         _canvasGroup.alpha = 0;
         _canvasGroup.interactable = false;
         _canvasGroup.blocksRaycasts = false;
         _panel.gameObject.SetActive(false);
+        OnPopupClosed?.Invoke();
     }
 
-    private void ShowImmediate()
+    public void ShowImmediate()
     {
         _canvasGroup.alpha = 1;
         _canvasGroup.interactable = true;
