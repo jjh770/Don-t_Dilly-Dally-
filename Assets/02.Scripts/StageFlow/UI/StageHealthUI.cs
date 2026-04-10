@@ -13,7 +13,6 @@ public class StageHealthUI : MonoBehaviour
     [SerializeField] private Slider _healthGauge;
     [SerializeField] private TextMeshProUGUI _patientCountText;
     [SerializeField] private TextMeshProUGUI _patientNameText;
-    [SerializeField] private TextMeshProUGUI _diseaseNameText;
 
     [Header("Health Tween")]
     [SerializeField] private float _healthTweenDuration = 0.25f;
@@ -167,11 +166,6 @@ public class StageHealthUI : MonoBehaviour
             _patientNameText.text = GetPatientNameText();
         }
 
-        if (_diseaseNameText != null)
-        {
-            _diseaseNameText.text = GetDiseaseNameText();
-        }
-
         if (_patientCountText != null)
         {
             _patientCountText.text = GetPatientCountText();
@@ -198,16 +192,6 @@ public class StageHealthUI : MonoBehaviour
         }
 
         return $"{disease.PatientName} 환자";
-    }
-
-    private string GetDiseaseNameText()
-    {
-        if (_stageFlowManager == null || !_stageFlowManager.TryGetCurrentDisease(out DiseaseData disease) || disease == null)
-        {
-            return string.Empty;
-        }
-
-        return $"병명: {disease.DiseaseName}";
     }
 
     private void AnimateGaugeTo(float targetValue)
