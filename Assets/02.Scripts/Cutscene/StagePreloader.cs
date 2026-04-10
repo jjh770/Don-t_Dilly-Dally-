@@ -19,13 +19,6 @@ public class StagePreloader : MonoBehaviourPunCallbacks
     [Header("병 정보 생성")]
     [SerializeField] private DiseaseGenerationManager _diseaseGenManager;
 
-    [Header("생성 설정")]
-    [Tooltip("이 시간(초) 내에 생성이 끝나지 않으면 나머지는 폴백 데이터로 채웁니다.")]
-    [SerializeField] private float _totalGenerationTimeoutSec = 25f;
-
-    [Tooltip("한 번의 API 호출로 생성할 최대 환자 수입니다.")]
-    [SerializeField] private int _batchSize = 4;
-
     public StageRuntimeData StageData { get; private set; }
     public int SurgeonActorNumber { get; private set; } = -1;
     public bool IsRoleAssignmentComplete { get; private set; }
@@ -261,15 +254,23 @@ public class StagePreloader : MonoBehaviourPunCallbacks
 
     public void Cleanup()
     {
-        DisposeCts();
-        if (Instance == this) Instance = null;
+        ReleaseResources();
         Destroy(gameObject);
     }
 
     private void OnDestroy()
     {
+        ReleaseResources();
+    }
+
+    private void ReleaseResources()
+    {
         DisposeCts();
-        if (Instance == this) Instance = null;
+
+        if (Instance == this)
+        {
+            Instance = null;
+        }
     }
 
     private void DisposeCts()

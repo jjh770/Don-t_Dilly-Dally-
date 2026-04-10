@@ -216,13 +216,20 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (itemObject.TryGetComponent(out HoldableItem holdableItem))
+            bool isLocalOwner = itemObject.PhotonView != null && itemObject.PhotonView.IsMine;
+
+            if (itemObject.TryGetComponent(out HoldableItem holdableItem) && isLocalOwner)
             {
                 holdableItem.Place(slotTransform);
             }
             else
             {
-                itemObject.transform.SetPositionAndRotation(slotTransform.position, slotTransform.rotation);
+                // 비소유자 클라이언트는 물리 상태를 바꾸지 않고
+                // 슬롯 부모/로컬 좌표만 맞춰 시각 상태만 재현합니다.
+                if (holdableItem != null)
+                {
+                    holdableItem.SetStoredInContainer(true);
+                }
             }
 
             itemObject.transform.SetParent(slotTransform, false);
