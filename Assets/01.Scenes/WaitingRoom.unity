@@ -8389,6 +8389,50 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6194329623499951522, guid: 1d812247b13ea1a429b1137c5b391fd3, type: 3}
   m_PrefabInstance: {fileID: 1390578507}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1406932240
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1406932242}
+  - component: {fileID: 1406932241}
+  m_Layer: 0
+  m_Name: SceneRPCView
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1406932241
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1406932240}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8be6479c1baa2bf46b94c6d01f5dd06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneRPCView
+--- !u!4 &1406932242
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1406932240}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1408108641
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13221,3 +13265,4 @@ SceneRoots:
   - {fileID: 917709085}
   - {fileID: 870072383}
   - {fileID: 344003393}
+  - {fileID: 1406932242}

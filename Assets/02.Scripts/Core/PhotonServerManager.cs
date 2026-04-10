@@ -1,8 +1,10 @@
 using Cysharp.Threading.Tasks;
+using DontDillyDally.Data;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -27,13 +29,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
     public string RoomCode => PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom.Name : null;
-    public int CountOfPlayers => PhotonNetwork.CountOfPlayers;
 
 
     public event Action<string> OnFailedToJoinRoom;
     public event Action<Player, bool> OnReadyStateChanged;
     public event Action<Player, string> OnNicknameChanged;
     public event Action OnMasterClientChanged;
+    private bool _isReturningToWaitingRoom;
 
     private void Start()
     {
@@ -250,10 +252,132 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public void ReturnWaitingRoom()
     {
-        PhotonNetwork.CurrentRoom.IsOpen = true;
-        RoomProperties.SetGameInProgress(false);
-        RoomProperties.SetStageDataPrepComplete(false);
-        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
+        if (_isReturningToWaitingRoom)
+        {
+            return;
+        }
+
+        ReturnWaitingRoomAsync().Forget();
+    }
+
+    private async UniTaskVoid ReturnWaitingRoomAsync()
+    {
+        if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom == null)
+        {
+            return;
+        }
+
+        _isReturningToWaitingRoom = true;
+
+        try
+        {
+            if (PhotonNetwork.IsMasterClient)
+            {
+                PhotonNetwork.CurrentRoom.IsOpen = true;
+                RoomProperties.SetGameInProgress(false);
+                RoomProperties.SetStageDataPrepComplete(false);
+
+                int cleanedCount = CleanupGameplayRoomObjects();
+                if (cleanedCount > 0)
+                {
+                    Debug.Log($"[PhotonServerManager] 대기실 복귀 전 게임 오브젝트 {cleanedCount}개를 정리했습니다.");
+                    await UniTask.DelayFrame(1);
+                }
+            }
+
+            // 씬 전환 중 Photon이 룸 캐시의 오브젝트를 재생성하지 못하도록
+            // 메시지 큐를 멈춥니다. 씬 로드 완료 후 다시 활성화됩니다.
+            PhotonNetwork.IsMessageQueueRunning = false;
+            SceneLoadManager.Instance.OnSceneLoadComplete += HandleWaitingRoomSceneLoaded;
+            SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
+
+            // BeginSceneLoad가 이미 로딩 중이거나 씬 데이터 누락으로 시작되지 못하면
+            // 메시지 큐와 플래그를 즉시 복구합니다.
+            if (!SceneLoadManager.Instance.IsLoading)
+            {
+                SceneLoadManager.Instance.OnSceneLoadComplete -= HandleWaitingRoomSceneLoaded;
+                PhotonNetwork.IsMessageQueueRunning = true;
+                _isReturningToWaitingRoom = false;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[PhotonServerManager] 대기실 복귀 중 오류 발생: {e.Message}");
+            SceneLoadManager.Instance.OnSceneLoadComplete -= HandleWaitingRoomSceneLoaded;
+            PhotonNetwork.IsMessageQueueRunning = true;
+            _isReturningToWaitingRoom = false;
+        }
+    }
+
+    private void HandleWaitingRoomSceneLoaded(ESceneType sceneType)
+    {
+        SceneLoadManager.Instance.OnSceneLoadComplete -= HandleWaitingRoomSceneLoaded;
+        PhotonNetwork.IsMessageQueueRunning = true;
+        _isReturningToWaitingRoom = false;
+    }
+
+    private static int CleanupGameplayRoomObjects()
+    {
+        int destroyedCount = 0;
+        HashSet<GameObject> destroyed = new HashSet<GameObject>();
+
+        // 1) Photon에 등록된 네트워크 오브젝트 정리
+        // PhotonViewCollection은 Photon 내부 목록을 사용하므로 씬 전체 탐색이 불필요합니다.
+        List<PhotonView> registeredViews = new List<PhotonView>();
+        foreach (PhotonView photonView in PhotonNetwork.PhotonViewCollection)
+        {
+            registeredViews.Add(photonView);
+        }
+
+        foreach (PhotonView photonView in registeredViews)
+        {
+            if (photonView == null || photonView.gameObject == null)
+                continue;
+
+            if (!photonView.IsRoomView)
+                continue;
+
+            GameObject target = photonView.gameObject;
+            if (!destroyed.Add(target))
+                continue;
+
+            if (!IsGameplayObject(target))
+                continue;
+
+            PhotonNetwork.Destroy(target);
+            destroyedCount++;
+        }
+
+        // 2) Photon에 미등록된 scene 오브젝트 정리 (ViewID 0 등)
+        PhotonView[] sceneViews = FindObjectsOfType<PhotonView>(true);
+        foreach (PhotonView photonView in sceneViews)
+        {
+            if (photonView == null || photonView.gameObject == null)
+                continue;
+
+            if (!photonView.IsRoomView)
+                continue;
+
+            GameObject target = photonView.gameObject;
+            if (!destroyed.Add(target))
+                continue;
+
+            if (!IsGameplayObject(target))
+                continue;
+
+            UnityEngine.Object.Destroy(target);
+            destroyedCount++;
+        }
+
+        return destroyedCount;
+    }
+
+    private static bool IsGameplayObject(GameObject target)
+    {
+        return target.GetComponent<ItemObject>() != null ||
+               target.GetComponent<BasicMaterialSource>() != null ||
+               target.GetComponent<MixToolSource>() != null ||
+               target.GetComponent<TraySource>() != null;
     }
 
     public void ChangeMaster(Player player)

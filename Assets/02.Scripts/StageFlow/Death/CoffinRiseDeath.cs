@@ -79,6 +79,7 @@ public class CoffinRiseDeath : PatientDeathBase
     private Sequence _sequence;
     private Vector3 _coffinFinalPosition;
     private Transform _originalSmokeFxParent;
+    private Transform _originalPatientParent;
 
     public override Sequence Play(
         Transform patientRoot,
@@ -125,8 +126,13 @@ public class CoffinRiseDeath : PatientDeathBase
         });
 
         // Phase 2a: 침대 사라짐 + 환자 바닥으로.
+        // 환자가 침대의 자식이면 침대 비활성화 시 같이 사라지므로,
+        // 먼저 월드 공간으로 분리.
         _sequence.InsertCallback(_bedHideTime, () =>
         {
+            _originalPatientParent = patientTransform.parent;
+            patientTransform.SetParent(null, worldPositionStays: true);
+
             bedTransform.gameObject.SetActive(false);
 
             Vector3 patientPos = patientTransform.position;
@@ -224,6 +230,13 @@ public class CoffinRiseDeath : PatientDeathBase
         }
 
         patientTransform.DOKill();
+
+        // 환자를 원래 부모(침대)로 복원.
+        if (_originalPatientParent != null && patientTransform.parent != _originalPatientParent)
+        {
+            bedTransform.gameObject.SetActive(true);
+            patientTransform.SetParent(_originalPatientParent, worldPositionStays: false);
+        }
 
         ClearFx(_smokeFx);
 

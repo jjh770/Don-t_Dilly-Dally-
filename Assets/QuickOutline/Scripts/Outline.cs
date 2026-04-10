@@ -305,7 +305,9 @@ public class Outline : MonoBehaviour {
   }
 
   void CacheRenderers() {
-    renderers = GetComponentsInChildren<Renderer>(true);
+    renderers = GetComponentsInChildren<Renderer>(true)
+      .Where(r => r is not ParticleSystemRenderer)
+      .ToArray();
   }
 
   void ApplyOutlineMaterials() {
