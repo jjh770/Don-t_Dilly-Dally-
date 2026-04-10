@@ -34,7 +34,7 @@ RectTransform:
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 6272906522652237772}
-  m_Father: {fileID: 150048037825600282}
+  m_Father: {fileID: 716167433801891625}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
@@ -172,7 +172,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 3663496816007808569}
   - {fileID: 716167433801891625}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -199,10 +198,10 @@ MonoBehaviour:
     m_Top: 0
     m_Bottom: 0
   m_ChildAlignment: 0
-  m_Spacing: -50.69
+  m_Spacing: 0
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 1
+  m_ChildControlWidth: 0
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
@@ -384,8 +383,8 @@ GameObject:
   - component: {fileID: 716167433801891625}
   - component: {fileID: 387281892833923731}
   - component: {fileID: 7567853941609553582}
-  - component: {fileID: 3980751653164990199}
   - component: {fileID: 8932361214244779724}
+  - component: {fileID: 5475774655243178797}
   - component: {fileID: 1745047981209859859}
   - component: {fileID: 7440547117227710236}
   m_Layer: 5
@@ -408,11 +407,12 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 4198785343546701733}
+  - {fileID: 3663496816007808569}
   m_Father: {fileID: 150048037825600282}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 178.5, y: -219.51}
+  m_AnchoredPosition: {x: 151.6, y: -90}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &387281892833923731
@@ -453,32 +453,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &3980751653164990199
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7124285761505030894}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
-  m_Padding:
-    m_Left: 10
-    m_Right: 10
-    m_Top: 10
-    m_Bottom: 10
-  m_ChildAlignment: 4
-  m_Spacing: 5
-  m_ChildForceExpandWidth: 0
-  m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!114 &8932361214244779724
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -493,6 +467,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.ContentSizeFitter
   m_HorizontalFit: 2
   m_VerticalFit: 2
+--- !u!114 &5475774655243178797
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7124285761505030894}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
+  m_Padding:
+    m_Left: 0
+    m_Right: 0
+    m_Top: 0
+    m_Bottom: 0
+  m_ChildAlignment: 0
+  m_Spacing: 0
+  m_ChildForceExpandWidth: 1
+  m_ChildForceExpandHeight: 0
+  m_ChildControlWidth: 1
+  m_ChildControlHeight: 0
+  m_ChildScaleWidth: 0
+  m_ChildScaleHeight: 0
+  m_ReverseArrangement: 0
 --- !u!114 &1745047981209859859
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -541,6 +541,14 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 716167433801891625}
     m_Modifications:
+    - target: {fileID: 1665336909241551107, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
+      propertyPath: _panelRoot
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 1665336909241551107, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
+      propertyPath: _contentRoot
+      value: 
+      objectReference: {fileID: 0}
     - target: {fileID: 2406383485046906848, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -575,7 +583,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_AnchorMin.x
@@ -583,7 +591,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_SizeDelta.x
@@ -623,11 +631,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 178.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -178
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 6651206114615183667, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -641,8 +649,13 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 9064807146040754861, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1478477106129990080, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4db67a31c2699074b816ba164f4cdcfe, type: 3}
