@@ -1,7 +1,7 @@
 using DG.Tweening;
 using UnityEngine;
 
-public abstract class PatientEntranceBase : MonoBehaviour
+public abstract class PatientClearBase : MonoBehaviour
 {
     // 문 감쇠 스윙 비율 (열린 각도 대비).
     private const float DOOR_SWING_1ST_RATIO = 0.4f;
@@ -10,16 +10,17 @@ public abstract class PatientEntranceBase : MonoBehaviour
     private const int DOOR_SWING_PHASE_COUNT = 4;
 
     public abstract Sequence Play(
+        Transform patientRoot,
         Transform bedTransform,
-        Vector3 finalPosition,
-        Quaternion finalRotation);
+        Transform patientTransform);
 
     public abstract void ForceComplete(
+        Transform patientRoot,
         Transform bedTransform,
-        Vector3 finalPosition,
-        Quaternion finalRotation);
+        Transform patientTransform);
 
-    // Slam door inward, then swing back and forth like a loose door (damped oscillation).
+    // ── Door Helpers ─────────────────────────────────────────────
+
     protected Sequence CreateDoorSequence(
         Transform doorParent,
         float openAngle,
@@ -40,38 +41,31 @@ public abstract class PatientEntranceBase : MonoBehaviour
 
         Sequence doorSequence = DOTween.Sequence();
 
-        // Phase 1: Slam open inward (bed crashes through).
         Quaternion openA = originalA * Quaternion.Euler(0f, openAngle, 0f);
         Quaternion openB = originalB * Quaternion.Euler(0f, -openAngle, 0f);
 
         doorSequence.Append(panelA.DOLocalRotateQuaternion(openA, slamDuration).SetEase(Ease.OutQuart));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(openB, slamDuration).SetEase(Ease.OutQuart));
 
-        // Stay open while bed passes through.
         doorSequence.AppendInterval(stayOpenDuration);
 
-        // Phase 2: Damped swinging (loose door feel).
         float singleSwingTime = swingDuration / DOOR_SWING_PHASE_COUNT;
 
-        // Swing outward (rebound).
         Quaternion swingOut1A = originalA * Quaternion.Euler(0f, -openAngle * DOOR_SWING_1ST_RATIO, 0f);
         Quaternion swingOut1B = originalB * Quaternion.Euler(0f, openAngle * DOOR_SWING_1ST_RATIO, 0f);
         doorSequence.Append(panelA.DOLocalRotateQuaternion(swingOut1A, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(swingOut1B, singleSwingTime).SetEase(Ease.InOutSine));
 
-        // Swing inward again (smaller).
         Quaternion swingIn2A = originalA * Quaternion.Euler(0f, openAngle * DOOR_SWING_2ND_RATIO, 0f);
         Quaternion swingIn2B = originalB * Quaternion.Euler(0f, -openAngle * DOOR_SWING_2ND_RATIO, 0f);
         doorSequence.Append(panelA.DOLocalRotateQuaternion(swingIn2A, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(swingIn2B, singleSwingTime).SetEase(Ease.InOutSine));
 
-        // Swing outward (tiny).
         Quaternion swingOut3A = originalA * Quaternion.Euler(0f, -openAngle * DOOR_SWING_3RD_RATIO, 0f);
         Quaternion swingOut3B = originalB * Quaternion.Euler(0f, openAngle * DOOR_SWING_3RD_RATIO, 0f);
         doorSequence.Append(panelA.DOLocalRotateQuaternion(swingOut3A, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(swingOut3B, singleSwingTime).SetEase(Ease.InOutSine));
 
-        // Settle to closed.
         doorSequence.Append(panelA.DOLocalRotateQuaternion(originalA, singleSwingTime).SetEase(Ease.InOutSine));
         doorSequence.Join(panelB.DOLocalRotateQuaternion(originalB, singleSwingTime).SetEase(Ease.InOutSine));
 

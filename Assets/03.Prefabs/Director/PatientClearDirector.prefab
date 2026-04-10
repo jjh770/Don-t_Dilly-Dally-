@@ -1,0 +1,255 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1152724889821221683
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1079646498297778887}
+  - component: {fileID: 5409430866093202568}
+  m_Layer: 0
+  m_Name: BurnoutLaunch
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1079646498297778887
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152724889821221683}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8284956658772639871}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &5409430866093202568
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1152724889821221683}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ef1e12ec404edf499bb63f09f6d4347, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BurnoutLaunchClear
+  _burnoutDuration: 1.5
+  _burnoutShakeStrength: 0.08
+  _burnoutVibrato: 30
+  _wheelieStartTime: 0.8
+  _wheelihTiltAngle: {x: 0, y: 0, z: 15}
+  _wheelieTiltDuration: 0.4
+  _wheelieLiftHeight: 0.2
+  _launchStartTime: 1.5
+  _launchOffset: {x: 12, y: 0, z: 0}
+  _launchDuration: 0.6
+  _launchTiltAngle: {x: 0, y: 0, z: 20}
+  _launchTiltDuration: 0.15
+  _burnoutSmokeFx: []
+  _burnoutSmokeStartTime: 0
+  _burnoutSmokeStopTime: 2
+  _launchTrailFx: {fileID: 0}
+  _launchTrailStartTime: 1.5
+  _doorParent: {fileID: 0}
+  _doorOpenTime: 1.3
+  _doorOpenAngle: 90
+  _doorSlamDuration: 0.1
+  _doorStayOpenDuration: 0.8
+  _doorSwingDuration: 2
+--- !u!1 &4597540266725178407
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6709630875837109671}
+  - component: {fileID: 6646258820135386236}
+  m_Layer: 0
+  m_Name: CatapultFling
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &6709630875837109671
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4597540266725178407}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8284956658772639871}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6646258820135386236
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4597540266725178407}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d51d59c3e56bf6747849a824c6b2ca25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CatapultFlingClear
+  _chargeDuration: 0.8
+  _chargeShakeStrength: 0.06
+  _chargeVibrato: 25
+  _catapultStartTime: 0.8
+  _catapultAngle: {x: 0, y: 0, z: 80}
+  _catapultDuration: 0.25
+  _catapultLiftHeight: 0.5
+  _flingStartTime: 1.05
+  _flingPeakHeight: 8
+  _flingHorizontalDistance: 10
+  _flingDuration: 1.5
+  _flipCount: 3
+  _toppleStartTime: 1.3
+  _toppleOffset: {x: -6, y: 0, z: 0}
+  _toppleAngle: {x: 0, y: 0, z: -90}
+  _toppleDuration: 0.8
+  _chargeDustFx: {fileID: 0}
+  _flingTrailFx: {fileID: 0}
+  _catapultSmokeFx: {fileID: 0}
+--- !u!1 &5024102182139606937
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8284956658772639871}
+  - component: {fileID: 2625280244792203905}
+  m_Layer: 0
+  m_Name: PatientClearDirector
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8284956658772639871
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5024102182139606937}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1079646498297778887}
+  - {fileID: 6709630875837109671}
+  - {fileID: 4209355821574733107}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2625280244792203905
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5024102182139606937}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4f459641b99ec141beae84889ac72a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PatientClearDirector
+  _selectionMode: 0
+  _fixedClear: {fileID: 0}
+  _clears:
+  - {fileID: 5409430866093202568}
+  - {fileID: 6646258820135386236}
+  - {fileID: 8333607464929258846}
+  _patientRoot: {fileID: 0}
+  _bedTransform: {fileID: 0}
+  _patientTransform: {fileID: 0}
+  _debugMode: 0
+--- !u!1 &8346935555752508972
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4209355821574733107}
+  - component: {fileID: 8333607464929258846}
+  m_Layer: 0
+  m_Name: HelicopterLift
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4209355821574733107
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8346935555752508972}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8284956658772639871}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8333607464929258846
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8346935555752508972}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 25ff2a506832d3d46a8d50f6cecad087, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HelicopterLiftClear
+  _helicopterTransform: {fileID: 0}
+  _heliStartHeight: 15
+  _heliHoverHeight: 7
+  _ropeTransform: {fileID: 0}
+  _ropeFullLengthScaleY: 1
+  _heliDescentDuration: 1.5
+  _heliDescentEase: 6
+  _ropeDeployStartTime: 1.5
+  _ropeDeployDuration: 0.8
+  _hookTime: 2.3
+  _hookShakeDuration: 0.4
+  _hookShakeStrength: 0.1
+  _liftStartTime: 2.7
+  _liftHeight: 15
+  _liftDuration: 2
+  _liftSwayAngle: 8
+  _liftSwayDuration: 0.5
+  _rotorWindFx: {fileID: 0}
+  _rotorWindStartTime: 0.5
+  _rotorWindStopTime: 3.5
+  _hookSparkFx: {fileID: 0}
+  _liftDustFx: {fileID: 0}
