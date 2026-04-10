@@ -36,7 +36,7 @@ public class TutorialView : UIPopupBase
         _nextButton.onClick.AddListener(OnNextClicked);
         _closedButton.onClick.AddListener(Hide);
     }
-    void Start()
+    private void Start()
     {
         BuildSlides();
         BuildDots();
@@ -51,7 +51,7 @@ public class TutorialView : UIPopupBase
         _closedButton.onClick.RemoveListener(Hide);
     }
 
-    void BuildSlides()
+    private void BuildSlides()
     {
         foreach (var data in _slides)
         {
@@ -61,7 +61,7 @@ public class TutorialView : UIPopupBase
         }
     }
 
-    void BuildDots()
+    private void BuildDots()
     {
         foreach (var _ in _slides)
         {
@@ -70,9 +70,10 @@ public class TutorialView : UIPopupBase
         }
     }
 
-    void OnNextClicked()
+    private void OnNextClicked()
     {
-        GoTo(_currentIndex + 1, direction: 1);
+        if (_currentIndex < _slides.Count - 1)
+            GoTo(_currentIndex + 1, direction: 1);
     }
 
     void OnPrevClicked()
@@ -81,7 +82,7 @@ public class TutorialView : UIPopupBase
             GoTo(_currentIndex - 1, direction: -1);
     }
 
-    void GoTo(int next, int direction)
+    private void GoTo(int next, int direction)
     {
         if (_isAnimating) return;
         _currentIndex = next;
@@ -89,7 +90,7 @@ public class TutorialView : UIPopupBase
         StartCoroutine(SlideCoroutine(direction));
     }
 
-    void Refresh()
+    private void Refresh()
     {
         _prevButton.interactable = _currentIndex > 0;
         _nextButton.interactable = _currentIndex < _slides.Count - 1;
@@ -100,7 +101,7 @@ public class TutorialView : UIPopupBase
                 : new Color(1, 1, 1, 0.3f);
     }
 
-    IEnumerator SlideCoroutine(int direction)
+    private IEnumerator SlideCoroutine(int direction)
     {
         _isAnimating = true;
 

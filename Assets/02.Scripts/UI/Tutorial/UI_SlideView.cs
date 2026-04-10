@@ -21,16 +21,16 @@ public class UI_SlideView : MonoBehaviour
 
     public void Setup(UI_SlideData data)
     {
-        _stepLabel.text = data.stepLabel;
-        _titleText.text = data.title;
-        _descText.text = data.description;
+        _stepLabel.text = data.StepLabel;
+        _titleText.text = data.Title;
+        _descText.text = data.Description;
 
-        ApplyLayout(data.layout, data.image);
+        ApplyLayout(data.SlideLayout, data.Image);
 
         IsReady = true;
     }
 
-    void ApplyLayout(UI_SlideData.Layout layout, Sprite image)
+    private void ApplyLayout(UI_SlideData.Layout layout, Sprite image)
     {
         bool hasImage = layout != UI_SlideData.Layout.TextOnly;
 
@@ -47,7 +47,7 @@ public class UI_SlideView : MonoBehaviour
         }
     }
 
-    public void Reset()
+    private void Reset()
     {
         _stepLabel.text = string.Empty;
         _titleText.text = string.Empty;
