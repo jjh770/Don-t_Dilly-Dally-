@@ -32,8 +32,11 @@ public class PatientEntranceDirector : MonoBehaviour
     private PatientEntranceBase _activeEntrance;
     private Vector3 _finalPosition;
     private Quaternion _finalRotation;
+    private Vector3 _parentInitialPosition;
+    private Quaternion _parentInitialRotation;
     private bool _hasPlayed;
     private bool _isBound;
+    private bool _wasInTransition;
 
     private void Awake()
     {
@@ -82,6 +85,15 @@ public class PatientEntranceDirector : MonoBehaviour
     {
         _finalPosition = _bedTransform.position;
         _finalRotation = _bedTransform.rotation;
+
+        // 부모(PatientObject 등)의 초기 위치도 캐싱.
+        // 퇴장 연출이 부모를 DOShake로 움직일 수 있으므로 입장 전 원복 필요.
+        Transform parent = _bedTransform.parent;
+        if (parent != null)
+        {
+            _parentInitialPosition = parent.position;
+            _parentInitialRotation = parent.rotation;
+        }
     }
 
     // Late-bind pattern matching StageWaitNoticeUI.
@@ -120,7 +132,25 @@ public class PatientEntranceDirector : MonoBehaviour
         }
         else if (phase == EStagePhase.Playing)
         {
-            ForceCompleteIfNeeded();
+            // 입장 연출이 Playing 전에 끝나지 못했어도 끊지 않고 자연스럽게 마무리.
+            // (ForceComplete는 OnDestroy나 다음 입장 시작 시에만 호출)
+
+            // PatientTransition → Playing 복귀: 다음 환자 입장 연출 재생.
+            if (_wasInTransition)
+            {
+                _wasInTransition = false;
+                _hasPlayed = false;
+                ForceCompleteIfNeeded();
+
+                // 퇴장 연출이 부모(patientRoot)를 움직였을 수 있으므로 부모부터 원복.
+                ResetParentPose();
+                SnapBedToFinalPose();
+                PlaySelectedEntrance();
+            }
+        }
+        else if (phase == EStagePhase.PatientTransition)
+        {
+            _wasInTransition = true;
         }
     }
 
@@ -171,6 +201,17 @@ public class PatientEntranceDirector : MonoBehaviour
         _activeEntrance = null;
     }
 
+    private void ResetParentPose()
+    {
+        Transform parent = _bedTransform != null ? _bedTransform.parent : null;
+        if (parent != null)
+        {
+            parent.DOKill();
+            parent.position = _parentInitialPosition;
+            parent.rotation = _parentInitialRotation;
+        }
+    }
+
     private void SnapBedToFinalPose()
     {
         if (_bedTransform == null)
@@ -178,6 +219,7 @@ public class PatientEntranceDirector : MonoBehaviour
             return;
         }
 
+        _bedTransform.DOKill();
         _bedTransform.position = _finalPosition;
         _bedTransform.rotation = _finalRotation;
     }

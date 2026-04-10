@@ -24,6 +24,7 @@ public class UI_RecipeItemEntry : MonoBehaviour
 
     [Header("아이콘 설정")]
     [SerializeField] private Sprite _iconFrameSprite;
+    [SerializeField] private Sprite _actionFrameSprite;
     [SerializeField] private float _frameSize = 80f;
     [SerializeField] private float _materialIconSize = 60f;
     [SerializeField] private float _actionIconSize = 40f;
@@ -173,10 +174,10 @@ public class UI_RecipeItemEntry : MonoBehaviour
         layoutElement.preferredHeight = _frameSize;
 
         // 아이콘 프레임 (배경 + 재료 아이콘 포함)
-        Image frameImage = CreateFrameWithIcon(slotRt, $"Frame_{index}", _frameSize, _materialIconSize, out Image materialIcon);
+        Image frameImage = CreateFrameWithIcon(slotRt, $"Frame_{index}", _iconFrameSprite, _frameSize, _materialIconSize, out Image materialIcon);
 
         // 액션 아이콘 프레임 (프레임 아래, 기본 비활성화)
-        Image actionFrameImage = CreateFrameWithIcon(slotRt, $"ActionFrame_{index}", _frameSize, _materialIconSize, out Image actionIcon);
+        Image actionFrameImage = CreateFrameWithIcon(slotRt, $"ActionFrame_{index}", _actionFrameSprite, _frameSize, _materialIconSize, out Image actionIcon);
         actionFrameImage.gameObject.SetActive(false);
 
         return new MaterialSlot
@@ -190,7 +191,7 @@ public class UI_RecipeItemEntry : MonoBehaviour
         };
     }
 
-    private Image CreateFrameWithIcon(RectTransform parent, string objectName, float frameSize, float iconSize, out Image innerIcon)
+    private Image CreateFrameWithIcon(RectTransform parent, string objectName, Sprite frameSprite, float frameSize, float iconSize, out Image innerIcon)
     {
         // 프레임 오브젝트
         GameObject frameObj = new GameObject(objectName, typeof(RectTransform), typeof(Image));
@@ -201,7 +202,7 @@ public class UI_RecipeItemEntry : MonoBehaviour
         frameRt.sizeDelta = new Vector2(frameSize, frameSize);
 
         Image frameImage = frameObj.GetComponent<Image>();
-        frameImage.sprite = _iconFrameSprite;
+        frameImage.sprite = frameSprite;
         frameImage.type = Image.Type.Sliced;
         frameImage.raycastTarget = false;
 

@@ -38,10 +38,10 @@ public class DataBootstrapper : MonoBehaviour
     {
         // Repository 생성
         IRoomCurrencyRepository roomDataRepository = new FirebaseRoomCurrencyRepository(FirebaseInitializer.Instance.Database);
-        IPlayerInformationRepository playerRepository = new TestPlayerInformationRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
-        //IPlayerInformationRepository playerRepository = new FirebasePlayerInformationRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
-        //ICustomizingRepository customizingRepository = new FirebaseCustomizingRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
-        ICustomizingRepository customizingRepository = new LocalCustomizingRepository(_testUserId);
+        //IPlayerInformationRepository playerRepository = new TestPlayerInformationRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
+        IPlayerInformationRepository playerRepository = new FirebasePlayerInformationRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
+        ICustomizingRepository customizingRepository = new FirebaseCustomizingRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
+        //ICustomizingRepository customizingRepository = new LocalCustomizingRepository(_testUserId);
 
 
         RoomDataManager.Instance.Initialize(roomDataRepository);

@@ -36,7 +36,7 @@ namespace DontDillyDally.StageFlow
         private const int GAME_OVER_ACK_TOTAL_TIMEOUT_MS = 12000;
         private const float STAGE_START_COUNTDOWN_SEC = 3f;
         private const float STAGE_CLEAR_DELAY_SEC = 5f;
-        private const float PATIENT_TRANSITION_DELAY_SEC = 2f;
+        private const float PATIENT_TRANSITION_DELAY_SEC = 4f;
         private const float RETURN_TO_WAITING_ROOM_DELAY_SEC = 5f;
 
         // ── 위임 컴포넌트 ────────────────────────────────────────────
