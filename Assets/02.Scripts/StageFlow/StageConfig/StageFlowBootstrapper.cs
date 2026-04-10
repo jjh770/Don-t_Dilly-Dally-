@@ -22,6 +22,7 @@ namespace DontDillyDally.StageFlow
 
         private StageRuntimeData _stageData;
         private GameObject _stagePrefab;
+        private GameObject _spawnedStageInstance;
         private bool _isCleaningUp;
 
         private void Awake()
@@ -88,7 +89,8 @@ namespace DontDillyDally.StageFlow
                 }
 
                 // 마스터는 스테이지 프리팹을 생성하고 데이터 준비 완료까지 보장합니다.
-                PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
+                CleanupSpawnedStageInstance();
+                _spawnedStageInstance = PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
 
                 if (StagePreloader.Instance != null)
                 {
@@ -118,6 +120,7 @@ namespace DontDillyDally.StageFlow
 
         private void Cleanup()
         {
+            CleanupSpawnedStageInstance();
             ReleaseResources();
             Destroy(gameObject);
         }
@@ -147,6 +150,29 @@ namespace DontDillyDally.StageFlow
             {
                 SceneLoadManager.Instance.OnSceneLoadComplete -= HandleSceneLoadComplete;
             }
+        }
+
+        public bool CleanupSpawnedStageInstance()
+        {
+            if (_spawnedStageInstance == null)
+            {
+                return false;
+            }
+
+            GameObject target = _spawnedStageInstance;
+            _spawnedStageInstance = null;
+
+            PhotonView pv = target.GetComponent<PhotonView>();
+            if (PhotonNetwork.InRoom && PhotonNetwork.IsMasterClient && pv != null && pv.IsMine)
+            {
+                PhotonNetwork.Destroy(target);
+            }
+            else
+            {
+                Destroy(target);
+            }
+
+            return true;
         }
     }
 }

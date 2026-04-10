@@ -4718,283 +4718,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1667538447}
   m_CullTransparentMesh: 1
---- !u!1 &1669847613
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1669847615}
-  - component: {fileID: 1669847614}
-  m_Layer: 0
-  m_Name: SoundManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1669847614
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1669847613}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3c1be994962822c469d2d4301f76b1a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SoundManager
-  _bgmEntries:
-  - Key: 1
-    Clip: {fileID: 0}
-    Volume: 0.3
-    Pitch: 1
-  - Key: 2
-    Clip: {fileID: 0}
-    Volume: 0.3
-    Pitch: 1
-  - Key: 3
-    Clip: {fileID: 0}
-    Volume: 0.3
-    Pitch: 1
-  - Key: 4
-    Clip: {fileID: 8300000, guid: c60fce8b46ff38f4c8ca6de7549f77d5, type: 3}
-    Volume: 0.3
-    Pitch: 1
-  - Key: 5
-    Clip: {fileID: 8300000, guid: 01ef4b2ede5a0e341a6159e32082f4d8, type: 3}
-    Volume: 0.315
-    Pitch: 1
-  - Key: 6
-    Clip: {fileID: 8300000, guid: 0e073916d3c268d4ea37b6e1d720486c, type: 3}
-    Volume: 0.31
-    Pitch: 1
-  - Key: 7
-    Clip: {fileID: 8300000, guid: ca90d189052f88c439eed5550ef13aa1, type: 3}
-    Volume: 0.3
-    Pitch: 1
-  _bgmVolume: 0.5
-  _bgmFadeDuration: 1
-  _sfxEntries:
-  - Key: 1
-    Clip: {fileID: 8300000, guid: 3e3b8f067a4b74a4f940d790c6fd7180, type: 3}
-    Volume: 0.482
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 2
-    Clip: {fileID: 8300000, guid: ccfab99f7b5cb3e489b843d2dd8ceb52, type: 3}
-    Volume: 0.452
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 3
-    Clip: {fileID: 0}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 4
-    Clip: {fileID: 0}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 5
-    Clip: {fileID: 8300000, guid: 333b4d838f1e88e4a8fc18fec3256911, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 6
-    Clip: {fileID: 8300000, guid: 9832f92fd803ce54887994c74fe26f7c, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 7
-    Clip: {fileID: 8300000, guid: f48cf09e99d974142b019d2b4ec4fa49, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 8
-    Clip: {fileID: 8300000, guid: 69b640bd02f9c5a43be56b6e37eda542, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 9
-    Clip: {fileID: 8300000, guid: 9adf65a087ae25c47acc2903f19d2541, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 10
-    Clip: {fileID: 8300000, guid: 47da1916055d62b41b037b1d6b100b2d, type: 3}
-    Volume: 0.429
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 11
-    Clip: {fileID: 8300000, guid: 786898c1e0e789142af158190e2f4827, type: 3}
-    Volume: 0.435
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 12
-    Clip: {fileID: 8300000, guid: 2f97c8a3d55ec9d4684ca7a8a20cf0df, type: 3}
-    Volume: 0.458
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 13
-    Clip: {fileID: 8300000, guid: 7cc5eff5209c4754c993351d1ad0a1f8, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 1
-    FadeOutDuration: 1
-  - Key: 14
-    Clip: {fileID: 8300000, guid: 3b217713fa7c3da4b9ae55120be61c6e, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 15
-    Clip: {fileID: 8300000, guid: 3dd55d0e10bc2cd458bce7fd67f216e6, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 16
-    Clip: {fileID: 8300000, guid: 49e7ef5673008ab40ba0758405f94e0a, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 1
-    FadeOutDuration: 2
-  - Key: 17
-    Clip: {fileID: 8300000, guid: 1b01a66bca06ccb4993593b72709ca07, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 18
-    Clip: {fileID: 8300000, guid: 1be850a2d4a4cdf46a630df073a0064f, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 19
-    Clip: {fileID: 8300000, guid: d2210efc86e91ad4a83a1bf989bdfa45, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 20
-    Clip: {fileID: 8300000, guid: a4a5d2a10b82df64f8c5704b3070e04a, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 1
-    FadeOutDuration: 1
-  - Key: 21
-    Clip: {fileID: 8300000, guid: 1b01a66bca06ccb4993593b72709ca07, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 22
-    Clip: {fileID: 8300000, guid: d02e7eab3231b8941b1d6753b71e38ec, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 23
-    Clip: {fileID: 8300000, guid: e16cf8209e502684e9a54ee20613d4cb, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 24
-    Clip: {fileID: 8300000, guid: b2491958487696948abba86104e521bb, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 25
-    Clip: {fileID: 8300000, guid: 351fdbc14c216bf4dbf2c1b24425c715, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 26
-    Clip: {fileID: 8300000, guid: 635fec3e9c384ec43a0f01a9c1376a4a, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 1
-    FadeOutDuration: 1
-  - Key: 27
-    Clip: {fileID: 8300000, guid: a548305717ecf67438a76671cc92b311, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 28
-    Clip: {fileID: 8300000, guid: 67ada8eec0678204980fdc8fdc12b287, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 29
-    Clip: {fileID: 8300000, guid: d38cc85744d2f3c4187b0e9e59e27745, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 30
-    Clip: {fileID: 8300000, guid: 8fb9d266ce65c5943be05b65059b9697, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 31
-    Clip: {fileID: 8300000, guid: 974493d1bdaebd44ab96b7638206d5aa, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 32
-    Clip: {fileID: 8300000, guid: 444177cb702c74b429b5f827ccbc86bf, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  - Key: 33
-    Clip: {fileID: 8300000, guid: 03e686fae26ae3a46ba1f3386e6ee7ca, type: 3}
-    Volume: 1
-    Pitch: 1
-    Loop: 0
-    FadeOutDuration: 0.15
-  _sfxVolume: 1
-  _sfxPoolDefault: 8
-  _sfxPoolMax: 20
---- !u!4 &1669847615
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1669847613}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1693701151 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 2413987122785149828, guid: 59c5788b2c76e7c48aa2e95f379ae911, type: 3}
@@ -6655,6 +6378,63 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1886276331}
   m_SourcePrefab: {fileID: 100100000, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+--- !u!1001 &6206310217369316370
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1330423442012225330, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1332615642577795521, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
+      propertyPath: m_Name
+      value: SoundManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: b7b16fca2411ecc4fb59931a030ebf20, type: 3}
 --- !u!114 &6353583014827886306 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1227510411108586982, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
@@ -7891,7 +7671,7 @@ SceneRoots:
   - {fileID: 2018122521}
   - {fileID: 1934658413}
   - {fileID: 1721396351}
-  - {fileID: 1669847615}
+  - {fileID: 6206310217369316370}
   - {fileID: 1220003896}
   - {fileID: 1197743600}
   - {fileID: 138580716}

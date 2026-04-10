@@ -1,5 +1,6 @@
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
+using DontDillyDally.StageFlow;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -278,6 +279,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
                 RoomProperties.SetStageDataPrepComplete(false);
 
                 int cleanedCount = CleanupGameplayRoomObjects();
+                if (StageFlowBootstrapper.Instance != null &&
+                    StageFlowBootstrapper.Instance.CleanupSpawnedStageInstance())
+                {
+                    cleanedCount++;
+                }
+
                 if (cleanedCount > 0)
                 {
                     Debug.Log($"[PhotonServerManager] 대기실 복귀 전 게임 오브젝트 {cleanedCount}개를 정리했습니다.");
@@ -312,6 +319,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     private void HandleWaitingRoomSceneLoaded(ESceneType sceneType)
     {
         SceneLoadManager.Instance.OnSceneLoadComplete -= HandleWaitingRoomSceneLoaded;
+        PlayerRegistry.Clear();
         PhotonNetwork.IsMessageQueueRunning = true;
         _isReturningToWaitingRoom = false;
     }
@@ -377,7 +385,8 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         return target.GetComponent<ItemObject>() != null ||
                target.GetComponent<BasicMaterialSource>() != null ||
                target.GetComponent<MixToolSource>() != null ||
-               target.GetComponent<TraySource>() != null;
+               target.GetComponent<TraySource>() != null ||
+               target.GetComponent<StageFlowManager>() != null;
     }
 
     public void ChangeMaster(Player player)

@@ -110,15 +110,21 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
         else if (PhotonNetwork.IsMasterClient)
         {
             PhotonNetwork.LoadLevel(sceneName);
-            while (PhotonNetwork.LevelLoadingProgress < 1f)
+        }
+
+        if (loadMode == ESceneLoadMode.PhotonSynced)
+        {
+            while (!IsTargetSceneLoaded(sceneName))
             {
-                _loadingProgress = PhotonNetwork.LevelLoadingProgress;
+                _loadingProgress = Mathf.Clamp01(PhotonNetwork.LevelLoadingProgress);
                 yield return null;
             }
 
             _loadingProgress = 1f;
-
+            yield return null;
+            yield return Resources.UnloadUnusedAssets();
         }
+
         FinishSceneLoad(true);
     }
 
@@ -152,6 +158,12 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
                 return;
             }
         }
+    }
+
+    private static bool IsTargetSceneLoaded(string sceneName)
+    {
+        Scene activeScene = SceneManager.GetActiveScene();
+        return activeScene.IsValid() && activeScene.name == sceneName;
     }
     #endregion
 }

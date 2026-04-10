@@ -67,6 +67,12 @@ public static class PlayerRegistry
         return Players.Values;
     }
 
+    public static void Clear()
+    {
+        Players.Clear();
+        _localPlayer = null;
+    }
+
     private static void CacheLocalPlayerIfNeeded(PlayerController player)
     {
         if (player == null || player.PhotonView == null || !player.PhotonView.IsMine)

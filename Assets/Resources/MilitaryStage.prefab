@@ -8981,6 +8981,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7179129376621567877}
     m_Modifications:
+    - target: {fileID: -5956570196799090983, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2414056373852416543, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
       propertyPath: m_Name
       value: hospital_bed_010
@@ -9035,8 +9039,37 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3083738517127164069, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2757815583926558055}
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 2414056373852416543, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2217320602881356890}
   m_SourcePrefab: {fileID: 100100000, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
+--- !u!1 &7383698511581449221 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 2414056373852416543, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
+  m_PrefabInstance: {fileID: 5185993753694381594}
+  m_PrefabAsset: {fileID: 0}
+--- !u!65 &2217320602881356890
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7383698511581449221}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.939915, y: 0.86833835, z: 2.3895164}
+  m_Center: {x: -0.0006711187, y: 0.43416905, z: 0.006682159}
 --- !u!4 &7868907853561779903 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 3083738517127164069, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
@@ -9047,7 +9080,7 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3553546706129632823, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
   m_PrefabInstance: {fileID: 5185993753694381594}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 7383698511581449221}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 59c41580550f5bc498df557b520e4e1c, type: 3}

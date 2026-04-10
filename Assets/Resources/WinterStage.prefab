@@ -10771,6 +10771,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6709931327862628086}
     m_Modifications:
+    - target: {fileID: 1879060592064147892, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4779075976247722480, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
       propertyPath: m_Name
       value: hospital_bed_008
@@ -10829,6 +10833,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4779075976247722480, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 340733307955938249}
+    - targetCorrespondingSourceObject: {fileID: 4779075976247722480, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7182292914589980166}
   m_SourcePrefab: {fileID: 100100000, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
 --- !u!4 &4758146499106439554 stripped
 Transform:
@@ -10853,6 +10860,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.StageFlow.PatientInteractable
   _surgeonOnly: 1
+--- !u!65 &7182292914589980166
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5279210159408831288}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.93991494, y: 0.86833835, z: 2.3895164}
+  m_Center: {x: -0.00067582744, y: 0.43416905, z: 0.006682159}
 --- !u!1001 &1111587970425713171
 PrefabInstance:
   m_ObjectHideFlags: 0
