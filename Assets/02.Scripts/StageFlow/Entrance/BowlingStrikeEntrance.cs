@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using DG.Tweening;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BowlingStrikeEntrance : PatientEntranceBase
@@ -19,7 +19,8 @@ public class BowlingStrikeEntrance : PatientEntranceBase
     [SerializeField] private GameObject _pinPrefab;
 
     [Tooltip("핀 위치 배열 (이 오브젝트의 로컬 좌표 기준). 이 오브젝트를 씬에서 옮기면 핀 전체가 같이 이동.")]
-    [SerializeField] private Vector3[] _pinPositions = new[]
+    [SerializeField]
+    private Vector3[] _pinPositions = new[]
     {
         new Vector3(0f, 0f, 0f),
         new Vector3(0.6f, 0f, -0.4f),
@@ -160,6 +161,7 @@ public class BowlingStrikeEntrance : PatientEntranceBase
 
     private void ScatterPins()
     {
+
         foreach (GameObject pin in _spawnedPins)
         {
             if (pin == null)
@@ -190,6 +192,7 @@ public class BowlingStrikeEntrance : PatientEntranceBase
             pin.transform.DOScale(Vector3.zero, _pinFadeDuration)
                 .SetDelay(_scatterDuration * 0.7f);
         }
+        SoundManager.Instance.Play(SFXKey.PatientBowlingStrike, SoundType.Local);
     }
 
     private void CleanupPins()

@@ -12170,7 +12170,12 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 4075237959558491678, guid: 465c26af3118fa84eb61cea82802052b, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 4075237959558491678, guid: 465c26af3118fa84eb61cea82802052b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 905225201302517795, guid: 465c26af3118fa84eb61cea82802052b, type: 3}
@@ -12186,6 +12191,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 566276160240902809, guid: 465c26af3118fa84eb61cea82802052b, type: 3}
       insertIndex: -1
       addedObject: {fileID: 6047352833288903818}
+    - targetCorrespondingSourceObject: {fileID: 566276160240902809, guid: 465c26af3118fa84eb61cea82802052b, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7425682678539299112}
   m_SourcePrefab: {fileID: 100100000, guid: 465c26af3118fa84eb61cea82802052b, type: 3}
 --- !u!4 &124280856979988300 stripped
 Transform:
@@ -12232,6 +12240,27 @@ MonoBehaviour:
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
+--- !u!65 &7425682678539299112
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 788790103309551094}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.9004134, y: 0.7289784, z: 2.273088}
+  m_Center: {x: -0.00018084054, y: 0.36448896, z: 0.044563424}
 --- !u!1001 &1492610658923525436
 PrefabInstance:
   m_ObjectHideFlags: 0

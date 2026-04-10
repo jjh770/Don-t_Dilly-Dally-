@@ -1,7 +1,8 @@
+using ExternPropertyAttributes;
+using Photon.Pun;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Photon.Pun;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -11,18 +12,51 @@ using UnityEngine.Pool;
 public enum BGMKey
 {
     None,
-    Robby,
+    Main,
+    Lobby,
     WaitingRoom,
-    Stage1,
-    Stage2,
-    Stage3,
+    Halloween,
+    Military,
+    Winter,
+    Hospital,
 }
 
 public enum SFXKey
 {
     None,
-    UIClick = 1,
-    UIConfirm = 2,
+    UIButtonClick = 1,
+    UIButtonConfirm = 2,
+    UIPanelOpen = 3,
+    UIPanelClose = 4,
+    AmbHelicopter = 5,
+    AmbJetFly = 6,
+    AmbPenguin1 = 7,
+    AmbPenguin2 = 8,
+    AmbPenguin3 = 9,
+    PlayerThrow = 10,
+    PlayerPickUp = 11,
+    PlayerDrop = 12,
+    PatientEmergencyBeep = 13,
+    PotionMixerOpen = 14,
+    PotionMixerClose = 15,
+    PotionMixerInProgress = 16,
+    PotionMixerComplete = 17,
+    SterilizerOpen = 18,
+    SterilizerClose = 19,
+    SterilizerInProgress = 20,
+    SterilizerComplete = 21,
+    SterilizerSteam = 22,
+    RecycleBin = 23,
+    PatientBowlingStrike = 24,
+    PatientBrake = 25,
+    PatinetRocketHovering = 26,
+    PatientRocketLanding = 27,
+    PatientDeathSkeleton = 28,
+    PatientDeathSkeletonPoof = 29,
+    PatientDeathCoffinRise = 30,
+    PatientDeathCoffinClose = 31,
+    PatinetDeathAngel = 32,
+    UIGoToWorkButton = 33,
 }
 
 // 사운드 재생 타입.
@@ -56,12 +90,14 @@ public class SFXEntry
     [Range(0f, 1f)] public float Volume = 1f;
     [Range(0.5f, 2f)] public float Pitch = 1f;
     public bool Loop = false;
+    [AllowNesting]
+    [ShowIf(nameof(Loop))]
+    [Min(0f)] public float FadeOutDuration = 0.15f;
 
     public float Duration => (Clip != null && Pitch > 0) ? Clip.length / Pitch : 0f;
 }
 public class SoundManager : PunPersistentSingleton<SoundManager>
 {
-
     // ──────────────────────────────────────────
     //  인스펙터 설정
     // ──────────────────────────────────────────
@@ -86,6 +122,9 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     private Dictionary<SFXKey, SFXEntry> _sfxDict = new Dictionary<SFXKey, SFXEntry>();
 
     private Coroutine _bgmFadeCoroutine;
+    private readonly Dictionary<AudioSource, Coroutine> _sfxFadeCoroutines = new Dictionary<AudioSource, Coroutine>();
+    private readonly Dictionary<AudioSource, float> _sfxFadeDurations = new Dictionary<AudioSource, float>();
+    private float _currentBgmEntryVolume = 1f;
 
     // ──────────────────────────────────────────
     //  초기화
@@ -111,11 +150,20 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     {
         _sfxPool = new ObjectPool<AudioSource>(
             createFunc: CreateSFXSource,
-            actionOnGet: src => src.gameObject.SetActive(true),
+            actionOnGet: src =>
+            {
+                StopTrackedSFXFade(src);
+                _sfxFadeDurations.Remove(src);
+                src.gameObject.SetActive(true);
+            },
             actionOnRelease: src =>
             {
+                StopTrackedSFXFade(src);
+                _sfxFadeDurations.Remove(src);
                 src.Stop();
                 src.clip = null;
+                src.loop = false;
+                src.pitch = 1f;
                 src.gameObject.SetActive(false);
             },
             actionOnDestroy: src => Destroy(src.gameObject),
@@ -173,6 +221,12 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         }
     }
 
+    /// <summary>Loop가 켜진 SFX만 핸들을 반환하며 재생합니다.</summary>
+    public AudioSource PlayLoop(SFXKey key)
+    {
+        return PlaySFX_Local(key, requireLoop: true);
+    }
+
     /// <summary>현재 BGM을 정지합니다.</summary>
     public void StopBGM(bool fade = true)
     {
@@ -181,12 +235,26 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     }
 
     /// <summary>루프 SFX를 명시적으로 정지하고 풀에 반납합니다.</summary>
-    public void StopSFX(AudioSource source)
+    public void StopSFX(AudioSource source, bool fade = true)
     {
-        if (source != null) _sfxPool.Release(source);
+        if (source == null)
+        {
+            return;
+        }
+
+        float fadeDuration = 0f;
+        _sfxFadeDurations.TryGetValue(source, out fadeDuration);
+
+        if (!fade || fadeDuration <= 0f || !source.gameObject.activeSelf)
+        {
+            _sfxPool.Release(source);
+            return;
+        }
+
+        StartSFXFade(source, fadeDuration, 0f, () => _sfxPool.Release(source));
     }
 
-    public void SetBGMVolume(float volume) { _bgmVolume = Mathf.Clamp01(volume); _bgmSource.volume = _bgmVolume; }
+    public void SetBGMVolume(float volume) { _bgmVolume = Mathf.Clamp01(volume); _bgmSource.volume = _bgmVolume * _currentBgmEntryVolume; }
     public void SetSFXVolume(float volume) { _sfxVolume = Mathf.Clamp01(volume); }
 
     // ══════════════════════════════════════════
@@ -205,18 +273,19 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
             StartFade(_bgmSource, _bgmFadeDuration * 0.5f, 0f, () =>
             {
                 SetBGMClip(data);
-                StartFade(_bgmSource, _bgmFadeDuration * 0.5f, _bgmVolume);
+                StartFade(_bgmSource, _bgmFadeDuration * 0.5f, _bgmVolume * data.Volume);
             });
         }
         else
         {
             SetBGMClip(data);
-            StartFade(_bgmSource, _bgmFadeDuration, _bgmVolume);
+            StartFade(_bgmSource, _bgmFadeDuration, _bgmVolume * data.Volume);
         }
     }
 
     private void SetBGMClip(BGMEntry data)
     {
+        _currentBgmEntryVolume = Mathf.Clamp01(data.Volume);
         _bgmSource.clip = data.Clip;
         _bgmSource.pitch = data.Pitch;
         _bgmSource.volume = 0f;
@@ -226,20 +295,27 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     // ══════════════════════════════════════════
     //  SFX RPC
     // ══════════════════════════════════════════
-    private void PlaySFX_RPC(SFXKey key)
+    private AudioSource PlaySFX_RPC(SFXKey key, bool requireLoop = false)
     {
+        if (requireLoop)
+        {
+            Debug.LogWarning("[SoundManager] Loop SFX는 현재 Local 재생만 지원합니다.");
+            return null;
+        }
+
         if (PhotonNetwork.IsConnected && PhotonNetwork.InRoom)
         {
-            if (SceneRPCView.Instance != null)
+            if (SceneRPCView.Instance == null)
             {
                 Debug.LogWarning("[SoundManager] SceneRPCView가 씬에 존재하지 않습니다. RPC SFX를 재생할 수 없습니다.");
-                return;
+                return null;
             }
             SceneRPCView.Instance.PlaySfxForAll(key);
-        }      
+            return null;
+        }
         else
         {
-            PlaySFXInternal(key);
+            return PlaySFXInternal(key, requireLoop);
         }
     }
 
@@ -247,17 +323,23 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     // ══════════════════════════════════════════
     //  SFX Local
     // ══════════════════════════════════════════
-    private void PlaySFX_Local(SFXKey key) => PlaySFXInternal(key);
+    private AudioSource PlaySFX_Local(SFXKey key, bool requireLoop = false) => PlaySFXInternal(key, requireLoop);
 
     // ══════════════════════════════════════════
     //  공통 SFX 재생
     // ══════════════════════════════════════════
-    private void PlaySFXInternal(SFXKey key)
+    private AudioSource PlaySFXInternal(SFXKey key, bool requireLoop = false)
     {
         if (!_sfxDict.TryGetValue(key, out var data))
         {
             Debug.LogWarning($"[SoundManager] SFX 키 없음: {key}");
-            return;
+            return null;
+        }
+
+        if (requireLoop && !data.Loop)
+        {
+            Debug.LogWarning($"[SoundManager] Loop로 재생하려면 SFX Entry의 Loop를 켜야 합니다: {key}");
+            return null;
         }
 
         var source = _sfxPool.Get();
@@ -265,10 +347,13 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         source.volume = data.Volume * _sfxVolume;
         source.pitch = data.Pitch;
         source.loop = data.Loop;
+        _sfxFadeDurations[source] = data.Loop ? data.FadeOutDuration : 0f;
         source.Play();
 
         if (!data.Loop)
             StartCoroutine(ReleaseWhenDone(source, data.Duration));
+
+        return source;
     }
 
     private IEnumerator ReleaseWhenDone(AudioSource source, float duration)
@@ -284,6 +369,37 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     {
         if (_bgmFadeCoroutine != null) StopCoroutine(_bgmFadeCoroutine);
         _bgmFadeCoroutine = StartCoroutine(FadeRoutine(source, duration, targetVolume, onComplete));
+    }
+
+    private void StartSFXFade(AudioSource source, float duration, float targetVolume, Action onComplete = null)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        StopTrackedSFXFade(source);
+        Coroutine coroutine = StartCoroutine(FadeRoutine(source, duration, targetVolume, () =>
+        {
+            _sfxFadeCoroutines.Remove(source);
+            onComplete?.Invoke();
+        }));
+
+        _sfxFadeCoroutines[source] = coroutine;
+    }
+
+    private void StopTrackedSFXFade(AudioSource source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        if (_sfxFadeCoroutines.TryGetValue(source, out Coroutine coroutine))
+        {
+            StopCoroutine(coroutine);
+            _sfxFadeCoroutines.Remove(source);
+        }
     }
 
     private IEnumerator FadeRoutine(AudioSource source, float duration, float targetVolume, System.Action onComplete)

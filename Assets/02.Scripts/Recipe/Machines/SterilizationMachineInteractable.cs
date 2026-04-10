@@ -35,6 +35,7 @@ namespace DontDillyDally.Data
         private SterilizationSlot[] _slots;
         private bool _isBatchCompleted;
         private PhotonView _photonView;
+        private AudioSource _sterilizationLoopSource;
 
         public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
         public Transform Transform => transform;
@@ -68,6 +69,11 @@ namespace DontDillyDally.Data
             {
                 _slots[i] = new SterilizationSlot();
             }
+        }
+
+        private void OnDisable()
+        {
+            StopSterilizationLoop();
         }
 
         public void Interact(Transform interactor)
@@ -223,6 +229,7 @@ namespace DontDillyDally.Data
             }
 
             _actionTimer.TryStart(_sterilizationDuration, OnSterilizationTimerComplete);
+            StartSterilizationLoop();
         }
 
         private void OnSterilizationTimerComplete()
@@ -241,6 +248,7 @@ namespace DontDillyDally.Data
         private void CompleteSterilizationBatch()
         {
             _runningMotion?.StopMotion();
+            StopSterilizationLoop();
 
             // 결과 아이템의 ViewID를 수집하여 RPC로 전송
             int[] resultViewIds = new int[MaxSlots];
@@ -292,6 +300,11 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.InRoom)
             {
                 _photonView.RPC(nameof(RPC_SterilCompleteBatch), RpcTarget.Others, resultViewIds);
+            }
+
+            if (_isBatchCompleted)
+            {
+                SoundManager.Instance?.Play(SFXKey.SterilizerComplete, SoundType.Local);
             }
         }
 
@@ -431,6 +444,7 @@ namespace DontDillyDally.Data
 
             // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
             _actionTimer?.TryStart(duration, () => { });
+            StartSterilizationLoop();
         }
 
         [PunRPC]
@@ -438,6 +452,7 @@ namespace DontDillyDally.Data
         {
             _runningMotion?.StopMotion();
             _actionTimer?.Cancel();
+            StopSterilizationLoop();
 
             // 모든 슬롯 초기화 후 결과 아이템 재배치
             for (int i = 0; i < _slots.Length; i++)
@@ -469,6 +484,11 @@ namespace DontDillyDally.Data
 
             _isBatchCompleted = HasAnyStoredItems();
             _door?.Unlock();
+
+            if (_isBatchCompleted)
+            {
+                SoundManager.Instance?.Play(SFXKey.SterilizerComplete, SoundType.Local);
+            }
         }
 
         [PunRPC]
@@ -529,16 +549,19 @@ namespace DontDillyDally.Data
         private void OpenDoorAndSync()
         {
             _door?.TryOpen();
+            SoundManager.Instance.Play(SFXKey.SterilizerOpen, SoundType.Local);
 
             if (PhotonNetwork.InRoom)
             {
                 _photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
+
             }
         }
 
         private void CloseDoorAndSync()
         {
             _door?.TryClose();
+            SoundManager.Instance.Play(SFXKey.SterilizerClose, SoundType.Local);
 
             if (PhotonNetwork.InRoom)
             {
@@ -558,6 +581,28 @@ namespace DontDillyDally.Data
         private bool IsDoorOpen()
         {
             return _door == null || _door.IsOpen;
+        }
+
+        private void StartSterilizationLoop()
+        {
+            if (_sterilizationLoopSource != null || SoundManager.Instance == null)
+            {
+                return;
+            }
+
+            _sterilizationLoopSource = SoundManager.Instance.PlayLoop(SFXKey.SterilizerInProgress);
+        }
+
+        private void StopSterilizationLoop()
+        {
+            if (_sterilizationLoopSource == null || SoundManager.Instance == null)
+            {
+                _sterilizationLoopSource = null;
+                return;
+            }
+
+            SoundManager.Instance.StopSFX(_sterilizationLoopSource);
+            _sterilizationLoopSource = null;
         }
 
         private int GetFirstAvailableSlotIndex()

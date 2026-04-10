@@ -7,11 +7,11 @@ public class UI_SoundTrigger : MonoBehaviour, IPointerEnterHandler
 {
     [Header("Common")]
     [SerializeField] private SoundType _soundType = SoundType.Local;
-    [SerializeField] private SFXKey _buttonSfxKey = SFXKey.UIClick;
+    [SerializeField] private SFXKey _buttonSfxKey = SFXKey.UIButtonClick;
 
     [Header("Hover")]
     [SerializeField] private bool _playHoverSound = false;
-    [SerializeField] private SFXKey _hoverSfxKey = SFXKey.UIClick;
+    [SerializeField] private SFXKey _hoverSfxKey = SFXKey.UIButtonClick;
 
     private Button _button;
 

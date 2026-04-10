@@ -37,6 +37,7 @@ namespace DontDillyDally.Data
         private readonly List<ToolType> _loadedPotionsBuffer = new List<ToolType>(MaxSlots);
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
+        private AudioSource _mixLoopSource;
 
         public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
         public Transform Transform => transform;
@@ -68,6 +69,11 @@ namespace DontDillyDally.Data
             {
                 _slots[i] = new PotionSlot();
             }
+        }
+
+        private void OnDisable()
+        {
+            StopMixingLoop();
         }
 
         public void Interact(Transform interactor)
@@ -243,6 +249,7 @@ namespace DontDillyDally.Data
             }
 
             _actionTimer.TryStart(_pendingCraftingDuration, OnMixingTimerComplete);
+            StartMixingLoop();
         }
 
         private void OnMixingTimerComplete()
@@ -261,6 +268,7 @@ namespace DontDillyDally.Data
         private void CompleteMixingProcess()
         {
             _runningMotion?.StopMotion();
+            StopMixingLoop();
             ConsumeAllStoredInputs();
 
             if (_pendingResultMaterial == CraftedMaterialType.Unknown)
@@ -301,6 +309,9 @@ namespace DontDillyDally.Data
                 int resultViewId = GetPhotonViewId(resultItem);
                 photonView.RPC(nameof(RPC_PotionCompleteMixing), RpcTarget.Others, resultViewId);
             }
+
+            SoundManager.Instance?.Play(SFXKey.PotionMixerComplete, SoundType.Local);
+
         }
 
         private void TryTakeStoredInput(IHeldItemInteractor heldItemInteractor)
@@ -445,6 +456,7 @@ namespace DontDillyDally.Data
 
             // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
             _actionTimer?.TryStart(duration, () => { });
+            StartMixingLoop();
         }
 
         [PunRPC]
@@ -452,6 +464,7 @@ namespace DontDillyDally.Data
         {
             _runningMotion?.StopMotion();
             _actionTimer?.Cancel();
+            StopMixingLoop();
 
             // 슬롯 초기화 (아이템은 PhotonNetwork.Destroy로 이미 제거됨)
             for (int i = 0; i < _slots.Length; i++)
@@ -474,6 +487,11 @@ namespace DontDillyDally.Data
             }
 
             _door?.Unlock();
+
+            if (resultItemViewId >= 0)
+            {
+                SoundManager.Instance?.Play(SFXKey.PotionMixerComplete, SoundType.Local);
+            }
         }
 
         [PunRPC]
@@ -553,6 +571,7 @@ namespace DontDillyDally.Data
         private void OpenDoorAndSync()
         {
             _door?.TryOpen();
+            SoundManager.Instance.Play(SFXKey.PotionMixerOpen, SoundType.Local);
 
             if (PhotonNetwork.InRoom)
             {
@@ -563,6 +582,7 @@ namespace DontDillyDally.Data
         private void CloseDoorAndSync()
         {
             _door?.TryClose();
+            SoundManager.Instance.Play(SFXKey.PotionMixerClose, SoundType.Local);
 
             if (PhotonNetwork.InRoom)
             {
@@ -671,6 +691,28 @@ namespace DontDillyDally.Data
         private bool IsDoorOpen()
         {
             return _door == null || _door.IsOpen;
+        }
+
+        private void StartMixingLoop()
+        {
+            if (_mixLoopSource != null || SoundManager.Instance == null)
+            {
+                return;
+            }
+
+            _mixLoopSource = SoundManager.Instance.PlayLoop(SFXKey.PotionMixerInProgress);
+        }
+
+        private void StopMixingLoop()
+        {
+            if (_mixLoopSource == null || SoundManager.Instance == null)
+            {
+                _mixLoopSource = null;
+                return;
+            }
+
+            SoundManager.Instance.StopSFX(_mixLoopSource);
+            _mixLoopSource = null;
         }
 
         private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)

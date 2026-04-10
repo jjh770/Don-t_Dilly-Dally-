@@ -69,6 +69,8 @@ public class AirEventSpawner : MonoBehaviourPun
             spawnedObject.transform.rotation = Quaternion.LookRotation(direction);
         }
 
+        SoundManager.Instance.Play(SFXKey.AmbJetFly, SoundType.Local);
+
         AirEventMover mover = spawnedObject.AddComponent<AirEventMover>();
         mover.Initialize(direction, _moveDuration, _moveSpeed, _maxShakeIntensity, _maxShakeDistance);
     }
