@@ -1,9 +1,14 @@
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RobbyBootstrapper : MonoBehaviour
 {
     [SerializeField] private RoomView _roomView;
     [SerializeField] private AttendanceView _attendanceView;
+
+    [SerializeField] private TutorialView _tutorialView;
+    [SerializeField] private Button _tutorialOpenButton;
+
     [SerializeField] private AttendanceManager _attendanceManager;
     [SerializeField] private UIPopupBase _attendancePopup;
 
@@ -25,6 +30,7 @@ public class RobbyBootstrapper : MonoBehaviour
         _attendanceView.Init(_attendancePresenter);
 
         _roomView.AttendancePopupButton.onClick.AddListener(_attendancePresenter.AttendancePopupOpen);
+        _tutorialOpenButton.onClick.AddListener(_tutorialView.Show);
     }
 
     private void OnDestroy()
@@ -32,5 +38,6 @@ public class RobbyBootstrapper : MonoBehaviour
         _roomPresenter.Dispose();
         _attendancePresenter.Dispose();
         _roomView.AttendancePopupButton.onClick.RemoveListener(_attendancePresenter.AttendancePopupOpen);
+        _tutorialOpenButton.onClick.RemoveListener(_tutorialView.Show);
     }
 }
