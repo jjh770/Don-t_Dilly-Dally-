@@ -46,6 +46,7 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     public override void OnLeftRoom()
     {
         UnsubscribeFromRoleAssignment();
+        CleanupExistingLocalPlayerObject();
         _usedSpawnPoints.Clear();
         _surgeonSpawnActorNumber = -1;
         _player = null;
@@ -92,7 +93,19 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
             return;
         }
 
-        if (_hasSpawnedLocalPlayer || _isSpawnRequestPending)
+        if (_hasSpawnedLocalPlayer && _player != null)
+        {
+            return;
+        }
+
+        if (_hasSpawnedLocalPlayer && _player == null)
+        {
+            _hasSpawnedLocalPlayer = false;
+        }
+
+        CleanupExistingLocalPlayerObject();
+
+        if (_isSpawnRequestPending)
         {
             return;
         }
@@ -361,5 +374,53 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
     private void HandleRoleAssignmentCompleted(int surgeonActorNumber)
     {
         TrySpawnLocalPlayer();
+    }
+
+    private void CleanupExistingLocalPlayerObject()
+    {
+        GameObject existingPlayer = GetExistingLocalPlayerObject();
+        if (existingPlayer == null)
+        {
+            return;
+        }
+
+        PhotonView playerView = existingPlayer.GetComponent<PhotonView>();
+        if (PhotonNetwork.InRoom && playerView != null && playerView.IsMine)
+        {
+            PhotonNetwork.Destroy(existingPlayer);
+        }
+        else
+        {
+            Destroy(existingPlayer);
+        }
+
+        if (_player == existingPlayer)
+        {
+            _player = null;
+        }
+
+        _hasSpawnedLocalPlayer = false;
+        _isSpawnRequestPending = false;
+    }
+
+    private GameObject GetExistingLocalPlayerObject()
+    {
+        if (_player != null)
+        {
+            return _player;
+        }
+
+        if (!PlayerRegistry.TryGetLocalPlayer(out PlayerController localPlayer) || localPlayer == null)
+        {
+            return null;
+        }
+
+        PhotonView playerView = localPlayer.PhotonView;
+        if (playerView == null || !playerView.IsMine)
+        {
+            return null;
+        }
+
+        return localPlayer.gameObject;
     }
 }

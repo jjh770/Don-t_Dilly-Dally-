@@ -340,7 +340,9 @@ namespace DontDillyDally.Data
         private void PlaceTrayAtSlot(TrayItem trayItem)
         {
             HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
-            if (holdable != null)
+            bool isLocalOwner = trayItem.PhotonView != null && trayItem.PhotonView.IsMine;
+
+            if (holdable != null && isLocalOwner)
             {
                 holdable.Place(_traySlotPoint);
 
@@ -351,10 +353,20 @@ namespace DontDillyDally.Data
             }
             else
             {
-                trayItem.transform.SetPositionAndRotation(_traySlotPoint.position, _traySlotPoint.rotation);
+                // 비소유자 클라이언트는 물리 상태를 바꾸지 않고
+                // 슬롯 부모/로컬 좌표만 맞춰 시각 상태만 재현합니다.
+                if (holdable != null)
+                {
+                    holdable.SetStoredInContainer(true);
+                }
             }
 
-            trayItem.transform.SetParent(_traySlotPoint, true);
+            // 부모 변경 자체는 PhotonTransformView가 동기화하지 않습니다.
+            // 배치 직후 소유권이 바로 바뀌더라도 모든 클라이언트가
+            // 동일한 슬롯 기준 좌표를 사용하도록 로컬 좌표를 고정합니다.
+            trayItem.transform.SetParent(_traySlotPoint, false);
+            trayItem.transform.localPosition = Vector3.zero;
+            trayItem.transform.localRotation = Quaternion.identity;
 
             NetworkItemOwnership.ReturnOwnershipToMaster(trayItem.PhotonView);
         }
