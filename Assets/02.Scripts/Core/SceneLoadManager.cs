@@ -63,6 +63,8 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
             return;
         }
 
+        SoundManager.Instance?.StopBGM();
+
         _nextSceneData = _sceneDataMap[type];
         _isLoading = true;
         StartCoroutine(LoadSceneAsync());
