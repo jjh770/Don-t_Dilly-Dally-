@@ -292,6 +292,10 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
                 }
             }
 
+            // 씬 전환 전 로컬 플레이어를 PhotonNetwork.Destroy로 정리하여
+            // 서버의 버퍼된 인스턴스화 캐시를 제거합니다.
+            PlayerSpawnManager.Instance?.DestroyLocalPlayer();
+
             // 씬 전환 중 Photon이 룸 캐시의 오브젝트를 재생성하지 못하도록
             // 메시지 큐를 멈춥니다. 씬 로드 완료 후 다시 활성화됩니다.
             PhotonNetwork.IsMessageQueueRunning = false;

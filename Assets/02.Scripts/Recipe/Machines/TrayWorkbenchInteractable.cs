@@ -342,23 +342,18 @@ namespace DontDillyDally.Data
             HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
             bool isLocalOwner = trayItem.PhotonView != null && trayItem.PhotonView.IsMine;
 
-            if (holdable != null && isLocalOwner)
+            if (holdable != null)
             {
-                holdable.Place(_traySlotPoint);
-
-                // 워크벤치에 적재된 트레이는 콜라이더 비활성화
-                // (플레이어는 워크벤치 콜라이더로 상호작용하므로 트레이 콜라이더 불필요)
-                // 네트워크 동기화가 콜라이더를 다시 켜는 것도 방지
-                holdable.SetStoredInContainer(true);
-            }
-            else
-            {
-                // 비소유자 클라이언트는 물리 상태를 바꾸지 않고
-                // 슬롯 부모/로컬 좌표만 맞춰 시각 상태만 재현합니다.
-                if (holdable != null)
+                if (isLocalOwner)
                 {
-                    holdable.SetStoredInContainer(true);
+                    holdable.Place(_traySlotPoint);
                 }
+                else
+                {
+                    holdable.ApplyNetworkHoldState(false, -1);
+                }
+
+                holdable.SetStoredInContainer(true);
             }
 
             // 부모 변경 자체는 PhotonTransformView가 동기화하지 않습니다.

@@ -111,7 +111,12 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
         }
         else if (loadMode == ESceneLoadMode.PhotonSynced)
         {
-            PhotonNetwork.LoadLevel(sceneName);
+            // Master는 항상 LoadLevel을 호출하고, Non-Master는 메시지 큐가 꺼져 있어
+            // Master의 씬 전환 이벤트를 수신할 수 없을 때만 직접 호출합니다.
+            if (PhotonNetwork.IsMasterClient || !PhotonNetwork.IsMessageQueueRunning)
+            {
+                PhotonNetwork.LoadLevel(sceneName);
+            }
 
             while (!IsTargetSceneLoaded(sceneName))
             {

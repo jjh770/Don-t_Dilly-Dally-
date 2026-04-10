@@ -37,6 +37,13 @@ public class PlayerSpawnManager : PunSingleton<PlayerSpawnManager>
 
     public event Action<GameObject> OnPlayerSpawned;
 
+    public void DestroyLocalPlayer()
+    {
+        CleanupExistingLocalPlayerObject();
+        _hasSpawnedLocalPlayer = false;
+        _isSpawnRequestPending = false;
+    }
+
     public override void OnJoinedRoom()
     {
         SubscribeToRoleAssignment();

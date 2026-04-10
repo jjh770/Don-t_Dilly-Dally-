@@ -24,7 +24,10 @@ public class StageWaitNoticeUI : MonoBehaviour
 
     private void Start()
     {
-        TryBind();
+        if (!TryBind())
+        {
+            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
+        }
         RefreshUi();
     }
 

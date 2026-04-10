@@ -218,18 +218,20 @@ namespace DontDillyDally.Data
 
             bool isLocalOwner = itemObject.PhotonView != null && itemObject.PhotonView.IsMine;
 
-            if (itemObject.TryGetComponent(out HoldableItem holdableItem) && isLocalOwner)
+            if (itemObject.TryGetComponent(out HoldableItem holdableItem))
             {
-                holdableItem.Place(slotTransform);
-            }
-            else
-            {
-                // 비소유자 클라이언트는 물리 상태를 바꾸지 않고
-                // 슬롯 부모/로컬 좌표만 맞춰 시각 상태만 재현합니다.
-                if (holdableItem != null)
+                if (isLocalOwner)
                 {
-                    holdableItem.SetStoredInContainer(true);
+                    holdableItem.Place(slotTransform);
                 }
+                else
+                {
+                    // 비소유자 클라이언트에서도 홀드 상태를 해제하여
+                    // UpdateHeldTransform이 위치를 손으로 덮어쓰지 않도록 합니다.
+                    holdableItem.ApplyNetworkHoldState(false, -1);
+                }
+
+                holdableItem.SetStoredInContainer(true);
             }
 
             itemObject.transform.SetParent(slotTransform, false);
