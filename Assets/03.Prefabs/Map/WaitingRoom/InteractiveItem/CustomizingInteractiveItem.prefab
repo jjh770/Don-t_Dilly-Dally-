@@ -11,10 +11,10 @@ GameObject:
   - component: {fileID: 8652913488235843278}
   - component: {fileID: 2348449972502523897}
   - component: {fileID: 9050522668536190633}
-  - component: {fileID: 5423199808893852616}
-  - component: {fileID: 1832382831346839264}
+  - component: {fileID: 5844147209745037168}
+  - component: {fileID: 9056393465575665064}
   m_Layer: 6
-  m_Name: CustomazingInteractiveItem
+  m_Name: CustomizingInteractiveItem
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -28,7 +28,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1763520989493423169}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
   m_LocalPosition: {x: 4.822, y: 0, z: 4.37}
   m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 1
@@ -92,8 +92,21 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &5423199808893852616
-MeshCollider:
+--- !u!114 &5844147209745037168
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1763520989493423169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d43bc49223ee710409ddf9d823816732, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UIInteractiveItem
+  _popUpUI: {fileID: 0}
+--- !u!65 &9056393465575665064
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -110,20 +123,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 3023169230736089165, guid: 75ce63928f2ae1948b76b92271c1aa25, type: 3}
---- !u!114 &1832382831346839264
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1763520989493423169}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 898bab16903011c489285d29d7990018, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CustomizingInteractItem
-  _customizingUI: {fileID: 0}
+  serializedVersion: 3
+  m_Size: {x: 1.2801688, y: 1.7589127, z: 0.519556}
+  m_Center: {x: -0.0036104321, y: 0.8794562, z: 0.008013755}

@@ -9,6 +9,7 @@ public class UI_StageItemView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private Image _stageImage;
     [SerializeField] private TMP_Text _stageNumberText;
     [SerializeField] private TMP_Text _stageNameText;
+    [SerializeField] private RectTransform _stageNameBackgroundPanel;
     [SerializeField] private GameObject _lockObject;
     [SerializeField] private Toggle _toggle;
 
@@ -32,6 +33,7 @@ public class UI_StageItemView : MonoBehaviour, IPointerClickHandler
         if (_stageNameText != null)
         {
             _stageNameText.text = stageName;
+            LayoutRebuilder.ForceRebuildLayoutImmediate(_stageNameBackgroundPanel);
         }
 
         if (_stageImage != null)
