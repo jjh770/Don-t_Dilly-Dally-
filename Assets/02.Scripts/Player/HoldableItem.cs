@@ -265,9 +265,38 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     private void RefreshCachedComponents()
     {
         // 모델 Refresh 중 자식 collider가 교체될 수 있으므로 항상 현재 모델 기준으로 다시 수집합니다.
-        _allColliders = GetComponentsInChildren<Collider>(true);
+        _allColliders = GetInteractionColliders();
         RefreshHoldAnchor();
         ApplyColliderStateToCachedColliders();
+    }
+
+    private Collider[] GetInteractionColliders()
+    {
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        if (_itemObject == null || colliders.Length == 0)
+        {
+            return colliders;
+        }
+
+        int writeIndex = 0;
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            Collider collider = colliders[i];
+            if (_itemObject.IsRuntimeModelCollider(collider))
+            {
+                continue;
+            }
+
+            colliders[writeIndex] = collider;
+            writeIndex++;
+        }
+
+        if (writeIndex != colliders.Length)
+        {
+            System.Array.Resize(ref colliders, writeIndex);
+        }
+
+        return colliders;
     }
 
     private Collider[] GetAllColliders()

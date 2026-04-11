@@ -169,6 +169,18 @@ namespace DontDillyDally.Data
             return transform.parent == expectedParent;
         }
 
+        public bool IsRuntimeModelCollider(Collider collider)
+        {
+            if (collider == null || CurrentModelInstance == null)
+            {
+                return false;
+            }
+
+            Transform colliderTransform = collider.transform;
+            Transform modelTransform = CurrentModelInstance.transform;
+            return colliderTransform == modelTransform || colliderTransform.IsChildOf(modelTransform);
+        }
+
         public bool TryApplyBoxColliderFromModelPrefab(GameObject modelPrefab)
         {
             if (modelPrefab == null)

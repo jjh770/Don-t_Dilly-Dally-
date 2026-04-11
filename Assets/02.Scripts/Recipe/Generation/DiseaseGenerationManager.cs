@@ -72,6 +72,18 @@ namespace DontDillyDally.Data
 
         private static readonly CraftedMaterialType[] Stage3Materials =
         {
+            CraftedMaterialType.SterilizedScalpelGray,
+            CraftedMaterialType.SterilizedPincetteStraight,
+            CraftedMaterialType.SterilizedScissorsSmall,
+            CraftedMaterialType.AnestheticSyringe,
+            CraftedMaterialType.Bandage,
+            CraftedMaterialType.Disinfectant,
+            CraftedMaterialType.GauzeBox,
+            CraftedMaterialType.OrganLung,
+        };
+
+        private static readonly CraftedMaterialType[] Stage4Materials =
+        {
             CraftedMaterialType.SterilizedScalpelGreen,
             CraftedMaterialType.SterilizedPincetteCurved,
             CraftedMaterialType.SterilizedScissorsClamp,
@@ -82,18 +94,6 @@ namespace DontDillyDally.Data
             CraftedMaterialType.AmbuBag,
             CraftedMaterialType.OrganLiver,
             CraftedMaterialType.OrganStomach,
-        };
-
-        private static readonly CraftedMaterialType[] Stage4Materials =
-        {
-            CraftedMaterialType.SterilizedScalpelGray,
-            CraftedMaterialType.SterilizedPincetteStraight,
-            CraftedMaterialType.SterilizedScissorsSmall,
-            CraftedMaterialType.AnestheticSyringe,
-            CraftedMaterialType.Bandage,
-            CraftedMaterialType.Disinfectant,
-            CraftedMaterialType.GauzeBox,
-            CraftedMaterialType.OrganLung,
         };
 
         public static IReadOnlyList<CraftedMaterialType> GetAllowedMaterials(string stageId)
