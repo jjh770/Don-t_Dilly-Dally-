@@ -144,8 +144,8 @@ public class UI_Customizing : UIPopupBase
 
     private void OnSaveClicked()
     {
-        _viewModel?.Save();                 // 일반 저장(?)
-        _viewModel?.SaveToSelectedSlot();   // 현재 선택 슬롯에 저장
+        _viewModel?.SaveToSelectedSlot();   // 먼저 슬롯에 현재 상태 저장
+        _viewModel?.Save();                 // 전체 저장 (MergeMetaFrom에서 업데이트된 슬롯 반영)
         OnSaved?.Invoke();
     }
 
