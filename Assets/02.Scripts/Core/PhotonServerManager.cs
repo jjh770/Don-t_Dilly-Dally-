@@ -272,13 +272,20 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
         try
         {
+            // cleanup보다 먼저 메시지 큐를 끈다.
+            // 비마스터가 마스터보다 먼저 대기실에 도착해 Instantiate 이벤트를 보내면
+            // 마스터가 게임씬에서 원격 플레이어를 생성한 뒤 LoadLevel의 캐시 재처리로
+            // 동일 플레이어가 중복 생성되는 문제를 방지한다.
+            PhotonNetwork.IsMessageQueueRunning = false;
+
             if (PhotonNetwork.IsMasterClient)
             {
                 PhotonNetwork.CurrentRoom.IsOpen = true;
                 RoomProperties.SetGameInProgress(false);
                 RoomProperties.SetStageDataPrepComplete(false);
 
-                int cleanedCount = CleanupGameplayRoomObjects();
+                int cleanedCount = CleanupGameplayPlayerObjects();
+                cleanedCount += CleanupGameplayRoomObjects();
                 if (StageFlowBootstrapper.Instance != null &&
                     StageFlowBootstrapper.Instance.CleanupSpawnedStageInstance())
                 {
@@ -295,10 +302,6 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
             // 씬 전환 전 로컬 플레이어를 PhotonNetwork.Destroy로 정리하여
             // 서버의 버퍼된 인스턴스화 캐시를 제거합니다.
             PlayerSpawnManager.Instance?.DestroyLocalPlayer();
-
-            // 씬 전환 중 Photon이 룸 캐시의 오브젝트를 재생성하지 못하도록
-            // 메시지 큐를 멈춥니다. 씬 로드 완료 후 다시 활성화됩니다.
-            PhotonNetwork.IsMessageQueueRunning = false;
             SceneLoadManager.Instance.OnSceneLoadComplete += HandleWaitingRoomSceneLoaded;
             SceneLoadManager.Instance.BeginSceneLoad(ESceneType.WaitingRoom);
 
@@ -382,6 +385,44 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         }
 
         return destroyedCount;
+    }
+
+    private static int CleanupGameplayPlayerObjects()
+    {
+        if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient)
+        {
+            return 0;
+        }
+
+        HashSet<GameObject> playerObjects = new HashSet<GameObject>();
+        PlayerController[] playerControllers = FindObjectsOfType<PlayerController>(true);
+        foreach (PlayerController playerController in playerControllers)
+        {
+            if (playerController == null || playerController.PhotonView == null)
+            {
+                continue;
+            }
+
+            if (playerController.PhotonView.Owner != null)
+            {
+                playerObjects.Add(playerController.gameObject);
+            }
+        }
+
+        foreach (Player player in PhotonNetwork.PlayerList)
+        {
+            PhotonNetwork.DestroyPlayerObjects(player);
+        }
+
+        foreach (GameObject playerObject in playerObjects)
+        {
+            if (playerObject != null)
+            {
+                UnityEngine.Object.Destroy(playerObject);
+            }
+        }
+
+        return playerObjects.Count;
     }
 
     private static bool IsGameplayObject(GameObject target)

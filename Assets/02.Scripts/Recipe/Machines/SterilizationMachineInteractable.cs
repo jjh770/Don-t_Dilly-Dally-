@@ -676,16 +676,19 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
-            foreach (Collider col in colliders)
-            {
-                col.enabled = isEnabled;
-            }
-
             HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
             if (holdable != null)
             {
                 holdable.SetStoredInContainer(!isEnabled);
+                holdable.SetAllCollidersEnabled(isEnabled);
+            }
+            else
+            {
+                Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
+                foreach (Collider col in colliders)
+                {
+                    col.enabled = isEnabled;
+                }
             }
 
             if (isEnabled)
