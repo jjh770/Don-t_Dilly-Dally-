@@ -6,7 +6,8 @@ using UnityEngine;
 public class PlayerRoleView : MonoBehaviourPunCallbacks
 {
     [Header("인디케이터")]
-    [SerializeField] private Renderer _indicatorRenderer;
+    [SerializeField] private Renderer _downIndicatorRenderer;
+    [SerializeField] private GameObject _upIndicator;
 
     private Material _originalMaterial;
     private bool _isInitialized;
@@ -15,6 +16,12 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     {
         Initialize();
         SubscribeToManager();
+
+        // 자기 자신만 _upIndicator 활성화
+        if (_upIndicator != null)
+        {
+            _upIndicator.SetActive(photonView.IsMine);
+        }
 
         // 이미 역할이 배정되었다면 적용
         TryApplyExistingRole();
@@ -30,9 +37,9 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     {
         if (_isInitialized) return;
 
-        if (_indicatorRenderer != null)
+        if (_downIndicatorRenderer != null)
         {
-            _originalMaterial = _indicatorRenderer.sharedMaterial;
+            _originalMaterial = _downIndicatorRenderer.sharedMaterial;
         }
 
         _isInitialized = true;
@@ -132,13 +139,13 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
 
     private void ApplyIndicatorMaterial(Material material)
     {
-        if (_indicatorRenderer == null || material == null) return;
+        if (_downIndicatorRenderer == null || material == null) return;
 
-        var materials = _indicatorRenderer.materials;
+        var materials = _downIndicatorRenderer.materials;
         for (int i = 0; i < materials.Length; i++)
         {
             materials[i] = material;
         }
-        _indicatorRenderer.materials = materials;
+        _downIndicatorRenderer.materials = materials;
     }
 }
