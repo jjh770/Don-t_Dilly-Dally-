@@ -26,6 +26,7 @@ public class Lobby : MonoBehaviour
         SpawnPreviewCharacter();
         InitializeCustomizingUI();
         SetupButtons();
+        SetupTransitionEvents();
     }
 
     private void OnDestroy()
@@ -36,6 +37,12 @@ public class Lobby : MonoBehaviour
         {
             _customizingUI.OnClosed -= OnCustomizingClosed;
             _customizingUI.OnSaved -= OnCustomizingSaved;
+        }
+
+        if (_transition != null)
+        {
+            _transition.OnTransitionToCustomizingComplete -= HandleTransitionToCustomizingComplete;
+            _transition.OnTransitionToLobbyComplete -= HandleTransitionToLobbyComplete;
         }
 
         if (_previewCharacter != null)
@@ -96,8 +103,23 @@ public class Lobby : MonoBehaviour
         }
     }
 
+    private void SetupTransitionEvents()
+    {
+        if (_transition == null) return;
+
+        _transition.OnTransitionToCustomizingComplete -= HandleTransitionToCustomizingComplete;
+        _transition.OnTransitionToCustomizingComplete += HandleTransitionToCustomizingComplete;
+        _transition.OnTransitionToLobbyComplete -= HandleTransitionToLobbyComplete;
+        _transition.OnTransitionToLobbyComplete += HandleTransitionToLobbyComplete;
+    }
+
     private void OnCustomizingButtonClicked()
     {
+        if (_customizingUI != null)
+        {
+            _customizingUI.SetCanClose(false);
+        }
+
         if (_transition != null)
         {
             _transition.TransitionToCustomizing();
@@ -108,12 +130,33 @@ public class Lobby : MonoBehaviour
         }
     }
 
+    private void HandleTransitionToCustomizingComplete()
+    {
+        if (_customizingUI != null)
+        {
+            _customizingUI.SetCanClose(true);
+        }
+    }
+
     public void OnCustomizingClosed()
     {
+        if (_customizingUI != null)
+        {
+            _customizingUI.SetCanClose(false);
+        }
+
         if (_transition != null)
         {
             _transition.TransitionToLobby();
         }
+        else if (_customizingUI != null)
+        {
+            _customizingUI.HideImmediate();
+        }
+    }
+
+    private void HandleTransitionToLobbyComplete()
+    {
         if (_customizingUI != null)
         {
             _customizingUI.HideImmediate();

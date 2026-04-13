@@ -30,9 +30,15 @@ public class UI_Customizing : UIPopupBase
 
     private CustomizingUIViewModel _viewModel;
     private List<UI_CustomizingItem> _itemButtons = new();
+    private bool _canClose = true;
 
     public event Action OnClosed;
     public event Action OnSaved;
+
+    public void SetCanClose(bool canClose)
+    {
+        _canClose = canClose;
+    }
 
     public void Initialize(CustomizingUIViewModel viewModel)
     {
@@ -54,14 +60,6 @@ public class UI_Customizing : UIPopupBase
         _viewModel.AutoSelectSlot();                // 현재 상태에 맞는 슬롯 선택
         SelectCategory(_viewModel.CurrentCategory);
         UpdateSaveButtonState();
-    }
-
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.Escape))
-        {
-            OnCloseClicked();
-        }
     }
 
     private void OnDestroy()
@@ -156,6 +154,8 @@ public class UI_Customizing : UIPopupBase
 
     private void OnCloseClicked()
     {
+        if (!_canClose) return;
+
         _viewModel?.CloseCustomizingUI();
 
         if (OnClosed != null)
@@ -257,6 +257,11 @@ public class UI_Customizing : UIPopupBase
     protected override void OnShow()
     {
         _viewModel?.OpenCustomizingUI();
+    }
+
+    protected override void HandleCloseHotkey()
+    {
+        OnCloseClicked();
     }
 
     [Serializable]
