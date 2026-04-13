@@ -21,7 +21,6 @@ public class PlayerMovementAbility : PlayerAbility
     private const string HorizontalAxis = "Horizontal";
     private const string VerticalAxis = "Vertical";
     private const float MinMoveSqrMagnitude = 0.01f;
-    private static readonly object LegacyMovementLockSource = new();
     private bool IsMovementLocked => _movementLockSources.Count > 0;
 
     protected override void Awake()
@@ -111,14 +110,13 @@ public class PlayerMovementAbility : PlayerAbility
         _rotationSpeedMultiplier = rotationSpeedMultiplier;
     }
 
-    public void SetMovementLocked(bool isLocked)
-    {
-        SetMovementLocked(LegacyMovementLockSource, isLocked);
-    }
-
     public void SetMovementLocked(object lockSource, bool isLocked)
     {
-        lockSource ??= LegacyMovementLockSource;
+        if (lockSource == null)
+        {
+            Debug.LogWarning("[PlayerMovementAbility] 이동 잠금 토큰이 없음.");
+            return;
+        }
 
         if (isLocked)
         {
