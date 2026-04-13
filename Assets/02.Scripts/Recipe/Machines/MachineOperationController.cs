@@ -57,21 +57,20 @@ namespace DontDillyDally.Data
         {
             _door?.LockClosed();
             _runningMotion?.TryStart();
-            _actionTimer?.TryStart(duration, () => { });
+            _actionTimer?.TryStart(duration, StopRunningFeedback);
             StartLoop();
         }
 
         public void CompleteLocal()
         {
-            _runningMotion?.StopMotion();
-            StopLoop();
+            _actionTimer?.Cancel();
+            StopRunningFeedback();
         }
 
         public void CompleteRemote()
         {
-            _runningMotion?.StopMotion();
             _actionTimer?.Cancel();
-            StopLoop();
+            StopRunningFeedback();
         }
 
         public void UnlockDoor()
@@ -126,6 +125,12 @@ namespace DontDillyDally.Data
             }
 
             _loopSource = SoundManager.Instance.PlayLoop(_loopSound);
+        }
+
+        private void StopRunningFeedback()
+        {
+            _runningMotion?.StopMotion();
+            StopLoop();
         }
 
         private static void PlayOneShot(SFXKey sound)
