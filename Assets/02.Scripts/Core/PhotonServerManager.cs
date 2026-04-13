@@ -258,6 +258,17 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
             return;
         }
 
+        if (!PhotonNetwork.InRoom || PhotonNetwork.CurrentRoom == null)
+        {
+            return;
+        }
+
+        if (!PhotonNetwork.IsMasterClient)
+        {
+            Debug.Log("[PhotonServerManager] 대기실 복귀는 마스터 클라이언트의 씬 동기화를 기다립니다.");
+            return;
+        }
+
         ReturnWaitingRoomAsync().Forget();
     }
 

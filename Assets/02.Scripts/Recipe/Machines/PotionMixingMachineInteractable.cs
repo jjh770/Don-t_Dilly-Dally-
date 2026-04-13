@@ -375,7 +375,10 @@ namespace DontDillyDally.Data
             if (item == null)
                 return;
 
-            // 픽업 실패 시 "안 집힌 상태"로 되돌리기 위해 위치/상호작용/슬롯 메타데이터를 모두 복구합니다.
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (item.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
+                return;
+
             Transform slotTransform = GetSlotTransform(slotIndex);
             MachineStoredItemUtility.StoreInMachine(item, slotTransform);
             _slots[slotIndex].Item = item;
@@ -393,7 +396,10 @@ namespace DontDillyDally.Data
             if (item == null)
                 return;
 
-            // 출력 아이템 픽업 실패 시에도 다른 클라이언트와 동일하게 출력 슬롯 상태를 되돌립니다.
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (item.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
+                return;
+
             Transform outputTransform = GetOutputTransform();
             MachineStoredItemUtility.StoreInMachine(item, outputTransform);
             _storedOutputItem = item;
@@ -520,6 +526,10 @@ namespace DontDillyDally.Data
             if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
                 return;
 
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (itemObject.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
+                return;
+
             Transform slotTransform = GetSlotTransform(slotIndex);
             MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
             _slots[slotIndex].Item = itemObject;
@@ -531,6 +541,10 @@ namespace DontDillyDally.Data
         {
             PhotonView itemPV = PhotonView.Find(itemViewId);
             if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+                return;
+
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (itemObject.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
                 return;
 
             Transform outputTransform = GetOutputTransform();

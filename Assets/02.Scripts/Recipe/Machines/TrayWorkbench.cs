@@ -40,17 +40,6 @@ namespace DontDillyDally.Data
             return true;
         }
 
-        public bool TrySetCurrentTrayItem(TrayItem trayItem)
-        {
-            if (!CanPlaceTrayItem(trayItem))
-            {
-                return false;
-            }
-
-            SetCurrentTrayItem(trayItem);
-            return true;
-        }
-
         public void ClearCurrentTrayItem(TrayItem trayItem = null)
         {
             if (trayItem == null || CurrentTrayItem == trayItem)
@@ -84,28 +73,6 @@ namespace DontDillyDally.Data
             }
 
             return CanPlaceItemOnTray(item);
-        }
-
-        public void LoadTray(SubmittedTray tray)
-        {
-            TrayItem trayItem = GetResolvedTrayItem();
-            if (trayItem == null)
-            {
-                return;
-            }
-
-            trayItem.ApplyTraySnapshot(tray);
-        }
-
-        public SubmittedTray TakeTraySnapshot()
-        {
-            TrayItem trayItem = GetResolvedTrayItem();
-            if (trayItem == null)
-            {
-                return null;
-            }
-
-            return trayItem.GetTraySnapshot();
         }
 
         private TrayItem GetResolvedTrayItem()

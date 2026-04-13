@@ -349,7 +349,10 @@ namespace DontDillyDally.Data
             if (item == null || slotIndex < 0 || slotIndex >= _slots.Length)
                 return;
 
-            // 소독 완료 아이템 픽업이 실패하면 슬롯과 완료 상태를 함께 되돌려야 클라이언트별 상태가 어긋나지 않습니다.
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (item.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
+                return;
+
             Transform slotTransform = GetSlotTransform(slotIndex);
             MachineStoredItemUtility.StoreInMachine(item, slotTransform);
             _slots[slotIndex].Item = item;
@@ -506,6 +509,10 @@ namespace DontDillyDally.Data
 
             PhotonView itemPV = PhotonView.Find(itemViewId);
             if (itemPV == null || !itemPV.TryGetComponent(out ItemObject itemObject))
+                return;
+
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (itemObject.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
                 return;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
