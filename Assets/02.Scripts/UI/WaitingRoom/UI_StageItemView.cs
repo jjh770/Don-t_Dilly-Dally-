@@ -7,11 +7,14 @@ using UnityEngine.UI;
 public class UI_StageItemView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private Image _stageImage;
+    [SerializeField] private Image _backgroundImage;
     [SerializeField] private TMP_Text _stageNumberText;
     [SerializeField] private TMP_Text _stageNameText;
     [SerializeField] private RectTransform _stageNameBackgroundPanel;
     [SerializeField] private GameObject _lockObject;
     [SerializeField] private Toggle _toggle;
+    [SerializeField] private Color _defaultBackgroundColor = Color.white;
+    [SerializeField] private Color _selectedBackgroundColor = Color.yellow;
 
     private int _stageIndex;
     private bool _isAvailable;
@@ -42,6 +45,11 @@ public class UI_StageItemView : MonoBehaviour, IPointerClickHandler
             _stageImage.enabled = stageSprite != null;
         }
 
+        if (_backgroundImage != null)
+        {
+            _backgroundImage.color = _defaultBackgroundColor;
+        }
+
         if (_lockObject != null)
         {
             _lockObject.SetActive(!isAvailable);
@@ -65,6 +73,16 @@ public class UI_StageItemView : MonoBehaviour, IPointerClickHandler
         }
 
         _toggle.SetIsOnWithoutNotify(_isAvailable && isSelected);
+    }
+
+    public void SetConfirmedSelected(bool isSelected)
+    {
+        if (_backgroundImage == null)
+        {
+            return;
+        }
+
+        _backgroundImage.color = isSelected ? _selectedBackgroundColor : _defaultBackgroundColor;
     }
 
     public void OnPointerClick(PointerEventData eventData)
