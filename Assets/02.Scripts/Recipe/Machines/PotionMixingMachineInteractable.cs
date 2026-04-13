@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Collider), typeof(PhotonView))]
     public class PotionMixingMachineInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
@@ -37,9 +37,9 @@ namespace DontDillyDally.Data
         private readonly List<ToolType> _loadedPotionsBuffer = new List<ToolType>(MaxSlots);
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
-        private AudioSource _mixLoopSource;
+        private MachineOperationController _operationController;
 
-        public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
+        public bool IsInteracting => _operationController != null && _operationController.IsRunning;
         public Transform Transform => transform;
 
         private void Awake()
@@ -64,6 +64,15 @@ namespace DontDillyDally.Data
                 _runningMotion = GetComponentInChildren<RunningMotion>(true);
             }
 
+            _operationController = new MachineOperationController(
+                _door,
+                _actionTimer,
+                _runningMotion,
+                SFXKey.PotionMixerInProgress,
+                SFXKey.PotionMixerOpen,
+                SFXKey.PotionMixerClose,
+                SFXKey.PotionMixerComplete);
+
             _slots = new PotionSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -73,7 +82,7 @@ namespace DontDillyDally.Data
 
         private void OnDisable()
         {
-            StopMixingLoop();
+            _operationController?.StopLoop();
         }
 
         public void Interact(Transform interactor)
@@ -83,7 +92,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (_actionTimer != null && _actionTimer.IsRunning)
+            if (IsInteracting)
             {
                 return;
             }
@@ -129,7 +138,7 @@ namespace DontDillyDally.Data
             if (_potionMixingMachine == null)
                 return false;
 
-            if (_actionTimer != null && _actionTimer.IsRunning)
+            if (IsInteracting)
                 return false;
 
             if (_storedOutputItem != null)
@@ -205,11 +214,10 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            int itemViewId = GetPhotonViewId(itemObject);
+            int itemViewId = itemObject.ViewId;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PotionToolType = potionToolType;
@@ -233,8 +241,6 @@ namespace DontDillyDally.Data
 
             _pendingResultMaterial = result.ResultMaterial;
             _pendingCraftingDuration = result.CraftingDuration;
-            _door?.LockClosed();
-            _runningMotion?.TryStart();
 
             if (PhotonNetwork.InRoom)
             {
@@ -242,14 +248,7 @@ namespace DontDillyDally.Data
                     (int)result.ResultMaterial, result.CraftingDuration);
             }
 
-            if (_actionTimer == null)
-            {
-                OnMixingTimerComplete();
-                return;
-            }
-
-            _actionTimer.TryStart(_pendingCraftingDuration, OnMixingTimerComplete);
-            StartMixingLoop();
+            _operationController.StartLocal(_pendingCraftingDuration, OnMixingTimerComplete);
         }
 
         private void OnMixingTimerComplete()
@@ -267,13 +266,12 @@ namespace DontDillyDally.Data
 
         private void CompleteMixingProcess()
         {
-            _runningMotion?.StopMotion();
-            StopMixingLoop();
+            _operationController.CompleteLocal();
             ConsumeAllStoredInputs();
 
             if (_pendingResultMaterial == CraftedMaterialType.Unknown)
             {
-                _door?.Unlock();
+                _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
                 {
@@ -289,7 +287,7 @@ namespace DontDillyDally.Data
 
             if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
             {
-                _door?.Unlock();
+                _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
                 {
@@ -299,18 +297,17 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            PlaceStoredItem(resultItem, outputTransform);
-            SetStoredItemInteractionEnabled(resultItem, false);
+            MachineStoredItemUtility.StoreInMachine(resultItem, outputTransform);
             _storedOutputItem = resultItem;
-            _door?.Unlock();
+            _operationController.UnlockDoor();
 
             if (PhotonNetwork.InRoom)
             {
-                int resultViewId = GetPhotonViewId(resultItem);
+                int resultViewId = resultItem.ViewId;
                 photonView.RPC(nameof(RPC_PotionCompleteMixing), RpcTarget.Others, resultViewId);
             }
 
-            SoundManager.Instance?.Play(SFXKey.PotionMixerComplete, SoundType.Local);
+            _operationController.PlayComplete();
 
         }
 
@@ -333,6 +330,7 @@ namespace DontDillyDally.Data
 
             // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _slots[slotIndex].Clear();
+            MachineStoredItemUtility.PrepareForPickup(storedItem);
 
             if (PhotonNetwork.InRoom)
             {
@@ -359,6 +357,7 @@ namespace DontDillyDally.Data
 
             // 출력 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
             _storedOutputItem = null;
+            MachineStoredItemUtility.PrepareForPickup(itemToRestore);
 
             if (PhotonNetwork.InRoom)
             {
@@ -378,14 +377,13 @@ namespace DontDillyDally.Data
 
             // 픽업 실패 시 "안 집힌 상태"로 되돌리기 위해 위치/상호작용/슬롯 메타데이터를 모두 복구합니다.
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(item, slotTransform);
-            SetStoredItemInteractionEnabled(item, false);
+            MachineStoredItemUtility.StoreInMachine(item, slotTransform);
             _slots[slotIndex].Item = item;
             _slots[slotIndex].PotionToolType = potionToolType;
 
             if (PhotonNetwork.InRoom)
             {
-                int viewId = GetPhotonViewId(item);
+                int viewId = item.ViewId;
                 photonView.RPC(nameof(RPC_PotionRollbackTakeInput), RpcTarget.Others, slotIndex, viewId, (int)potionToolType);
             }
         }
@@ -397,13 +395,12 @@ namespace DontDillyDally.Data
 
             // 출력 아이템 픽업 실패 시에도 다른 클라이언트와 동일하게 출력 슬롯 상태를 되돌립니다.
             Transform outputTransform = GetOutputTransform();
-            PlaceStoredItem(item, outputTransform);
-            SetStoredItemInteractionEnabled(item, false);
+            MachineStoredItemUtility.StoreInMachine(item, outputTransform);
             _storedOutputItem = item;
 
             if (PhotonNetwork.InRoom)
             {
-                int viewId = GetPhotonViewId(item);
+                int viewId = item.ViewId;
                 photonView.RPC(nameof(RPC_PotionRollbackTakeOutput), RpcTarget.Others, viewId);
             }
         }
@@ -439,8 +436,7 @@ namespace DontDillyDally.Data
             }
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PotionToolType = (ToolType)potionToolType;
@@ -451,20 +447,13 @@ namespace DontDillyDally.Data
         {
             _pendingResultMaterial = (CraftedMaterialType)resultMaterial;
             _pendingCraftingDuration = duration;
-            _door?.LockClosed();
-            _runningMotion?.TryStart();
-
-            // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
-            _actionTimer?.TryStart(duration, () => { });
-            StartMixingLoop();
+            _operationController.StartRemote(duration);
         }
 
         [PunRPC]
         private void RPC_PotionCompleteMixing(int resultItemViewId)
         {
-            _runningMotion?.StopMotion();
-            _actionTimer?.Cancel();
-            StopMixingLoop();
+            _operationController.CompleteRemote();
 
             // 슬롯 초기화 (아이템은 PhotonNetwork.Destroy로 이미 제거됨)
             for (int i = 0; i < _slots.Length; i++)
@@ -480,17 +469,16 @@ namespace DontDillyDally.Data
                 if (resultPV != null && resultPV.TryGetComponent(out ItemObject resultItem))
                 {
                     Transform outputTransform = GetOutputTransform();
-                    PlaceStoredItem(resultItem, outputTransform);
-                    SetStoredItemInteractionEnabled(resultItem, false);
+                    MachineStoredItemUtility.StoreInMachine(resultItem, outputTransform);
                     _storedOutputItem = resultItem;
                 }
             }
 
-            _door?.Unlock();
+            _operationController.UnlockDoor();
 
             if (resultItemViewId >= 0)
             {
-                SoundManager.Instance?.Play(SFXKey.PotionMixerComplete, SoundType.Local);
+                _operationController.PlayComplete();
             }
         }
 
@@ -505,7 +493,7 @@ namespace DontDillyDally.Data
             ItemObject item = _slots[slotIndex].Item;
             if (item != null)
             {
-                SetStoredItemInteractionEnabled(item, true);
+                MachineStoredItemUtility.PrepareForPickup(item);
             }
 
             _slots[slotIndex].Clear();
@@ -516,7 +504,7 @@ namespace DontDillyDally.Data
         {
             if (_storedOutputItem != null)
             {
-                SetStoredItemInteractionEnabled(_storedOutputItem, true);
+                MachineStoredItemUtility.PrepareForPickup(_storedOutputItem);
             }
 
             _storedOutputItem = null;
@@ -533,8 +521,7 @@ namespace DontDillyDally.Data
                 return;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PotionToolType = (ToolType)potionToolType;
         }
@@ -547,21 +534,20 @@ namespace DontDillyDally.Data
                 return;
 
             Transform outputTransform = GetOutputTransform();
-            PlaceStoredItem(itemObject, outputTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, outputTransform);
             _storedOutputItem = itemObject;
         }
 
         [PunRPC]
         private void RPC_PotionOpenDoor()
         {
-            _door?.TryOpen();
+            _operationController?.TryOpenDoor();
         }
 
         [PunRPC]
         private void RPC_PotionCloseDoor()
         {
-            _door?.TryClose();
+            _operationController?.TryCloseDoor();
         }
 
         #endregion
@@ -570,8 +556,10 @@ namespace DontDillyDally.Data
 
         private void OpenDoorAndSync()
         {
-            _door?.TryOpen();
-            SoundManager.Instance.Play(SFXKey.PotionMixerOpen, SoundType.Local);
+            if (!_operationController.TryOpenDoor())
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
@@ -581,8 +569,10 @@ namespace DontDillyDally.Data
 
         private void CloseDoorAndSync()
         {
-            _door?.TryClose();
-            SoundManager.Instance.Play(SFXKey.PotionMixerClose, SoundType.Local);
+            if (!_operationController.TryCloseDoor())
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
@@ -690,78 +680,7 @@ namespace DontDillyDally.Data
 
         private bool IsDoorOpen()
         {
-            return _door == null || _door.IsOpen;
-        }
-
-        private void StartMixingLoop()
-        {
-            if (_mixLoopSource != null || SoundManager.Instance == null)
-            {
-                return;
-            }
-
-            _mixLoopSource = SoundManager.Instance.PlayLoop(SFXKey.PotionMixerInProgress);
-        }
-
-        private void StopMixingLoop()
-        {
-            if (_mixLoopSource == null || SoundManager.Instance == null)
-            {
-                _mixLoopSource = null;
-                return;
-            }
-
-            SoundManager.Instance.StopSFX(_mixLoopSource);
-            _mixLoopSource = null;
-        }
-
-        private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
-        {
-            if (itemObject == null)
-            {
-                return;
-            }
-
-            if (itemObject.TryGetComponent(out HoldableItem holdableItem))
-            {
-                holdableItem.Place(slotTransform);
-            }
-            else
-            {
-                itemObject.transform.SetPositionAndRotation(slotTransform.position, slotTransform.rotation);
-            }
-
-            itemObject.transform.SetParent(slotTransform, true);
-
-            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.PhotonView);
-        }
-
-        private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)
-        {
-            if (itemObject == null)
-            {
-                return;
-            }
-
-            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
-            if (holdable != null)
-            {
-                holdable.SetStoredInContainer(!isEnabled);
-                holdable.SetAllCollidersEnabled(isEnabled);
-            }
-            else
-            {
-                Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
-                foreach (Collider col in colliders)
-                {
-                    col.enabled = isEnabled;
-                }
-            }
-
-            if (isEnabled)
-            {
-                itemObject.transform.SetParent(null, true);
-            }
+            return _operationController == null || _operationController.IsDoorOpen;
         }
 
         private GameObject SpawnResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
@@ -783,16 +702,6 @@ namespace DontDillyDally.Data
             }
 
             return spawnedObject;
-        }
-
-        private static int GetPhotonViewId(ItemObject itemObject)
-        {
-            if (itemObject == null)
-            {
-                return -1;
-            }
-
-            return itemObject.ViewId;
         }
 
         #endregion

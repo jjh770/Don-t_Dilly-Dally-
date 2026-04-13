@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Collider), typeof(PhotonView))]
     public class SterilizationMachineInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string SterilizedResultPrefabName = "BasicMaterialItem";
@@ -34,16 +34,13 @@ namespace DontDillyDally.Data
 
         private SterilizationSlot[] _slots;
         private bool _isBatchCompleted;
-        private PhotonView _photonView;
-        private AudioSource _sterilizationLoopSource;
+        private MachineOperationController _operationController;
 
-        public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
+        public bool IsInteracting => _operationController != null && _operationController.IsRunning;
         public Transform Transform => transform;
 
         private void Awake()
         {
-            _photonView = GetComponentInParent<PhotonView>();
-
             if (_sterilizationMachine == null)
             {
                 _sterilizationMachine = GetComponent<SterilizationMachine>();
@@ -64,6 +61,15 @@ namespace DontDillyDally.Data
                 _runningMotion = GetComponentInChildren<RunningMotion>(true);
             }
 
+            _operationController = new MachineOperationController(
+                _door,
+                _actionTimer,
+                _runningMotion,
+                SFXKey.SterilizerInProgress,
+                SFXKey.SterilizerOpen,
+                SFXKey.SterilizerClose,
+                SFXKey.SterilizerComplete);
+
             _slots = new SterilizationSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -73,7 +79,7 @@ namespace DontDillyDally.Data
 
         private void OnDisable()
         {
-            StopSterilizationLoop();
+            _operationController?.StopLoop();
         }
 
         public void Interact(Transform interactor)
@@ -83,7 +89,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (_actionTimer != null && _actionTimer.IsRunning)
+            if (IsInteracting)
             {
                 return;
             }
@@ -129,7 +135,7 @@ namespace DontDillyDally.Data
             if (_sterilizationMachine == null)
                 return false;
 
-            if (_actionTimer != null && _actionTimer.IsRunning)
+            if (IsInteracting)
                 return false;
 
             if (_isBatchCompleted)
@@ -191,18 +197,17 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            int itemViewId = GetPhotonViewId(itemObject);
+            int itemViewId = itemObject.ViewId;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PendingResultMaterial = pendingResultMaterial;
 
             if (PhotonNetwork.InRoom)
             {
-                _photonView.RPC(nameof(RPC_SterilInsert), RpcTarget.Others,
+                photonView.RPC(nameof(RPC_SterilInsert), RpcTarget.Others,
                     slotIndex, itemViewId, (int)pendingResultMaterial);
             }
         }
@@ -214,22 +219,12 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            _door?.LockClosed();
-            _runningMotion?.TryStart();
-
             if (PhotonNetwork.InRoom)
             {
-                _photonView.RPC(nameof(RPC_SterilStartBatch), RpcTarget.Others, _sterilizationDuration);
+                photonView.RPC(nameof(RPC_SterilStartBatch), RpcTarget.Others, _sterilizationDuration);
             }
 
-            if (_actionTimer == null)
-            {
-                OnSterilizationTimerComplete();
-                return;
-            }
-
-            _actionTimer.TryStart(_sterilizationDuration, OnSterilizationTimerComplete);
-            StartSterilizationLoop();
+            _operationController.StartLocal(_sterilizationDuration, OnSterilizationTimerComplete);
         }
 
         private void OnSterilizationTimerComplete()
@@ -237,7 +232,7 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
             {
                 // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
-                _photonView.RPC(nameof(RPC_SterilRequestCompletion), RpcTarget.MasterClient);
+                photonView.RPC(nameof(RPC_SterilRequestCompletion), RpcTarget.MasterClient);
                 return;
             }
 
@@ -247,8 +242,7 @@ namespace DontDillyDally.Data
 
         private void CompleteSterilizationBatch()
         {
-            _runningMotion?.StopMotion();
-            StopSterilizationLoop();
+            _operationController.CompleteLocal();
 
             // 결과 아이템의 ViewID를 수집하여 RPC로 전송
             int[] resultViewIds = new int[MaxSlots];
@@ -268,7 +262,7 @@ namespace DontDillyDally.Data
                 if (slot.Item is TrayItem trayItem)
                 {
                     _sterilizationMachine.TrySterilizeTray(trayItem);
-                    resultViewIds[i] = GetPhotonViewId(trayItem);
+                    resultViewIds[i] = trayItem.ViewId;
                     continue;
                 }
 
@@ -287,24 +281,23 @@ namespace DontDillyDally.Data
                         continue;
                     }
 
-                    PlaceStoredItem(resultItem, slotTransform);
-                    SetStoredItemInteractionEnabled(resultItem, false);
+                    MachineStoredItemUtility.StoreInMachine(resultItem, slotTransform);
                     slot.Item = resultItem;
-                    resultViewIds[i] = GetPhotonViewId(resultItem);
+                    resultViewIds[i] = resultItem.ViewId;
                 }
             }
 
             _isBatchCompleted = HasAnyStoredItems();
-            _door?.Unlock();
+            _operationController.UnlockDoor();
 
             if (PhotonNetwork.InRoom)
             {
-                _photonView.RPC(nameof(RPC_SterilCompleteBatch), RpcTarget.Others, resultViewIds);
+                photonView.RPC(nameof(RPC_SterilCompleteBatch), RpcTarget.Others, resultViewIds);
             }
 
             if (_isBatchCompleted)
             {
-                SoundManager.Instance?.Play(SFXKey.SterilizerComplete, SoundType.Local);
+                _operationController.PlayComplete();
             }
         }
 
@@ -336,9 +329,11 @@ namespace DontDillyDally.Data
                 _isBatchCompleted = false;
             }
 
+            MachineStoredItemUtility.PrepareForPickup(storedItem);
+
             if (PhotonNetwork.InRoom)
             {
-                _photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
+                photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
             }
 
             ItemObject itemToRestore = storedItem;
@@ -356,14 +351,13 @@ namespace DontDillyDally.Data
 
             // 소독 완료 아이템 픽업이 실패하면 슬롯과 완료 상태를 함께 되돌려야 클라이언트별 상태가 어긋나지 않습니다.
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(item, slotTransform);
-            SetStoredItemInteractionEnabled(item, false);
+            MachineStoredItemUtility.StoreInMachine(item, slotTransform);
             _slots[slotIndex].Item = item;
             _isBatchCompleted = true;
 
             if (PhotonNetwork.InRoom)
             {
-                int viewId = GetPhotonViewId(item);
+                int viewId = item.ViewId;
                 photonView.RPC(nameof(RPC_SterilRollbackTakeItem), RpcTarget.Others, slotIndex, viewId);
             }
         }
@@ -429,8 +423,7 @@ namespace DontDillyDally.Data
             }
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PendingResultMaterial = (CraftedMaterialType)pendingResultMaterial;
@@ -439,20 +432,13 @@ namespace DontDillyDally.Data
         [PunRPC]
         private void RPC_SterilStartBatch(float duration)
         {
-            _door?.LockClosed();
-            _runningMotion?.TryStart();
-
-            // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
-            _actionTimer?.TryStart(duration, () => { });
-            StartSterilizationLoop();
+            _operationController.StartRemote(duration);
         }
 
         [PunRPC]
         private void RPC_SterilCompleteBatch(int[] resultViewIds)
         {
-            _runningMotion?.StopMotion();
-            _actionTimer?.Cancel();
-            StopSterilizationLoop();
+            _operationController.CompleteRemote();
 
             // 모든 슬롯 초기화 후 결과 아이템 재배치
             for (int i = 0; i < _slots.Length; i++)
@@ -476,18 +462,17 @@ namespace DontDillyDally.Data
                     }
 
                     Transform slotTransform = GetSlotTransform(i);
-                    PlaceStoredItem(resultItem, slotTransform);
-                    SetStoredItemInteractionEnabled(resultItem, false);
+                    MachineStoredItemUtility.StoreInMachine(resultItem, slotTransform);
                     _slots[i].Item = resultItem;
                 }
             }
 
             _isBatchCompleted = HasAnyStoredItems();
-            _door?.Unlock();
+            _operationController.UnlockDoor();
 
             if (_isBatchCompleted)
             {
-                SoundManager.Instance?.Play(SFXKey.SterilizerComplete, SoundType.Local);
+                _operationController.PlayComplete();
             }
         }
 
@@ -502,7 +487,7 @@ namespace DontDillyDally.Data
             ItemObject item = _slots[slotIndex].Item;
             if (item != null)
             {
-                SetStoredItemInteractionEnabled(item, true);
+                MachineStoredItemUtility.PrepareForPickup(item);
             }
 
             _slots[slotIndex].Clear();
@@ -524,8 +509,7 @@ namespace DontDillyDally.Data
                 return;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
             _slots[slotIndex].Item = itemObject;
             _isBatchCompleted = true;
         }
@@ -533,13 +517,13 @@ namespace DontDillyDally.Data
         [PunRPC]
         private void RPC_SterilOpenDoor()
         {
-            _door?.TryOpen();
+            _operationController?.TryOpenDoor();
         }
 
         [PunRPC]
         private void RPC_SterilCloseDoor()
         {
-            _door?.TryClose();
+            _operationController?.TryCloseDoor();
         }
 
         #endregion
@@ -548,24 +532,28 @@ namespace DontDillyDally.Data
 
         private void OpenDoorAndSync()
         {
-            _door?.TryOpen();
-            SoundManager.Instance.Play(SFXKey.SterilizerOpen, SoundType.Local);
+            if (!_operationController.TryOpenDoor())
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
-                _photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
+                photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
 
             }
         }
 
         private void CloseDoorAndSync()
         {
-            _door?.TryClose();
-            SoundManager.Instance.Play(SFXKey.SterilizerClose, SoundType.Local);
+            if (!_operationController.TryCloseDoor())
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
-                _photonView.RPC(nameof(RPC_SterilCloseDoor), RpcTarget.Others);
+                photonView.RPC(nameof(RPC_SterilCloseDoor), RpcTarget.Others);
             }
         }
 
@@ -580,29 +568,7 @@ namespace DontDillyDally.Data
 
         private bool IsDoorOpen()
         {
-            return _door == null || _door.IsOpen;
-        }
-
-        private void StartSterilizationLoop()
-        {
-            if (_sterilizationLoopSource != null || SoundManager.Instance == null)
-            {
-                return;
-            }
-
-            _sterilizationLoopSource = SoundManager.Instance.PlayLoop(SFXKey.SterilizerInProgress);
-        }
-
-        private void StopSterilizationLoop()
-        {
-            if (_sterilizationLoopSource == null || SoundManager.Instance == null)
-            {
-                _sterilizationLoopSource = null;
-                return;
-            }
-
-            SoundManager.Instance.StopSFX(_sterilizationLoopSource);
-            _sterilizationLoopSource = null;
+            return _operationController == null || _operationController.IsDoorOpen;
         }
 
         private int GetFirstAvailableSlotIndex()
@@ -648,55 +614,6 @@ namespace DontDillyDally.Data
             return transform;
         }
 
-        private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
-        {
-            if (itemObject == null)
-            {
-                return;
-            }
-
-            if (itemObject.TryGetComponent(out HoldableItem holdableItem))
-            {
-                holdableItem.Place(slotTransform);
-            }
-            else
-            {
-                itemObject.transform.SetPositionAndRotation(slotTransform.position, slotTransform.rotation);
-            }
-
-            itemObject.transform.SetParent(slotTransform, true);
-
-            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.PhotonView);
-        }
-
-        private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)
-        {
-            if (itemObject == null)
-            {
-                return;
-            }
-
-            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
-            if (holdable != null)
-            {
-                holdable.SetStoredInContainer(!isEnabled);
-                holdable.SetAllCollidersEnabled(isEnabled);
-            }
-            else
-            {
-                Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
-                foreach (Collider col in colliders)
-                {
-                    col.enabled = isEnabled;
-                }
-            }
-
-            if (isEnabled)
-            {
-                itemObject.transform.SetParent(null, true);
-            }
-        }
-
         private GameObject SpawnSterilizedResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
         {
             if (PhotonNetwork.InRoom)
@@ -721,16 +638,6 @@ namespace DontDillyDally.Data
             }
 
             return spawnedObject;
-        }
-
-        private static int GetPhotonViewId(ItemObject itemObject)
-        {
-            if (itemObject == null)
-            {
-                return -1;
-            }
-
-            return itemObject.ViewId;
         }
 
         #endregion
