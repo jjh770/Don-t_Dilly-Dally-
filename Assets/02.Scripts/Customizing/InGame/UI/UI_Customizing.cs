@@ -66,6 +66,7 @@ public class UI_Customizing : UIPopupBase
 
     private void OnDestroy()
     {
+        ClearItemButtons();
         UnsubscribeFromViewModel();
         _viewModel?.Dispose();
     }
