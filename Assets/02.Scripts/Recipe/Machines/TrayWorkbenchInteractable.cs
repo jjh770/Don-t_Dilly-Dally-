@@ -25,6 +25,18 @@ namespace DontDillyDally.Data
             }
         }
 
+        private void LateUpdate()
+        {
+            TrayItem tray = _trayWorkbench != null ? _trayWorkbench.CurrentTrayItem : null;
+            if (tray == null)
+            {
+                return;
+            }
+
+            tray.transform.localPosition = Vector3.zero;
+            tray.transform.localRotation = Quaternion.identity;
+        }
+
         public void Interact(Transform interactor)
         {
             if (_trayWorkbench == null || interactor == null)
@@ -56,15 +68,10 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (heldItem is BasicMaterialItem basicMaterialItem)
+            CraftedMaterialType materialType = ResolveMaterialType(heldItem);
+            if (materialType != CraftedMaterialType.None)
             {
-                TryPlaceBasicMaterial(heldItemInteractor, basicMaterialItem);
-                return;
-            }
-
-            if (heldItem is MixToolItem mixToolItem)
-            {
-                TryPlaceMixToolItem(heldItemInteractor, mixToolItem);
+                TryPlaceMaterialOnTray(heldItemInteractor, heldItem, materialType);
             }
         }
 
@@ -83,17 +90,9 @@ namespace DontDillyDally.Data
             if (!_trayWorkbench.HasTray)
                 return false;
 
-            if (item is BasicMaterialItem basicMaterialItem)
-                return _trayWorkbench.CanPlaceBasicMaterialOnTray(basicMaterialItem.MaterialType);
-
-            if (item is MixToolItem mixToolItem)
-            {
-                CraftedMaterialType materialType = ResolveMixToolMaterialType(mixToolItem.ToolType);
-                return materialType != CraftedMaterialType.None
-                    && _trayWorkbench.CanPlaceBasicMaterialOnTray(materialType);
-            }
-
-            return false;
+            CraftedMaterialType materialType = ResolveMaterialType(item);
+            return materialType != CraftedMaterialType.None
+                && _trayWorkbench.CanPlaceBasicMaterialOnTray(materialType);
         }
 
         #region Interaction Handlers
@@ -110,10 +109,10 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            int trayViewId = GetPhotonViewId(trayItem);
+            int trayViewId = trayItem.ViewId;
 
             _trayWorkbench.SetCurrentTrayItem(trayItem);
-            PlaceTrayAtSlot(trayItem);
+            TrayWorkbenchItemUtility.PlaceTrayOnWorkbench(trayItem, _traySlotPoint);
 
             if (PhotonNetwork.InRoom)
             {
@@ -121,56 +120,8 @@ namespace DontDillyDally.Data
             }
         }
 
-        private void TryPlaceBasicMaterial(IHeldItemInteractor heldItemInteractor, BasicMaterialItem basicMaterialItem)
+        private void TryPlaceMaterialOnTray(IHeldItemInteractor heldItemInteractor, ItemObject itemObject, CraftedMaterialType materialType)
         {
-            TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
-            if (trayItem == null)
-            {
-                return;
-            }
-
-            int playerId = PhotonNetwork.LocalPlayer != null
-                ? PhotonNetwork.LocalPlayer.ActorNumber
-                : 0;
-
-            CraftedItem craftedItem = CraftedItem.CreateBasicMaterial(basicMaterialItem.MaterialType, playerId);
-            if (craftedItem == null || !_trayWorkbench.CanPlaceItemOnTray(craftedItem))
-            {
-                return;
-            }
-
-            int availableSlotIndex = trayItem.GetFirstAvailableSlotIndex();
-            if (availableSlotIndex < 0 || !trayItem.CanStoreItem(craftedItem, availableSlotIndex))
-            {
-                return;
-            }
-
-            if (!heldItemInteractor.TryReleaseHeldItem(basicMaterialItem))
-            {
-                return;
-            }
-
-            int materialViewId = GetPhotonViewId(basicMaterialItem);
-            if (!trayItem.TryStoreItem(basicMaterialItem, craftedItem, availableSlotIndex))
-            {
-                return;
-            }
-
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_WorkbenchPlaceMaterial), RpcTarget.Others,
-                    materialViewId, availableSlotIndex, (int)basicMaterialItem.MaterialType, playerId);
-            }
-        }
-
-        private void TryPlaceMixToolItem(IHeldItemInteractor heldItemInteractor, MixToolItem mixToolItem)
-        {
-            CraftedMaterialType materialType = ResolveMixToolMaterialType(mixToolItem.ToolType);
-            if (materialType == CraftedMaterialType.None)
-            {
-                return;
-            }
-
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem == null)
             {
@@ -193,13 +144,12 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!heldItemInteractor.TryReleaseHeldItem(mixToolItem))
+            if (!heldItemInteractor.TryReleaseHeldItem(itemObject))
             {
                 return;
             }
 
-            int itemViewId = GetPhotonViewId(mixToolItem);
-            if (!trayItem.TryStoreItem(mixToolItem, craftedItem, availableSlotIndex))
+            if (!trayItem.TryStoreItem(itemObject, craftedItem, availableSlotIndex))
             {
                 return;
             }
@@ -207,19 +157,29 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_WorkbenchPlaceMaterial), RpcTarget.Others,
-                    itemViewId, availableSlotIndex, (int)materialType, playerId);
+                    itemObject.ViewId, availableSlotIndex, (int)materialType, playerId);
             }
         }
 
-        private static CraftedMaterialType ResolveMixToolMaterialType(ToolType toolType)
+        private static CraftedMaterialType ResolveMaterialType(ItemObject itemObject)
         {
-            return toolType switch
+            if (itemObject is BasicMaterialItem basicMaterialItem)
             {
-                ToolType.PotionCyan    => CraftedMaterialType.FilledPotionCyan,
-                ToolType.PotionMagenta => CraftedMaterialType.FilledPotionMagenta,
-                ToolType.PotionYellow  => CraftedMaterialType.FilledPotionYellow,
-                _ => CraftedMaterialType.None
-            };
+                return basicMaterialItem.MaterialType;
+            }
+
+            if (itemObject is MixToolItem mixToolItem)
+            {
+                return mixToolItem.ToolType switch
+                {
+                    ToolType.PotionCyan    => CraftedMaterialType.FilledPotionCyan,
+                    ToolType.PotionMagenta => CraftedMaterialType.FilledPotionMagenta,
+                    ToolType.PotionYellow  => CraftedMaterialType.FilledPotionYellow,
+                    _ => CraftedMaterialType.None
+                };
+            }
+
+            return CraftedMaterialType.None;
         }
 
         private void TryTakeTray(IHeldItemInteractor heldItemInteractor)
@@ -230,14 +190,13 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
-            if (holdable == null)
+            if (!trayItem.TryGetComponent(out HoldableItem holdable))
             {
                 return;
             }
 
             // 워크벤치 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            SetTrayInteractionEnabled(trayItem, true);
+            TrayWorkbenchItemUtility.PrepareTrayForPickup(trayItem);
             _trayWorkbench.ClearCurrentTrayItem(trayItem);
 
             if (PhotonNetwork.InRoom)
@@ -257,14 +216,16 @@ namespace DontDillyDally.Data
             if (trayItem == null)
                 return;
 
-            // 트레이 픽업 실패 시에는 손에 들린 상태가 아니라 작업대에 놓인 상태로 다시 고정합니다.
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (trayItem.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
+                return;
+
             _trayWorkbench.SetCurrentTrayItem(trayItem);
-            PlaceTrayAtSlot(trayItem);
-            SetTrayInteractionEnabled(trayItem, false);
+            TrayWorkbenchItemUtility.PlaceTrayOnWorkbench(trayItem, _traySlotPoint);
 
             if (PhotonNetwork.InRoom)
             {
-                int viewId = GetPhotonViewId(trayItem);
+                int viewId = trayItem.ViewId;
                 photonView.RPC(nameof(RPC_WorkbenchRollbackTakeTray), RpcTarget.Others, viewId);
             }
         }
@@ -280,9 +241,12 @@ namespace DontDillyDally.Data
             if (trayPV == null || !trayPV.TryGetComponent(out TrayItem trayItem))
                 return;
 
+            // 다른 플레이어가 이미 집었으면 롤백하지 않음
+            if (trayItem.TryGetComponent(out HoldableItem holdable) && holdable.IsInteracting)
+                return;
+
             _trayWorkbench.SetCurrentTrayItem(trayItem);
-            PlaceTrayAtSlot(trayItem);
-            SetTrayInteractionEnabled(trayItem, false);
+            TrayWorkbenchItemUtility.PlaceTrayOnWorkbench(trayItem, _traySlotPoint);
         }
 
         [PunRPC]
@@ -295,7 +259,7 @@ namespace DontDillyDally.Data
             }
 
             _trayWorkbench.SetCurrentTrayItem(trayItem);
-            PlaceTrayAtSlot(trayItem);
+            TrayWorkbenchItemUtility.PlaceTrayOnWorkbench(trayItem, _traySlotPoint);
         }
 
         [PunRPC]
@@ -328,84 +292,11 @@ namespace DontDillyDally.Data
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem != null)
             {
-                SetTrayInteractionEnabled(trayItem, true);
+                TrayWorkbenchItemUtility.PrepareTrayForPickup(trayItem);
                 _trayWorkbench.ClearCurrentTrayItem(trayItem);
             }
         }
 
-        #endregion
-
-        #region Utility
-
-        private void PlaceTrayAtSlot(TrayItem trayItem)
-        {
-            HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
-            bool isLocalOwner = trayItem.PhotonView != null && trayItem.PhotonView.IsMine;
-
-            if (holdable != null)
-            {
-                if (isLocalOwner)
-                {
-                    holdable.Place(_traySlotPoint);
-                }
-                else
-                {
-                    holdable.ApplyNetworkHoldState(false, -1);
-                }
-
-                holdable.SetStoredInContainer(true);
-            }
-
-            // 부모 변경 자체는 PhotonTransformView가 동기화하지 않습니다.
-            // 배치 직후 소유권이 바로 바뀌더라도 모든 클라이언트가
-            // 동일한 슬롯 기준 좌표를 사용하도록 로컬 좌표를 고정합니다.
-            trayItem.transform.SetParent(_traySlotPoint, false);
-            trayItem.transform.localPosition = Vector3.zero;
-            trayItem.transform.localRotation = Quaternion.identity;
-
-            NetworkItemOwnership.ReturnOwnershipToMaster(trayItem.PhotonView);
-        }
-
-        private static void SetTrayInteractionEnabled(TrayItem trayItem, bool isEnabled)
-        {
-            if (trayItem == null)
-            {
-                return;
-            }
-
-            Collider[] colliders = trayItem.GetComponentsInChildren<Collider>(true);
-            foreach (Collider col in colliders)
-            {
-                ItemObject ownerItem = col.GetComponentInParent<ItemObject>();
-                if (ownerItem != null && ownerItem != trayItem)
-                {
-                    continue;
-                }
-
-                col.enabled = isEnabled;
-            }
-
-            HoldableItem holdable = trayItem.GetComponent<HoldableItem>();
-            if (holdable != null)
-            {
-                holdable.SetStoredInContainer(!isEnabled);
-            }
-
-            if (isEnabled)
-            {
-                trayItem.transform.SetParent(null, true);
-            }
-        }
-
-        private static int GetPhotonViewId(ItemObject itemObject)
-        {
-            if (itemObject == null)
-            {
-                return -1;
-            }
-
-            return itemObject.ViewId;
-        }
         #endregion
     }
 }

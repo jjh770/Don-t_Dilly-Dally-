@@ -11,10 +11,27 @@ namespace DontDillyDally.Data
         [SerializeField] private Transform[] _itemSlotPoints = new Transform[MaxItemSlots];
 
         private ItemObject[] _storedSlotItems;
+        private Vector3[] _storedLocalPositions;
 
         private void Awake()
         {
             _storedSlotItems = new ItemObject[MaxItemSlots];
+            _storedLocalPositions = new Vector3[MaxItemSlots];
+        }
+
+        private void LateUpdate()
+        {
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                ItemObject item = _storedSlotItems[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                item.transform.localPosition = _storedLocalPositions[i];
+                item.transform.localRotation = Quaternion.identity;
+            }
         }
 
         public int GetFirstAvailableSlotIndex()
@@ -84,6 +101,7 @@ namespace DontDillyDally.Data
             PlaceStoredItem(itemObject, slotTransform);
             DisableItemInteraction(itemObject);
             _storedSlotItems[slotIndex] = itemObject;
+            _storedLocalPositions[slotIndex] = itemObject.transform.localPosition;
             return true;
         }
 
@@ -141,6 +159,7 @@ namespace DontDillyDally.Data
             {
                 ItemObject storedItem = _storedSlotItems[i];
                 _storedSlotItems[i] = null;
+                _storedLocalPositions[i] = Vector3.zero;
 
                 if (storedItem == null)
                 {
@@ -195,16 +214,9 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
-            foreach (Collider col in colliders)
+            if (itemObject.TryGetComponent(out HoldableItem holdable))
             {
-                col.enabled = false;
-            }
-
-            // 보관 상태에서는 다시 집을 수 없도록 플래그를 설정합니다.
-            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
-            if (holdable != null)
-            {
+                holdable.SetAllCollidersEnabled(false);
                 holdable.SetStoredInContainer(true);
             }
         }
