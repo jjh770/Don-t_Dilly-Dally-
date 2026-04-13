@@ -7,6 +7,7 @@ namespace DontDillyDally.StageFlow
     public sealed class StageMovementCoordinator : IDisposable
     {
         private readonly StageFlowRpcHandler _rpc;
+        private readonly object _movementLockSource = new();
         private IDisposable _phaseSubscription;
 
         public StageMovementCoordinator(StageFlowRpcHandler rpc)
@@ -52,16 +53,16 @@ namespace DontDillyDally.StageFlow
             }
 
             bool canMove = _rpc.CurrentPhase.Value == EStagePhase.Playing;
-            player.MovementAbility.SetMovementLocked(!canMove);
+            player.MovementAbility.SetMovementLocked(_movementLockSource, !canMove);
         }
 
-        private static void SetAllPlayersMovementLocked(bool locked)
+        private void SetAllPlayersMovementLocked(bool locked)
         {
             foreach (PlayerController player in PlayerRegistry.GetAllPlayers())
             {
                 if (player != null && player.MovementAbility != null)
                 {
-                    player.MovementAbility.SetMovementLocked(locked);
+                    player.MovementAbility.SetMovementLocked(_movementLockSource, locked);
                 }
             }
         }

@@ -30,6 +30,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     private PlayerMovementAbility _playerMovement;
     private Camera _camera;
     private Collider[] _playerColliders;
+    private readonly object _movementLockSource = new();
 
     public ItemObject CurrentHeldItem => _currentHeldItem;
     public IInteractable CurrentHeldInteractable => _currentHeldInteractable;
@@ -125,7 +126,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         }
 
         _isExternalInteractionLocked = true;
-        _playerMovement?.SetMovementLocked(true);
+        _playerMovement?.SetMovementLocked(_movementLockSource, true);
         return true;
     }
 
@@ -137,7 +138,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         }
 
         _isExternalInteractionLocked = false;
-        _playerMovement?.SetMovementLocked(false);
+        _playerMovement?.SetMovementLocked(_movementLockSource, false);
     }
 
     public bool TryBeginThrow()

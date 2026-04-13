@@ -6,10 +6,6 @@ namespace DontDillyDally.MiniGame
 {
     // 미니게임의 생성, 실행, 종료 라이프사이클을 관리한다.
     // 외부 시스템은 Launch()만 호출하면 된다.
-    //
-    // [통합 시 필요한 작업]
-    // 1. Launch() 호출 전에 플레이어 입력 비활성화.
-    // 2. onComplete 콜백에서 플레이어 입력 재활성화.
     public sealed class MiniGameLauncher : MonoBehaviour
     {
         [Header("미니게임별 설정 에셋")]
@@ -27,7 +23,8 @@ namespace DontDillyDally.MiniGame
         private IMiniGame _activeMiniGame;
         private IInputProvider _inputProvider;
         private Coroutine _resultCoroutine;
-        private PlayerMovementAbility _lockedMovementAbility;
+        private PlayerMovementAbility _playerMovementAbility;
+        private readonly object _movementLockSource = new();
 
         public bool IsPlaying =>
             _activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing;
@@ -132,25 +129,25 @@ namespace DontDillyDally.MiniGame
 
         private void LockLocalPlayerMovement()
         {
-            if (_lockedMovementAbility != null)
+            if (_playerMovementAbility != null)
             {
-                _lockedMovementAbility.SetMovementLocked(true);
+                _playerMovementAbility.SetMovementLocked(_movementLockSource, true);
                 return;
             }
 
-            _lockedMovementAbility = ResolveLocalMovementAbility();
-            _lockedMovementAbility?.SetMovementLocked(true);
+            _playerMovementAbility = ResolveLocalMovementAbility();
+            _playerMovementAbility?.SetMovementLocked(_movementLockSource, true);
         }
 
         private void UnlockLocalPlayerMovement()
         {
-            if (_lockedMovementAbility == null)
+            if (_playerMovementAbility == null)
             {
                 return;
             }
 
-            _lockedMovementAbility.SetMovementLocked(false);
-            _lockedMovementAbility = null;
+            _playerMovementAbility.SetMovementLocked(_movementLockSource, false);
+            _playerMovementAbility = null;
         }
 
         private static PlayerMovementAbility ResolveLocalMovementAbility()
