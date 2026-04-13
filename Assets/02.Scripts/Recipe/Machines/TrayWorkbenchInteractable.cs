@@ -157,7 +157,7 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_WorkbenchPlaceMaterial), RpcTarget.Others,
-                    itemObject.ViewId, availableSlotIndex, (int)materialType, playerId);
+                    trayItem.ViewId, itemObject.ViewId, availableSlotIndex, (int)materialType, playerId);
             }
         }
 
@@ -263,10 +263,10 @@ namespace DontDillyDally.Data
         }
 
         [PunRPC]
-        private void RPC_WorkbenchPlaceMaterial(int materialViewId, int slotIndex, int materialType, int playerId)
+        private void RPC_WorkbenchPlaceMaterial(int trayViewId, int materialViewId, int slotIndex, int materialType, int playerId)
         {
-            TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
-            if (trayItem == null)
+            PhotonView trayPV = PhotonView.Find(trayViewId);
+            if (trayPV == null || !trayPV.TryGetComponent(out TrayItem trayItem))
             {
                 return;
             }
