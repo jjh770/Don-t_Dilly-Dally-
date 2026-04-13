@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Collider), typeof(PhotonView))]
     public class PotionMixingMachineInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
@@ -37,9 +37,9 @@ namespace DontDillyDally.Data
         private readonly List<ToolType> _loadedPotionsBuffer = new List<ToolType>(MaxSlots);
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
-        private AudioSource _mixLoopSource;
+        private MachineOperationController _operationController;
 
-        public bool IsInteracting => _actionTimer != null && _actionTimer.IsRunning;
+        public bool IsInteracting => _operationController != null && _operationController.IsRunning;
         public Transform Transform => transform;
 
         private void Awake()
@@ -64,6 +64,15 @@ namespace DontDillyDally.Data
                 _runningMotion = GetComponentInChildren<RunningMotion>(true);
             }
 
+            _operationController = new MachineOperationController(
+                _door,
+                _actionTimer,
+                _runningMotion,
+                SFXKey.PotionMixerInProgress,
+                SFXKey.PotionMixerOpen,
+                SFXKey.PotionMixerClose,
+                SFXKey.PotionMixerComplete);
+
             _slots = new PotionSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -73,7 +82,7 @@ namespace DontDillyDally.Data
 
         private void OnDisable()
         {
-            StopMixingLoop();
+            _operationController?.StopLoop();
         }
 
         public void Interact(Transform interactor)
@@ -83,7 +92,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (_actionTimer != null && _actionTimer.IsRunning)
+            if (IsInteracting)
             {
                 return;
             }
@@ -129,7 +138,7 @@ namespace DontDillyDally.Data
             if (_potionMixingMachine == null)
                 return false;
 
-            if (_actionTimer != null && _actionTimer.IsRunning)
+            if (IsInteracting)
                 return false;
 
             if (_storedOutputItem != null)
@@ -233,8 +242,6 @@ namespace DontDillyDally.Data
 
             _pendingResultMaterial = result.ResultMaterial;
             _pendingCraftingDuration = result.CraftingDuration;
-            _door?.LockClosed();
-            _runningMotion?.TryStart();
 
             if (PhotonNetwork.InRoom)
             {
@@ -242,14 +249,7 @@ namespace DontDillyDally.Data
                     (int)result.ResultMaterial, result.CraftingDuration);
             }
 
-            if (_actionTimer == null)
-            {
-                OnMixingTimerComplete();
-                return;
-            }
-
-            _actionTimer.TryStart(_pendingCraftingDuration, OnMixingTimerComplete);
-            StartMixingLoop();
+            _operationController.StartLocal(_pendingCraftingDuration, OnMixingTimerComplete);
         }
 
         private void OnMixingTimerComplete()
@@ -267,13 +267,12 @@ namespace DontDillyDally.Data
 
         private void CompleteMixingProcess()
         {
-            _runningMotion?.StopMotion();
-            StopMixingLoop();
+            _operationController.CompleteLocal();
             ConsumeAllStoredInputs();
 
             if (_pendingResultMaterial == CraftedMaterialType.Unknown)
             {
-                _door?.Unlock();
+                _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
                 {
@@ -289,7 +288,7 @@ namespace DontDillyDally.Data
 
             if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
             {
-                _door?.Unlock();
+                _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
                 {
@@ -302,7 +301,7 @@ namespace DontDillyDally.Data
             PlaceStoredItem(resultItem, outputTransform);
             SetStoredItemInteractionEnabled(resultItem, false);
             _storedOutputItem = resultItem;
-            _door?.Unlock();
+            _operationController.UnlockDoor();
 
             if (PhotonNetwork.InRoom)
             {
@@ -310,7 +309,7 @@ namespace DontDillyDally.Data
                 photonView.RPC(nameof(RPC_PotionCompleteMixing), RpcTarget.Others, resultViewId);
             }
 
-            SoundManager.Instance?.Play(SFXKey.PotionMixerComplete, SoundType.Local);
+            _operationController.PlayComplete();
 
         }
 
@@ -451,20 +450,13 @@ namespace DontDillyDally.Data
         {
             _pendingResultMaterial = (CraftedMaterialType)resultMaterial;
             _pendingCraftingDuration = duration;
-            _door?.LockClosed();
-            _runningMotion?.TryStart();
-
-            // 원격 클라이언트는 타이머를 시각적으로만 실행 (완료 콜백 없음)
-            _actionTimer?.TryStart(duration, () => { });
-            StartMixingLoop();
+            _operationController.StartRemote(duration);
         }
 
         [PunRPC]
         private void RPC_PotionCompleteMixing(int resultItemViewId)
         {
-            _runningMotion?.StopMotion();
-            _actionTimer?.Cancel();
-            StopMixingLoop();
+            _operationController.CompleteRemote();
 
             // 슬롯 초기화 (아이템은 PhotonNetwork.Destroy로 이미 제거됨)
             for (int i = 0; i < _slots.Length; i++)
@@ -486,11 +478,11 @@ namespace DontDillyDally.Data
                 }
             }
 
-            _door?.Unlock();
+            _operationController.UnlockDoor();
 
             if (resultItemViewId >= 0)
             {
-                SoundManager.Instance?.Play(SFXKey.PotionMixerComplete, SoundType.Local);
+                _operationController.PlayComplete();
             }
         }
 
@@ -555,13 +547,13 @@ namespace DontDillyDally.Data
         [PunRPC]
         private void RPC_PotionOpenDoor()
         {
-            _door?.TryOpen();
+            _operationController?.TryOpenDoor();
         }
 
         [PunRPC]
         private void RPC_PotionCloseDoor()
         {
-            _door?.TryClose();
+            _operationController?.TryCloseDoor();
         }
 
         #endregion
@@ -570,8 +562,10 @@ namespace DontDillyDally.Data
 
         private void OpenDoorAndSync()
         {
-            _door?.TryOpen();
-            SoundManager.Instance.Play(SFXKey.PotionMixerOpen, SoundType.Local);
+            if (!_operationController.TryOpenDoor())
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
@@ -581,8 +575,10 @@ namespace DontDillyDally.Data
 
         private void CloseDoorAndSync()
         {
-            _door?.TryClose();
-            SoundManager.Instance.Play(SFXKey.PotionMixerClose, SoundType.Local);
+            if (!_operationController.TryCloseDoor())
+            {
+                return;
+            }
 
             if (PhotonNetwork.InRoom)
             {
@@ -690,29 +686,7 @@ namespace DontDillyDally.Data
 
         private bool IsDoorOpen()
         {
-            return _door == null || _door.IsOpen;
-        }
-
-        private void StartMixingLoop()
-        {
-            if (_mixLoopSource != null || SoundManager.Instance == null)
-            {
-                return;
-            }
-
-            _mixLoopSource = SoundManager.Instance.PlayLoop(SFXKey.PotionMixerInProgress);
-        }
-
-        private void StopMixingLoop()
-        {
-            if (_mixLoopSource == null || SoundManager.Instance == null)
-            {
-                _mixLoopSource = null;
-                return;
-            }
-
-            SoundManager.Instance.StopSFX(_mixLoopSource);
-            _mixLoopSource = null;
+            return _operationController == null || _operationController.IsDoorOpen;
         }
 
         private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
