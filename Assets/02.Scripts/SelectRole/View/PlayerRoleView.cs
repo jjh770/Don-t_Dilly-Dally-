@@ -9,6 +9,8 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     [SerializeField] private Renderer _downIndicatorRenderer;
     [SerializeField] private GameObject _upIndicator;
 
+    private Renderer[] _upIndicatorRenderers;
+
     private Material _originalMaterial;
     private bool _isInitialized;
 
@@ -16,12 +18,6 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     {
         Initialize();
         SubscribeToManager();
-
-        // 자기 자신만 _upIndicator 활성화
-        if (_upIndicator != null)
-        {
-            _upIndicator.SetActive(photonView.IsMine);
-        }
 
         // 이미 역할이 배정되었다면 적용
         TryApplyExistingRole();
@@ -40,6 +36,16 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         if (_downIndicatorRenderer != null)
         {
             _originalMaterial = _downIndicatorRenderer.sharedMaterial;
+        }
+
+        if (_upIndicator != null)
+        {
+            _upIndicatorRenderers = _upIndicator.GetComponentsInChildren<Renderer>();
+        }
+
+        if (_upIndicator != null)
+        {
+            _upIndicator.SetActive(false);
         }
 
         _isInitialized = true;
@@ -119,6 +125,12 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         // 인디케이터 머티리얼 적용
         ApplyIndicatorMaterial(profile.GetMaterial(role));
 
+        // 자기 자신만 _upIndicator 활성화
+        if (_upIndicator != null && photonView.IsMine)
+        {
+            _upIndicator.SetActive(true);
+        }
+
         Debug.Log($"[PlayerRoleView] 역할 적용 - {photonView.Owner.NickName}: {role}");
     }
 
@@ -135,17 +147,37 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         {
             ApplyIndicatorMaterial(_originalMaterial);
         }
+
+        if (_upIndicator != null)
+        {
+            _upIndicator.SetActive(false);
+        }
     }
 
     private void ApplyIndicatorMaterial(Material material)
     {
-        if (_downIndicatorRenderer == null || material == null) return;
+        if (material == null) return;
 
-        var materials = _downIndicatorRenderer.materials;
+        ApplyMaterialToRenderer(_downIndicatorRenderer, material);
+
+        if (_upIndicatorRenderers != null)
+        {
+            foreach (var renderer in _upIndicatorRenderers)
+            {
+                ApplyMaterialToRenderer(renderer, material);
+            }
+        }
+    }
+
+    private void ApplyMaterialToRenderer(Renderer renderer, Material material)
+    {
+        if (renderer == null) return;
+
+        var materials = renderer.materials;
         for (int i = 0; i < materials.Length; i++)
         {
             materials[i] = material;
         }
-        _downIndicatorRenderer.materials = materials;
+        renderer.materials = materials;
     }
 }
