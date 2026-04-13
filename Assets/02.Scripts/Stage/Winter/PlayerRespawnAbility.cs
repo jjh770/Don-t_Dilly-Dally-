@@ -22,6 +22,7 @@ public class PlayerRespawnAbility : MonoBehaviour
     private RigidbodyConstraints _originalConstraints;
     private bool _isRespawning;
     private int _safeZoneCount;
+    private readonly object _movementLockSource = new();
 
     private void Awake()
     {
@@ -68,7 +69,7 @@ public class PlayerRespawnAbility : MonoBehaviour
         // 1. 싱크 시작
         if (_movementAbility != null)
         {
-            _movementAbility.SetMovementLocked(true);
+            _movementAbility.SetMovementLocked(_movementLockSource, true);
         }
 
         if (_rigidbody != null)
@@ -110,7 +111,7 @@ public class PlayerRespawnAbility : MonoBehaviour
 
         if (_movementAbility != null)
         {
-            _movementAbility.SetMovementLocked(false);
+            _movementAbility.SetMovementLocked(_movementLockSource, false);
         }
 
         _isRespawning = false;

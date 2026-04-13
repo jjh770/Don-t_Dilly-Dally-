@@ -1,4 +1,4 @@
-using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerMovementAbility : PlayerAbility
@@ -11,7 +11,7 @@ public class PlayerMovementAbility : PlayerAbility
     private float _currentSpeed;
     private float _moveSpeedMultiplier = 1f;
     private float _rotationSpeedMultiplier = 1f;
-    private bool _isMovementLocked;
+    private readonly HashSet<object> _movementLockSources = new();
     private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
 
@@ -21,6 +21,8 @@ public class PlayerMovementAbility : PlayerAbility
     private const string HorizontalAxis = "Horizontal";
     private const string VerticalAxis = "Vertical";
     private const float MinMoveSqrMagnitude = 0.01f;
+    private static readonly object LegacyMovementLockSource = new();
+    private bool IsMovementLocked => _movementLockSources.Count > 0;
 
     protected override void Awake()
     {
@@ -44,7 +46,7 @@ public class PlayerMovementAbility : PlayerAbility
             return;
         }
 
-        if (_isMovementLocked)
+        if (IsMovementLocked)
         {
             _moveDirection = Vector3.zero;
             UpdateAnimation();
@@ -63,7 +65,7 @@ public class PlayerMovementAbility : PlayerAbility
             return;
         }
 
-        if (_isMovementLocked)
+        if (IsMovementLocked)
         {
             _currentSpeed = 0f;
             Vector3 velocity = _rigidbody.linearVelocity;
@@ -111,9 +113,23 @@ public class PlayerMovementAbility : PlayerAbility
 
     public void SetMovementLocked(bool isLocked)
     {
-        _isMovementLocked = isLocked;
+        SetMovementLocked(LegacyMovementLockSource, isLocked);
+    }
 
-        if (_isMovementLocked)
+    public void SetMovementLocked(object lockSource, bool isLocked)
+    {
+        lockSource ??= LegacyMovementLockSource;
+
+        if (isLocked)
+        {
+            _movementLockSources.Add(lockSource);
+        }
+        else
+        {
+            _movementLockSources.Remove(lockSource);
+        }
+
+        if (IsMovementLocked)
         {
             _moveDirection = Vector3.zero;
             _currentSpeed = 0f;
