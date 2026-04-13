@@ -179,7 +179,10 @@ public class UI_Customizing : UIPopupBase
         foreach (var viewData in _viewModel.VisibleItems)
         {
             var button = CreateItemButton(viewData);
-            _itemButtons.Add(button);
+            if (button != null)
+            {
+                _itemButtons.Add(button);
+            }
         }
     }
 
@@ -216,7 +219,10 @@ public class UI_Customizing : UIPopupBase
 
         for (int i = 0; i < _itemButtons.Count && i < visibleItems.Count; i++)
         {
-            _itemButtons[i].SetSelected(visibleItems[i].IsSelected);
+            if (_itemButtons[i] != null)
+            {
+                _itemButtons[i].SetSelected(visibleItems[i].IsSelected);
+            }
         }
     }
 
