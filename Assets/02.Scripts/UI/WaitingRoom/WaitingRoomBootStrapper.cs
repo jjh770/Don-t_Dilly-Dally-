@@ -81,5 +81,6 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _presenter?.Dispose();
         _stageUnlockPanelPresenter?.Dispose();
         _hospitalUpgradePresenter?.Dispose();
+        _customizingViewModel?.Dispose();
     }
 }

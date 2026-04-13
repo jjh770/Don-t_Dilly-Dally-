@@ -18,6 +18,11 @@ public class WaitingRoom : MonoBehaviour
         _button.onClick.RemoveListener(OnClick);
     }
 
+    private void OnDestroy()
+    {
+        _viewModel?.Dispose();
+    }
+
     private void OnClick()
     {
         if (_customizingUI == null) return;
