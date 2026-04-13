@@ -197,11 +197,10 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            int itemViewId = GetPhotonViewId(itemObject);
+            int itemViewId = itemObject.ViewId;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PendingResultMaterial = pendingResultMaterial;
@@ -263,7 +262,7 @@ namespace DontDillyDally.Data
                 if (slot.Item is TrayItem trayItem)
                 {
                     _sterilizationMachine.TrySterilizeTray(trayItem);
-                    resultViewIds[i] = GetPhotonViewId(trayItem);
+                    resultViewIds[i] = trayItem.ViewId;
                     continue;
                 }
 
@@ -282,10 +281,9 @@ namespace DontDillyDally.Data
                         continue;
                     }
 
-                    PlaceStoredItem(resultItem, slotTransform);
-                    SetStoredItemInteractionEnabled(resultItem, false);
+                    MachineStoredItemUtility.StoreInMachine(resultItem, slotTransform);
                     slot.Item = resultItem;
-                    resultViewIds[i] = GetPhotonViewId(resultItem);
+                    resultViewIds[i] = resultItem.ViewId;
                 }
             }
 
@@ -331,6 +329,8 @@ namespace DontDillyDally.Data
                 _isBatchCompleted = false;
             }
 
+            MachineStoredItemUtility.PrepareForPickup(storedItem);
+
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
@@ -351,14 +351,13 @@ namespace DontDillyDally.Data
 
             // 소독 완료 아이템 픽업이 실패하면 슬롯과 완료 상태를 함께 되돌려야 클라이언트별 상태가 어긋나지 않습니다.
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(item, slotTransform);
-            SetStoredItemInteractionEnabled(item, false);
+            MachineStoredItemUtility.StoreInMachine(item, slotTransform);
             _slots[slotIndex].Item = item;
             _isBatchCompleted = true;
 
             if (PhotonNetwork.InRoom)
             {
-                int viewId = GetPhotonViewId(item);
+                int viewId = item.ViewId;
                 photonView.RPC(nameof(RPC_SterilRollbackTakeItem), RpcTarget.Others, slotIndex, viewId);
             }
         }
@@ -424,8 +423,7 @@ namespace DontDillyDally.Data
             }
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
 
             _slots[slotIndex].Item = itemObject;
             _slots[slotIndex].PendingResultMaterial = (CraftedMaterialType)pendingResultMaterial;
@@ -464,8 +462,7 @@ namespace DontDillyDally.Data
                     }
 
                     Transform slotTransform = GetSlotTransform(i);
-                    PlaceStoredItem(resultItem, slotTransform);
-                    SetStoredItemInteractionEnabled(resultItem, false);
+                    MachineStoredItemUtility.StoreInMachine(resultItem, slotTransform);
                     _slots[i].Item = resultItem;
                 }
             }
@@ -490,7 +487,7 @@ namespace DontDillyDally.Data
             ItemObject item = _slots[slotIndex].Item;
             if (item != null)
             {
-                SetStoredItemInteractionEnabled(item, true);
+                MachineStoredItemUtility.PrepareForPickup(item);
             }
 
             _slots[slotIndex].Clear();
@@ -512,8 +509,7 @@ namespace DontDillyDally.Data
                 return;
 
             Transform slotTransform = GetSlotTransform(slotIndex);
-            PlaceStoredItem(itemObject, slotTransform);
-            SetStoredItemInteractionEnabled(itemObject, false);
+            MachineStoredItemUtility.StoreInMachine(itemObject, slotTransform);
             _slots[slotIndex].Item = itemObject;
             _isBatchCompleted = true;
         }
@@ -618,55 +614,6 @@ namespace DontDillyDally.Data
             return transform;
         }
 
-        private void PlaceStoredItem(ItemObject itemObject, Transform slotTransform)
-        {
-            if (itemObject == null)
-            {
-                return;
-            }
-
-            if (itemObject.TryGetComponent(out HoldableItem holdableItem))
-            {
-                holdableItem.Place(slotTransform);
-            }
-            else
-            {
-                itemObject.transform.SetPositionAndRotation(slotTransform.position, slotTransform.rotation);
-            }
-
-            itemObject.transform.SetParent(slotTransform, true);
-
-            NetworkItemOwnership.ReturnOwnershipToMaster(itemObject.PhotonView);
-        }
-
-        private static void SetStoredItemInteractionEnabled(ItemObject itemObject, bool isEnabled)
-        {
-            if (itemObject == null)
-            {
-                return;
-            }
-
-            HoldableItem holdable = itemObject.GetComponent<HoldableItem>();
-            if (holdable != null)
-            {
-                holdable.SetStoredInContainer(!isEnabled);
-                holdable.SetAllCollidersEnabled(isEnabled);
-            }
-            else
-            {
-                Collider[] colliders = itemObject.GetComponentsInChildren<Collider>(true);
-                foreach (Collider col in colliders)
-                {
-                    col.enabled = isEnabled;
-                }
-            }
-
-            if (isEnabled)
-            {
-                itemObject.transform.SetParent(null, true);
-            }
-        }
-
         private GameObject SpawnSterilizedResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
         {
             if (PhotonNetwork.InRoom)
@@ -691,16 +638,6 @@ namespace DontDillyDally.Data
             }
 
             return spawnedObject;
-        }
-
-        private static int GetPhotonViewId(ItemObject itemObject)
-        {
-            if (itemObject == null)
-            {
-                return -1;
-            }
-
-            return itemObject.ViewId;
         }
 
         #endregion
