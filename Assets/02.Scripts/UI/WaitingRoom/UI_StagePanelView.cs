@@ -259,6 +259,7 @@ public class UI_StagePanelView : UIPopupBase
 
         SetViewedStage(_stages[_confirmedStageIndex]);
     }
+
     protected override void OnShow()
     {
         

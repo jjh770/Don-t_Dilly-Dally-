@@ -14,6 +14,8 @@ public class WaitingRoomView : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _hospitalLevelText;
     [SerializeField] private TextMeshProUGUI _hospitalNameText;
     [SerializeField] private Image _hospitalImage;
+    [SerializeField] private Image _selectedStageImage;
+    [SerializeField] private TextMeshProUGUI _selectedStageTitle;
 
     [SerializeField] private UI_NumberCounterTween _roomCoinText;
     [SerializeField] private UI_NumberCounterTween _roomStarsText;
@@ -83,6 +85,22 @@ public class WaitingRoomView : MonoBehaviour
         _hospitalImage.sprite = image;
         _hospitalLevelText.text = $"{level}";
         _hospitalNameText.text = name;
+    }
+
+    public void SetSelectedStage(Sprite image, string title)
+    {
+        if (_selectedStageImage == null)
+        {
+            return;
+        }
+
+        _selectedStageImage.sprite = image;
+        _selectedStageImage.enabled = image != null;
+
+        if (_selectedStageTitle != null)
+        {
+            _selectedStageTitle.text = title;
+        }
     }
     public void SetRoomCurrency(int coin, int star)
     {

@@ -1,7 +1,7 @@
 using System;
+using DontDillyDally.StageFlow;
 using Photon.Pun;
 using Photon.Realtime;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class WaitingRoomPresenter
@@ -25,6 +25,7 @@ public class WaitingRoomPresenter
         RoomDataManager.Instance.OnRoomDataLoaded += HandleDataLoaded;
         RoomDataManager.Instance.OnRoomDataChanged += HandleRoomDataChanged;
         RoomDataManager.Instance.OnHospitalUpgraded += HandleHospitalUpgraded;
+        RoomDataManager.Instance.OnSelectedStageChanged += HandleSelectedStageChanged;
     }
 
     
@@ -127,6 +128,13 @@ public class WaitingRoomPresenter
         _waitingRoomView.SetHospitalInformation(PhotonServerManager.Instance.RoomCode, definition.HospitalName, definition.Level, definition.HospitalIcon);
 
         _waitingRoomView.SetRoomCurrency(RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
+
+        var selectedStage = RoomDataManager.Instance.CurrentStageDefinition;
+        if (selectedStage != null)
+        {
+            _waitingRoomView.SetSelectedStage(selectedStage.StageThumbnail, selectedStage.StageName);
+        }
+            
     }
     private void HandleHospitalUpgraded(HospitalLevelDefinitionSO sO)
     {
@@ -141,6 +149,11 @@ public class WaitingRoomPresenter
     private void HandleRoomDataChanged(int coin, int star)
     {
         _waitingRoomView.SetRoomCurrency(coin, star);
+    }
+
+    private void HandleSelectedStageChanged(int _, StageDefinitionSO selectedStage)
+    {
+        _waitingRoomView.SetSelectedStage(selectedStage != null ? selectedStage.StageThumbnail : null, selectedStage != null ? selectedStage.StageName : null);
     }
 
 
@@ -169,6 +182,7 @@ public class WaitingRoomPresenter
             RoomDataManager.Instance.OnRoomDataLoaded -= HandleDataLoaded;
             RoomDataManager.Instance.OnRoomDataChanged -= HandleRoomDataChanged;
             RoomDataManager.Instance.OnHospitalUpgraded -= HandleHospitalUpgraded;
+            RoomDataManager.Instance.OnSelectedStageChanged -= HandleSelectedStageChanged;
         }
     }
 }
