@@ -214,6 +214,8 @@ namespace DontDillyDally.StageFlow
             _emergencyResultTcs?.TrySetResult(result);
             _emergencyResultTcs = null;
             _currentEmergencyActorNumber = -1;
+
+            EventManager.Instance?.OnSuccessEmergencyEvent();
         }
 
         private void CompleteEmergencyFailure()
@@ -235,6 +237,8 @@ namespace DontDillyDally.StageFlow
             _emergencyResultTcs?.TrySetResult(result);
             _emergencyResultTcs = null;
             _currentEmergencyActorNumber = -1;
+
+            EventManager.Instance?.OnFailEmergencyEvent();
         }
 
         private void HandleEmergencyStartedReceived(

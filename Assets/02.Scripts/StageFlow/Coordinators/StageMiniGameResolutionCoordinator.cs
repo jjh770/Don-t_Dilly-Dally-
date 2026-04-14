@@ -45,6 +45,7 @@ namespace DontDillyDally.StageFlow
                 float recoveredHealth = _host != null ? _host.ApplyHeal(_dependencies?.MiniGameSuccessHeal ?? 0f) : 0f;
                 Debug.Log($"[StageFlow] 미니게임 성공. 체력 +{_dependencies?.MiniGameSuccessHeal ?? 0f} | 현재 체력: {recoveredHealth}");
                 StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.MiniGameSuccess);
+                StageFlowManager.Instance?.ResetSurgeryTimer();
                 EventManager.Instance?.OnSurgerySuccess();
                 return true;
             }
@@ -52,6 +53,7 @@ namespace DontDillyDally.StageFlow
             float newHealth = _host != null ? _host.ApplyDamage(_dependencies?.MiniGameFailPenalty ?? 0f) : 0f;
             Debug.Log($"[StageFlow] 미니게임 실패. 체력 -{_dependencies?.MiniGameFailPenalty ?? 0f} | 현재 체력: {newHealth}");
             StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.MiniGameFail);
+            StageFlowManager.Instance?.ResetSurgeryTimer();
             EventManager.Instance?.OnSurgeryFail(SurgeryFailureReason.MiniGameFailure);
 
             if (_host != null && _host.IsGameOver)

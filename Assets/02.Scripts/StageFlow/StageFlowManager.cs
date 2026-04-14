@@ -38,6 +38,7 @@ namespace DontDillyDally.StageFlow
         private const float STAGE_CLEAR_DELAY_SEC = 5f;
         private const float PATIENT_TRANSITION_DELAY_SEC = 4f;
         private const float RETURN_TO_WAITING_ROOM_DELAY_SEC = 5f;
+        private const float NO_SURGERY_TIMEOUT_SEC = 20f;
 
         // ── 위임 컴포넌트 ────────────────────────────────────────────
         [Header("핸들러")]
@@ -253,6 +254,8 @@ namespace DontDillyDally.StageFlow
         // ── 런타임 상태 ────────────────────────────────────────────────
         private StageRuntimeData _stageData;
         private bool _isGameOver;
+        private float _lastSurgeryTime;
+        private bool _noSurgeryEventTriggered;
 
         // ── 런타임 컨트롤러 ───────────────────────────────────────────
         private StageRpcAckCoordinator _ackCoordinator;
@@ -360,6 +363,7 @@ namespace DontDillyDally.StageFlow
                 }
                 Debug.Log("[StageFlow] ▶ Playing 시작 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
+                ResetSurgeryTimer();
                 await _patientTreatmentCoordinator.RunGameLoop(PATIENT_TRANSITION_DELAY_SEC, ct);
                 Debug.Log("[StageFlow] ✓ Playing 완료 (모든 환자 치료 성공)");
 
@@ -496,6 +500,28 @@ namespace DontDillyDally.StageFlow
                     _isGameOver,
                     isWaitingForSubmission);
             }
+
+            CheckNoSurgeryTimeout();
+        }
+
+        private void CheckNoSurgeryTimeout()
+        {
+            if (_noSurgeryEventTriggered)
+            {
+                return;
+            }
+
+            if (Time.time - _lastSurgeryTime >= NO_SURGERY_TIMEOUT_SEC)
+            {
+                _noSurgeryEventTriggered = true;
+                EventManager.Instance?.OnNoSurgery();
+            }
+        }
+
+        public void ResetSurgeryTimer()
+        {
+            _lastSurgeryTime = Time.time;
+            _noSurgeryEventTriggered = false;
         }
 
         private bool CanRunPlayingUpdate(out EStagePhase currentPhase)

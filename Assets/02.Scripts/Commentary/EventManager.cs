@@ -10,8 +10,11 @@ public class EventManager : MonoBehaviour
     public event Action<GameEvent> OnEventPublished;
 
     [SerializeField] private int _maxEventLogCount = 20;
+    [SerializeField] private int _chainThreshold = 3;
 
     private readonly List<GameEvent> _eventLog = new();
+    private bool _chainAccidentTriggered;
+    private bool _chainCooperationTriggered;
 
     public IReadOnlyList<GameEvent> EventLog => _eventLog;
 
@@ -59,11 +62,6 @@ public class EventManager : MonoBehaviour
         Publish(EventType.TimeOut, "시간이 다 되어서 게임이 끝났습니다.");
     }
 
-    public void OnEquipmentAccident(string equipmentName)
-    {
-        Publish(EventType.EquipmentAccident, $"{equipmentName} 장비에 사고가 발생했습니다.");
-    }
-
     public void OnPatientCritical()
     {
         Publish(EventType.PatientCritical, "환자의 상태가 위험합니다.");
@@ -74,56 +72,24 @@ public class EventManager : MonoBehaviour
         Publish(EventType.PatientCritical, $"환자의 상태가 위험합니다. {detail}");
     }
 
-    public void OnEmergencyEvent()
+    public void OnNoSurgery()
     {
-        // 임시.
-        // 나중에 긴급 상황 타입이 생기면 삭제할 것.
-        Publish(EventType.EmergencyEvent, "긴급 상황 발생");
+        Publish(EventType.NoSurgery, "수술이 오랫동안 진행되지 않았습니다.");
     }
 
-    public void OnEmergencyEvent(string emergencyDetail)
+    public void OnSuccessEmergencyEvent()
     {
-        Publish(EventType.EmergencyEvent, $"긴급 상황 발생: {emergencyDetail}");
+        Publish(EventType.SuccessEmergencyEvent, "긴급 이벤트를 성공적으로 처리했습니다.");
     }
 
-    public void OnMachineBroken(string machineName)
+    public void OnFailEmergencyEvent()
     {
-        Publish(EventType.MachineBroken, $"{machineName} 기계가 고장났습니다.");
+        Publish(EventType.FailEmergencyEvent, "긴급 이벤트 처리에 실패했습니다.");
     }
 
-    public void OnMaterialDeliveredLate(string materialName)
+    public void OnWrongMaterialUsed()
     {
-        Publish(EventType.MaterialDeliveredLate, $"{materialName} 재료가 늦게 전달되었습니다.");
-    }
-
-    public void OnEmergencyPrevented(string emergencyDetail)
-    {
-        Publish(EventType.EmergencyPrevented, $"긴급 이벤트를 막아냈습니다. {emergencyDetail}");
-    }
-
-    public void OnRepairTimeout(string machineName)
-    {
-        Publish(EventType.RepairTimeout, $"제한 시간 내에 {machineName} 장비를 고치지 못했습니다.");
-    }
-
-    public void OnRepairCompletedFast(string machineName)
-    {
-        Publish(EventType.RepairCompletedFast, $"{machineName} 장비 수리를 빠르게 완료했습니다.");
-    }
-
-    public void OnRepairCompletedLate(string machineName)
-    {
-        Publish(EventType.RepairCompletedLate, $"{machineName} 장비 수리가 늦어졌습니다.");
-    }
-
-    public void OnChainAccident(string accidentContext)
-    {
-        Publish(EventType.ChainAccident, accidentContext);
-    }
-
-    public void OnChainCooperation(string cooperationContext)
-    {
-        Publish(EventType.ChainCooperation, cooperationContext);
+        Publish(EventType.WrongMaterialUsed, "잘못된 재료를 사용했습니다.");
     }
 
     // ========== 내부 메서드 ==========
@@ -139,11 +105,67 @@ public class EventManager : MonoBehaviour
         }
 
         OnEventPublished?.Invoke(gameEvent);
+
+        // Chain 판정 (Chain 이벤트 자체는 판정 제외)
+        if (gameEvent.Type != EventType.ChainAccident && gameEvent.Type != EventType.ChainCooperation)
+        {
+            CheckChainEvents();
+        }
     }
 
     private void Publish(EventType type, string description)
     {
         Publish(new GameEvent(type, description));
+    }
+
+    private void CheckChainEvents()
+    {
+        bool allAccident = true;
+        bool allCooperation = true;
+        int foundCount = 0;
+
+        for (int i = _eventLog.Count - 1; i >= 0 && foundCount < _chainThreshold; i--)
+        {
+            GameEvent evt = _eventLog[i];
+
+            if (evt.Category == EventCategory.Neutral)
+            {
+                continue;
+            }
+
+            foundCount++;
+
+            if (evt.Category != EventCategory.Accident) allAccident = false;
+            if (evt.Category != EventCategory.Cooperation) allCooperation = false;
+
+            if (!allAccident && !allCooperation) break;
+        }
+
+        if (foundCount < _chainThreshold)
+        {
+            return;
+        }
+
+        // ChainAccident 발동
+        if (allAccident && !_chainAccidentTriggered)
+        {
+            _chainAccidentTriggered = true;
+            _chainCooperationTriggered = false;
+            Publish(EventType.ChainAccident, "사고가 연속으로 발생하고 있습니다.");
+        }
+        // ChainCooperation 발동
+        else if (allCooperation && !_chainCooperationTriggered)
+        {
+            _chainCooperationTriggered = true;
+            _chainAccidentTriggered = false;
+            Publish(EventType.ChainCooperation, "협동이 연속으로 성공하고 있습니다.");
+        }
+        // 패턴이 깨지면 플래그 리셋
+        else if (!allAccident && !allCooperation)
+        {
+            _chainAccidentTriggered = false;
+            _chainCooperationTriggered = false;
+        }
     }
 
     // ========== 조회 메서드 ==========
