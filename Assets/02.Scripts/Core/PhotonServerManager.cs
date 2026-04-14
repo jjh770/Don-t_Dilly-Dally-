@@ -141,8 +141,9 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         if (!CanAddRoom(roomCode)) return;
 
+        if (!CanProceedWithLobbyRequest()) return;
+
         SetNickname(PlayerDataManager.Instance.PlayerNickname);
-        if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby) return;
         PhotonNetwork.CreateRoom(roomCode, GetRoomOptions());
     }
 
@@ -169,7 +170,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public async UniTask TryJoinRoomAsync(string roomCode)
     {
-        if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby) return;
+        if (!CanProceedWithLobbyRequest()) return;
         if (await RoomDataManager.Instance.IsRoomDataExist(roomCode))
         {
             _roomCode = roomCode;
@@ -193,6 +194,22 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
             string errorMessage = "병원을 더이상 추가할 수 없습니다.";
             OnFailedToJoinRoom?.Invoke(errorMessage);
             Debug.Log("[PhotonServerManager] 병원을 더이상 추가할 수 없습니다.");
+            return false;
+        }
+
+        return true;
+    }
+
+   private bool CanProceedWithLobbyRequest()
+    {
+        Debug.Log($"[PhotonServerManager] Current Network State: {PhotonNetwork.NetworkClientState}");
+        if (PhotonNetwork.NetworkClientState == ClientState.ConnectingToGameServer)
+        {
+            return false;
+        }
+        else if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby)
+        {
+            OnFailedToJoinRoom?.Invoke("연결 상태를 확인해주세요.");
             return false;
         }
 
