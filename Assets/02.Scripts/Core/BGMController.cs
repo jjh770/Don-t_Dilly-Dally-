@@ -45,7 +45,7 @@ public class BGMController : PersistentSingleton<BGMController>
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         TryBindSceneLoadManager();
-        RefreshCurrentBgm();
+        ApplySceneBgm(ResolveSceneType(scene.name));
     }
 
     private void HandleSceneLoadComplete(ESceneType sceneType)
@@ -105,10 +105,7 @@ public class BGMController : PersistentSingleton<BGMController>
             _ => BGMKey.None
         };
 
-        if (key != BGMKey.None)
-        {
-            PlayIfNeeded(key);
-        }
+        PlayIfNeeded(key);
     }
 
     private void ApplyStageBgm()
@@ -164,7 +161,23 @@ public class BGMController : PersistentSingleton<BGMController>
 
     private void PlayIfNeeded(BGMKey key)
     {
-        if (key == BGMKey.None || _currentKey == key || SoundManager.Instance == null)
+        if (SoundManager.Instance == null)
+        {
+            return;
+        }
+
+        if (key == BGMKey.None)
+        {
+            if (_currentKey != BGMKey.None)
+            {
+                SoundManager.Instance.StopBGM();
+                _currentKey = BGMKey.None;
+            }
+
+            return;
+        }
+
+        if (_currentKey == key)
         {
             return;
         }
@@ -180,7 +193,11 @@ public class BGMController : PersistentSingleton<BGMController>
             return _sceneLoadManager.CurrentSceneType;
         }
 
-        string sceneName = SceneManager.GetActiveScene().name;
+        return ResolveSceneType(SceneManager.GetActiveScene().name);
+    }
+
+    private static ESceneType ResolveSceneType(string sceneName)
+    {
         return sceneName switch
         {
             "Main" => ESceneType.MainMenu,
