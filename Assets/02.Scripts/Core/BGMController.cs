@@ -124,7 +124,7 @@ public class BGMController : PersistentSingleton<BGMController>
 
         string stageId = string.Empty;
         var stageSceneConfig = StageSceneConfig.Instance;
-        if (stageSceneConfig != null)
+        if (stageSceneConfig != null && !string.IsNullOrWhiteSpace(stageSceneConfig.StageId))
         {
             stageId = stageSceneConfig.StageId;
         }
