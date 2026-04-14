@@ -286,14 +286,23 @@ public class PushableNetworkLock : MonoBehaviour, IPushable, IPunOwnershipCallba
             _photonView.RPC(nameof(RPC_RequestStopInteract), RpcTarget.MasterClient, actorNumber);
         }
 
-        if (PhotonNetwork.InRoom &&
-            _photonView.IsMine &&
-            _photonView.IsRoomView &&
-            PhotonNetwork.MasterClient != null &&
-            PhotonNetwork.MasterClient != PhotonNetwork.LocalPlayer)
+        ReturnOwnershipToMasterIfNeeded();
+    }
+
+    private void ReturnOwnershipToMasterIfNeeded()
+    {
+        if (!PhotonNetwork.InRoom || _photonView == null || !_photonView.IsMine)
         {
-            _photonView.TransferOwnership(PhotonNetwork.MasterClient);
+            return;
         }
+
+        Player masterClient = PhotonNetwork.MasterClient;
+        if (masterClient == null || masterClient == PhotonNetwork.LocalPlayer)
+        {
+            return;
+        }
+
+        _photonView.TransferOwnership(masterClient);
     }
 
     private bool IsLockedByAnotherPlayer(int localActorNumber)
