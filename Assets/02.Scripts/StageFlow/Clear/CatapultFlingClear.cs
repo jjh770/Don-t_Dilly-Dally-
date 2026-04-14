@@ -143,10 +143,10 @@ public class CatapultFlingClear : PatientClearBase
             patientTransform.DOPath(flingPath, _flingDuration, PathType.CatmullRom)
                 .SetEase(Ease.Linear));
 
-        // 공중제비 회전 (X축으로 세워진 상태에서 사출되므로 X축 기준 회전).
+        // 공중제비 회전 (로컬 축 기준).
         Vector3 flipRotation = new(360f * _flipCount, 0f, 0f);
         _sequence.Insert(_flingStartTime,
-            patientTransform.DORotate(flipRotation, _flingDuration, RotateMode.FastBeyond360)
+            patientTransform.DOLocalRotate(flipRotation, _flingDuration, RotateMode.FastBeyond360)
                 .SetEase(Ease.Linear));
 
         // Phase 3a: 침대가 원래 각도로 바운스 복귀 (통통 2~3번 튕김).
