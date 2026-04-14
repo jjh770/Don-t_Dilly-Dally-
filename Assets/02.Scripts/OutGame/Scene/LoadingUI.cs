@@ -40,7 +40,6 @@ public class LoadingUI : MonoBehaviour
     {
         { ELoadingStep.FirebaseInit,    "서버에 연결하는 중..." },
         { ELoadingStep.PlayerDataLoad,  "플레이어 데이터를 불러오는 중..." },
-        { ELoadingStep.AttendanceLoad,  "출석 정보를 확인하는 중..." },
     };
 
     private void OnEnable()
@@ -66,7 +65,10 @@ public class LoadingUI : MonoBehaviour
 
     public void Show(ELoadingStep step)
     {
-        _messageText.text = _messages[step];
+        if (_messages.TryGetValue(step, out string message))
+        {
+            _messageText.text = message;
+        }
         _panel.SetActive(true);
     }
 
