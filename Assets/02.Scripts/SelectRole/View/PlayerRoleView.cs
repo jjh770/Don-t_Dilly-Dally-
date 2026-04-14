@@ -6,7 +6,10 @@ using UnityEngine;
 public class PlayerRoleView : MonoBehaviourPunCallbacks
 {
     [Header("인디케이터")]
-    [SerializeField] private Renderer _indicatorRenderer;
+    [SerializeField] private Renderer _downIndicatorRenderer;
+    [SerializeField] private GameObject _upIndicator;
+
+    private Renderer[] _upIndicatorRenderers;
 
     private Material _originalMaterial;
     private bool _isInitialized;
@@ -30,9 +33,15 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     {
         if (_isInitialized) return;
 
-        if (_indicatorRenderer != null)
+        if (_downIndicatorRenderer != null)
         {
-            _originalMaterial = _indicatorRenderer.sharedMaterial;
+            _originalMaterial = _downIndicatorRenderer.sharedMaterial;
+        }
+
+        if (_upIndicator != null)
+        {
+            _upIndicatorRenderers = _upIndicator.GetComponentsInChildren<Renderer>();
+            _upIndicator.SetActive(false);
         }
 
         _isInitialized = true;
@@ -112,6 +121,12 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         // 인디케이터 머티리얼 적용
         ApplyIndicatorMaterial(profile.GetMaterial(role));
 
+        // 자기 자신만 _upIndicator 활성화
+        if (_upIndicator != null && photonView.IsMine)
+        {
+            _upIndicator.SetActive(true);
+        }
+
         Debug.Log($"[PlayerRoleView] 역할 적용 - {photonView.Owner.NickName}: {role}");
     }
 
@@ -128,17 +143,38 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         {
             ApplyIndicatorMaterial(_originalMaterial);
         }
+
+        if (_upIndicator != null)
+        {
+            _upIndicator.SetActive(false);
+        }
     }
 
     private void ApplyIndicatorMaterial(Material material)
     {
-        if (_indicatorRenderer == null || material == null) return;
+        if (material == null) return;
 
-        var materials = _indicatorRenderer.materials;
-        for (int i = 0; i < materials.Length; i++)
+        ApplyMaterialToRenderer(_downIndicatorRenderer, material);
+
+        if (_upIndicatorRenderers != null)
+        {
+            foreach (var renderer in _upIndicatorRenderers)
+            {
+                ApplyMaterialToRenderer(renderer, material);
+            }
+        }
+    }
+
+    private void ApplyMaterialToRenderer(Renderer renderer, Material material)
+    {
+        if (renderer == null) return;
+
+        int count = renderer.sharedMaterials.Length;
+        var materials = new Material[count];
+        for (int i = 0; i < count; i++)
         {
             materials[i] = material;
         }
-        _indicatorRenderer.materials = materials;
+        renderer.materials = materials;
     }
 }
