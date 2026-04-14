@@ -1,10 +1,16 @@
 [System.Serializable]
 public sealed class RewardNarrativeResult
 {
+    public const int InvalidMoneyDelta = int.MinValue;
+
     public string summaryText;
+    public int requestedMoneyDelta = InvalidMoneyDelta;
+
+    public bool HasRequestedMoneyDelta => requestedMoneyDelta != InvalidMoneyDelta;
 
     public static RewardNarrativeResult Fallback => new()
     {
-        summaryText = "ì´ë²ˆ ìˆ˜ìˆ  ê²°ê³¼ê°€ ë³‘ì› ê¸°ë¡ì— ë°˜ì˜ë˜ì—ˆìŠµë‹ˆë‹¤."
+        summaryText = "ÀÌ¹ø ¼ö¼ú °á°ú°¡ º´¿ø ±â·Ï¿¡ ¹İ¿µµÇ¾ú½À´Ï´Ù.",
+        requestedMoneyDelta = InvalidMoneyDelta
     };
 }
