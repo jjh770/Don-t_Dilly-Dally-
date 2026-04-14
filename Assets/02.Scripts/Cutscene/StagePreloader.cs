@@ -165,7 +165,9 @@ public class StagePreloader : MonoBehaviourPunCallbacks
             for (int i = 0; i < results.Length; i++)
             {
                 DiseaseData disease = results[i];
-                if (disease == null)
+                bool needsFallback = disease == null || disease.Source != RecipeSource.AIGenerated;
+
+                if (needsFallback)
                 {
                     disease = PickUniqueFallback(stageFallbacks, usedFallbackIds, StageData.StageId);
                     if (disease != null)
