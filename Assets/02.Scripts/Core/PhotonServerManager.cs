@@ -137,15 +137,16 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         OpenRoom(roomCode);
     }
 
-    public void OpenRoom(string roomCode)
+    private void OpenRoom(string roomCode)
     {
         if (!CanAddRoom(roomCode)) return;
 
         SetNickname(PlayerDataManager.Instance.PlayerNickname);
+        if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby) return;
         PhotonNetwork.CreateRoom(roomCode, GetRoomOptions());
     }
 
-    public RoomOptions GetRoomOptions()
+    private RoomOptions GetRoomOptions()
     {
         RoomOptions roomOptions = new RoomOptions();
         roomOptions.MaxPlayers = _maxPlayersPerRoom;
@@ -168,6 +169,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     public async UniTask TryJoinRoomAsync(string roomCode)
     {
+        if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby) return;
         if (await RoomDataManager.Instance.IsRoomDataExist(roomCode))
         {
             _roomCode = roomCode;
