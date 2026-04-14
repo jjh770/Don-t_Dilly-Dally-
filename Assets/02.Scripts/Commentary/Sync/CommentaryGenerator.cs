@@ -37,44 +37,31 @@ public class CommentaryGenerator : MonoBehaviour
          {
             EventType.SurgerySuccess, new[]
             {
-                "좋아, 처치가 제대로 들어갔어.",
-                "수술 실력이 훌륭해. 환자 상태가 안정된다.",
-                "좋아, 정확한 수술로 한고비 넘겼어."
-            }
-        },
-        {
-
-            EventType.EquipmentAccident, new[]
-            {
-                "이런, 장비에 문제가 생겼어.",
-                "장비 사고다. 빨리 대처해.",
-                "장비가 말썽이야. 침착하게 처리해."
+                "좋아, 수술 성공이야. 환자 상태가 안정됐어.",
+                "좋았어. 방금 수술이 잘 끝났어.",
+                "잘했어. 수술이 제대로 마무리됐어.",
+                "좋아, 이번 처치는 성공이야.",
+                "방금 수술 잘 들어갔어.",
+                "좋아, 수술 결과 괜찮아. 계속 가자.",
+                "수술 성공이야. 환자 상태가 다시 괜찮아졌어",
+                "잘했다. 수술 하나 깔끔하게 끝냈어.",
+                "좋아, 수술은 성공이다. 다음 준비해."
             }
         },
         {
             EventType.PatientCritical, new[]
             {
-                "환자 상태가 위험해. 서둘러.",
-                "위급 상황이다. 집중해.",
-                "환자가 위험해. 빨리 조치를 취해."
+                "환자 체력이 많이 떨어졌어. 서둘러.",
+                "환자 체력이 낮아. 빨리 처치해.",
+                "지금 환자 체력이 위험한 수준이야.",
+                "환자 체력이 계속 줄고 있어. 서둘러.",
+                "환자 상태 안 좋아. 체력부터 회복시켜.",
+                "환자 체력이 얼마 안 남았어. 빨리 움직여.",
+                "지금 환자 체력 낮아졌어. 집중해.",
+                "환자 체력이 바닥나기 직전이야. 서둘러.",
+                "환자부터 봐. 체력이 너무 낮아."
             }
         },
-        {
-            EventType.EmergencyEvent, new[]
-            {
-                "긴급 상황 발생. 모두 주목!",
-                "비상이다! 대응 준비.",
-                "긴급 이벤트. 빠른 판단이 필요해!"
-            }
-        },
-        {
-            EventType.MachineBroken, new[]
-            {
-                "기계가 고장났어. 수리가 필요해!",
-                "장비 고장! 대체 장비를 준비해!",
-                "기계 문제 발생. 빨리 해결해야 해!"
-            }
-        }
     };
 
     // 타입에 따라 최종 텍스트를 생성
@@ -160,7 +147,6 @@ public class CommentaryGenerator : MonoBehaviour
     private static readonly Dictionary<EventType, string[]> DynamicFallbackTexts = new()
     {
         { EventType.NewPatientAppeared, new[] { "새로운 환자가 도착했다.", "환자가 들어왔어. 준비해.", "새 환자야, 집중." } },
-        { EventType.MaterialDeliveredLate, new[] { "재료 전달이 늦어지고 있어.", "재료가 늦어. 서둘러.", "전달이 지연되고 있다." } },
         { EventType.EmergencyPrevented, new[] { "위기를 잘 넘겼어.", "훌륭해, 위기 대응 성공.", "잘 막았어." } },
         { EventType.WrongMaterialUsed, new[] { "잘못된 재료를 사용했어.", "재료가 틀렸어. 확인해.", "그건 아니야." } },
         { EventType.RepairTimeout, new[] { "수리 시간을 초과했어.", "수리 실패. 시간 초과.", "늦었어..." } },

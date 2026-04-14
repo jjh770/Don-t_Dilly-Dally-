@@ -59,11 +59,6 @@ public class EventManager : MonoBehaviour
         Publish(EventType.TimeOut, "시간이 다 되어서 게임이 끝났습니다.");
     }
 
-    public void OnEquipmentAccident(string equipmentName)
-    {
-        Publish(EventType.EquipmentAccident, $"{equipmentName} 장비에 사고가 발생했습니다.");
-    }
-
     public void OnPatientCritical()
     {
         Publish(EventType.PatientCritical, "환자의 상태가 위험합니다.");
@@ -72,28 +67,6 @@ public class EventManager : MonoBehaviour
     public void OnPatientCritical(string detail)
     {
         Publish(EventType.PatientCritical, $"환자의 상태가 위험합니다. {detail}");
-    }
-
-    public void OnEmergencyEvent()
-    {
-        // 임시.
-        // 나중에 긴급 상황 타입이 생기면 삭제할 것.
-        Publish(EventType.EmergencyEvent, "긴급 상황 발생");
-    }
-
-    public void OnEmergencyEvent(string emergencyDetail)
-    {
-        Publish(EventType.EmergencyEvent, $"긴급 상황 발생: {emergencyDetail}");
-    }
-
-    public void OnMachineBroken(string machineName)
-    {
-        Publish(EventType.MachineBroken, $"{machineName} 기계가 고장났습니다.");
-    }
-
-    public void OnMaterialDeliveredLate(string materialName)
-    {
-        Publish(EventType.MaterialDeliveredLate, $"{materialName} 재료가 늦게 전달되었습니다.");
     }
 
     public void OnEmergencyPrevented(string emergencyDetail)

@@ -16,21 +16,20 @@ public enum EventType
     // - 즉시 필요한 것
     TimeOut,                // 타임아웃 됐을 때
     PatientDeath,           // 환자가 죽었을 때
-    NewPatientAppeared,     // 새로운 환자가 등장했을 때
 
     // 템플릿형
     // - 여러 개 만들어서 랜덤 재생
     // - 매번 멘트가 같으면 심심한 것
-    SurgerySuccess,         // 수술에 성공했을 때
-    EquipmentAccident,      // 장비가 고장났을 때 (사고)
-    PatientCritical,        // 환자가 응급 상황일 때 (피가 낮을 때)
-    EmergencyEvent,         // 긴급 이벤트 발생
-    MachineBroken,          // 기계가 고장났을 때
+    SurgerySuccess,         // 수술에 성공했을 때 (협동)
+    SurgeryFail,            // 수술에 실패했을 때 (사고)
+    NoSurgery,              // 수술을 특정 시간 동안 안 할 때 (사고)
+    PatientCritical,        // 환자의 체력이 낮을 때 (사고)
+    SuccessEmergencyEvent,  // 긴급 이벤트 성공 (협동)
+    FailEmergencyEvent,     // 긴급 이벤트 실패 (사고)
 
     // 완전 동적형
     // - 최근 이벤트의 문맥을 반영해야 자연스러운 것
-    SurgeryFail,            // 수술에 실패했을 때 (사고)
-    MaterialDeliveredLate,  // 재료를 늦게 전달할 때 (사고)
+    NewPatientAppeared,     // 새로운 환자가 등장했을 때
     EmergencyPrevented,     // 긴급 이벤트를 막아냈을 때 (협동)
     WrongMaterialUsed,      // 잘못된 재료를 사용했을 때 (사고)
     RepairTimeout,          // 제한 시간 내에 장비를 고치지 못했을 때 (사고)
@@ -74,18 +73,15 @@ public class GameEvent
             // 완전 고정형
             EventType.TimeOut => EventPriority.Critical,
             EventType.PatientDeath => EventPriority.Critical,
-            EventType.NewPatientAppeared => EventPriority.Critical,
+            
 
             // 템플릿형
             EventType.SurgerySuccess => EventPriority.Critical,
             EventType.SurgeryFail => EventPriority.Critical,
-            EventType.EquipmentAccident => EventPriority.High,
             EventType.PatientCritical => EventPriority.High,
-            EventType.EmergencyEvent => EventPriority.High,
-            EventType.MachineBroken => EventPriority.High,
 
             // 완전 동적형
-            EventType.MaterialDeliveredLate => EventPriority.Normal,
+            EventType.NewPatientAppeared => EventPriority.Critical,
             EventType.EmergencyPrevented => EventPriority.High,
             EventType.WrongMaterialUsed => EventPriority.High,
             EventType.RepairTimeout => EventPriority.High,

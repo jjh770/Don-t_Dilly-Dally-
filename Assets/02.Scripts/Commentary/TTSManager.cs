@@ -14,6 +14,7 @@ public class TTSManager : MonoBehaviour
     [SerializeField] private string _modelId = "eleven_multilingual_v2";
     [SerializeField] private float _stability = 0.5f;
     [SerializeField] private float _similarityBoost = 0.75f;
+    [SerializeField, Range(0.25f, 4f)] private float _speed = 1.15f;
 
     [Header("요청 세팅")]
     [SerializeField] private float _timeout = 15f;
@@ -79,7 +80,8 @@ public class TTSManager : MonoBehaviour
             ""model_id"": ""{_modelId}"",
             ""voice_settings"": {{
                 ""stability"": {_stability.ToString(System.Globalization.CultureInfo.InvariantCulture)},
-                ""similarity_boost"": {_similarityBoost.ToString(System.Globalization.CultureInfo.InvariantCulture)}
+                ""similarity_boost"": {_similarityBoost.ToString(System.Globalization.CultureInfo.InvariantCulture)},
+                ""speed"": {_speed.ToString(System.Globalization.CultureInfo.InvariantCulture)}
             }}
         }}";
     }
