@@ -129,6 +129,15 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks, IPunInstant
 
         TItem spawnedItem = spawnedObject.GetComponent<TItem>();
         spawnedItem.name = GetDefaultItemName();
+        spawnedItem.Recycled += OnSpawnedItemRecycled;
         CurrentSpawnedItem = spawnedItem;
+    }
+
+    private void OnSpawnedItemRecycled(ItemObject recycledItem)
+    {
+        if (CurrentSpawnedItem == recycledItem)
+        {
+            CurrentSpawnedItem = null;
+        }
     }
 }
