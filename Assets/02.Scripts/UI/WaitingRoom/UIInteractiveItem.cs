@@ -24,7 +24,7 @@ public class UIInteractiveItem : MonoBehaviour, IInteractable
 
     public void StopInteract()
     {
-
+        
     }
 
     public void HandlePopupClosed()

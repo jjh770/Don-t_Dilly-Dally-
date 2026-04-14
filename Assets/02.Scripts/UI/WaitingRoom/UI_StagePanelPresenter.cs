@@ -20,6 +20,10 @@ public class UI_StagePanelPresenter
         _roomDataManager.OnRoomDataLoaded += Render;
         _roomDataManager.OnHospitalUpgraded += HandleHospitalUpgraded;
         _roomDataManager.OnSelectedStageChanged += HandleSelectedStageChanged;
+        if (PhotonServerManager.Instance != null)
+        {
+            PhotonServerManager.Instance.OnMasterClientChanged += HandleMasterClientChanged;
+        }
     }
 
     public void Initialize()
@@ -42,6 +46,10 @@ public class UI_StagePanelPresenter
         _roomDataManager.OnRoomDataLoaded -= Render;
         _roomDataManager.OnHospitalUpgraded -= HandleHospitalUpgraded;
         _roomDataManager.OnSelectedStageChanged -= HandleSelectedStageChanged;
+        if (PhotonServerManager.Instance != null)
+        {
+            PhotonServerManager.Instance.OnMasterClientChanged -= HandleMasterClientChanged;
+        }
     }
 
     private void HandleHospitalUpgraded(HospitalLevelDefinitionSO _)
@@ -51,17 +59,17 @@ public class UI_StagePanelPresenter
 
     private void HandleSelectedStageChanged(int selectedStageIndex, StageDefinitionSO selectedStage)
     {
-        if (_view == null || selectedStage == null)
+        if (_view == null)
         {
             return;
         }
 
-        if (selectedStageIndex < 0 || selectedStageIndex >= _stageItems.Count)
-        {
-            return;
-        }
+        _view.SetConfirmedStageIndex(selectedStageIndex);
+    }
 
-        _view.SetSelectedStage(_stageItems[selectedStageIndex]);
+    private void HandleMasterClientChanged()
+    {
+        _view?.SetMasterClient(PhotonServerManager.Instance != null && PhotonServerManager.Instance.IsMasterClient);
     }
 
     private void Render()
@@ -72,7 +80,10 @@ public class UI_StagePanelPresenter
         }
 
         BuildStageItems();
-        _view.Render(_stageItems, _roomDataManager.SelectedStageIndex);
+        _view.Render(
+            _stageItems,
+            _roomDataManager.SelectedStageIndex,
+            PhotonServerManager.Instance != null && PhotonServerManager.Instance.IsMasterClient);
     }
 
     private void BuildStageItems()

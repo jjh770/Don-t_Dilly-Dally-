@@ -8,6 +8,9 @@ public abstract class UIPopupBase : MonoBehaviour
     [SerializeField] protected CanvasGroup _canvasGroup;
     [SerializeField] protected RectTransform _panel;
 
+    [Header("Close Input")]
+    [SerializeField] private bool _closeOnEscape = true;
+
     [Header("Animation")]
     [SerializeField] private float _fadeDuration = 0.2f;
     [SerializeField] private float _scaleDuration = 0.2f;
@@ -22,6 +25,17 @@ public abstract class UIPopupBase : MonoBehaviour
     protected virtual void Awake()
     {
         HideImmediate();
+    }
+
+    protected virtual void Update()
+    {
+        if (!IsPopupVisible())
+            return;
+
+        if (_closeOnEscape && Input.GetKeyDown(KeyCode.Escape))
+        {
+            HandleCloseHotkey();
+        }
     }
 
     public void HideImmediate()
@@ -44,8 +58,22 @@ public abstract class UIPopupBase : MonoBehaviour
     public virtual void Show() => PlayShowAnimation();
     public virtual void Show(Action onComplete = null) => PlayShowAnimation(onComplete);
     public virtual void Hide() => PlayHideAnimation();
+    public bool IsVisible => IsPopupVisible();
 
     protected abstract void OnShow();
+
+    protected virtual bool IsPopupVisible()
+    {
+        return _panel != null
+            && _panel.gameObject.activeInHierarchy
+            && _canvasGroup != null
+            && _canvasGroup.interactable;
+    }
+
+    protected virtual void HandleCloseHotkey()
+    {
+        Hide();
+    }
 
     #region Animation
 
