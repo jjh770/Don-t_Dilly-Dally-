@@ -5,10 +5,6 @@ using UnityEngine.UI;
 
 namespace DontDillyDally.UI
 {
-    /// <summary>
-    /// 레시피를 구성하는 개별 재료 조합 단위를 표현합니다.
-    /// 단일 재료 또는 재료 + 액션 아이템 조합을 표현할 수 있습니다.
-    /// </summary>
     public class UI_RecipeItemEntry : MonoBehaviour
     {
         [Header("프리팹")]
@@ -41,7 +37,6 @@ namespace DontDillyDally.UI
         private MaterialState _state;
 
         private UI_ItemFrame _materialFrame;
-        private GameObject _plusIcon;
         private UI_ItemFrame _actionFrame;
 
         public enum MaterialState
@@ -98,11 +93,8 @@ namespace DontDillyDally.UI
             _materialFrame.gameObject.name = "MaterialFrame";
             _materialFrame.SetIcon(materialIcon);
 
-            if (actionType != ActionType.None && actionIcon != null && _plusIconPrefab != null)
+            if (actionType != ActionType.None && actionIcon != null)
             {
-                _plusIcon = Instantiate(_plusIconPrefab, _itemContainer);
-                _plusIcon.name = "PlusIcon";
-
                 _actionFrame = Instantiate(_itemFramePrefab, _itemContainer);
                 _actionFrame.gameObject.name = "ActionFrame";
                 _actionFrame.SetIcon(actionIcon);
@@ -235,12 +227,6 @@ namespace DontDillyDally.UI
             {
                 Destroy(_materialFrame.gameObject);
                 _materialFrame = null;
-            }
-
-            if (_plusIcon != null)
-            {
-                Destroy(_plusIcon);
-                _plusIcon = null;
             }
 
             if (_actionFrame != null)
