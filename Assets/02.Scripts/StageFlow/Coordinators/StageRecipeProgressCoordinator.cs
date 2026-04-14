@@ -74,6 +74,7 @@ namespace DontDillyDally.StageFlow
                 if (result.Success)
                 {
                     Debug.Log($"[StageFlow]     ✓ 레시피 {recipeIndex + 1} 일치! (ID: {result.MatchedRecipeId})");
+                    StageFlowManager.Instance?.ResetSurgeryTimer();
 
                     bool shouldAdvanceRecipe = _host != null &&
                         await _host.RunRecipeMiniGame(ct);
@@ -107,7 +108,9 @@ namespace DontDillyDally.StageFlow
                 Debug.Log($"[StageFlow]     ✗ 레시피 실패! 체력 -{recipeFailPenalty} → 현재 체력: {newHealth}");
 
                 StageFlowManager.Instance.PerformanceTracker.Record(player, disease, EPerformanceEventType.TrayFail);
+                StageFlowManager.Instance?.ResetSurgeryTimer();
 
+                EventManager.Instance?.OnWrongMaterialUsed();
                 EventManager.Instance?.OnSurgeryFail(result.SurgeryFailure);
 
                 if (_host != null && _host.IsGameOver)

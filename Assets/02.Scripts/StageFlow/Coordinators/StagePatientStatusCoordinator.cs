@@ -5,9 +5,14 @@ namespace DontDillyDally.StageFlow
     // 현재 환자의 체력 초기화, 회복, 자연 감소를 전담합니다.
     public sealed class StagePatientStatusCoordinator : IDisposable
     {
+        private const float CRITICAL_HEALTH_THRESHOLD = 0.3f;
+
         private readonly PatientHealthController _controller;
         private readonly StageFlowRpcHandler _rpc;
         private readonly Action<EGameOverReason> _onHealthDepleted;
+
+        private float _maxHealth;
+        private bool _criticalEventTriggered;
 
         public StagePatientStatusCoordinator(
             PatientHealthController controller,
@@ -36,6 +41,8 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            _maxHealth = maxHealth;
+            _criticalEventTriggered = false;
             _controller.Initialize(maxHealth, drainPerSecond);
 
             if (currentPhase == EStagePhase.Playing)
@@ -103,6 +110,18 @@ namespace DontDillyDally.StageFlow
         private void HandleHealthChanged(float health)
         {
             _rpc?.SetHealth(health);
+
+            // 체력이 30% 미만이면 PatientCritical 이벤트 발생 (한 번만)
+            if (!_criticalEventTriggered && _maxHealth > 0f && health / _maxHealth < CRITICAL_HEALTH_THRESHOLD)
+            {
+                _criticalEventTriggered = true;
+                EventManager.Instance?.OnPatientCritical();
+            }
+            // 체력이 회복되면 플래그 리셋
+            else if (_criticalEventTriggered && _maxHealth > 0f && health / _maxHealth >= CRITICAL_HEALTH_THRESHOLD)
+            {
+                _criticalEventTriggered = false;
+            }
         }
 
         private void HandleHealthDepleted()
