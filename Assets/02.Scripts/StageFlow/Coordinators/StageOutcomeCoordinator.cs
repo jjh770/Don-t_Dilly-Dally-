@@ -182,6 +182,15 @@ namespace DontDillyDally.StageFlow
         private void HandleGameOverReceived(EGameOverReason reason)
         {
             _host?.PublishGameOver(reason);
+
+            if (reason == EGameOverReason.PatientDeath)
+            {
+                EventManager.Instance?.OnPatientDeath();
+            }
+            else if (reason == EGameOverReason.TimeExpired)
+            {
+                EventManager.Instance?.OnTimeOut();
+            }
         }
 
         private void HandleStageRewardGrantedReceived(StageReward reward, StageResult result)
