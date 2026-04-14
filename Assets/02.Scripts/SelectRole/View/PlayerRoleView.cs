@@ -41,10 +41,6 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         if (_upIndicator != null)
         {
             _upIndicatorRenderers = _upIndicator.GetComponentsInChildren<Renderer>();
-        }
-
-        if (_upIndicator != null)
-        {
             _upIndicator.SetActive(false);
         }
 
@@ -173,8 +169,9 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
     {
         if (renderer == null) return;
 
-        var materials = renderer.materials;
-        for (int i = 0; i < materials.Length; i++)
+        int count = renderer.sharedMaterials.Length;
+        var materials = new Material[count];
+        for (int i = 0; i < count; i++)
         {
             materials[i] = material;
         }
