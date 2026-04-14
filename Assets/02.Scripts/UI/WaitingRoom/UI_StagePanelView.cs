@@ -104,7 +104,6 @@ public class UI_StagePanelView : UIPopupBase
             }
         }
 
-        // 매번 데이터만 갱신
         for (int i = 0; i < stages.Count; i++)
         {
             _items[i].Initialize(
@@ -250,13 +249,14 @@ public class UI_StagePanelView : UIPopupBase
 
     public override void Show()
     {
-        base.Show();
+        
         if (_stages == null || _confirmedStageIndex < 0 || _confirmedStageIndex >= _stages.Count)
         {
             Debug.LogWarning("[UI_StagePanelView] No confirmed stage data available when showing stage panel.");
             return;
         }
 
+        base.Show();
         SetViewedStage(_stages[_confirmedStageIndex]);
     }
 
