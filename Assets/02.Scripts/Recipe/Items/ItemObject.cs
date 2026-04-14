@@ -35,6 +35,7 @@ namespace DontDillyDally.Data
         private bool _isPendingRecycle;
 
         public event System.Action ModelRefreshed;
+        public event System.Action<ItemObject> Recycled;
 
         public bool HasLeftSource => _networkItemState != null && _networkItemState.HasLeftSource;
         public PhotonView PhotonView => _photonView;
@@ -81,6 +82,9 @@ namespace DontDillyDally.Data
 
         public virtual void PrepareForRecycle()
         {
+            Recycled?.Invoke(this);
+            Recycled = null;
+
             transform.SetParent(null, true);
 
             IRecyclable[] recyclables = GetComponents<IRecyclable>();
