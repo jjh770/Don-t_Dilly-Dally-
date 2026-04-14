@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6536957589432490727}
   - component: {fileID: 1072930779210694372}
-  - component: {fileID: 1026607868494868648}
   - component: {fileID: 6716138987351349519}
   m_Layer: 5
   m_Name: RecipeListScrollView
@@ -34,11 +33,11 @@ RectTransform:
   - {fileID: 570920292147352552}
   m_Father: {fileID: 388491916933665539}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
-  m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 0, y: 220}
-  m_SizeDelta: {x: 650.5, y: 400}
-  m_Pivot: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1072930779210694372
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,32 +58,6 @@ MonoBehaviour:
   m_FlexibleWidth: -1
   m_FlexibleHeight: -1
   m_LayoutPriority: 1
---- !u!114 &1026607868494868648
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3244494552880262885}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.HorizontalLayoutGroup
-  m_Padding:
-    m_Left: 0
-    m_Right: 0
-    m_Top: 0
-    m_Bottom: 0
-  m_ChildAlignment: 0
-  m_Spacing: 0
-  m_ChildForceExpandWidth: 1
-  m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
-  m_ChildControlHeight: 0
-  m_ChildScaleWidth: 0
-  m_ChildScaleHeight: 0
-  m_ReverseArrangement: 0
 --- !u!114 &6716138987351349519
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -159,7 +132,7 @@ MonoBehaviour:
   m_Spacing: -50
   m_ChildForceExpandWidth: 0
   m_ChildForceExpandHeight: 1
-  m_ChildControlWidth: 0
+  m_ChildControlWidth: 1
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
@@ -285,9 +258,9 @@ MonoBehaviour:
   _recipeItemPrefab: {fileID: 7478536603626198060, guid: bd1b32b0bc4469247bb05fbb40965155, type: 3}
   _iconTable: {fileID: 11400000, guid: b6db998ebfc20bb48afdf4f310805209, type: 2}
   _currentTextColor: {r: 1, g: 1, b: 1, a: 1}
-  _pendingTextColor: {r: 0.9, g: 0.9, b: 0.9, a: 0.8}
-  _currentBgColor: {r: 1, g: 0.95, b: 0.7, a: 0.95}
-  _defaultBgColor: {r: 1, g: 1, b: 1, a: 0.6}
+  _pendingTextColor: {r: 0.9, g: 0.9, b: 0.9, a: 1}
+  _currentBgColor: {r: 1, g: 0.95, b: 0.7, a: 1}
+  _defaultBgColor: {r: 1, g: 1, b: 1, a: 1}
   _completeFlyUpDistance: 150
   _completeFlyUpDuration: 0.4
   _slideLeftDelay: 0.15
