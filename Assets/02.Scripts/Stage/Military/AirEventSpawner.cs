@@ -15,6 +15,22 @@ public class AirEventSpawner : MonoBehaviourPun
     [SerializeField] private float _maxShakeIntensity = 0.15f;
     [SerializeField] private float _maxShakeDistance = 30f;
 
+    [Header("헬기, 전투기 SFX")]
+    [SerializeField]
+    private SFXKey[] _helicopterSfxKeys =
+    {
+        SFXKey.AmbHelicopter1,
+        SFXKey.AmbHelicopter2
+    };
+
+    [SerializeField]
+    private SFXKey[] _jetSfxKeys =
+    {
+        SFXKey.AmbJetFly1,
+        SFXKey.AmbJetFly2,
+        SFXKey.AmbJetFly3
+    };
+
     private float _nextSpawnTime;
 
     private void Start()
@@ -51,29 +67,24 @@ public class AirEventSpawner : MonoBehaviourPun
 
         if (prefabIndex == _airEventPrefabs.Length - 1)
         {
-            sfxKey = GetRandomHelicopterSfx();
+            sfxKey = GetRandomSfx(_helicopterSfxKeys);
         }
         else
         {
-            sfxKey = GetRandomJetSfx();
+            sfxKey = GetRandomSfx(_jetSfxKeys);
         }
 
         photonView.RPC(nameof(RPC_SpawnAirEvent), RpcTarget.All, spawnPointIndex, prefabIndex, (int)sfxKey);
     }
 
-    private SFXKey GetRandomHelicopterSfx()
+    private static SFXKey GetRandomSfx(SFXKey[] keys)
     {
-        return Random.Range(0, 2) == 0 ? SFXKey.AmbHelicopter1 : SFXKey.AmbHelicopter2;
-    }
-
-    private SFXKey GetRandomJetSfx()
-    {
-        return Random.Range(0, 3) switch
+        if (keys == null || keys.Length == 0)
         {
-            0 => SFXKey.AmbJetFly1,
-            1 => SFXKey.AmbJetFly2,
-            _ => SFXKey.AmbJetFly3
-        };
+            return SFXKey.None;
+        }
+
+        return keys[Random.Range(0, keys.Length)];
     }
 
     [PunRPC]
@@ -94,7 +105,10 @@ public class AirEventSpawner : MonoBehaviourPun
             spawnedObject.transform.rotation = Quaternion.LookRotation(direction);
         }
 
-        SoundManager.Instance.Play((SFXKey)sfxKey, SoundType.Local);
+        if (sfxKey != (int)SFXKey.None)
+        {
+            SoundManager.Instance.Play((SFXKey)sfxKey, SoundType.Local);
+        }
 
         AirEventMover mover = spawnedObject.AddComponent<AirEventMover>();
         mover.Initialize(direction, _moveDuration, _moveSpeed, _maxShakeIntensity, _maxShakeDistance);

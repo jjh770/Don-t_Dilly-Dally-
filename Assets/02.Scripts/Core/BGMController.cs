@@ -123,18 +123,18 @@ public class BGMController : PersistentSingleton<BGMController>
         key = BGMKey.None;
 
         string stageId = string.Empty;
-        // Unity의 == 연산자로 파괴된 오브젝트를 올바르게 null 판정
-        var stageFlowManager = StageFlowManager.Instance;
-        if (stageFlowManager != null && stageFlowManager.CurrentStageData != null)
+        var stageSceneConfig = StageSceneConfig.Instance;
+        if (stageSceneConfig != null)
         {
-            stageId = stageFlowManager.CurrentStageData.StageId;
+            stageId = stageSceneConfig.StageId;
         }
         else
         {
-            var stageSceneConfig = StageSceneConfig.Instance;
-            if (stageSceneConfig != null)
+            // Unity의 == 연산자로 파괴된 오브젝트를 올바르게 null 판정
+            var stageFlowManager = StageFlowManager.Instance;
+            if (stageFlowManager != null && stageFlowManager.CurrentStageData != null)
             {
-                stageId = stageSceneConfig.StageId;
+                stageId = stageFlowManager.CurrentStageData.StageId;
             }
         }
 
