@@ -15,6 +15,7 @@ public class DataBootstrapper : MonoBehaviour
     private void Awake()
     {
         FirebaseInitializer.OnFirebaseInitialized += OnFirebaseSetComplete;
+        LoadingUIEvents.Show(ELoadingStep.FirebaseInit);
 
         _rewardRepository = _rewardSO;    
     }
@@ -36,6 +37,8 @@ public class DataBootstrapper : MonoBehaviour
 
     private void OnFirebaseSetComplete()
     {
+        LoadingUIEvents.Show(ELoadingStep.PlayerDataLoad);
+        
         // Repository 생성
         IRoomCurrencyRepository roomDataRepository = new FirebaseRoomCurrencyRepository(FirebaseInitializer.Instance.Database);
         //IPlayerInformationRepository playerRepository = new TestPlayerInformationRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
@@ -56,6 +59,8 @@ public class DataBootstrapper : MonoBehaviour
 
     private void InitializedAttendance()
     {
+        LoadingUIEvents.Hide();
+
         IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database);
         _attendanceManager.Initialize(attendanceRepository, _rewardRepository, PlayerDataManager.Instance.PlayerID);
     }
@@ -66,3 +71,5 @@ public class DataBootstrapper : MonoBehaviour
         PlayerDataManager.Instance.OnDataManagerReady -= InitializedAttendance;
     }
 }
+
+
