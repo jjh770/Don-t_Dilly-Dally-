@@ -299,8 +299,6 @@ namespace DontDillyDally.StageFlow
 
             _stageData = stageData;
             _isGameOver = false;
-            _lastSurgeryTime = Time.time;
-            _noSurgeryEventTriggered = false;
             OnStageDataChanged?.Invoke(_stageData);
 
             // 제출 핸들러와 타이머 바인딩을 현재 스테이지 기준으로 다시 준비합니다.
@@ -365,6 +363,7 @@ namespace DontDillyDally.StageFlow
                 }
                 Debug.Log("[StageFlow] ▶ Playing 시작 (게임 루프 시작)");
                 _rpc.SetPhase(EStagePhase.Playing);
+                ResetSurgeryTimer();
                 await _patientTreatmentCoordinator.RunGameLoop(PATIENT_TRANSITION_DELAY_SEC, ct);
                 Debug.Log("[StageFlow] ✓ Playing 완료 (모든 환자 치료 성공)");
 

@@ -111,7 +111,6 @@ namespace DontDillyDally.StageFlow
                 StageFlowManager.Instance?.ResetSurgeryTimer();
 
                 EventManager.Instance?.OnWrongMaterialUsed();
-                EventManager.Instance?.OnSurgeryFail(result.SurgeryFailure);
 
                 if (_host != null && _host.IsGameOver)
                 {

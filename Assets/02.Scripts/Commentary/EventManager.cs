@@ -74,7 +74,7 @@ public class EventManager : MonoBehaviour
 
     public void OnNoSurgery()
     {
-        Publish(EventType.NoSurgery, "수술이 10초 동안 진행되지 않았습니다.");
+        Publish(EventType.NoSurgery, "수술이 오랫동안 진행되지 않았습니다.");
     }
 
     public void OnSuccessEmergencyEvent()
@@ -120,21 +120,30 @@ public class EventManager : MonoBehaviour
 
     private void CheckChainEvents()
     {
-        var recentCategorizedEvents = GetRecentCategorizedEvents(_chainThreshold);
-
-        if (recentCategorizedEvents.Count < _chainThreshold)
-        {
-            return;
-        }
-
-        // 모두 사고인지 확인
         bool allAccident = true;
         bool allCooperation = true;
+        int foundCount = 0;
 
-        foreach (var evt in recentCategorizedEvents)
+        for (int i = _eventLog.Count - 1; i >= 0 && foundCount < _chainThreshold; i--)
         {
+            GameEvent evt = _eventLog[i];
+
+            if (evt.Category == EventCategory.Neutral)
+            {
+                continue;
+            }
+
+            foundCount++;
+
             if (evt.Category != EventCategory.Accident) allAccident = false;
             if (evt.Category != EventCategory.Cooperation) allCooperation = false;
+
+            if (!allAccident && !allCooperation) break;
+        }
+
+        if (foundCount < _chainThreshold)
+        {
+            return;
         }
 
         // ChainAccident 발동
@@ -157,22 +166,6 @@ public class EventManager : MonoBehaviour
             _chainAccidentTriggered = false;
             _chainCooperationTriggered = false;
         }
-    }
-
-    private List<GameEvent> GetRecentCategorizedEvents(int count)
-    {
-        var result = new List<GameEvent>();
-
-        // 뒤에서부터 Neutral이 아닌 이벤트만 수집
-        for (int i = _eventLog.Count - 1; i >= 0 && result.Count < count; i--)
-        {
-            if (_eventLog[i].Category != EventCategory.Neutral)
-            {
-                result.Add(_eventLog[i]);
-            }
-        }
-
-        return result;
     }
 
     // ========== 조회 메서드 ==========
