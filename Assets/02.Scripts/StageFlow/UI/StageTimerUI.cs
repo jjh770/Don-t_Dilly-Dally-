@@ -13,140 +13,203 @@ public class StageTimerUI : MonoBehaviour
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
     private StageFlowManager _stageFlowManager;
+    private EStagePhase _currentPhase = EStagePhase.None;
+    private float _totalTimeLimit;
     private float _lastSyncedTime;
     private float _lastSyncRealtime;
-    private float _totalTimeLimit;
-    private EStagePhase _currentPhase = EStagePhase.None;
+
+    private bool IsBound => _stageFlowManager != null;
+
+    private bool ShouldShowTimer =>
+        IsBound &&
+        (_currentPhase == EStagePhase.Playing ||
+         _currentPhase == EStagePhase.PatientTransition ||
+         _currentPhase == EStagePhase.StageClear);
 
     private void Start()
     {
-        if (!TryBind())
+        if (TryBind() == false)
         {
-            StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
+            StageFlowBootstrapper.StageFlowReady += OnStageFlowReady;
         }
     }
 
     private void Update()
     {
-        if (_stageFlowManager != null)
+        if (IsBound == true)
         {
-            RefreshTimerText();
+            UpdateUI();
         }
     }
 
     private void OnDestroy()
     {
-        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        StageFlowBootstrapper.StageFlowReady -= OnStageFlowReady;
+
+        if (_stageFlowManager != null)
+        {
+            _stageFlowManager.OnStageDataChanged -= OnStageDataChanged;
+        }
+
         _disposables.Dispose();
     }
 
-    /// <summary>
-    /// StageFlowManager가 준비된 뒤 구독을 연결합니다.
-    /// 클라이언트는 마지막 동기화 시각 기준으로 로컬 표시만 보간합니다.
-    /// </summary>
     private bool TryBind()
     {
-        if (_stageFlowManager != null ||
-            StageFlowBootstrapper.Instance == null ||
-            !StageFlowBootstrapper.Instance.IsStageFlowReady ||
-            StageFlowManager.Instance == null ||
-            !StageFlowManager.Instance.IsInitialized)
+        if (IsBound || !IsStageFlowReady())
         {
             return false;
         }
 
         _stageFlowManager = StageFlowManager.Instance;
-        _lastSyncedTime = _stageFlowManager.StageTimer.Value;
-        _lastSyncRealtime = Time.unscaledTime;
-        _currentPhase = _stageFlowManager.CurrentPhase.Value;
-        _totalTimeLimit = _stageFlowManager.CurrentStageData?.Settings?.TotalTimeLimitSec ?? _lastSyncedTime;
 
-        _stageFlowManager.StageTimer
-            .Subscribe(time =>
-            {
-                _lastSyncedTime = Mathf.Max(0f, time);
-                _lastSyncRealtime = Time.unscaledTime;
-                RefreshTimerText();
-            })
-            .AddTo(_disposables);
+        InitializeState();
+        SubscribeToEvents();
 
-        _stageFlowManager.CurrentPhase
-            .Subscribe(phase =>
-            {
-                if (_currentPhase == EStagePhase.Playing && phase != EStagePhase.Playing)
-                {
-                    _lastSyncedTime = GetDisplayTime();
-                    _lastSyncRealtime = Time.unscaledTime;
-                }
-
-                _currentPhase = phase;
-                RefreshTimerText();
-            })
-            .AddTo(_disposables);
-
-        StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
+        StageFlowBootstrapper.StageFlowReady -= OnStageFlowReady;
         return true;
     }
 
-    private void HandleStageFlowReady()
+    private bool IsStageFlowReady()
+    {
+        return StageFlowBootstrapper.Instance != null &&
+               StageFlowBootstrapper.Instance.IsStageFlowReady &&
+               StageFlowManager.Instance != null &&
+               StageFlowManager.Instance.IsInitialized;
+    }
+
+    private void InitializeState()
+    {
+        _lastSyncedTime = _stageFlowManager.StageTimer.Value;
+        _lastSyncRealtime = Time.unscaledTime;
+        _currentPhase = _stageFlowManager.CurrentPhase.Value;
+
+        UpdateTotalTimeLimit();
+    }
+
+    private void SubscribeToEvents()
+    {
+        _stageFlowManager.OnStageDataChanged += OnStageDataChanged;
+
+        _stageFlowManager.StageTimer
+            .Subscribe(OnTimerSync)
+            .AddTo(_disposables);
+
+        _stageFlowManager.CurrentPhase
+            .Subscribe(OnPhaseChanged)
+            .AddTo(_disposables);
+    }
+
+
+    private void OnStageFlowReady()
     {
         TryBind();
     }
 
-    private void RefreshTimerText()
+    private void OnStageDataChanged(StageRuntimeData data)
     {
-        bool shouldShow = _stageFlowManager != null &&
-                          (_currentPhase == EStagePhase.Playing ||
-                           _currentPhase == EStagePhase.PatientTransition ||
-                           _currentPhase == EStagePhase.StageClear);
+        UpdateTotalTimeLimit();
+    }
 
-        if (_timerText != null)
+    private void OnTimerSync(float time)
+    {
+        _lastSyncedTime = Mathf.Max(0f, time);
+        _lastSyncRealtime = Time.unscaledTime;
+        UpdateUI();
+    }
+
+    private void OnPhaseChanged(EStagePhase phase)
+    {
+        if (_currentPhase == EStagePhase.Playing && phase != EStagePhase.Playing)
         {
-            _timerText.gameObject.SetActive(shouldShow);
+            _lastSyncedTime = GetDisplayTime();
+            _lastSyncRealtime = Time.unscaledTime;
         }
 
-        if (_timerSlider != null)
-        {
-            _timerSlider.gameObject.SetActive(shouldShow);
-        }
+        _currentPhase = phase;
+        UpdateUI();
+    }
 
-        if (!shouldShow)
+    private void UpdateUI()
+    {
+        SetVisibility(ShouldShowTimer);
+
+        if (!ShouldShowTimer)
         {
             return;
         }
 
         float displayTime = GetDisplayTime();
+        UpdateTimerText(displayTime);
+        UpdateSlider(displayTime);
+    }
 
+    private void SetVisibility(bool visible)
+    {
         if (_timerText != null)
         {
-            int totalSeconds = Mathf.CeilToInt(displayTime);
-            int minutes = totalSeconds / 60;
-            int seconds = totalSeconds % 60;
-            _timerText.text = $"{minutes:00}:{seconds:00}";
+            _timerText.gameObject.SetActive(visible);
         }
 
-        if (_timerSlider != null && _totalTimeLimit > 0f)
+        if (_timerSlider != null)
         {
-            _timerSlider.value = displayTime / _totalTimeLimit;
+            _timerSlider.gameObject.SetActive(visible);
+        }
+    }
+
+    private void UpdateTimerText(float displayTime)
+    {
+        if (_timerText == null)
+        {
+            return;
+        }
+
+        int totalSeconds = Mathf.CeilToInt(displayTime);
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        _timerText.text = $"{minutes:00}:{seconds:00}";
+    }
+
+    private void UpdateSlider(float displayTime)
+    {
+        if (_timerSlider == null || _totalTimeLimit <= 0f)
+        {
+            return;
+        }
+
+        _timerSlider.value = displayTime / _totalTimeLimit;
+    }
+
+    private void UpdateTotalTimeLimit()
+    {
+        float? timeLimit = _stageFlowManager?.CurrentStageData?.Settings?.TotalTimeLimitSec;
+
+        if (timeLimit.HasValue)
+        {
+            _totalTimeLimit = timeLimit.Value;
         }
     }
 
     private float GetDisplayTime()
     {
-        if (_stageFlowManager == null)
+        if (!IsBound)
         {
             return 0f;
         }
 
+        // 마스터 클라이언트
+        // 실제 로컬 권한 타이머 사용
         if (PhotonNetwork.IsMasterClient)
         {
             return Mathf.Max(0f, _stageFlowManager.LocalRemainingTime);
         }
 
+        // 일반 클라이언트는
+        // 마지막 동기화 시간에서 경과 시간을 빼서 시간이 흐르는 것처럼 표시
         if (_currentPhase == EStagePhase.Playing)
         {
-            float elapsedTime = Time.unscaledTime - _lastSyncRealtime;
-            return Mathf.Max(0f, _lastSyncedTime - elapsedTime);
+            float elapsed = Time.unscaledTime - _lastSyncRealtime;
+            return Mathf.Max(0f, _lastSyncedTime - elapsed);
         }
 
         return Mathf.Max(0f, _lastSyncedTime);
