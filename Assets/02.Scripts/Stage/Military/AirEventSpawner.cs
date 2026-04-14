@@ -47,12 +47,37 @@ public class AirEventSpawner : MonoBehaviourPun
 
         int spawnPointIndex = Random.Range(0, _spawnPoints.Length);
         int prefabIndex = Random.Range(0, _airEventPrefabs.Length);
+        SFXKey sfxKey;
 
-        photonView.RPC(nameof(RPC_SpawnAirEvent), RpcTarget.All, spawnPointIndex, prefabIndex);
+        if (prefabIndex == _airEventPrefabs.Length - 1)
+        {
+            sfxKey = GetRandomHelicopterSfx();
+        }
+        else
+        {
+            sfxKey = GetRandomJetSfx();
+        }
+
+        photonView.RPC(nameof(RPC_SpawnAirEvent), RpcTarget.All, spawnPointIndex, prefabIndex, (int)sfxKey);
+    }
+
+    private SFXKey GetRandomHelicopterSfx()
+    {
+        return Random.Range(0, 2) == 0 ? SFXKey.AmbHelicopter1 : SFXKey.AmbHelicopter2;
+    }
+
+    private SFXKey GetRandomJetSfx()
+    {
+        return Random.Range(0, 3) switch
+        {
+            0 => SFXKey.AmbJetFly1,
+            1 => SFXKey.AmbJetFly2,
+            _ => SFXKey.AmbJetFly3
+        };
     }
 
     [PunRPC]
-    private void RPC_SpawnAirEvent(int spawnPointIndex, int prefabIndex)
+    private void RPC_SpawnAirEvent(int spawnPointIndex, int prefabIndex, int sfxKey)
     {
         if (spawnPointIndex < 0 || spawnPointIndex >= _spawnPoints.Length) return;
         if (prefabIndex < 0 || prefabIndex >= _airEventPrefabs.Length) return;
@@ -69,7 +94,7 @@ public class AirEventSpawner : MonoBehaviourPun
             spawnedObject.transform.rotation = Quaternion.LookRotation(direction);
         }
 
-        SoundManager.Instance.Play(SFXKey.AmbJetFly, SoundType.Local);
+        SoundManager.Instance.Play((SFXKey)sfxKey, SoundType.Local);
 
         AirEventMover mover = spawnedObject.AddComponent<AirEventMover>();
         mover.Initialize(direction, _moveDuration, _moveSpeed, _maxShakeIntensity, _maxShakeDistance);
