@@ -159,7 +159,7 @@ public class StagePreloader : MonoBehaviourPunCallbacks
 
             // 결과를 순서대로 등록 — null이면 폴백으로 즉시 대체
             // 사용된 폴백 ID를 추적하여 중복 방지
-            var usedFallbackIds = new HashSet<string>();
+            HashSet<string> usedFallbackIds = [];
             List<DiseaseData> stageFallbacks = FallbackDiseaseLoader.GetByStage(StageData.StageId);
 
             for (int i = 0; i < results.Length; i++)
@@ -167,7 +167,7 @@ public class StagePreloader : MonoBehaviourPunCallbacks
                 DiseaseData disease = results[i];
                 if (disease == null)
                 {
-                    disease = PickUniqueFallback(stageFallbacks, usedFallbackIds);
+                    disease = PickUniqueFallback(stageFallbacks, usedFallbackIds, StageData.StageId);
                     Debug.LogWarning($"[StagePreloader] 환자 {i + 1}/{patientCount} AI 실패 → 폴백 사용: {disease?.DiseaseName ?? "없음"}");
                 }
                 else
@@ -202,21 +202,31 @@ public class StagePreloader : MonoBehaviourPunCallbacks
         }
     }
 
-    // 사용되지 않은 폴백 데이터를 하나 선택합니다. 중복을 방지합니다.
+    // 사용되지 않은 폴백 데이터를 랜덤으로 하나 선택합니다. 중복을 방지합니다.
     // 모든 폴백이 사용된 경우 랜덤으로 반환합니다 (중복 허용).
     private static DiseaseData PickUniqueFallback(
-        List<DiseaseData> stageFallbacks, HashSet<string> usedIds)
+        List<DiseaseData> stageFallbacks, HashSet<string> usedIds, string stageId)
     {
         if (stageFallbacks == null || stageFallbacks.Count == 0)
-            return FallbackDiseaseLoader.GetRandom();
+        {
+            return FallbackDiseaseLoader.GetRandom(stageId);
+        }
 
+        // 사용 가능한 후보를 모아서 랜덤 선택 (순차 선택 방지)
+        var available = new List<DiseaseData>();
         for (int i = 0; i < stageFallbacks.Count; i++)
         {
             if (!usedIds.Contains(stageFallbacks[i].DiseaseId))
             {
-                usedIds.Add(stageFallbacks[i].DiseaseId);
-                return stageFallbacks[i];
+                available.Add(stageFallbacks[i]);
             }
+        }
+
+        if (available.Count > 0)
+        {
+            DiseaseData picked = available[UnityEngine.Random.Range(0, available.Count)];
+            usedIds.Add(picked.DiseaseId);
+            return picked;
         }
 
         // 모든 폴백 소진 — 어쩔 수 없이 랜덤 (중복 허용)
