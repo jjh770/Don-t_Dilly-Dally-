@@ -10,8 +10,11 @@ public class EventManager : MonoBehaviour
     public event Action<GameEvent> OnEventPublished;
 
     [SerializeField] private int _maxEventLogCount = 20;
+    [SerializeField] private int _chainThreshold = 3;
 
     private readonly List<GameEvent> _eventLog = new();
+    private bool _chainAccidentTriggered;
+    private bool _chainCooperationTriggered;
 
     public IReadOnlyList<GameEvent> EventLog => _eventLog;
 
@@ -69,34 +72,24 @@ public class EventManager : MonoBehaviour
         Publish(EventType.PatientCritical, $"환자의 상태가 위험합니다. {detail}");
     }
 
-    public void OnEmergencyPrevented(string emergencyDetail)
+    public void OnNoSurgery()
     {
-        Publish(EventType.EmergencyPrevented, $"긴급 이벤트를 막아냈습니다. {emergencyDetail}");
+        Publish(EventType.NoSurgery, "수술이 10초 동안 진행되지 않았습니다.");
     }
 
-    public void OnRepairTimeout(string machineName)
+    public void OnSuccessEmergencyEvent()
     {
-        Publish(EventType.RepairTimeout, $"제한 시간 내에 {machineName} 장비를 고치지 못했습니다.");
+        Publish(EventType.SuccessEmergencyEvent, "긴급 이벤트를 성공적으로 처리했습니다.");
     }
 
-    public void OnRepairCompletedFast(string machineName)
+    public void OnFailEmergencyEvent()
     {
-        Publish(EventType.RepairCompletedFast, $"{machineName} 장비 수리를 빠르게 완료했습니다.");
+        Publish(EventType.FailEmergencyEvent, "긴급 이벤트 처리에 실패했습니다.");
     }
 
-    public void OnRepairCompletedLate(string machineName)
+    public void OnWrongMaterialUsed()
     {
-        Publish(EventType.RepairCompletedLate, $"{machineName} 장비 수리가 늦어졌습니다.");
-    }
-
-    public void OnChainAccident(string accidentContext)
-    {
-        Publish(EventType.ChainAccident, accidentContext);
-    }
-
-    public void OnChainCooperation(string cooperationContext)
-    {
-        Publish(EventType.ChainCooperation, cooperationContext);
+        Publish(EventType.WrongMaterialUsed, "잘못된 재료를 사용했습니다.");
     }
 
     // ========== 내부 메서드 ==========
@@ -112,11 +105,74 @@ public class EventManager : MonoBehaviour
         }
 
         OnEventPublished?.Invoke(gameEvent);
+
+        // Chain 판정 (Chain 이벤트 자체는 판정 제외)
+        if (gameEvent.Type != EventType.ChainAccident && gameEvent.Type != EventType.ChainCooperation)
+        {
+            CheckChainEvents();
+        }
     }
 
     private void Publish(EventType type, string description)
     {
         Publish(new GameEvent(type, description));
+    }
+
+    private void CheckChainEvents()
+    {
+        var recentCategorizedEvents = GetRecentCategorizedEvents(_chainThreshold);
+
+        if (recentCategorizedEvents.Count < _chainThreshold)
+        {
+            return;
+        }
+
+        // 모두 사고인지 확인
+        bool allAccident = true;
+        bool allCooperation = true;
+
+        foreach (var evt in recentCategorizedEvents)
+        {
+            if (evt.Category != EventCategory.Accident) allAccident = false;
+            if (evt.Category != EventCategory.Cooperation) allCooperation = false;
+        }
+
+        // ChainAccident 발동
+        if (allAccident && !_chainAccidentTriggered)
+        {
+            _chainAccidentTriggered = true;
+            _chainCooperationTriggered = false;
+            Publish(EventType.ChainAccident, "사고가 연속으로 발생하고 있습니다.");
+        }
+        // ChainCooperation 발동
+        else if (allCooperation && !_chainCooperationTriggered)
+        {
+            _chainCooperationTriggered = true;
+            _chainAccidentTriggered = false;
+            Publish(EventType.ChainCooperation, "협동이 연속으로 성공하고 있습니다.");
+        }
+        // 패턴이 깨지면 플래그 리셋
+        else if (!allAccident && !allCooperation)
+        {
+            _chainAccidentTriggered = false;
+            _chainCooperationTriggered = false;
+        }
+    }
+
+    private List<GameEvent> GetRecentCategorizedEvents(int count)
+    {
+        var result = new List<GameEvent>();
+
+        // 뒤에서부터 Neutral이 아닌 이벤트만 수집
+        for (int i = _eventLog.Count - 1; i >= 0 && result.Count < count; i--)
+        {
+            if (_eventLog[i].Category != EventCategory.Neutral)
+            {
+                result.Add(_eventLog[i]);
+            }
+        }
+
+        return result;
     }
 
     // ========== 조회 메서드 ==========
