@@ -159,7 +159,7 @@ public class StagePreloader : MonoBehaviourPunCallbacks
 
             // 결과를 순서대로 등록 — null이면 폴백으로 즉시 대체
             // 사용된 폴백 ID를 추적하여 중복 방지
-            HashSet<string> usedFallbackIds = [];
+            var usedFallbackIds = new HashSet<string>();
             List<DiseaseData> stageFallbacks = FallbackDiseaseLoader.GetByStage(StageData.StageId);
 
             for (int i = 0; i < results.Length; i++)
@@ -168,6 +168,10 @@ public class StagePreloader : MonoBehaviourPunCallbacks
                 if (disease == null)
                 {
                     disease = PickUniqueFallback(stageFallbacks, usedFallbackIds, StageData.StageId);
+                    if (disease != null)
+                    {
+                        usedFallbackIds.Add(disease.DiseaseId);
+                    }
                     Debug.LogWarning($"[StagePreloader] 환자 {i + 1}/{patientCount} AI 실패 → 폴백 사용: {disease?.DiseaseName ?? "없음"}");
                 }
                 else
@@ -202,8 +206,8 @@ public class StagePreloader : MonoBehaviourPunCallbacks
         }
     }
 
-    // 사용되지 않은 폴백 데이터를 랜덤으로 하나 선택합니다. 중복을 방지합니다.
-    // 모든 폴백이 사용된 경우 랜덤으로 반환합니다 (중복 허용).
+    // 사용되지 않은 폴백 데이터를 랜덤으로 하나 선택합니다 (Query 전용, 부수 효과 없음).
+    // usedIds 갱신은 호출자가 담당합니다.
     private static DiseaseData PickUniqueFallback(
         List<DiseaseData> stageFallbacks, HashSet<string> usedIds, string stageId)
     {
@@ -224,9 +228,7 @@ public class StagePreloader : MonoBehaviourPunCallbacks
 
         if (available.Count > 0)
         {
-            DiseaseData picked = available[UnityEngine.Random.Range(0, available.Count)];
-            usedIds.Add(picked.DiseaseId);
-            return picked;
+            return available[UnityEngine.Random.Range(0, available.Count)];
         }
 
         // 모든 폴백 소진 — 어쩔 수 없이 랜덤 (중복 허용)
