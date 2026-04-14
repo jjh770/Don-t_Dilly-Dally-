@@ -15,6 +15,22 @@ public class AirEventSpawner : MonoBehaviourPun
     [SerializeField] private float _maxShakeIntensity = 0.15f;
     [SerializeField] private float _maxShakeDistance = 30f;
 
+    [Header("헬기, 전투기 SFX")]
+    [SerializeField]
+    private SFXKey[] _helicopterSfxKeys =
+    {
+        SFXKey.AmbHelicopter1,
+        SFXKey.AmbHelicopter2
+    };
+
+    [SerializeField]
+    private SFXKey[] _jetSfxKeys =
+    {
+        SFXKey.AmbJetFly1,
+        SFXKey.AmbJetFly2,
+        SFXKey.AmbJetFly3
+    };
+
     private float _nextSpawnTime;
 
     private void Start()
@@ -47,12 +63,32 @@ public class AirEventSpawner : MonoBehaviourPun
 
         int spawnPointIndex = Random.Range(0, _spawnPoints.Length);
         int prefabIndex = Random.Range(0, _airEventPrefabs.Length);
+        SFXKey sfxKey;
 
-        photonView.RPC(nameof(RPC_SpawnAirEvent), RpcTarget.All, spawnPointIndex, prefabIndex);
+        if (prefabIndex == _airEventPrefabs.Length - 1)
+        {
+            sfxKey = GetRandomSfx(_helicopterSfxKeys);
+        }
+        else
+        {
+            sfxKey = GetRandomSfx(_jetSfxKeys);
+        }
+
+        photonView.RPC(nameof(RPC_SpawnAirEvent), RpcTarget.All, spawnPointIndex, prefabIndex, (int)sfxKey);
+    }
+
+    private static SFXKey GetRandomSfx(SFXKey[] keys)
+    {
+        if (keys == null || keys.Length == 0)
+        {
+            return SFXKey.None;
+        }
+
+        return keys[Random.Range(0, keys.Length)];
     }
 
     [PunRPC]
-    private void RPC_SpawnAirEvent(int spawnPointIndex, int prefabIndex)
+    private void RPC_SpawnAirEvent(int spawnPointIndex, int prefabIndex, int sfxKey)
     {
         if (spawnPointIndex < 0 || spawnPointIndex >= _spawnPoints.Length) return;
         if (prefabIndex < 0 || prefabIndex >= _airEventPrefabs.Length) return;
@@ -69,7 +105,10 @@ public class AirEventSpawner : MonoBehaviourPun
             spawnedObject.transform.rotation = Quaternion.LookRotation(direction);
         }
 
-        SoundManager.Instance.Play(SFXKey.AmbJetFly, SoundType.Local);
+        if (sfxKey != (int)SFXKey.None)
+        {
+            SoundManager.Instance.Play((SFXKey)sfxKey, SoundType.Local);
+        }
 
         AirEventMover mover = spawnedObject.AddComponent<AirEventMover>();
         mover.Initialize(direction, _moveDuration, _moveSpeed, _maxShakeIntensity, _maxShakeDistance);

@@ -28,8 +28,8 @@ public enum SFXKey
     UIButtonConfirm = 2,
     UIPanelOpen = 3,
     UIPanelClose = 4,
-    AmbHelicopter = 5,
-    AmbJetFly = 6,
+    AmbHelicopter1 = 5,
+    AmbJetFly1 = 6,
     AmbPenguin1 = 7,
     AmbPenguin2 = 8,
     AmbPenguin3 = 9,
@@ -57,6 +57,9 @@ public enum SFXKey
     PatientDeathCoffinClose = 31,
     PatinetDeathAngel = 32,
     UIGoToWorkButton = 33,
+    AmbHelicopter2 = 34,
+    AmbJetFly2 = 35,
+    AmbJetFly3 = 36,
 }
 
 // 사운드 재생 타입.
