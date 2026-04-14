@@ -7,8 +7,10 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
 {
     [Header("인디케이터")]
     [SerializeField] private Renderer _downIndicatorRenderer;
-    [SerializeField] private GameObject _upIndicator;
+    [SerializeField] private IndicatorBillboard _upIndicatorPrefab;
+    [SerializeField] private Vector3 _upIndicatorOffset = new Vector3(0f, 2f, 0f);
 
+    private IndicatorBillboard _upIndicatorInstance;
     private Renderer[] _upIndicatorRenderers;
 
     private Material _originalMaterial;
@@ -29,6 +31,11 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         UnsubscribeFromManager();
     }
 
+    private void OnDestroy()
+    {
+        DestroyUpIndicator();
+    }
+
     private void Initialize()
     {
         if (_isInitialized) return;
@@ -38,13 +45,31 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
             _originalMaterial = _downIndicatorRenderer.sharedMaterial;
         }
 
-        if (_upIndicator != null)
+        _isInitialized = true;
+    }
+
+    private void CreateUpIndicator()
+    {
+        if (_upIndicatorInstance != null || _upIndicatorPrefab == null)
         {
-            _upIndicatorRenderers = _upIndicator.GetComponentsInChildren<Renderer>();
-            _upIndicator.SetActive(false);
+            return;
         }
 
-        _isInitialized = true;
+        _upIndicatorInstance = Instantiate(_upIndicatorPrefab);
+        _upIndicatorInstance.Initialize(transform, _upIndicatorOffset);
+        _upIndicatorRenderers = _upIndicatorInstance.GetComponentsInChildren<Renderer>();
+    }
+
+    private void DestroyUpIndicator()
+    {
+        if (_upIndicatorInstance == null)
+        {
+            return;
+        }
+
+        Destroy(_upIndicatorInstance.gameObject);
+        _upIndicatorInstance = null;
+        _upIndicatorRenderers = null;
     }
 
     private void SubscribeToManager()
@@ -121,10 +146,11 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
         // 인디케이터 머티리얼 적용
         ApplyIndicatorMaterial(profile.GetMaterial(role));
 
-        // 자기 자신만 _upIndicator 활성화
-        if (_upIndicator != null && photonView.IsMine)
+        // 자기 자신만 _upIndicator 생성
+        if (photonView.IsMine)
         {
-            _upIndicator.SetActive(true);
+            CreateUpIndicator();
+            ApplyIndicatorMaterial(profile.GetMaterial(role));
         }
 
         Debug.Log($"[PlayerRoleView] 역할 적용 - {photonView.Owner.NickName}: {role}");
@@ -144,10 +170,7 @@ public class PlayerRoleView : MonoBehaviourPunCallbacks
             ApplyIndicatorMaterial(_originalMaterial);
         }
 
-        if (_upIndicator != null)
-        {
-            _upIndicator.SetActive(false);
-        }
+        DestroyUpIndicator();
     }
 
     private void ApplyIndicatorMaterial(Material material)
