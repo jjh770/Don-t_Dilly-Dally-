@@ -6,12 +6,15 @@ public class UI_HospitalUpgradeView : MonoBehaviour
 {
     [SerializeField] private Button _upgradeButton;
     [SerializeField] private GameObject _maxLevelTextObject;
+    [SerializeField] private GameObject _requirementStampImageObject;
     [SerializeField] private GameObject _coinRequirementRoot;
     [SerializeField] private TMP_Text _coinRequirementText;
     [SerializeField] private Slider _coinSlider;
     [SerializeField] private GameObject _starRequirementRoot;
     [SerializeField] private TMP_Text _starRequirementText;
     [SerializeField] private Slider _starSlider;
+    [SerializeField] private Color _defaultSliderFillColor = Color.white;
+    [SerializeField] private Color _completedSliderFillColor = Color.green;
 
     private UI_HospitalUpgradePresenter _presenter;
 
@@ -38,12 +41,23 @@ public class UI_HospitalUpgradeView : MonoBehaviour
 
     public void Render(int currentCoin, int requiredCoin, int currentStar, int requiredStar, bool canUpgrade, bool hasNextLevel, bool isMaster)
     {
-        SetRequirementSection(_coinRequirementRoot, _coinRequirementText, _coinSlider, currentCoin, requiredCoin);
-        SetRequirementSection(_starRequirementRoot, _starRequirementText, _starSlider, currentStar, requiredStar);
+        bool isCoinRequirementMet = SetRequirementSection(_coinRequirementRoot, _coinRequirementText, _coinSlider, currentCoin, requiredCoin);
+        bool isStarRequirementMet = SetRequirementSection(_starRequirementRoot, _starRequirementText, _starSlider, currentStar, requiredStar);
+        bool hasCoinRequirement = requiredCoin > 0;
+        bool hasStarRequirement = requiredStar > 0;
+        bool hasAnyRequirement = hasCoinRequirement || hasStarRequirement;
+        bool areAllVisibleRequirementsMet =
+            (!hasCoinRequirement || isCoinRequirementMet) &&
+            (!hasStarRequirement || isStarRequirementMet);
 
         if (_maxLevelTextObject != null)
         {
             _maxLevelTextObject.SetActive(!hasNextLevel);
+        }
+
+        if (_requirementStampImageObject != null)
+        {
+            _requirementStampImageObject.SetActive(hasNextLevel && hasAnyRequirement && areAllVisibleRequirementsMet);
         }
 
         if (_upgradeButton != null)
@@ -53,7 +67,7 @@ public class UI_HospitalUpgradeView : MonoBehaviour
         }
     }
 
-    private void SetRequirementSection(GameObject root, TMP_Text requirementText, Slider slider, int currentValue, int requiredValue)
+    private bool SetRequirementSection(GameObject root, TMP_Text requirementText, Slider slider, int currentValue, int requiredValue)
     {
         bool shouldShow = requiredValue > 0;
 
@@ -64,7 +78,8 @@ public class UI_HospitalUpgradeView : MonoBehaviour
 
         if (!shouldShow)
         {
-            return;
+            SetSliderFillColor(slider, _defaultSliderFillColor);
+            return false;
         }
 
         if (requirementText != null)
@@ -72,11 +87,29 @@ public class UI_HospitalUpgradeView : MonoBehaviour
             requirementText.text = $"{requiredValue}";
         }
 
+        bool isRequirementMet = currentValue >= requiredValue;
         if (slider != null)
         {
             slider.minValue = 0f;
             slider.maxValue = 1f;
             slider.SetValueWithoutNotify(Mathf.Clamp01((float)currentValue / requiredValue));
+            SetSliderFillColor(slider, isRequirementMet ? _completedSliderFillColor : _defaultSliderFillColor);
+        }
+
+        return isRequirementMet;
+    }
+
+    private void SetSliderFillColor(Slider slider, Color color)
+    {
+        if (slider?.fillRect == null)
+        {
+            return;
+        }
+
+        Image fillImage = slider.fillRect.GetComponent<Image>();
+        if (fillImage != null)
+        {
+            fillImage.color = color;
         }
     }
 
