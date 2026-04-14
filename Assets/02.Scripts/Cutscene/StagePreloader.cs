@@ -158,13 +158,23 @@ public class StagePreloader : MonoBehaviourPunCallbacks
             DiseaseData[] results = await UniTask.WhenAll(tasks);
 
             // 결과를 순서대로 등록 — null이면 폴백으로 즉시 대체
+            // 사용된 폴백 ID를 추적하여 중복 방지
+            var usedFallbackIds = new HashSet<string>();
+            List<DiseaseData> stageFallbacks = FallbackDiseaseLoader.GetByStage(StageData.StageId);
+
             for (int i = 0; i < results.Length; i++)
             {
                 DiseaseData disease = results[i];
-                if (disease == null)
+                bool needsFallback = disease == null || disease.Source != RecipeSource.AIGenerated;
+
+                if (needsFallback)
                 {
-                    disease = FallbackDiseaseLoader.GetRandom(StageData.StageId);
-                    Debug.LogWarning($"[StagePreloader] 환자 {i + 1}/{patientCount} AI 실패 → 폴백 사용: {disease.DiseaseName}");
+                    disease = PickUniqueFallback(stageFallbacks, usedFallbackIds, StageData.StageId);
+                    if (disease != null)
+                    {
+                        usedFallbackIds.Add(disease.DiseaseId);
+                    }
+                    Debug.LogWarning($"[StagePreloader] 환자 {i + 1}/{patientCount} AI 실패 → 폴백 사용: {disease?.DiseaseName ?? "없음"}");
                 }
                 else
                 {
@@ -196,6 +206,35 @@ public class StagePreloader : MonoBehaviourPunCallbacks
         {
             Debug.Log("[StagePreloader] 데이터 준비 취소됨");
         }
+    }
+
+    // 사용되지 않은 폴백 데이터를 랜덤으로 하나 선택합니다 (Query 전용, 부수 효과 없음).
+    // usedIds 갱신은 호출자가 담당합니다.
+    private static DiseaseData PickUniqueFallback(
+        List<DiseaseData> stageFallbacks, HashSet<string> usedIds, string stageId)
+    {
+        if (stageFallbacks == null || stageFallbacks.Count == 0)
+        {
+            return FallbackDiseaseLoader.GetRandom(stageId);
+        }
+
+        // 사용 가능한 후보를 모아서 랜덤 선택 (순차 선택 방지)
+        var available = new List<DiseaseData>();
+        for (int i = 0; i < stageFallbacks.Count; i++)
+        {
+            if (!usedIds.Contains(stageFallbacks[i].DiseaseId))
+            {
+                available.Add(stageFallbacks[i]);
+            }
+        }
+
+        if (available.Count > 0)
+        {
+            return available[UnityEngine.Random.Range(0, available.Count)];
+        }
+
+        // 모든 폴백 소진 — 어쩔 수 없이 랜덤 (중복 허용)
+        return stageFallbacks[UnityEngine.Random.Range(0, stageFallbacks.Count)];
     }
 
     /// <summary>

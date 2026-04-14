@@ -265,7 +265,7 @@ namespace DontDillyDally.Data
         [SerializeField] private DiseaseGenerationService _generationService;
 
         [Header("재시도 설정")]
-        [SerializeField] private int _maxRetries = 2;
+        [SerializeField] private int _maxRetries = 0;
 
         // 지정된 난이도와 카테고리로 질병 데이터를 생성합니다.
         // AI 생성에 실패하면 폴백 데이터를 반환합니다.
