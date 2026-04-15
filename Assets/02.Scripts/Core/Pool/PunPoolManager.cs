@@ -43,10 +43,21 @@ public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
         {
             GameObject pooled = GetFromQueue(prefabId) ?? CreateNew(prefabId);
             if (pooled == null)
+            {
                 return null;
+            }
 
             pooled.transform.SetParent(null);
             pooled.transform.SetPositionAndRotation(position, rotation);
+
+            // 비활성 상태에서 non-kinematic Rigidbody의 내부 position이
+            // transform.position과 불일치할 수 있으므로 명시적으로 동기화한다.
+            if (pooled.TryGetComponent(out Rigidbody rb))
+            {
+                rb.position = position;
+                rb.rotation = rotation;
+            }
+
             return pooled;
         }
 
@@ -61,9 +72,14 @@ public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
     }
 
     // IPunPrefabPool 구현:
-    // PUN2가 SetActive(false)까지 처리한 뒤 호출하므로 큐에만 되돌려 놓는다.
+    // 커스텀 풀은 반납된 오브젝트를 직접 비활성화한 뒤 큐에 되돌린다.
     public void Destroy(GameObject go)
     {
+        if (go == null)
+        {
+            return;
+        }
+
         if (go.TryGetComponent(out ItemObject itemObject))
         {
             itemObject.NotifyRecycled();
@@ -76,6 +92,11 @@ public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
         }
 
         // 풀 루트 아래로 되돌려 다음 재사용을 준비한다.
+        if (go.activeSelf)
+        {
+            go.SetActive(false);
+        }
+
         go.transform.SetParent(_poolRoot);
         go.transform.localPosition = Vector3.zero;
         go.transform.localRotation = Quaternion.identity;
@@ -100,7 +121,9 @@ public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
     private GameObject CreateNew(string prefabId)
     {
         if (!_prefabTable.TryGetEntry(prefabId, out var entry))
+        {
             return null;
+        }
 
         var obj = Object.Instantiate(entry.Prefab, _poolRoot);
         obj.SetActive(false);
@@ -115,7 +138,15 @@ public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
     private GameObject GetFromQueue(string prefabId)
     {
         if (_pools.TryGetValue(prefabId, out var queue) && queue.Count > 0)
-            return queue.Dequeue();
+        {
+            GameObject pooled = queue.Dequeue();
+            if (pooled != null && pooled.activeSelf)
+            {
+                pooled.SetActive(false);
+            }
+
+            return pooled;
+        }
         return null;
     }
 

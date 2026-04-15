@@ -167,8 +167,16 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     public void PrepareForRecycle()
     {
-        StopInteract();
-        SetStoredInContainer(false);
+        IsInteracting = false;
+        IsStoredInContainer = false;
+        _isWaitingForOwnershipReturn = false;
+        _settledTime = 0f;
+        _currentHoldPoint = null;
+        _holderActorNumber = InvalidActorNumber;
+
+        StopDynamicMotion();
+        _rigidbody.isKinematic = true;
+        SetAllCollidersEnabled(true);
     }
 
     public void Hold(Transform holdPoint)
@@ -334,7 +342,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     private void StopDynamicMotion()
     {
-        if (_rigidbody == null || _rigidbody.isKinematic)
+        if (_rigidbody == null)
             return;
 
         _rigidbody.linearVelocity = Vector3.zero;

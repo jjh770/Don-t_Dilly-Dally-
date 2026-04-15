@@ -61,7 +61,10 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks, IPunInstant
     public void ForceRespawn()
     {
         if (!CanUsePhotonSpawn())
+        {
             return;
+        }
+
         EnsureSpawnedItem(forceRespawn: true);
     }
 
@@ -94,7 +97,9 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks, IPunInstant
     private void TryEnsureSpawnedItem()
     {
         if (!CanUsePhotonSpawn())
+        {
             return;
+        }
 
         EnsureSpawnedItem();
     }
@@ -107,7 +112,9 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks, IPunInstant
     private void EnsureSpawnedItem(bool forceRespawn = false)
     {
         if (!CanSpawnItem())
+        {
             return;
+        }
 
         Transform parent = GetSpawnParent();
 
@@ -118,16 +125,24 @@ public abstract class ItemSource<TItem> : MonoBehaviourPunCallbacks, IPunInstant
         }
 
         if (CurrentSpawnedItem != null)
+        {
             return;
+        }
 
+        object[] instantiationData = GetInstantiationData();
         GameObject spawnedObject = PhotonNetwork.InstantiateRoomObject(
             SpawnedItemPrefab.name,
             parent.position,
             parent.rotation,
             0,
-            GetInstantiationData());
+            instantiationData);
 
         TItem spawnedItem = spawnedObject.GetComponent<TItem>();
+        if (spawnedItem == null)
+        {
+            return;
+        }
+
         spawnedItem.name = GetDefaultItemName();
         spawnedItem.Recycled += OnSpawnedItemRecycled;
         CurrentSpawnedItem = spawnedItem;
