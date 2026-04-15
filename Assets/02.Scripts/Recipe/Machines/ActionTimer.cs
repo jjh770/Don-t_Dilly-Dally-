@@ -25,6 +25,7 @@ namespace DontDillyDally.Data
         private bool _isInitialized;
         private bool _hasLockedWorldPosition;
         private Vector3 _lockedWorldPosition;
+        private Camera _cachedTargetCamera;
 
         public bool IsRunning => _isRunning;
         public float Progress01 => _duration <= 0f ? 1f : Mathf.Clamp01(_elapsed / _duration);
@@ -159,7 +160,7 @@ namespace DontDillyDally.Data
             if (!_followWorldAnchor || _positionRoot == null || _worldAnchor == null)
                 return true;
 
-            Camera targetCamera = _targetCamera != null ? _targetCamera : Camera.main;
+            Camera targetCamera = GetTargetCamera();
             if (targetCamera == null)
                 return true;
 
@@ -180,6 +181,17 @@ namespace DontDillyDally.Data
 
             Transform anchor = _worldAnchor != null ? _worldAnchor : transform;
             return anchor.position + _worldOffset;
+        }
+
+        private Camera GetTargetCamera()
+        {
+            if (_targetCamera != null)
+                return _targetCamera;
+
+            if (_cachedTargetCamera == null)
+                _cachedTargetCamera = Camera.main;
+
+            return _cachedTargetCamera;
         }
     }
 }
