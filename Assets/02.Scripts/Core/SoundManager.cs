@@ -129,6 +129,9 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     private readonly Dictionary<AudioSource, float> _sfxFadeDurations = new Dictionary<AudioSource, float>();
     private float _currentBgmEntryVolume = 1f;
 
+    public float BGMVolume => _bgmVolume;
+    public float SFXVolume => _sfxVolume;
+
     // ──────────────────────────────────────────
     //  초기화
     // ──────────────────────────────────────────
