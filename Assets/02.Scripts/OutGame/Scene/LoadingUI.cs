@@ -2,11 +2,13 @@ using System.Collections.Generic;
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 public enum ELoadingStep
 {
     FirebaseInit,
     PlayerDataLoad,
     AttendanceLoad,
+    NoInternet,
 }
 
 public static class LoadingUIEvents
@@ -31,21 +33,29 @@ public static class LoadingUIEvents
     }
 }
 
-public class LoadingUI : MonoBehaviour
+public class LoadingUI : PersistentSingleton<LoadingUI>
 {
     [SerializeField] private GameObject _panel;
     [SerializeField] private TMP_Text _messageText;
+    [SerializeField] private Button _quitGameButton;
 
     private readonly Dictionary<ELoadingStep, string> _messages = new()
     {
         { ELoadingStep.FirebaseInit,    "서버에 연결하는 중..." },
         { ELoadingStep.PlayerDataLoad,  "플레이어 데이터를 불러오는 중..." },
+        {ELoadingStep.NoInternet, "서버 연결에 실패하였습니다.\n연결 상태를 확인하여 재접속 해주세요." },
     };
 
     private void OnEnable()
     {
         LoadingUIEvents.OnShowRequested += Show;
         LoadingUIEvents.OnHideRequested += Hide;
+        if (_quitGameButton != null)
+        {
+            _quitGameButton.onClick.AddListener(HandleQuitButtonClicked);
+        }
+
+        _quitGameButton.gameObject.SetActive(false);
 
         if (LoadingUIEvents.IsVisible)
         {
@@ -57,10 +67,23 @@ public class LoadingUI : MonoBehaviour
         }
     }
 
+    private void HandleQuitButtonClicked()
+    {
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
     private void OnDisable()
     {
         LoadingUIEvents.OnShowRequested -= Show;
         LoadingUIEvents.OnHideRequested -= Hide;
+        if (_quitGameButton != null)
+        {
+            _quitGameButton.onClick.RemoveListener(HandleQuitButtonClicked);
+        }
     }
 
     public void Show(ELoadingStep step)
@@ -69,7 +92,11 @@ public class LoadingUI : MonoBehaviour
         {
             _messageText.text = message;
         }
-        _panel.SetActive(true);
+        if (step == ELoadingStep.NoInternet)
+        {
+            _quitGameButton.gameObject.SetActive(true);
+        }
+        _panel.SetActive(true);     
     }
 
     public void Hide() => _panel.SetActive(false);

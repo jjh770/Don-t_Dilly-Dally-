@@ -27,10 +27,13 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
     private readonly System.Random _random = new System.Random();
 
+    private bool _isEnabled = true;
+
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
     public string RoomCode => PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom.Name : null;
 
+    public bool IsEnabled => _isEnabled;
 
     public event Action<string> OnFailedToJoinRoom;
     public event Action<Player, bool> OnReadyStateChanged;
@@ -63,7 +66,33 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         PhotonNetwork.EnableCloseConnection = true;
         PhotonNetwork.AutomaticallySyncScene = true;
 
-        PhotonNetwork.ConnectUsingSettings();
+        if (!PhotonNetwork.ConnectUsingSettings())
+        {
+            HandleConnectError();
+        }
+    }
+
+    private void HandleConnectError()
+    {
+        if (_isEnabled)
+        {
+            _isEnabled = false;
+            LoadingUIEvents.Show(ELoadingStep.NoInternet);
+        }
+    }
+
+    public override void OnDisconnected(DisconnectCause cause)
+    {
+        HandleConnectError();
+        Debug.LogWarning($"[PhotonServerManager] Disconnected: {cause}");
+
+        string message = cause switch
+        {
+            DisconnectCause.ExceptionOnConnect => "네트워크 연결을 확인해주세요.",
+            DisconnectCause.ServerTimeout => "서버 연결 시간이 초과되었습니다.",
+            DisconnectCause.ClientTimeout => "네트워크가 불안정합니다.",
+            _ => $"연결이 끊어졌습니다. ({cause})"
+        };
     }
 
     public override void OnConnectedToMaster()
