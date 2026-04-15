@@ -80,13 +80,14 @@ public class BurnoutLaunchClear : PatientClearBase
         Transform bedTransform,
         Transform patientTransform)
     {
-        // 캐싱을 ForceComplete보다 먼저 — 첫 호출 시 zero로 원복하는 버그 방지.
+        // ForceComplete 먼저 — 이전 연출 중간 상태를 정리한 뒤 캐싱.
+        // (_hasCachedState 가드로 첫 호출 시 zero 원복 방지.)
+        ForceComplete(patientRoot, bedTransform, patientTransform);
+
         _cachedRootPosition = patientRoot.position;
         _cachedBedPosition = bedTransform.position;
         _cachedBedRotation = bedTransform.rotation;
         _hasCachedState = true;
-
-        ForceComplete(patientRoot, bedTransform, patientTransform);
 
         Vector3 startPosition = _cachedBedPosition;
         Quaternion startRotation = _cachedBedRotation;
@@ -128,10 +129,9 @@ public class BurnoutLaunchClear : PatientClearBase
         // 발사 트레일 연기.
         _sequence.InsertCallback(_launchTrailStartTime, () => PlayFx(_launchTrailFx));
 
-        // 시퀀스 끝나면 patientRoot 원복 + 파티클 정리.
+        // 시퀀스 끝나면 파티클 정리만. 위치 원복은 EntranceDirector가 담당.
         _sequence.OnComplete(() =>
         {
-            patientRoot.position = _cachedRootPosition;
             ClearBurnoutSmoke();
             ClearFx(_launchTrailFx);
         });

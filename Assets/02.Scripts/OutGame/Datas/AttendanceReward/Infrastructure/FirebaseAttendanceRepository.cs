@@ -6,17 +6,26 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
 {
     private readonly FirebaseFirestore _db;
 
-    private const string CollectionName = "AttendanceRecord";
-    public FirebaseAttendanceRepository(FirebaseFirestore db)
+    private readonly string _id;
+
+    private const string CollectionName = "users";
+    private const string SubCollectionName = "data";
+    private const string DataDocumentId = "attendance";
+    public FirebaseAttendanceRepository(FirebaseFirestore db, string userId)
     {
         _db = db;
+        _id = userId;
     }
 
-    public async UniTask<AttendanceRecord> LoadAsync(string playerId)
+    public async UniTask<AttendanceRecord> LoadAsync()
     {
         try
         {
-            var result = await _db.Collection(CollectionName).Document(playerId).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName)
+                          .Document(_id)
+                          .Collection(SubCollectionName)
+                          .Document(DataDocumentId)
+                          .GetSnapshotAsync();
 
             AttendanceRecordDTO dto = result.ConvertTo<AttendanceRecordDTO>();
 
@@ -26,7 +35,7 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
                 Debug.LogWarning("[FirebaseAttendanceRepository] 불러온 데이터가 null 입니다. null을 반환합니다.");
                 return null;
             }
-            return dto.ToDomain(playerId);
+            return dto.ToDomain();
         }
         catch (System.Exception e)
         {
@@ -35,12 +44,16 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
         }
     }
 
-    public async UniTask SaveAsync(string playerId, AttendanceRecord record)
+    public async UniTask SaveAsync(AttendanceRecord record)
     {
         try
         {
             var dto = AttendanceRecordDTO.FromDomain(record);
-            await _db.Collection(CollectionName).Document(playerId).SetAsync(dto);
+            await _db.Collection(CollectionName)
+                          .Document(_id)
+                          .Collection(SubCollectionName)
+                          .Document(DataDocumentId)
+                          .SetAsync(dto);
             Debug.Log("[FirebaseAttendanceRepository] 저장 성공");
         }
         catch (System.Exception e)
@@ -67,7 +80,7 @@ public class FirebaseAttendanceRepository : IAttendanceRepository
         }
 
         // DTO → Domain
-        public AttendanceRecord ToDomain(string playerID) => new AttendanceRecord(playerID, TotalDays, LastCheckedDate);
+        public AttendanceRecord ToDomain() => new AttendanceRecord(TotalDays, LastCheckedDate);
 
 
         // Domain → DTO
