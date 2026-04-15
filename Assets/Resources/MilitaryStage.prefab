@@ -2038,6 +2038,37 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!1 &8106821432837186829
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3980060721635124786}
+  m_Layer: 6
+  m_Name: BedRotatePivot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3980060721635124786
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8106821432837186829}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 7868907853561779903}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &8804982234007097806
 GameObject:
   m_ObjectHideFlags: 0
@@ -9182,6 +9213,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 3083738517127164069, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2757815583926558055}
+    - targetCorrespondingSourceObject: {fileID: 3083738517127164069, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 3980060721635124786}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 2414056373852416543, guid: 45309b5db85d6df44ac3fff41e5924dd, type: 3}
       insertIndex: -1
@@ -13701,7 +13735,7 @@ PrefabInstance:
       objectReference: {fileID: 8760888484537495839}
     - target: {fileID: 2625280244792203905, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
       propertyPath: _clears.Array.size
-      value: 1
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 5024102182139606937, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
       propertyPath: m_Name
@@ -13723,6 +13757,38 @@ PrefabInstance:
       propertyPath: '_burnoutSmokeFx.Array.data[1]'
       value: 
       objectReference: {fileID: 7066422731361565025}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _chargeDustFx
+      value: 
+      objectReference: {fileID: 3600242157446984992}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _catapultPivot
+      value: 
+      objectReference: {fileID: 3980060721635124786}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _slideOffset.x
+      value: -12
+      objectReference: {fileID: 0}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _catapultAxis.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _catapultAxis.z
+      value: -1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _flingStartTime
+      value: 0.7
+      objectReference: {fileID: 0}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _catapultSmokeFx
+      value: 
+      objectReference: {fileID: 5423711334318769559}
+    - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _flingPeakHeight
+      value: 4
+      objectReference: {fileID: 0}
     - target: {fileID: 8284956658772639871, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
