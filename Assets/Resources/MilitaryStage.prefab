@@ -5047,6 +5047,11 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2350253702857961218, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
   m_PrefabInstance: {fileID: 2244492072266064154}
   m_PrefabAsset: {fileID: 0}
+--- !u!198 &5378853043315340315 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 6161927035943884033, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
+  m_PrefabInstance: {fileID: 2244492072266064154}
+  m_PrefabAsset: {fileID: 0}
 --- !u!198 &6264495069799542839 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 5317058696252952877, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
@@ -13813,6 +13818,22 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 7266210074369979858}
     - target: {fileID: 5409430866093202568, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _launchTiltAngle.x
+      value: -20
+      objectReference: {fileID: 0}
+    - target: {fileID: 5409430866093202568, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _launchTiltAngle.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5409430866093202568, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _wheelihTiltAngle.x
+      value: -10
+      objectReference: {fileID: 0}
+    - target: {fileID: 5409430866093202568, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
+      propertyPath: _wheelihTiltAngle.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5409430866093202568, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
       propertyPath: _burnoutSmokeFx.Array.size
       value: 2
       objectReference: {fileID: 0}
@@ -13823,7 +13844,7 @@ PrefabInstance:
     - target: {fileID: 5409430866093202568, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
       propertyPath: '_burnoutSmokeFx.Array.data[1]'
       value: 
-      objectReference: {fileID: 7066422731361565025}
+      objectReference: {fileID: 5378853043315340315}
     - target: {fileID: 6646258820135386236, guid: 1d65828bea480d14f874f882c92f4ff4, type: 3}
       propertyPath: _chargeDustFx
       value: 
