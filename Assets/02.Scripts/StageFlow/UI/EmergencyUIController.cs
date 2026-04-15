@@ -24,6 +24,10 @@ public sealed class EmergencyUIController : MonoBehaviour
 
     private void Awake()
     {
+        if (_stageFlowManager == null)
+        {
+            _stageFlowManager = StageFlowManager.Instance;
+        }
         ResolveReferences();
         _emergencyView?.UseExternalController();
         SetOverlayVisible(false);
@@ -31,11 +35,6 @@ public sealed class EmergencyUIController : MonoBehaviour
 
     private void Update()
     {
-        if (_stageFlowManager == null)
-        {
-            _stageFlowManager = StageFlowManager.Instance;
-        }
-
         if (_stageFlowManager == null || !_stageFlowManager.IsInitialized)
         {
             SetOverlayVisible(false);
@@ -57,7 +56,7 @@ public sealed class EmergencyUIController : MonoBehaviour
         }
 
         SetOverlayVisible(true);
-        _emergencyView.Refresh(_stageFlowManager);
+        _emergencyView?.Refresh(_stageFlowManager);
     }
 
     private void ResolveReferences()
@@ -106,7 +105,7 @@ public sealed class EmergencyUIController : MonoBehaviour
     {
         if (_followRoot == null || _canvasRect == null || _worldCamera == null)
         {
-            return true;
+            return false;
         }
 
         Vector3 screenPoint = _worldCamera.WorldToScreenPoint(anchor.position);
