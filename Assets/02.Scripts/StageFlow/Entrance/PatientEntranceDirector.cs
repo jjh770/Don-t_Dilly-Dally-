@@ -1,6 +1,5 @@
 using DG.Tweening;
 using DontDillyDally.StageFlow;
-using Photon.Pun;
 using UniRx;
 using UnityEngine;
 
@@ -184,8 +183,8 @@ public class PatientEntranceDirector : MonoBehaviour
             return _fixedEntrance;
         }
 
-        // 멀티플레이어 동기화를 위해 PhotonNetwork.Time 기반 시드 사용.
-        int seed = (int)(PhotonNetwork.Time * 1000);
+        // 마스터가 생성한 시드로 동기화 (모든 클라이언트 동일 결과).
+        int seed = _stageFlowManager != null ? _stageFlowManager.DirectionSeed : 0;
         int index = new System.Random(seed).Next(0, _entrances.Length);
         return _entrances[index];
     }
