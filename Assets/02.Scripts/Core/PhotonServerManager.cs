@@ -66,33 +66,47 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         PhotonNetwork.EnableCloseConnection = true;
         PhotonNetwork.AutomaticallySyncScene = true;
 
-        if (!PhotonNetwork.ConnectUsingSettings())
-        {
-            HandleConnectError();
-        }
+        PhotonNetwork.ConnectUsingSettings();
     }
 
-    private void HandleConnectError()
+    private void HandleConnectError(string log)
     {
         if (_isEnabled)
         {
             _isEnabled = false;
+            Debug.LogError($"[PhotonServerManager] Connect Error: {log}");
             LoadingUIEvents.Show(ELoadingStep.NoInternet);
         }
     }
 
     public override void OnDisconnected(DisconnectCause cause)
     {
-        HandleConnectError();
-        Debug.LogWarning($"[PhotonServerManager] Disconnected: {cause}");
+        Debug.Log($"[PhotonServerManager] Disconnected: {cause}");
 
-        string message = cause switch
+        switch (cause)
         {
-            DisconnectCause.ExceptionOnConnect => "네트워크 연결을 확인해주세요.",
-            DisconnectCause.ServerTimeout => "서버 연결 시간이 초과되었습니다.",
-            DisconnectCause.ClientTimeout => "네트워크가 불안정합니다.",
-            _ => $"연결이 끊어졌습니다. ({cause})"
-        };
+            case DisconnectCause.DisconnectByClientLogic:
+            case DisconnectCause.DisconnectByServerLogic:
+                return; // 정상 종료로 간주
+
+            case DisconnectCause.ExceptionOnConnect:
+                HandleConnectError("네트워크 연결을 확인해주세요.");
+                break;
+
+            case DisconnectCause.ServerTimeout:
+                HandleConnectError("서버 연결 시간이 초과되었습니다.");
+                break;
+
+            case DisconnectCause.ClientTimeout:
+                HandleConnectError("네트워크가 불안정합니다.");
+                break;
+
+            default:
+                HandleConnectError($"연결이 끊어졌습니다. ({cause})");
+                break;
+        }
+
+        
     }
 
     public override void OnConnectedToMaster()

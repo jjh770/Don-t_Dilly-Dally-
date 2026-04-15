@@ -50,12 +50,12 @@ public class LoadingUI : PersistentSingleton<LoadingUI>
     {
         LoadingUIEvents.OnShowRequested += Show;
         LoadingUIEvents.OnHideRequested += Hide;
+
         if (_quitGameButton != null)
         {
             _quitGameButton.onClick.AddListener(HandleQuitButtonClicked);
+            _quitGameButton.gameObject.SetActive(false);
         }
-
-        _quitGameButton.gameObject.SetActive(false);
 
         if (LoadingUIEvents.IsVisible)
         {
@@ -94,9 +94,15 @@ public class LoadingUI : PersistentSingleton<LoadingUI>
         }
         if (step == ELoadingStep.NoInternet)
         {
-            _quitGameButton.gameObject.SetActive(true);
+            if (_quitGameButton != null) 
+                _quitGameButton.gameObject.SetActive(true);
         }
-        _panel.SetActive(true);     
+        else
+        {
+            if (_quitGameButton != null)
+                _quitGameButton.gameObject.SetActive(false);
+        }
+            _panel.SetActive(true);     
     }
 
     public void Hide() => _panel.SetActive(false);
