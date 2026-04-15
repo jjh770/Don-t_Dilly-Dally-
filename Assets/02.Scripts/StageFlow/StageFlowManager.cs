@@ -61,6 +61,7 @@ namespace DontDillyDally.StageFlow
         public IReadOnlyReactiveProperty<int> SurgeonActorNumber => _rpc.SurgeonActorNumber;
         public IReadOnlyReactiveProperty<double> CountdownStartTime => _rpc.CountdownStartTime;
         public IReadOnlyReactiveProperty<float> CountdownDuration => _rpc.CountdownDuration;
+        public int DirectionSeed => _rpc.DirectionSeed.Value;
         public StageRuntimeData CurrentStageData => _stageData;
         public float LocalRemainingTime => _timer != null ? _timer.RemainingTime : 0f;
         public bool IsLocalSurgeon => GetLocalRole() == EStageRole.Surgeon;

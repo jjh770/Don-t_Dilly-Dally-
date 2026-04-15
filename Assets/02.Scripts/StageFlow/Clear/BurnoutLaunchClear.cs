@@ -128,10 +128,9 @@ public class BurnoutLaunchClear : PatientClearBase
         // 발사 트레일 연기.
         _sequence.InsertCallback(_launchTrailStartTime, () => PlayFx(_launchTrailFx));
 
-        // 시퀀스 끝나면 patientRoot 원복 + 파티클 정리.
+        // 시퀀스 끝나면 파티클 정리만. 위치 원복은 EntranceDirector가 담당.
         _sequence.OnComplete(() =>
         {
-            patientRoot.position = _cachedRootPosition;
             ClearBurnoutSmoke();
             ClearFx(_launchTrailFx);
         });

@@ -1,6 +1,5 @@
 using DG.Tweening;
 using DontDillyDally.StageFlow;
-using Photon.Pun;
 using UniRx;
 using UnityEngine;
 
@@ -142,9 +141,9 @@ public class PatientClearDirector : MonoBehaviour
             return _fixedClear;
         }
 
-        // 멀티플레이어 동기화를 위해 PhotonNetwork.Time 기반 시드 사용.
-        // 인접 시드의 첫 출력이 비슷한 .NET Random 특성 때문에 첫 두 호출은 버린다.
-        int seed = (int)(PhotonNetwork.Time * 1000);
+        // 마스터가 생성한 시드로 동기화 (모든 클라이언트 동일 결과).
+        // Entrance/Death와 다른 결과를 위해 rng.Next() 2회 스킵.
+        int seed = _stageFlowManager != null ? _stageFlowManager.DirectionSeed : 0;
         var rng = new System.Random(seed);
         rng.Next();
         rng.Next();

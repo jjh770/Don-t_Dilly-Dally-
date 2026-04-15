@@ -196,10 +196,9 @@ public class CatapultFlingClear : PatientClearBase
             bedTransform.DOMove(slideTarget, _slideDuration)
                 .SetEase(Ease.InQuad));
 
-        // 시퀀스 완료 시 patientRoot 원복 + 파티클 정리.
+        // 시퀀스 끝나면 파티클 정리만. 위치 원복은 EntranceDirector가 담당.
         _sequence.OnComplete(() =>
         {
-            patientRoot.position = _cachedRootPosition;
             ClearFx(_chargeDustFx);
             ClearFx(_flingTrailFx);
             ClearFx(_catapultSmokeFx);
