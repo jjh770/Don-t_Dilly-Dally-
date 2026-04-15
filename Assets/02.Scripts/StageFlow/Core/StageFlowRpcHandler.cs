@@ -52,6 +52,10 @@ namespace DontDillyDally.StageFlow
         public event Action<MiniGameType> OnMiniGameRequested;
         public event Action<bool> OnMiniGameResultReceived;
 
+        // ── 미니게임 VFX 이벤트 (모든 클라이언트가 구독) ──────────────
+        public event Action<MiniGameType> OnMiniGameVFXStarted;
+        public event Action<MiniGameType, bool> OnMiniGameVFXResult;
+
         // ── ACK 이벤트 (마스터가 구독) ───────────────────────────────
         public event Action<int> OnStageDataAckReceived; // actorNumber
         public event Action<int> OnSurgeonAckReceived; // actorNumber
@@ -292,6 +296,17 @@ namespace DontDillyDally.StageFlow
             photonView.RPC(nameof(RPC_MiniGameResult), RpcTarget.MasterClient, success);
         }
 
+        // ── 미니게임 VFX 브로드캐스트 (모든 클라이언트) ─────────────
+        public void BroadcastMiniGameVFXStarted(MiniGameType type)
+        {
+            photonView.RPC(nameof(RPC_MiniGameVFXStarted), RpcTarget.All, (int)type);
+        }
+
+        public void BroadcastMiniGameVFXResult(MiniGameType type, bool isSuccess)
+        {
+            photonView.RPC(nameof(RPC_MiniGameVFXResult), RpcTarget.All, (int)type, isSuccess);
+        }
+
         // ── 보상 ────────────────────────────────────────────────────
         public void BroadcastStageReward(StageReward reward, StageResult result)
         {
@@ -474,6 +489,22 @@ namespace DontDillyDally.StageFlow
         {
             Debug.Log($"[StageFlow] [RPC] 미니게임 결과 수신: {(success ? "성공" : "실패")}");
             OnMiniGameResultReceived?.Invoke(success);
+        }
+
+        [PunRPC]
+        private void RPC_MiniGameVFXStarted(int miniGameType)
+        {
+            var type = (MiniGameType)miniGameType;
+            Debug.Log($"[StageFlow] [RPC] 미니게임 VFX 시작: {type}");
+            OnMiniGameVFXStarted?.Invoke(type);
+        }
+
+        [PunRPC]
+        private void RPC_MiniGameVFXResult(int miniGameType, bool isSuccess)
+        {
+            var type = (MiniGameType)miniGameType;
+            Debug.Log($"[StageFlow] [RPC] 미니게임 VFX 결과: {type}, 성공={isSuccess}");
+            OnMiniGameVFXResult?.Invoke(type, isSuccess);
         }
 
         // ── 보상 ────────────────────────────────────────────────────
