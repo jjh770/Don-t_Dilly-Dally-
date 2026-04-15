@@ -29,7 +29,29 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            if (!photonView.IsMine && !photonView.AmController)
+            if (!PhotonNetwork.IsMasterClient && !photonView.IsMine && !photonView.AmController)
+            {
+                return false;
+            }
+
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                itemObject.RequestRecycleOnMaster();
+                return true;
+            }
+
+            if (!itemObject.TryBeginRecycle())
+            {
+                return true;
+            }
+
+            RecycleAsMaster(itemObject);
+            return true;
+        }
+
+        public static bool TryRecycleAsMaster(ItemObject itemObject)
+        {
+            if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient || itemObject == null)
             {
                 return false;
             }
@@ -39,15 +61,14 @@ namespace DontDillyDally.Data
                 return true;
             }
 
-            PrepareForRecycle(itemObject);
-
-            PhotonNetwork.Destroy(itemObject.gameObject);
+            RecycleAsMaster(itemObject);
             return true;
         }
 
-        private static void PrepareForRecycle(ItemObject itemObject)
+        private static void RecycleAsMaster(ItemObject itemObject)
         {
             itemObject.PrepareForRecycle();
+            PhotonNetwork.Destroy(itemObject.gameObject);
         }
     }
 }
