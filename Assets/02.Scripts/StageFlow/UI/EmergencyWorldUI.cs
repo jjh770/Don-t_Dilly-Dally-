@@ -1,4 +1,5 @@
 using DontDillyDally.Data;
+using DontDillyDally.MiniGame;
 using DontDillyDally.StageFlow;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,39 +16,43 @@ public class EmergencyWorldUI : MonoBehaviour
     [Header("Root")]
     [SerializeField] private GameObject _root;
 
-    [Header("Shared")]
-    [SerializeField] private Image _timerFillImage;
+    [Header("Timer")]
+    [SerializeField] private RadialTimerView _timer;
 
     [Header("Tray Layout")]
     [SerializeField] private GameObject _trayLayout;
+    [SerializeField] private GameObject _targetMaterialIconRoot;
     [SerializeField] private Image _targetMaterialIconImage;
+    [SerializeField] private GameObject _processActionIconRoot;
     [SerializeField] private Image _processActionIconImage;
 
     [Header("Diagnosis Layout")]
     [SerializeField] private GameObject _diagnosisLayout;
+    [SerializeField] private GameObject _diagnosisIconRoot;
     [SerializeField] private Image _diagnosisIconImage;
 
     private StageFlowManager _stageFlowManager;
     private CanvasGroup _canvasGroup;
+    private bool _isInitialized;
     private bool _wasVisible;
+    private bool _isExternallyControlled;
     private EmergencyEventKind _displayedKind = EmergencyEventKind.None;
     private CraftedMaterialType _displayedTrayTarget = CraftedMaterialType.None;
     private DiagnosisScanType _displayedDiagnosisTarget = DiagnosisScanType.None;
 
     private void Awake()
     {
-        if (_root == null)
-        {
-            _root = gameObject;
-        }
-
-        _canvasGroup = _root.GetComponent<CanvasGroup>();
-
+        EnsureInitialized();
         SetVisible(false);
     }
 
     private void Update()
     {
+        if (_isExternallyControlled)
+        {
+            return;
+        }
+
         if (_stageFlowManager == null)
         {
             _stageFlowManager = StageFlowManager.Instance;
@@ -65,13 +70,33 @@ public class EmergencyWorldUI : MonoBehaviour
         SetVisible(shouldShow);
         if (!shouldShow)
         {
-            if (_wasVisible)
-            {
-                ResetDisplayState();
-            }
-
             return;
         }
+
+        Refresh(_stageFlowManager);
+    }
+
+    public void UseExternalController()
+    {
+        _isExternallyControlled = true;
+        EnsureInitialized();
+        SetVisible(false);
+    }
+
+    public void SetPatientIndex(int patientIndex)
+    {
+        _patientIndex = patientIndex;
+    }
+
+    public void Refresh(StageFlowManager stageFlowManager)
+    {
+        if (stageFlowManager == null || !stageFlowManager.IsInitialized)
+        {
+            SetVisible(false);
+            return;
+        }
+
+        _stageFlowManager = stageFlowManager;
 
         EmergencyEventKind kind = _stageFlowManager.CurrentEmergencyKind;
         if (!_wasVisible || _displayedKind != kind)
@@ -108,16 +133,51 @@ public class EmergencyWorldUI : MonoBehaviour
         _wasVisible = true;
     }
 
-    private void SetVisible(bool visible)
+    public void SetVisible(bool visible)
     {
-        if (_root == null || _canvasGroup == null)
+        EnsureInitialized();
+
+        if (_root == null)
         {
             return;
         }
 
-        _canvasGroup.alpha = visible ? 1f : 0f;
-        _canvasGroup.interactable = visible;
-        _canvasGroup.blocksRaycasts = visible;
+        if (_canvasGroup == null)
+        {
+            _root.SetActive(visible);
+        }
+        else
+        {
+            _canvasGroup.alpha = visible ? 1f : 0f;
+            _canvasGroup.interactable = visible;
+            _canvasGroup.blocksRaycasts = visible;
+        }
+
+        if (!visible && _wasVisible)
+        {
+            ResetDisplayState();
+        }
+    }
+
+    private void EnsureInitialized()
+    {
+        if (_isInitialized)
+        {
+            return;
+        }
+
+        if (_root == null)
+        {
+            _root = gameObject;
+        }
+
+        if (_canvasGroup == null)
+        {
+            _canvasGroup = _root.GetComponent<CanvasGroup>();
+        }
+
+        InitializeTimer();
+        _isInitialized = true;
     }
 
     private void UpdateLayout(EmergencyEventKind kind)
@@ -142,7 +202,8 @@ public class EmergencyWorldUI : MonoBehaviour
 
         MaterialIconTable iconTable = _uiCatalog.MaterialIconTable;
 
-        SetImageSprite(_targetMaterialIconImage, iconTable != null ? iconTable.GetMaterialIcon(targetMaterial) : null);
+        Sprite targetIcon = iconTable != null ? iconTable.GetMaterialIcon(targetMaterial) : null;
+        SetIcon(_targetMaterialIconRoot, _targetMaterialIconImage, targetIcon);
 
         Sprite actionIcon = null;
         bool shouldShowProcessAction = false;
@@ -155,9 +216,13 @@ public class EmergencyWorldUI : MonoBehaviour
         }
 
         SetImageSprite(_processActionIconImage, actionIcon);
-        if (_processActionIconImage != null)
+        GameObject actionRoot = _processActionIconRoot != null
+            ? _processActionIconRoot
+            : _processActionIconImage != null ? _processActionIconImage.gameObject : null;
+
+        if (actionRoot != null)
         {
-            _processActionIconImage.gameObject.SetActive(shouldShowProcessAction);
+            actionRoot.SetActive(shouldShowProcessAction);
         }
     }
 
@@ -169,12 +234,12 @@ public class EmergencyWorldUI : MonoBehaviour
         }
 
         Sprite diagnosisIcon = _uiCatalog.GetDiagnosisIcon(diagnosisTarget);
-        SetImageSprite(_diagnosisIconImage, diagnosisIcon);
+        SetIcon(_diagnosisIconRoot, _diagnosisIconImage, diagnosisIcon);
     }
 
     private void UpdateTimer(EmergencyEventKind kind, float remainingTime)
     {
-        if (_timerFillImage == null)
+        if (_timer == null)
         {
             return;
         }
@@ -186,11 +251,25 @@ public class EmergencyWorldUI : MonoBehaviour
 
         if (duration <= 0f)
         {
-            _timerFillImage.fillAmount = 0f;
+            SetTimerRatio(0f);
             return;
         }
 
-        _timerFillImage.fillAmount = Mathf.Clamp01(remainingTime / duration);
+        SetTimerRatio(Mathf.Clamp01(remainingTime / duration));
+    }
+
+    private void InitializeTimer()
+    {
+        _timer ??= new RadialTimerView();
+        _timer.Initialize();
+    }
+
+    private void SetTimerRatio(float ratio)
+    {
+        if (_timer != null)
+        {
+            _timer.SetRatio(ratio);
+        }
     }
 
     private static void SetImageSprite(Image image, Sprite sprite)
@@ -202,6 +281,20 @@ public class EmergencyWorldUI : MonoBehaviour
 
         image.sprite = sprite;
         image.enabled = sprite != null;
+    }
+
+    private static void SetIcon(GameObject root, Image image, Sprite sprite)
+    {
+        SetImageSprite(image, sprite);
+
+        GameObject iconRoot = root != null
+            ? root
+            : image != null ? image.gameObject : null;
+
+        if (iconRoot != null)
+        {
+            iconRoot.SetActive(sprite != null);
+        }
     }
 
     private void ResetDisplayState()
