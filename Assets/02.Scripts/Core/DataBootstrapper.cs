@@ -37,6 +37,8 @@ public class DataBootstrapper : MonoBehaviour
 
     private void OnFirebaseSetComplete()
     {
+        if (!PhotonServerManager.Instance.IsEnabled) return;
+
         LoadingUIEvents.Show(ELoadingStep.PlayerDataLoad);
         
         // Repository 생성
