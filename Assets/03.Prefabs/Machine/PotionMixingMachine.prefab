@@ -94,7 +94,6 @@ MonoBehaviour:
   - {fileID: 7782305369551775583}
   - {fileID: 8154443506486584079}
   _resultPoint: {fileID: 4104899524656972305}
-  _resultPrefab: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
   _actionTimer: {fileID: 5010079669549835023}
   _runningMotion: {fileID: 3583928604032907882}
 --- !u!114 &9126562192315259289
@@ -562,6 +561,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ActionTimer
       objectReference: {fileID: 0}
+    - target: {fileID: 4914397548627977244, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
+      propertyPath: _worldAnchor
+      value: 
+      objectReference: {fileID: 2738302498175911971}
     - target: {fileID: 6888697892938087446, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -604,7 +607,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7484383893618393398, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 1.1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -621,7 +624,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0eb7fa1511c938b4db66a8244832cdbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.WorldActionTimer
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.ActionTimer
 --- !u!4 &6786221354823170821 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 6888697892938087446, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}

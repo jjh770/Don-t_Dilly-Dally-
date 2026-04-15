@@ -123,7 +123,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -204,8 +203,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
   _hasLeftSource: 0
-  _isHeld: 0
-  _holderActorNumber: -1
 --- !u!114 &-5006571336115383354
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -232,7 +229,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SyringeFillTarget
   _ruleDatabase: {fileID: 11400000, guid: a4f094ae39ed15445941c28717164cca, type: 2}
   _actionTimer: {fileID: 3983290462789081204}
-  _resultPrefab: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
 --- !u!1001 &8319291016620014696
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -245,6 +241,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ActionTimer
       objectReference: {fileID: 0}
+    - target: {fileID: 4914397548627977244, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
+      propertyPath: _worldAnchor
+      value: 
+      objectReference: {fileID: 2849932186617917100}
     - target: {fileID: 6888697892938087446, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -305,4 +305,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0eb7fa1511c938b4db66a8244832cdbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.WorldActionTimer
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.ActionTimer

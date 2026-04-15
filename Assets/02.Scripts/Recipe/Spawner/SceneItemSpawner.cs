@@ -20,9 +20,6 @@ namespace DontDillyDally.Data
         [Tooltip("트레이 공급원을 생성할 때 사용하는 공통 프리팹")]
         [SerializeField] private TraySource _traySourcePrefab;
 
-        [Tooltip("생성된 오브젝트를 정리해서 둘 부모 Transform")]
-        [SerializeField] private Transform _spawnedItemParent;
-
         [Header("실행 설정")]
         [Tooltip("씬 시작 시 자동으로 일반 공급원을 배치할지 여부")]
         [SerializeField] private bool _spawnItemsOnStart = true;
@@ -202,10 +199,6 @@ namespace DontDillyDally.Data
                         }
                     }
                 }
-                else
-                {
-                    Destroy(spawnedObject);
-                }
             }
 
             _spawnedObjects.Clear();
@@ -224,10 +217,7 @@ namespace DontDillyDally.Data
                 return;
 
             if (!PhotonNetwork.IsConnected || !PhotonNetwork.InRoom)
-            {
-                SpawnSceneObjects();
                 return;
-            }
 
             if (HasExistingSpawnSources())
             {
@@ -310,6 +300,10 @@ namespace DontDillyDally.Data
                 spawnPoint.position,
                 spawnPoint.rotation,
                 new object[] { (int)entry.ToolType });
+            if (spawnedToolSource == null)
+            {
+                return;
+            }
 
             spawnedToolSource.name = $"{entry.GetDefaultName()}Source";
             _spawnedObjects.Add(spawnedToolSource.gameObject);
@@ -322,6 +316,10 @@ namespace DontDillyDally.Data
                 spawnPoint.position,
                 spawnPoint.rotation,
                 new object[] { (int)entry.MaterialType });
+            if (spawnedMaterialSource == null)
+            {
+                return;
+            }
 
             spawnedMaterialSource.name = $"{entry.GetDefaultName()}Source";
             _spawnedObjects.Add(spawnedMaterialSource.gameObject);
@@ -334,6 +332,10 @@ namespace DontDillyDally.Data
                 spawnPoint.position,
                 spawnPoint.rotation,
                 null);
+            if (spawnedTraySource == null)
+            {
+                return;
+            }
 
             spawnedTraySource.name = $"TraySource_{trayIndex}";
             _spawnedObjects.Add(spawnedTraySource.gameObject);
@@ -342,25 +344,19 @@ namespace DontDillyDally.Data
         private TSource CreateRoomSourceObject<TSource>(TSource prefab, Vector3 position, Quaternion rotation, object[] instantiationData)
             where TSource : MonoBehaviour
         {
-            if (PhotonNetwork.InRoom)
+            if (!PhotonNetwork.InRoom)
             {
-                GameObject spawnedObject = PhotonNetwork.InstantiateRoomObject(
-                    prefab.name,
-                    position,
-                    rotation,
-                    0,
-                    instantiationData);
-
-                return spawnedObject.GetComponent<TSource>();
+                return null;
             }
 
-            TSource spawnedSource = Instantiate(prefab, position, rotation);
-            if (_spawnedItemParent != null)
-            {
-                spawnedSource.transform.SetParent(_spawnedItemParent, true);
-            }
+            GameObject spawnedObject = PhotonNetwork.InstantiateRoomObject(
+                prefab.name,
+                position,
+                rotation,
+                0,
+                instantiationData);
 
-            return spawnedSource;
+            return spawnedObject.GetComponent<TSource>();
         }
 
         private bool HasExistingSpawnSources()

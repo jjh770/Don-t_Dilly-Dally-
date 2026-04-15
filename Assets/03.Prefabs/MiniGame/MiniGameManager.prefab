@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6016377938553789253}
   - component: {fileID: 2623965147032813138}
   - component: {fileID: 4288854400726913692}
+  - component: {fileID: 3175335109458288604}
   m_Layer: 0
   m_Name: MiniGameManager
   m_TagString: Untagged
@@ -66,3 +67,19 @@ MonoBehaviour:
   _directionQTEView: {fileID: 0}
   _precisionStopView: {fileID: 0}
   _overlayPanel: {fileID: 0}
+--- !u!114 &3175335109458288604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5174847885672898769}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 637f6ebd339b01a4ea41bb27f8ce3d5e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.MiniGame.MiniGameVFXController
+  _surgeryLoopPrefab: {fileID: 8073265816963969788, guid: 65d30212ce4dfc14fafbda986f8291e1, type: 3}
+  _successPrefab: {fileID: 7353369823905805648, guid: 57545410d64866145a9f361fa00f4dc6, type: 3}
+  _failPrefab: {fileID: 2142817332363834476, guid: be7f84b29e3d64d47aeb95f726dde342, type: 3}
+  _vfxOffset: {x: 0, y: 0.7, z: 0}

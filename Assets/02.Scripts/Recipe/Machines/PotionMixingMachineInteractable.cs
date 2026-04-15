@@ -28,7 +28,6 @@ namespace DontDillyDally.Data
         [SerializeField] private MachineDoor _door;
         [SerializeField] private Transform[] _slotPoints = new Transform[MaxSlots];
         [SerializeField] private Transform _resultPoint;
-        [SerializeField] private GameObject _resultPrefab;
         private float _pendingCraftingDuration;
         [SerializeField] private ActionTimer _actionTimer;
         [SerializeField] private RunningMotion _runningMotion;
@@ -260,7 +259,6 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            // 마스터이거나 오프라인: 직접 완료 처리
             CompleteMixingProcess();
         }
 
@@ -699,23 +697,12 @@ namespace DontDillyDally.Data
 
         private GameObject SpawnResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
         {
-            if (PhotonNetwork.InRoom)
-            {
-                return PhotonNetwork.Instantiate(ResultPrefabName, position, rotation, 0, new object[] { (int)resultMaterial });
-            }
-
-            if (_resultPrefab == null)
+            if (!PhotonNetwork.InRoom)
             {
                 return null;
             }
 
-            GameObject spawnedObject = Instantiate(_resultPrefab, position, rotation);
-            if (spawnedObject.TryGetComponent(out BasicMaterialItem basicMaterialItem))
-            {
-                basicMaterialItem.Initialize(resultMaterial);
-            }
-
-            return spawnedObject;
+            return PhotonNetwork.InstantiateRoomObject(ResultPrefabName, position, rotation, 0, new object[] { (int)resultMaterial });
         }
 
         #endregion

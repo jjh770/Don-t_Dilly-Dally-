@@ -27,7 +27,6 @@ namespace DontDillyDally.Data
         [SerializeField] private SterilizationMachine _sterilizationMachine;
         [SerializeField] private MachineDoor _door;
         [SerializeField] private Transform[] _traySlotPoints = new Transform[MaxSlots];
-        [SerializeField] private GameObject _resultPrefab;
         [SerializeField] private float _sterilizationDuration = 5f;
         [SerializeField] private ActionTimer _actionTimer;
         [SerializeField] private RunningMotion _runningMotion;
@@ -236,7 +235,6 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            // 마스터이거나 오프라인: 직접 완료 처리
             CompleteSterilizationBatch();
         }
 
@@ -623,28 +621,17 @@ namespace DontDillyDally.Data
 
         private GameObject SpawnSterilizedResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
         {
-            if (PhotonNetwork.InRoom)
-            {
-                return PhotonNetwork.Instantiate(
-                    SterilizedResultPrefabName,
-                    position,
-                    rotation,
-                    0,
-                    new object[] { (int)resultMaterial });
-            }
-
-            if (_resultPrefab == null)
+            if (!PhotonNetwork.InRoom)
             {
                 return null;
             }
 
-            GameObject spawnedObject = Instantiate(_resultPrefab, position, rotation);
-            if (spawnedObject.TryGetComponent(out BasicMaterialItem basicMaterialItem))
-            {
-                basicMaterialItem.Initialize(resultMaterial);
-            }
-
-            return spawnedObject;
+            return PhotonNetwork.InstantiateRoomObject(
+                SterilizedResultPrefabName,
+                position,
+                rotation,
+                0,
+                new object[] { (int)resultMaterial });
         }
 
         #endregion

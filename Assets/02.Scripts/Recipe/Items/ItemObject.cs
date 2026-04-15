@@ -82,8 +82,7 @@ namespace DontDillyDally.Data
 
         public virtual void PrepareForRecycle()
         {
-            Recycled?.Invoke(this);
-            Recycled = null;
+            NotifyRecycled();
 
             transform.SetParent(null, true);
 
@@ -113,6 +112,33 @@ namespace DontDillyDally.Data
         public void ResetRecycleState()
         {
             _isPendingRecycle = false;
+        }
+
+        public void NotifyRecycled()
+        {
+            Recycled?.Invoke(this);
+            Recycled = null;
+        }
+
+        public void RequestRecycleOnMaster()
+        {
+            if (_photonView == null || !PhotonNetwork.InRoom || PhotonNetwork.MasterClient == null)
+            {
+                return;
+            }
+
+            _photonView.RPC(nameof(RPC_RequestRecycleOnMaster), RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+
+        [PunRPC]
+        private void RPC_RequestRecycleOnMaster(int requesterActorNumber, PhotonMessageInfo info)
+        {
+            if (info.Sender == null || info.Sender.ActorNumber != requesterActorNumber)
+            {
+                return;
+            }
+
+            ItemRecycleUtility.TryRecycleAsMaster(this);
         }
 
         protected void ResetReusableItemState()

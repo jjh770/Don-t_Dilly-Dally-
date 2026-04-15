@@ -1,3 +1,4 @@
+using DontDillyDally.StageFlow;
 using System;
 using System.Collections;
 using UnityEngine;
@@ -25,6 +26,7 @@ namespace DontDillyDally.MiniGame
         private Coroutine _resultCoroutine;
         private PlayerMovementAbility _playerMovementAbility;
         private readonly object _movementLockSource = new();
+        private StageFlowRpcHandler _rpc;
 
         public bool IsPlaying =>
             _activeMiniGame != null && _activeMiniGame.CurrentState == EMiniGameState.Playing;
@@ -62,6 +64,12 @@ namespace DontDillyDally.MiniGame
 
             _uiController.ShowMiniGameUI(game);
             game.Begin(config);
+
+            // 모든 클라이언트에 수술 VFX 시작 알림
+            if (IsPlaying)
+            {
+                ResolveRpc()?.BroadcastMiniGameVFXStarted(type);
+            }
 
             // Begin()에서 Config 캐스팅 실패 등으로 Playing 상태가 아니면 정리.
             if (!IsPlaying)
@@ -105,6 +113,9 @@ namespace DontDillyDally.MiniGame
 
         private IEnumerator DelayedComplete(MiniGameResult result, Action<MiniGameResult> onComplete)
         {
+            // 모든 클라이언트에 결과 VFX 알림 (성공/실패 이펙트)
+            ResolveRpc()?.BroadcastMiniGameVFXResult(result.GameType, result.IsSuccess);
+
             // 결과 연출용 대기 (UI는 그대로 보여줌).
             _uiController.ShowResult(result.IsSuccess);
             yield return new WaitForSeconds(_resultDisplayDuration);
@@ -125,6 +136,17 @@ namespace DontDillyDally.MiniGame
                 MiniGameType.PrecisionStop => _precisionStopConfig,
                 _ => throw new ArgumentOutOfRangeException(nameof(type))
             };
+        }
+
+        private StageFlowRpcHandler ResolveRpc()
+        {
+            if (_rpc != null)
+            {
+                return _rpc;
+            }
+
+            _rpc = FindObjectOfType<StageFlowRpcHandler>();
+            return _rpc;
         }
 
         private void LockLocalPlayerMovement()
