@@ -1,6 +1,5 @@
 using DontDillyDally.Data;
 using Photon.Pun;
-using System.Collections;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -28,6 +27,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     private Rigidbody _rigidbody;
     private PhotonView _photonView;
     private HoldableItemNetworkSync _networkSync;
+    private TemporaryCollisionIgnore _temporaryCollisionIgnore;
     private Transform _currentHoldPoint;
     private Transform _holdAnchor;
     private Collider[] _allColliders;
@@ -46,10 +46,14 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _rigidbody = GetComponent<Rigidbody>();
         _photonView = GetComponent<PhotonView>();
         _networkSync = GetComponent<HoldableItemNetworkSync>();
+        _temporaryCollisionIgnore = GetComponent<TemporaryCollisionIgnore>();
         _itemObject = GetComponent<DontDillyDally.Data.ItemObject>();
 
         if (_networkSync == null)
             _networkSync = gameObject.AddComponent<HoldableItemNetworkSync>();
+
+        if (_temporaryCollisionIgnore == null)
+            _temporaryCollisionIgnore = gameObject.AddComponent<TemporaryCollisionIgnore>();
 
         RefreshCachedComponents();
     }
@@ -167,6 +171,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     public void PrepareForRecycle()
     {
+        _temporaryCollisionIgnore?.Restore();
+
         IsInteracting = false;
         IsStoredInContainer = false;
         _isWaitingForOwnershipReturn = false;
@@ -195,7 +201,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
         if (throwerColliders != null)
         {
-            StartCoroutine(IgnoreCollisionTemporarily(throwerColliders));
+            _temporaryCollisionIgnore?.IgnoreTemporarily(GetAllColliders(), throwerColliders, _ignoreCollisionDuration);
         }
 
         Vector3 throwDirection = (direction + Vector3.up * _upAngle).normalized;
@@ -256,6 +262,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
     private void ResetToNeutralState()
     {
+        _temporaryCollisionIgnore?.Restore();
+
         IsInteracting = false;
         IsStoredInContainer = false;
         _isWaitingForOwnershipReturn = false;
@@ -347,38 +355,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
-    }
-
-
-    private IEnumerator IgnoreCollisionTemporarily(Collider[] colliders)
-    {
-        // 던지자마자 잠깐 플레이어 콜라이더 무시 (충돌 안 하게)
-        SetCollisionWithThrower(colliders, true);
-
-        yield return new WaitForSeconds(_ignoreCollisionDuration);
-
-        SetCollisionWithThrower(colliders, false);
-    }
-
-    private void SetCollisionWithThrower(Collider[] colliders, bool isIgnore)
-    {
-        Collider[] itemColliders = GetAllColliders();
-        if (itemColliders.Length == 0)
-            return;
-
-        foreach (Collider col in colliders)
-        {
-            if (col == null)
-                continue;
-
-            foreach (Collider itemCollider in itemColliders)
-            {
-                if (itemCollider == null)
-                    continue;
-
-                Physics.IgnoreCollision(itemCollider, col, isIgnore);
-            }
-        }
     }
 
     public void OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
