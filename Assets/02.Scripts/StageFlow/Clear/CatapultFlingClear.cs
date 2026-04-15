@@ -93,15 +93,15 @@ public class CatapultFlingClear : PatientClearBase
         Transform bedTransform,
         Transform patientTransform)
     {
-        // 캐싱을 ForceComplete보다 먼저.
+        // ForceComplete 먼저 — 이전 연출 중간 상태를 정리한 뒤 캐싱.
+        ForceComplete(patientRoot, bedTransform, patientTransform);
+
         _cachedRootPosition = patientRoot.position;
         _cachedBedPosition = bedTransform.position;
         _cachedBedRotation = bedTransform.rotation;
         _cachedPatientLocalPosition = patientTransform.localPosition;
         _cachedPatientLocalRotation = patientTransform.localRotation;
         _hasCachedState = true;
-
-        ForceComplete(patientRoot, bedTransform, patientTransform);
 
         _originalPatientParent = patientTransform.parent;
         _originalPatientScale = patientTransform.localScale;
@@ -196,10 +196,9 @@ public class CatapultFlingClear : PatientClearBase
             bedTransform.DOMove(slideTarget, _slideDuration)
                 .SetEase(Ease.InQuad));
 
-        // 시퀀스 완료 시 patientRoot 원복 + 파티클 정리.
+        // 시퀀스 끝나면 파티클 정리만. 위치 원복은 EntranceDirector가 담당.
         _sequence.OnComplete(() =>
         {
-            patientRoot.position = _cachedRootPosition;
             ClearFx(_chargeDustFx);
             ClearFx(_flingTrailFx);
             ClearFx(_catapultSmokeFx);

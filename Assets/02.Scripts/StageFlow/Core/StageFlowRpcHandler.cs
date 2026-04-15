@@ -24,8 +24,10 @@ namespace DontDillyDally.StageFlow
         private readonly ReactiveProperty<int> _surgeonActorNumber = new(-1);
         private readonly ReactiveProperty<double> _countdownStartTime = new(0d);
         private readonly ReactiveProperty<float> _countdownDuration = new(0f);
+        private readonly ReactiveProperty<int> _directionSeed = new(0);
 
         public IReadOnlyReactiveProperty<EStagePhase> CurrentPhase => _currentPhase;
+        public IReadOnlyReactiveProperty<int> DirectionSeed => _directionSeed;
         public IReadOnlyReactiveProperty<float> PatientHealth => _patientHealth;
         public IReadOnlyReactiveProperty<float> StageTimer => _stageTimer;
         public IReadOnlyReactiveProperty<int> CurrentPatientIndex => _currentPatientIndex;
@@ -64,14 +66,21 @@ namespace DontDillyDally.StageFlow
         //  마스터 → 클라이언트 동기화 메서드
         // ================================================================
 
-        // 페이즈 변경 상태 전파 (마스터가 호출, 모두가 수신, 다른 기능 없음)
+        // 페이즈 변경 상태 전파 (마스터가 호출, 모두가 수신, 다른 기능 없음).
+        // 연출 동기화용 시드를 마스터가 생성하여 함께 전파.
         public void SetPhase(EStagePhase phase)
         {
             Debug.Log($"[StageFlow] 페이즈 변경: {_currentPhase.Value} → {phase}");
-            _currentPhase.Value = phase;
+
             if (PhotonNetwork.IsMasterClient)
             {
-                photonView.RPC(nameof(RPC_SetPhase), RpcTarget.Others, (int)phase);
+                _directionSeed.Value = UnityEngine.Random.Range(int.MinValue, int.MaxValue);
+                _currentPhase.Value = phase;
+                photonView.RPC(nameof(RPC_SetPhase), RpcTarget.Others, (int)phase, _directionSeed.Value);
+            }
+            else
+            {
+                _currentPhase.Value = phase;
             }
         }
         // 체력 동기화 시기 : 환자 변경, 치료 성공/실패, 긴급 처치 등 체력에 변화가 생길 때마다
@@ -299,9 +308,10 @@ namespace DontDillyDally.StageFlow
         // ================================================================
 
         [PunRPC]
-        private void RPC_SetPhase(int phase)
+        private void RPC_SetPhase(int phase, int seed)
         {
-            Debug.Log($"[StageFlow] [RPC] 페이즈 수신: {(EStagePhase)phase}");
+            Debug.Log($"[StageFlow] [RPC] 페이즈 수신: {(EStagePhase)phase} (seed={seed})");
+            _directionSeed.Value = seed;
             _currentPhase.Value = (EStagePhase)phase;
         }
 
@@ -503,6 +513,7 @@ namespace DontDillyDally.StageFlow
             _surgeonActorNumber.Dispose();
             _countdownStartTime.Dispose();
             _countdownDuration.Dispose();
+            _directionSeed.Dispose();
         }
     }
 }
