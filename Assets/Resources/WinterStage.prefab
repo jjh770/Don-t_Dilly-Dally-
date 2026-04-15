@@ -10611,6 +10611,79 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 1, z: 0}
+--- !u!1 &7779469378578179861
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 9001501807137805042}
+  - component: {fileID: 4684074535431433475}
+  m_Layer: 0
+  m_Name: HelicopterDropEnter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &9001501807137805042
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7779469378578179861}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 3626958182236528469}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &4684074535431433475
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7779469378578179861}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d32c432974c25354281f40aaa550962f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HelicopterDropEntrance
+  _helicopterTransform: {fileID: 4926151616739649395}
+  _ropeTransform: {fileID: 0}
+  _ropeFullLengthScaleY: 1
+  _startOffset: {x: 0, y: 12, z: 0}
+  _heliHoverOffset: {x: 0, y: 4, z: 0}
+  _descentDuration: 2
+  _descentEase: 6
+  _touchdownStartTime: 2
+  _touchdownDuration: 1
+  _touchdownEase: 30
+  _unhookTime: 3
+  _unhookShakeDuration: 0.3
+  _unhookShakeStrength: 0.05
+  _unhookShakeVibrato: 10
+  _ropeRetractStartTime: 3.3
+  _ropeRetractDuration: 0.5
+  _ropeRetractEase: 5
+  _heliExitStartTime: 3.8
+  _heliExitOffset: {x: 7, y: 15, z: 0}
+  _heliExitDuration: 1.5
+  _heliExitEase: 5
+  _descentSwayAngle: 6
+  _descentSwayDuration: 0.4
+  _rotorWindFx: {fileID: 0}
+  _rotorWindStartTime: 0.5
+  _rotorWindStopTime: 4
+  _unhookSparkFx: {fileID: 0}
+  _landingDustFx: {fileID: 0}
+  _landingDustStartTime: 2.8
 --- !u!1 &7994198521626355308
 GameObject:
   m_ObjectHideFlags: 0
@@ -14259,8 +14332,20 @@ PrefabInstance:
       objectReference: {fileID: 3478572270277601647}
     - target: {fileID: 2137252290656994560, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
       propertyPath: _selectionMode
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2137252290656994560, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
+      propertyPath: _entrances.Array.size
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 2137252290656994560, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
+      propertyPath: '_entrances.Array.data[0]'
+      value: 
+      objectReference: {fileID: 3478572270277601647}
+    - target: {fileID: 2137252290656994560, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
+      propertyPath: '_entrances.Array.data[1]'
+      value: 
+      objectReference: {fileID: 4684074535431433475}
     - target: {fileID: 2352775557698587192, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
       propertyPath: '_brakeSmokeFx.Array.data[0]'
       value: 
@@ -14270,8 +14355,13 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 2919836360128774692}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 1782822396068428879, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
+    - {fileID: 4190370757551664646, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
+    m_AddedGameObjects:
+    - targetCorrespondingSourceObject: {fileID: 819057603698823799, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 9001501807137805042}
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4358218cb16ff6d4485f9a0e6e66e999, type: 3}
 --- !u!114 &3478572270277601647 stripped
