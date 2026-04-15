@@ -183,7 +183,7 @@ public class GoogleAuthManager : MonoBehaviour
             // ContinueWith 대신 await 사용
             FirebaseUser newUser = await auth.SignInWithCredentialAsync(credential);
 
-            Debug.Log($"Firebase 로그인 완료: {newUser.DisplayName} (UID: {newUser.Email})");
+            Debug.Log($"Firebase 로그인 완료: {newUser.DisplayName} (Email: {newUser.Email}, UID: {newUser.UserId})");
 
             PlayerDataManager.Instance.SetPlayerID(newUser.UserId);
             SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
