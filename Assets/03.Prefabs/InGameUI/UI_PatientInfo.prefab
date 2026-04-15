@@ -157,7 +157,7 @@ MonoBehaviour:
   _panelRoot: {fileID: 8667489321436298331}
   _entryPrefab: {fileID: 7049167788807954065, guid: 555c8f8829274274e90a6968a9d489df, type: 3}
   _contentRoot: {fileID: 6053954840538440253}
-  _slideDistance: 633
+  _slideDistance: 500
   _slideInDuration: 0.3
   _slideOutDuration: 0.25
   _slideInEase: 9
@@ -194,9 +194,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1857995127907538765}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 15, y: -48.7}
   m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5874249490140443663
@@ -282,7 +282,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3988882677901583615}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
   m_Name: 
@@ -340,7 +340,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 632.3, y: 1013.5}
+  m_SizeDelta: {x: 500, y: 1013.5}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &4727404239496210885
 CanvasRenderer:
@@ -502,8 +502,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 50
-  m_fontSizeBase: 50
+  m_fontSize: 40
+  m_fontSizeBase: 40
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -583,7 +583,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -10}
-  m_SizeDelta: {x: -16.698425, y: 131}
+  m_SizeDelta: {x: -16.698425, y: 125}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &6785090640161091741
 CanvasRenderer:
@@ -655,9 +655,9 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 1857995127907538765}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 0, y: 1}
+  m_AnchoredPosition: {x: 132.6, y: -25}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &3146020539244871997
@@ -879,7 +879,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4089409822059815300, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_SizeDelta.y
-      value: 161
+      value: 127.8
       objectReference: {fileID: 0}
     - target: {fileID: 4089409822059815300, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_LocalPosition.x
@@ -935,27 +935,27 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 5773160461277630425, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_AnchorMax.x
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5773160461277630425, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5773160461277630425, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_AnchorMin.x
-      value: 0
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5773160461277630425, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0.5
       objectReference: {fileID: 0}
     - target: {fileID: 5773160461277630425, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 39.1
+      value: -20
       objectReference: {fileID: 0}
     - target: {fileID: 5773160461277630425, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -80.5
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8522366019804131866, guid: dd496bdee3db83b479bf39c316d1870d, type: 3}
       propertyPath: m_Name

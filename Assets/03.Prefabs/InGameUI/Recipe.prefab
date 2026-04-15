@@ -38,7 +38,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 160}
+  m_SizeDelta: {x: 0, y: 140}
   m_Pivot: {x: 0, y: 1}
 --- !u!222 &1642194600043507479
 CanvasRenderer:
@@ -91,9 +91,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
   m_Padding:
-    m_Left: 30
-    m_Right: 30
-    m_Top: 15
+    m_Left: 20
+    m_Right: 20
+    m_Top: 3
     m_Bottom: 0
   m_ChildAlignment: 1
   m_Spacing: 0
@@ -146,7 +146,7 @@ RectTransform:
   m_GameObject: {fileID: 2456747965274633692}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.75, y: 0.75, z: 0.75}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 4578415017100886267}
@@ -155,7 +155,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 150, y: -136.8}
+  m_AnchoredPosition: {x: 100, y: -100}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &3429994603598981806
@@ -215,10 +215,10 @@ MonoBehaviour:
   _iconContainer: {fileID: 2461451685710196738}
   _iconFrameSprite: {fileID: 21300000, guid: b02caed49f77549d68353cfcd2234daf, type: 3}
   _actionFrameSprite: {fileID: 21300000, guid: 5e72dcb049b024ae79f396c76b1d982c, type: 3}
-  _frameSize: 80
-  _materialIconSize: 60
-  _actionIconSize: 40
-  _slotSpacing: 5
+  _frameSize: 70
+  _materialIconSize: 50
+  _actionIconSize: 50
+  _slotSpacing: 3
 --- !u!1 &4992242793467262190
 GameObject:
   m_ObjectHideFlags: 0
@@ -254,8 +254,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 121.205, y: -40}
-  m_SizeDelta: {x: 182.41, y: 50}
+  m_AnchoredPosition: {x: 83.825, y: -28}
+  m_SizeDelta: {x: 127.65, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5654981935654255297
 CanvasRenderer:
@@ -287,8 +287,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uC18C\uB3C5 \uBC0F \uC548\uC815\uD654"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: c6648fd2a946ce3478a3ca1d87a69d50, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 71a89c0954278b441a342ef129771e46, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 60bd17b0450512c4c96da00e717f33e7, type: 2}
+  m_sharedMaterial: {fileID: -8043124478379117214, guid: 60bd17b0450512c4c96da00e717f33e7, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -312,8 +312,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 25
+  m_fontSizeBase: 25
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -488,7 +488,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 58, y: -128}
+  m_AnchoredPosition: {x: 58, y: -108}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &576865469407548497
@@ -556,10 +556,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.VerticalLayoutGroup
   m_Padding:
-    m_Left: 40
-    m_Right: 40
-    m_Top: 30
-    m_Bottom: 30
+    m_Left: 20
+    m_Right: 20
+    m_Top: 15
+    m_Bottom: 15
   m_ChildAlignment: 4
   m_Spacing: 0
   m_ChildForceExpandWidth: 0
