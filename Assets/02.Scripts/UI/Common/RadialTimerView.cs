@@ -2,9 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace DontDillyDally.MiniGame
+namespace DontDillyDally.UI
 {
-    // 모든 미니게임이 공통으로 쓰는 Radial 타이머 UI 조각.
+    // 여러 UI에서 공통으로 쓰는 Radial 타이머 UI 조각.
     // Image Type을 Filled, Fill Method를 Radial 360으로 설정해두면
     // SetRatio(0~1) 호출만으로 fillAmount + 색상 그라디언트가 동시에 갱신된다.
     [Serializable]
@@ -41,8 +41,19 @@ namespace DontDillyDally.MiniGame
                 return;
             }
 
-            _image.fillAmount = timeRatio;
-            _image.color = EvaluateColor(timeRatio);
+            float clampedRatio = Mathf.Clamp01(timeRatio);
+            _image.fillAmount = clampedRatio;
+            _image.color = EvaluateColor(clampedRatio);
+        }
+
+        public void BindImageIfEmpty(Image image)
+        {
+            if (_image != null || image == null)
+            {
+                return;
+            }
+
+            _image = image;
         }
 
         // 1.0 → _colorFull, 0.5 → _colorMid, 0.0 → _colorEmpty 로 선형 보간.

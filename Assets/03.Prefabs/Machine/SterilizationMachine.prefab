@@ -496,7 +496,6 @@ MonoBehaviour:
   - {fileID: 625564890154434417}
   - {fileID: 2070111626689446047}
   - {fileID: 3752236861428293230}
-  _resultPrefab: {fileID: 2241975781096926272, guid: 1a6e3769fd3d1704aa47302440079d78, type: 3}
   _sterilizationDuration: 5
   _actionTimer: {fileID: 1967075194894486486}
   _runningMotion: {fileID: 3101245820696990766}
@@ -572,6 +571,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ActionTimer
       objectReference: {fileID: 0}
+    - target: {fileID: 4914397548627977244, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
+      propertyPath: _worldAnchor
+      value: 
+      objectReference: {fileID: 768441550279945129}
     - target: {fileID: 6888697892938087446, guid: 84fea8e2127452c4cb812cf0e66d329b, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -632,7 +635,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0eb7fa1511c938b4db66a8244832cdbb, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.WorldActionTimer
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.ActionTimer
 --- !u!1001 &7272629658243433928
 PrefabInstance:
   m_ObjectHideFlags: 0
