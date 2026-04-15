@@ -107,13 +107,13 @@ public class HelicopterLiftClear : PatientClearBase
         Transform bedTransform,
         Transform patientTransform)
     {
-        // 캐싱을 ForceComplete보다 먼저.
+        // ForceComplete 먼저 — 이전 연출 중간 상태를 정리한 뒤 캐싱.
+        ForceComplete(patientRoot, bedTransform, patientTransform);
+
         _cachedRootPosition = patientRoot.position;
         _cachedBedPosition = bedTransform.position;
         _cachedBedRotation = bedTransform.rotation;
         _hasCachedState = true;
-
-        ForceComplete(patientRoot, bedTransform, patientTransform);
 
         Vector3 bedPosition = _cachedBedPosition;
 
