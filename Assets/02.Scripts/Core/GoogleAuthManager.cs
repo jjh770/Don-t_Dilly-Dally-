@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Cysharp.Threading.Tasks;
+using Firebase.Auth;
 using UnityEngine;
 
 public class GoogleAuthManager : MonoBehaviour
@@ -41,11 +42,29 @@ public class GoogleAuthManager : MonoBehaviour
 
         if (string.IsNullOrEmpty(_authCode)) return;
 
-        string accessToken = await ExchangeCodeForToken(_authCode);
+        // 1. 토큰 교환 (id_token과 access_token을 모두 가져옴)
+        var tokenResponse = await ExchangeCodeForTokenResponse(_authCode);
 
-        if (string.IsNullOrEmpty(accessToken)) return;
+        if (tokenResponse == null)
+        {
+            Debug.LogError("Google 토큰 교환 실패: 응답이 비어 있습니다.");
+            return;
+        }
 
-        await GetUserInfo(accessToken);
+        if (!string.IsNullOrEmpty(tokenResponse.error))
+        {
+            Debug.LogError($"Google 토큰 교환 실패: {tokenResponse.error} / {tokenResponse.error_description}");
+            return;
+        }
+
+        if (string.IsNullOrEmpty(tokenResponse.id_token))
+        {
+            Debug.LogError("Google 토큰 교환 실패: id_token이 비어 있습니다.");
+            return;
+        }
+
+        // 2. Firebase 로그인 호출
+        await SignInWithFirebase(tokenResponse.id_token);
     }
 
     // ✅ 추가: 취소 버튼에 연결할 메서드
@@ -129,7 +148,7 @@ public class GoogleAuthManager : MonoBehaviour
         }
     }
 
-    private async Task<string> ExchangeCodeForToken(string code)
+    private async Task<TokenResponse> ExchangeCodeForTokenResponse(string code)
     {
         using var client = new HttpClient();
 
@@ -146,30 +165,33 @@ public class GoogleAuthManager : MonoBehaviour
         var response = await client.PostAsync(TOKEN_URL, content);
         var json = await response.Content.ReadAsStringAsync();
 
-        var tokenData = JsonUtility.FromJson<TokenResponse>(json);
-        return tokenData?.access_token;
+        if (!response.IsSuccessStatusCode)
+        {
+            Debug.LogError($"Google 토큰 교환 HTTP 실패: {(int)response.StatusCode} / {json}");
+        }
+
+        return JsonUtility.FromJson<TokenResponse>(json);
     }
 
-    private async Task<GoogleUserInfo> GetUserInfo(string accessToken)
+    private async Task SignInWithFirebase(string googleIdToken)
     {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+        try
+        {
+            Credential credential = GoogleAuthProvider.GetCredential(googleIdToken, null);
+            var auth = FirebaseAuth.DefaultInstance;
 
-        var response = await client.GetAsync(USER_INFO_URL);
-        var json = await response.Content.ReadAsStringAsync();
+            // ContinueWith 대신 await 사용
+            FirebaseUser newUser = await auth.SignInWithCredentialAsync(credential);
 
-        var userInfo = JsonUtility.FromJson<GoogleUserInfo>(json);
+            Debug.Log($"Firebase 로그인 완료: {newUser.DisplayName} (UID: {newUser.Email})");
 
-        Debug.Log($"로그인 성공! 이름: {userInfo.name}, 이메일: {userInfo.email}");
-        OnLoginSuccess(userInfo);
-
-        return userInfo;
-    }
-
-    private void OnLoginSuccess(GoogleUserInfo userInfo)
-    {
-        PlayerDataManager.Instance.SetPlayerID(userInfo.email);
-        SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
+            PlayerDataManager.Instance.SetPlayerID(newUser.UserId);
+            SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Firebase 로그인 실패: {e.Message}");
+        }
     }
 
     private void OnDestroy()
@@ -184,15 +206,9 @@ public class GoogleAuthManager : MonoBehaviour
 public class TokenResponse
 {
     public string access_token;
+    public string id_token;
     public string refresh_token;
     public int expires_in;
-}
-
-[Serializable]
-public class GoogleUserInfo
-{
-    public string id;
-    public string email;
-    public string name;
-    public string picture; // 프로필 이미지 URL
+    public string error;
+    public string error_description;
 }

@@ -8,7 +8,6 @@ public class AttendanceManager : MonoBehaviour
     private IAttendanceRepository _attendanceRepo;
     private AttendanceDomainService _domainService;
     private IRewardRepository _rewardRepo;
-    private string _playerId;
 
     private bool _isCheckedToday = false;
     public IRewardRepository RewardRepo => _rewardRepo;
@@ -20,10 +19,9 @@ public class AttendanceManager : MonoBehaviour
 
     public bool IsReady { get; private set; }
 
-    public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, string playerID)
+    public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo)
     {
         _attendanceRepo = attendanceRepo;
-        _playerId = playerID;
         _rewardRepo = rewardRepo;
 
         _domainService = new AttendanceDomainService(_rewardRepo);
@@ -47,14 +45,14 @@ public class AttendanceManager : MonoBehaviour
 
     private async UniTask<AttendanceRecord> LoadAttendanceAsync(CancellationToken token)
     {
-        var record = await _attendanceRepo.LoadAsync(_playerId)
+        var record = await _attendanceRepo.LoadAsync()
             .AttachExternalCancellation(token);
 
         if (token.IsCancellationRequested) return null;
 
         if (record == null)
         {
-            record = new AttendanceRecord(_playerId);
+            record = new AttendanceRecord();
             Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
         }
 
@@ -64,14 +62,14 @@ public class AttendanceManager : MonoBehaviour
 
     private async UniTask CheckAttendanceAsync(CancellationToken token)
     {
-        var record = await _attendanceRepo.LoadAsync(_playerId)
+        var record = await _attendanceRepo.LoadAsync()
             .AttachExternalCancellation(token);
 
         if (token.IsCancellationRequested) return;
 
         if (record == null)
         {
-            record = new AttendanceRecord(_playerId);
+            record = new AttendanceRecord();
             Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
         }
 
@@ -99,7 +97,7 @@ public class AttendanceManager : MonoBehaviour
 
         OnAttendanceChecked?.Invoke(record.TotalDays);
 
-        await _attendanceRepo.SaveAsync(_playerId, record)
+        await _attendanceRepo.SaveAsync(record)
             .AttachExternalCancellation(token);
     }
 }

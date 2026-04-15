@@ -8,7 +8,9 @@ public class FirebaseCustomizingRepository : ICustomizingRepository
 
     private readonly string _id;
 
-    private readonly string COLLECTION_NAME = "Customizing";
+    private const string CollectionName = "users";
+    private const string SubCollectionName = "data";
+    private const string DataDocumentId = "customizing";
 
     public FirebaseCustomizingRepository(FirebaseFirestore db, string userId)
     {
@@ -21,7 +23,11 @@ public class FirebaseCustomizingRepository : ICustomizingRepository
         try
         {
             var dto = new CustomizingSaveDataDTO(data);
-            await _db.Collection(COLLECTION_NAME).Document(_id).SetAsync(dto);
+            await _db.Collection(CollectionName)
+                          .Document(_id)
+                          .Collection(SubCollectionName)
+                          .Document(DataDocumentId)
+                          .SetAsync(dto);
             Debug.Log("[FirebaseCustomizingRepository] 저장 성공");
         }
         catch (System.Exception e)
@@ -34,7 +40,11 @@ public class FirebaseCustomizingRepository : ICustomizingRepository
     {
         try
         {
-            var result = await _db.Collection(COLLECTION_NAME).Document(_id).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName)
+                          .Document(_id)
+                          .Collection(SubCollectionName)
+                          .Document(DataDocumentId)
+                          .GetSnapshotAsync();
 
             CustomizingSaveDataDTO dto = result.ConvertTo<CustomizingSaveDataDTO>();
             Debug.LogFormat("[FirebaseCustomizingRepository] 불러오기 성공");

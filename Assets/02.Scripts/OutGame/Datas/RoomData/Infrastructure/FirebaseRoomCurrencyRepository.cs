@@ -11,7 +11,7 @@ public class FirebaseRoomCurrencyRepository : IRoomCurrencyRepository
         _db = db;
     }
 
-    private const string CollectionName = "RoomCurrency";
+    private const string CollectionName = "hospitals";
     public async UniTask<RoomWallet> Load(string roomCode)
     {
         try

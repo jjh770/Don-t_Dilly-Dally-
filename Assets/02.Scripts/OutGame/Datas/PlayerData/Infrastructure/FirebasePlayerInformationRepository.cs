@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Linq;
 using Cysharp.Threading.Tasks;
 using Firebase.Firestore;
@@ -10,7 +11,9 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
 
     private readonly string _id;
 
-    private const string CollectionName = "PlayerInformation";
+    private const string CollectionName = "users";
+    private const string SubCollectionName = "data";
+    private const string DataDocumentId = "player-information";
 
     public FirebasePlayerInformationRepository(FirebaseFirestore db, string userId)
     {
@@ -22,7 +25,11 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
     {
         try
         {
-            var result = await _db.Collection(CollectionName).Document(_id).GetSnapshotAsync();
+            var result = await _db.Collection(CollectionName)
+                          .Document(_id)
+                          .Collection(SubCollectionName)
+                          .Document(DataDocumentId)
+                          .GetSnapshotAsync();
 
             PlayerInformationDTO dto = result.ConvertTo<PlayerInformationDTO>();
             Debug.LogFormat("[FirebasePlayerInformationRepository] 불러오기 성공");
@@ -47,7 +54,11 @@ public class FirebasePlayerInformationRepository : IPlayerInformationRepository
         try
         {
             var dto = PlayerInformationDTO.FromDomain(saveData);
-            await _db.Collection(CollectionName).Document(_id).SetAsync(dto);
+            await _db.Collection(CollectionName)
+                          .Document(_id)
+                          .Collection(SubCollectionName)
+                          .Document(DataDocumentId)
+                          .SetAsync(dto);
             Debug.Log("[FirebasePlayerInformationRepository] 저장 성공");
         }
         catch (System.Exception e)
