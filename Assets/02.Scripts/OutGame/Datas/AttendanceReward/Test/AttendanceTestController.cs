@@ -10,7 +10,6 @@ public class AttendanceTestController : MonoBehaviour
     private Text _statusText;
     private AttendanceRecord _testRecord;
     private AttendanceDomainService _domainService;
-    private const string TestPlayerId = "test_player";
 
     private void Start()
     {
@@ -21,7 +20,7 @@ public class AttendanceTestController : MonoBehaviour
         }
 
         _domainService = new AttendanceDomainService(_rewardTable);
-        _testRecord = new AttendanceRecord(TestPlayerId);
+        _testRecord = new AttendanceRecord();
 
         CreateDebugUI();
         UpdateStatusText();
@@ -148,7 +147,6 @@ public class AttendanceTestController : MonoBehaviour
     private void ForceCheckAttendance()
     {
         _testRecord = new AttendanceRecord(
-            TestPlayerId,
             _testRecord.TotalDays,
             "1900-01-01"
         );
@@ -168,7 +166,7 @@ public class AttendanceTestController : MonoBehaviour
 
     private void OnResetButtonClicked()
     {
-        _testRecord = new AttendanceRecord(TestPlayerId);
+        _testRecord = new AttendanceRecord();
         Debug.Log("[AttendanceTest] 출석 기록 초기화");
         UpdateStatusText("초기화 완료!\n현재: 0일차");
     }

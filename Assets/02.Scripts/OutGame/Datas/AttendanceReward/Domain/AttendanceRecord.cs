@@ -2,20 +2,15 @@ using System;
 
 public class AttendanceRecord
 {
-    public string PlayerId { get; }
     public int TotalDays { get; private set; }
     public string LastCheckedDate { get; private set; }
 
     private const string DateFormat = "yyyy-MM-dd";
 
-    public AttendanceRecord(string playerId)
-    {
-        PlayerId = playerId;
-    }
+    public AttendanceRecord() { }
 
-    public AttendanceRecord(string playerId, int totalDays, string lastCheckedDate)
+    public AttendanceRecord(int totalDays, string lastCheckedDate)
     {
-        PlayerId = playerId;
         TotalDays = totalDays;
         LastCheckedDate = lastCheckedDate;
     }

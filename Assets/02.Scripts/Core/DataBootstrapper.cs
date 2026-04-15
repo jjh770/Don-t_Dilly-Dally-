@@ -61,8 +61,8 @@ public class DataBootstrapper : MonoBehaviour
     {
         LoadingUIEvents.Hide();
 
-        IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database);
-        _attendanceManager.Initialize(attendanceRepository, _rewardRepository, PlayerDataManager.Instance.PlayerID);
+        IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
+        _attendanceManager.Initialize(attendanceRepository, _rewardRepository);
     }
 
     private void OnDestroy()
