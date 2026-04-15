@@ -80,31 +80,46 @@ public class CatapultFlingClear : PatientClearBase
     private Transform _originalPatientParent;
     private Vector3 _originalPatientScale;
 
+    // ForceComplete용 초기 상태 캐싱.
+    private bool _hasCachedState;
+    private Vector3 _cachedRootPosition;
+    private Vector3 _cachedBedPosition;
+    private Quaternion _cachedBedRotation;
+    private Vector3 _cachedPatientLocalPosition;
+    private Quaternion _cachedPatientLocalRotation;
+
     public override Sequence Play(
         Transform patientRoot,
         Transform bedTransform,
         Transform patientTransform)
     {
+        // 캐싱을 ForceComplete보다 먼저.
+        _cachedRootPosition = patientRoot.position;
+        _cachedBedPosition = bedTransform.position;
+        _cachedBedRotation = bedTransform.rotation;
+        _cachedPatientLocalPosition = patientTransform.localPosition;
+        _cachedPatientLocalRotation = patientTransform.localRotation;
+        _hasCachedState = true;
+
         ForceComplete(patientRoot, bedTransform, patientTransform);
 
         _originalPatientParent = patientTransform.parent;
         _originalPatientScale = patientTransform.localScale;
 
-        Vector3 bedStartPos = bedTransform.position;
-        Quaternion bedStartRot = bedTransform.rotation;
+        Vector3 bedStartPos = _cachedBedPosition;
+        Quaternion bedStartRot = _cachedBedRotation;
 
         _sequence = DOTween.Sequence();
 
         // Phase 0: 충전 떨림.
         _sequence.Append(
             patientRoot.DOShakePosition(_chargeDuration, _chargeShakeStrength,
-                vibrato: _chargeVibrato, fadeOut: false));
+                vibrato: _chargeVibrato, fadeOut: true));
 
         _sequence.InsertCallback(0f, () => PlayFx(_chargeDustFx));
         _sequence.InsertCallback(_chargeDuration, () => StopFx(_chargeDustFx));
 
         // Phase 1: 침대 바짝 세우기 (투석기).
-        // 피봇 포인트를 축으로 RotateAround — 수치 보정 불필요.
         Vector3 pivotPoint = _catapultPivot != null ? _catapultPivot.position : bedStartPos;
         Vector3 rotAxis = _catapultAxis.normalized;
         float rotated = 0f;
@@ -119,14 +134,22 @@ public class CatapultFlingClear : PatientClearBase
 
         _sequence.InsertCallback(_catapultStartTime, () => PlayFx(_catapultSmokeFx));
 
-        // Phase 2: 환자 사출 — 월드 공간으로 분리 후 포물선 비행.
+        // Phase 2: 환자 사출.
+        // 분리 전 환자의 회전 축을 캡처해서 그 축으로 공중제비.
+        Vector3 spinAxis = Vector3.right;
+        Quaternion spinBaseRotation = Quaternion.identity;
+
         _sequence.InsertCallback(_flingStartTime, () =>
         {
+            // 분리 전 환자의 right 축 = 공중제비 회전 축.
+            spinAxis = patientTransform.right;
+            spinBaseRotation = patientTransform.rotation;
+
             patientTransform.SetParent(null, worldPositionStays: true);
             PlayFx(_flingTrailFx);
         });
 
-        // 포물선 비행: DOPath로 3점 (시작, 정점, 착지점).
+        // 포물선 비행.
         Vector3 flingStart = patientTransform.position;
         Vector3 flingPeak = flingStart + new Vector3(
             _flingHorizontalDistance * 0.5f,
@@ -134,7 +157,7 @@ public class CatapultFlingClear : PatientClearBase
             0f);
         Vector3 flingEnd = flingStart + new Vector3(
             _flingHorizontalDistance,
-            _flingPeakHeight * 0.3f, // 화면 밖으로 날아가므로 약간 위에서 끝남.
+            _flingPeakHeight * 0.3f,
             0f);
 
         Vector3[] flingPath = { flingStart, flingPeak, flingEnd };
@@ -143,13 +166,19 @@ public class CatapultFlingClear : PatientClearBase
             patientTransform.DOPath(flingPath, _flingDuration, PathType.CatmullRom)
                 .SetEase(Ease.Linear));
 
-        // 공중제비 회전 (로컬 축 기준).
-        Vector3 flipRotation = new(360f * _flipCount, 0f, 0f);
-        _sequence.Insert(_flingStartTime,
-            patientTransform.DOLocalRotate(flipRotation, _flingDuration, RotateMode.FastBeyond360)
-                .SetEase(Ease.Linear));
+        // 공중제비 — 캡처한 축으로 수동 회전.
+        float flipAngle = 360f * _flipCount;
+        float flipProgress = 0f;
 
-        // Phase 3a: 침대가 원래 각도로 바운스 복귀 (통통 2~3번 튕김).
+        _sequence.Insert(_flingStartTime,
+            DOVirtual.Float(0f, flipAngle, _flingDuration, angle =>
+            {
+                float step = angle - flipProgress;
+                patientTransform.rotation = Quaternion.AngleAxis(angle, spinAxis) * spinBaseRotation;
+                flipProgress = angle;
+            }).SetEase(Ease.Linear));
+
+        // Phase 3a: 침대 바운스 복귀.
         float bounceProgress = 0f;
 
         _sequence.Insert(_bounceStartTime,
@@ -160,12 +189,21 @@ public class CatapultFlingClear : PatientClearBase
                 bounceProgress = delta;
             }).SetEase(Ease.OutBounce));
 
-        // Phase 3b: 제자리 복귀 후 왼쪽으로 슬라이드 (회전 없이 이동만).
+        // Phase 3b: 왼쪽 슬라이드.
         Vector3 slideTarget = bedStartPos + _slideOffset;
 
         _sequence.Insert(_slideStartTime,
             bedTransform.DOMove(slideTarget, _slideDuration)
                 .SetEase(Ease.InQuad));
+
+        // 시퀀스 완료 시 patientRoot 원복 + 파티클 정리.
+        _sequence.OnComplete(() =>
+        {
+            patientRoot.position = _cachedRootPosition;
+            ClearFx(_chargeDustFx);
+            ClearFx(_flingTrailFx);
+            ClearFx(_catapultSmokeFx);
+        });
 
         return _sequence;
     }
@@ -182,11 +220,21 @@ public class CatapultFlingClear : PatientClearBase
         bedTransform.DOKill();
         patientTransform.DOKill();
 
-        // 환자를 원래 부모(침대)로 복원.
+        // 환자를 원래 부모로 복원.
         if (_originalPatientParent != null && patientTransform.parent != _originalPatientParent)
         {
             patientTransform.SetParent(_originalPatientParent, worldPositionStays: false);
             patientTransform.localScale = _originalPatientScale;
+        }
+
+        // RotateAround/DOShake로 변경된 위치·회전 원복.
+        if (_hasCachedState)
+        {
+            patientRoot.position = _cachedRootPosition;
+            bedTransform.position = _cachedBedPosition;
+            bedTransform.rotation = _cachedBedRotation;
+            patientTransform.localPosition = _cachedPatientLocalPosition;
+            patientTransform.localRotation = _cachedPatientLocalRotation;
         }
 
         ClearFx(_chargeDustFx);

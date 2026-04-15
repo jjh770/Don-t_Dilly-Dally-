@@ -113,7 +113,11 @@ public class SkyLandingEntrance : PatientEntranceBase
         if (_thrusterFx == null) return;
         foreach (ParticleSystem fx in _thrusterFx) PlayFx(fx);
         StopRocketHoverLoop();
-        _rocketHoverLoopSource = SoundManager.Instance.PlayLoop(SFXKey.PatinetRocketHovering);
+
+        if (SoundManager.Instance != null)
+        {
+            _rocketHoverLoopSource = SoundManager.Instance.PlayLoop(SFXKey.PatinetRocketHovering);
+        }
     }
 
     private void StopThrusters()
@@ -124,7 +128,11 @@ public class SkyLandingEntrance : PatientEntranceBase
         }
 
         StopRocketHoverLoop();
-        SoundManager.Instance.Play(SFXKey.PatientRocketLanding, SoundType.Local);
+
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.Play(SFXKey.PatientRocketLanding, SoundType.Local);
+        }
     }
 
     private void ClearThrusters()
@@ -135,7 +143,11 @@ public class SkyLandingEntrance : PatientEntranceBase
 
     private void StopRocketHoverLoop()
     {
-        SoundManager.Instance.StopSFX(_rocketHoverLoopSource);
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopSFX(_rocketHoverLoopSource);
+        }
+
         _rocketHoverLoopSource = null;
     }
 }
