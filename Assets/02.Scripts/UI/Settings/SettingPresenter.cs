@@ -1,39 +1,21 @@
-using System;
 using UnityEngine;
-using UnityEngine.UI;
-
 public class SettingPresenter
 {
     private readonly SettingView _view;
     private readonly SoundManager _soundManager;
 
-    private readonly Button _openButton;
-
-    public SettingPresenter(SettingView view, SoundManager soundManager, Button openButton)
+    public SettingPresenter(SettingView view, SoundManager soundManager)
     {
         _view = view;
         _soundManager = soundManager;
-        _openButton = openButton;
 
         _view.Initialize(this);
-
-        _openButton.onClick.AddListener(HandleOpenButtonClicked);
 
         RefreshView();
     }
 
     public void Dispose()
     {
-        _openButton.onClick.RemoveListener(HandleOpenButtonClicked);
-    }
-
-    public void HandleCloseRequested()
-    {
-    }
-
-    private void HandleOpenButtonClicked()
-    {
-        _view.Show();
     }
 
 

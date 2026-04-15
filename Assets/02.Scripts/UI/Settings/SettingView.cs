@@ -21,11 +21,15 @@ public class SettingView : UIPopupBase
         if (_bgmSlider != null)
         {
             _bgmSlider.onValueChanged.AddListener(HandleBgmSliderChanged);
+            _bgmSlider.minValue = 0f;
+            _bgmSlider.maxValue = 1f;
         }
 
         if (_sfxSlider != null)
         {
             _sfxSlider.onValueChanged.AddListener(HandleSfxSliderChanged);
+            _sfxSlider.minValue = 0f;
+            _sfxSlider.maxValue = 1f;
         }
 
         if (_quitGameButton != null)
@@ -35,7 +39,7 @@ public class SettingView : UIPopupBase
 
         if (_closeButton != null)
         {
-            _closeButton.onClick.AddListener(HandleCloseButtonClicked);
+            _closeButton.onClick.AddListener(Hide);
         } 
     }
 
@@ -58,7 +62,7 @@ public class SettingView : UIPopupBase
 
         if (_closeButton != null)
         {
-            _closeButton.onClick.RemoveListener(HandleCloseButtonClicked);
+            _closeButton.onClick.RemoveListener(Hide);
         }
     }
 
@@ -84,12 +88,6 @@ public class SettingView : UIPopupBase
         _presenter?.RefreshView();
     }
 
-    protected override void HandleCloseHotkey()
-    {
-        base.HandleCloseHotkey();
-        _presenter?.HandleCloseRequested();
-    }
-
     private void HandleBgmSliderChanged(float value)
     {
         SetValueText(_bgmValueText, value);
@@ -107,21 +105,12 @@ public class SettingView : UIPopupBase
         _presenter?.HandleQuitButtonClicked();
     }
 
-    private void HandleCloseButtonClicked()
-    {
-        Hide();
-        _presenter?.HandleCloseRequested();
-    }
-
     private static void SetSliderValue(Slider slider, float value)
     {
         if (slider == null)
         {
             return;
         }
-
-        slider.minValue = 0f;
-        slider.maxValue = 1f;
         slider.SetValueWithoutNotify(Mathf.Clamp01(value));
     }
 

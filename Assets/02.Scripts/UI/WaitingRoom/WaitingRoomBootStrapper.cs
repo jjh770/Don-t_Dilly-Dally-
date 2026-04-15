@@ -68,7 +68,12 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 
         if (_settingView != null)
         {
-            _settingPresenter = new SettingPresenter(_settingView, SoundManager.Instance, _settingOpenButton);
+            _settingPresenter = new SettingPresenter(_settingView, SoundManager.Instance);
+            if (_settingOpenButton != null)
+            {
+                _settingOpenButton.onClick.RemoveListener(_settingView.Show);
+                _settingOpenButton.onClick.AddListener(_settingView.Show);
+            }
         }
 
         if (_customizingUI == null) return;
@@ -92,6 +97,10 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _stageUnlockPanelPresenter?.Dispose();
         _hospitalUpgradePresenter?.Dispose();
         _settingPresenter?.Dispose();
+        if (_settingOpenButton != null && _settingView != null)
+        {
+            _settingOpenButton.onClick.RemoveListener(_settingView.Show);
+        }
         _customizingViewModel?.Dispose();
     }
 }

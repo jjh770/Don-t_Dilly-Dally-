@@ -29,7 +29,7 @@ public class RobbyBootstrapper : MonoBehaviour
         _attendancePresenter = new AttendancePresenter(_attendanceManager, _attendanceView, CustomizingManager.Instance, _attendancePopup);
         if (_settingView != null)
         {
-            _settingPresenter = new SettingPresenter(_settingView, SoundManager.Instance, _settingOpenButton);
+            _settingPresenter = new SettingPresenter(_settingView, SoundManager.Instance);
         }
 
         // 3. View 초기화
@@ -38,6 +38,7 @@ public class RobbyBootstrapper : MonoBehaviour
 
         _roomView.AttendancePopupButton.onClick.AddListener(_attendancePresenter.AttendancePopupOpen);
         _tutorialOpenButton.onClick.AddListener(_tutorialView.Show);
+        _settingOpenButton.onClick.AddListener(_settingView.Show);
     }
 
     private void OnDestroy()
@@ -47,5 +48,6 @@ public class RobbyBootstrapper : MonoBehaviour
         _settingPresenter?.Dispose();
         _roomView.AttendancePopupButton.onClick.RemoveListener(_attendancePresenter.AttendancePopupOpen);
         _tutorialOpenButton.onClick.RemoveListener(_tutorialView.Show);
+        _settingOpenButton.onClick.RemoveListener(_settingView.Show);
     }
 }
