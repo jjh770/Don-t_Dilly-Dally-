@@ -207,7 +207,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         {
             return false;
         }
-        else if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby)
+        else if (PhotonNetwork.NetworkClientState != ClientState.JoinedLobby && PhotonNetwork.NetworkClientState != ClientState.ConnectedToMasterServer)
         {
             OnFailedToJoinRoom?.Invoke("연결 상태를 확인해주세요.");
             return false;
