@@ -1,5 +1,6 @@
 using Photon.Pun;
 using UnityEngine;
+using UnityEngine.UI;
 public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
 {
     [SerializeField] private WaitingRoomClickManager _clickManager;
@@ -11,6 +12,8 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
     [SerializeField] private UI_Customizing _customizingUI;
     [SerializeField] private UI_StagePanelView _stageUnlockPanelView;
     [SerializeField] private UI_HospitalUpgradeView _hospitalUpgradeView;
+    [SerializeField] private SettingView _settingView;
+    [SerializeField] private Button _settingOpenButton;
 
     private WaitingRoomModel _model;
     private CustomizingUIViewModel _customizingViewModel;
@@ -18,6 +21,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
     private WaitingRoomPresenter _presenter;
     private UI_StagePanelPresenter _stageUnlockPanelPresenter;
     private UI_HospitalUpgradePresenter _hospitalUpgradePresenter;
+    private SettingPresenter _settingPresenter;
 
     private void Start()
     {
@@ -37,6 +41,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _presenter?.Dispose();
         _stageUnlockPanelPresenter?.Dispose();
         _hospitalUpgradePresenter?.Dispose();
+        _settingPresenter?.Dispose();
         _model = new WaitingRoomModel();
 
         _presenter = new WaitingRoomPresenter(_defaultView, _popupView, _model);
@@ -61,6 +66,11 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
             _hospitalUpgradePresenter.Initialize();
         }
 
+        if (_settingView != null)
+        {
+            _settingPresenter = new SettingPresenter(_settingView, SoundManager.Instance, _settingOpenButton);
+        }
+
         if (_customizingUI == null) return;
 
         if (_customizingViewModel == null)
@@ -81,6 +91,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _presenter?.Dispose();
         _stageUnlockPanelPresenter?.Dispose();
         _hospitalUpgradePresenter?.Dispose();
+        _settingPresenter?.Dispose();
         _customizingViewModel?.Dispose();
     }
 }
