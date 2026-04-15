@@ -7,9 +7,6 @@ using UnityEngine.UI;
 [DisallowMultipleComponent]
 public class EmergencyWorldUI : MonoBehaviour
 {
-    [Header("Patient")]
-    [SerializeField] private int _patientIndex;
-
     [Header("Catalog")]
     [SerializeField] private EmergencyUiCatalogSO _uiCatalog;
 
@@ -64,8 +61,7 @@ public class EmergencyWorldUI : MonoBehaviour
             return;
         }
 
-        bool isCurrentPatient = _stageFlowManager.CurrentPatientIndex.Value == _patientIndex;
-        bool shouldShow = _stageFlowManager.ShouldShowEmergencyUi && isCurrentPatient;
+        bool shouldShow = _stageFlowManager.ShouldShowEmergencyUi;
 
         SetVisible(shouldShow);
         if (!shouldShow)
@@ -81,11 +77,6 @@ public class EmergencyWorldUI : MonoBehaviour
         _isExternallyControlled = true;
         EnsureInitialized();
         SetVisible(false);
-    }
-
-    public void SetPatientIndex(int patientIndex)
-    {
-        _patientIndex = patientIndex;
     }
 
     public void Refresh(StageFlowManager stageFlowManager)
@@ -206,24 +197,14 @@ public class EmergencyWorldUI : MonoBehaviour
         SetIcon(_targetMaterialIconRoot, _targetMaterialIconImage, targetIcon);
 
         Sprite actionIcon = null;
-        bool shouldShowProcessAction = false;
         if (_uiCatalog.TryGetTargetMaterialProcess(targetMaterial, out EmergencyUiCatalogSO.TargetMaterialProcessEntry entry) &&
             iconTable != null &&
             entry.ProcessAction != ActionType.None)
         {
             actionIcon = iconTable.GetActionIcon(entry.ProcessAction);
-            shouldShowProcessAction = actionIcon != null;
         }
 
-        SetImageSprite(_processActionIconImage, actionIcon);
-        GameObject actionRoot = _processActionIconRoot != null
-            ? _processActionIconRoot
-            : _processActionIconImage != null ? _processActionIconImage.gameObject : null;
-
-        if (actionRoot != null)
-        {
-            actionRoot.SetActive(shouldShowProcessAction);
-        }
+        SetIcon(_processActionIconRoot, _processActionIconImage, actionIcon);
     }
 
     private void UpdateDiagnosisIcon(DiagnosisScanType diagnosisTarget)

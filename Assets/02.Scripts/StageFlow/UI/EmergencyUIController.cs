@@ -21,6 +21,8 @@ public sealed class EmergencyUIController : MonoBehaviour
     private StageFlowManager _stageFlowManager;
     private Canvas _canvas;
     private CanvasGroup _overlayCanvasGroup;
+    private bool _hasAppliedOverlayVisibility;
+    private bool _isOverlayVisible;
 
     private void Awake()
     {
@@ -130,6 +132,14 @@ public sealed class EmergencyUIController : MonoBehaviour
 
     private void SetOverlayVisible(bool visible)
     {
+        if (_hasAppliedOverlayVisibility && _isOverlayVisible == visible)
+        {
+            return;
+        }
+
+        _hasAppliedOverlayVisibility = true;
+        _isOverlayVisible = visible;
+
         if (_overlayCanvasGroup != null)
         {
             _overlayCanvasGroup.alpha = visible ? 1f : 0f;
