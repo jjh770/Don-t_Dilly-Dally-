@@ -82,8 +82,7 @@ namespace DontDillyDally.Data
 
         public virtual void PrepareForRecycle()
         {
-            Recycled?.Invoke(this);
-            Recycled = null;
+            NotifyRecycled();
 
             transform.SetParent(null, true);
 
@@ -113,6 +112,12 @@ namespace DontDillyDally.Data
         public void ResetRecycleState()
         {
             _isPendingRecycle = false;
+        }
+
+        public void NotifyRecycled()
+        {
+            Recycled?.Invoke(this);
+            Recycled = null;
         }
 
         protected void ResetReusableItemState()

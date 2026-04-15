@@ -1,5 +1,6 @@
 using Photon.Pun;
 using System.Collections.Generic;
+using DontDillyDally.Data;
 using UnityEngine;
 
 // 사용 예시
@@ -63,6 +64,11 @@ public class PunPoolManager : PunSingleton<PunPoolManager>, IPunPrefabPool
     // PUN2가 SetActive(false)까지 처리한 뒤 호출하므로 큐에만 되돌려 놓는다.
     public void Destroy(GameObject go)
     {
+        if (go.TryGetComponent(out ItemObject itemObject))
+        {
+            itemObject.NotifyRecycled();
+        }
+
         if (!go.TryGetComponent<PoolableObject>(out var poolable))
         {
             Object.Destroy(go);
