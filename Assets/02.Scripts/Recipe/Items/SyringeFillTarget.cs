@@ -10,6 +10,7 @@ namespace DontDillyDally.Data
         private const string ResultPrefabName = "BasicMaterialItem";
         private const ToolType FillInputMask = ToolType.Syringe | ToolType.AnestheticFluid | ToolType.SedativeFluid;
         private const float ResultPickupTimeout = 2f;
+        private const float ResultPickupPollInterval = 0.05f;
 
         [Header("주사기 주입 설정")]
         [SerializeField] private CraftingRuleDatabase _ruleDatabase;
@@ -26,6 +27,7 @@ namespace DontDillyDally.Data
         private IHeldItemInteractor _activeHeldItemInteractor;
         private ItemObject _activeHeldItem;
         private IHeldItemInteractor _pendingResultPickupInteractor;
+        private WaitForSeconds _resultPickupPollWait;
         private bool _isFillInProgress;
         private bool _isPlayerInteractionLocked;
 
@@ -36,6 +38,7 @@ namespace DontDillyDally.Data
         {
             _mixToolItem = GetComponent<MixToolItem>();
             _networkOwnership = GetComponent<NetworkItemOwnership>();
+            _resultPickupPollWait = new WaitForSeconds(ResultPickupPollInterval);
 
             if (_actionTimer == null)
             {
@@ -304,8 +307,8 @@ namespace DontDillyDally.Data
                     yield break;
                 }
 
-                elapsed += Time.deltaTime;
-                yield return null;
+                elapsed += ResultPickupPollInterval;
+                yield return _resultPickupPollWait;
             }
 
             _pendingResultPickupInteractor = null;
