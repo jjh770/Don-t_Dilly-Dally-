@@ -41,7 +41,7 @@ namespace DontDillyDally.StageFlow
 
         private void HandlePhaseChanged(EStagePhase phase)
         {
-            bool canMove = phase == EStagePhase.Playing;
+            bool canMove = CanMoveDuringPhase(phase);
             SetAllPlayersMovementLocked(!canMove);
         }
 
@@ -52,8 +52,14 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
-            bool canMove = _rpc.CurrentPhase.Value == EStagePhase.Playing;
+            bool canMove = CanMoveDuringPhase(_rpc.CurrentPhase.Value);
             player.MovementAbility.SetMovementLocked(_movementLockSource, !canMove);
+        }
+
+        private static bool CanMoveDuringPhase(EStagePhase phase)
+        {
+            return phase == EStagePhase.Playing ||
+                   phase == EStagePhase.PatientTransition;
         }
 
         private void SetAllPlayersMovementLocked(bool locked)
