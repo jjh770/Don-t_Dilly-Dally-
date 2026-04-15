@@ -140,6 +140,9 @@ namespace DontDillyDally.MiniGame
             FxHelper.Clear(_surgeryLoopInstance);
             FxHelper.Clear(_successInstance);
             FxHelper.Clear(_failInstance);
+
+            // 다음 환자에서 새로 ResolvePatientTransform()하도록 캐시 초기화.
+            _cachedPatientTransform = null;
         }
 
         // ── 인스턴스 관리 ───────────────────────────────────────────
