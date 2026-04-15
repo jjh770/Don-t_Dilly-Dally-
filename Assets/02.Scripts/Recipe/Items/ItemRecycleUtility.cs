@@ -18,18 +18,26 @@ namespace DontDillyDally.Data
             }
 
             PhotonView photonView = itemObject.PhotonView;
-            if (PhotonNetwork.InRoom)
+            if (!PhotonNetwork.InRoom)
             {
-                if (photonView == null)
-                {
-                    Debug.LogWarning($"[ItemRecycle] Photon 룸 아이템 '{itemObject.name}'에 PhotonView가 없습니다.");
-                    return false;
-                }
+                return false;
+            }
 
-                if (!photonView.IsMine && !photonView.AmController)
-                {
-                    return false;
-                }
+            if (photonView == null)
+            {
+                Debug.LogWarning($"[ItemRecycle] Photon 룸 아이템 '{itemObject.name}'에 PhotonView가 없습니다.");
+                return false;
+            }
+
+            if (!PhotonNetwork.IsMasterClient && !photonView.IsMine && !photonView.AmController)
+            {
+                return false;
+            }
+
+            if (!PhotonNetwork.IsMasterClient)
+            {
+                itemObject.RequestRecycleOnMaster();
+                return true;
             }
 
             if (!itemObject.TryBeginRecycle())
@@ -37,27 +45,30 @@ namespace DontDillyDally.Data
                 return true;
             }
 
-            PrepareForRecycle(itemObject);
-
-            if (PhotonNetwork.InRoom)
-            {
-                PhotonNetwork.Destroy(itemObject.gameObject);
-                return true;
-            }
-
-            if (PunPoolManager.Instance != null && itemObject.TryGetComponent(out PoolableObject _))
-            {
-                PunPoolManager.Instance.Destroy(itemObject.gameObject);
-                return true;
-            }
-
-            Object.Destroy(itemObject.gameObject);
+            RecycleAsMaster(itemObject);
             return true;
         }
 
-        private static void PrepareForRecycle(ItemObject itemObject)
+        public static bool TryRecycleAsMaster(ItemObject itemObject)
+        {
+            if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient || itemObject == null)
+            {
+                return false;
+            }
+
+            if (!itemObject.TryBeginRecycle())
+            {
+                return true;
+            }
+
+            RecycleAsMaster(itemObject);
+            return true;
+        }
+
+        private static void RecycleAsMaster(ItemObject itemObject)
         {
             itemObject.PrepareForRecycle();
+            PhotonNetwork.Destroy(itemObject.gameObject);
         }
     }
 }

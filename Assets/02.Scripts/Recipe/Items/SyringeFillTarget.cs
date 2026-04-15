@@ -1,18 +1,20 @@
 using Photon.Pun;
+using System.Collections;
 using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    [RequireComponent(typeof(MixToolItem))]
-    public class SyringeFillTarget : MonoBehaviour, IInteractable, IItemAcceptor
+    [RequireComponent(typeof(MixToolItem), typeof(PhotonView))]
+    public class SyringeFillTarget : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private const string ResultPrefabName = "BasicMaterialItem";
         private const ToolType FillInputMask = ToolType.Syringe | ToolType.AnestheticFluid | ToolType.SedativeFluid;
+        private const float ResultPickupTimeout = 2f;
+        private const float ResultPickupPollInterval = 0.05f;
 
         [Header("주사기 주입 설정")]
         [SerializeField] private CraftingRuleDatabase _ruleDatabase;
         [SerializeField] private ActionTimer _actionTimer;
-        [SerializeField] private GameObject _resultPrefab;
 
         private MixToolItem _mixToolItem;
         private NetworkItemOwnership _networkOwnership;
@@ -24,6 +26,8 @@ namespace DontDillyDally.Data
 
         private IHeldItemInteractor _activeHeldItemInteractor;
         private ItemObject _activeHeldItem;
+        private IHeldItemInteractor _pendingResultPickupInteractor;
+        private WaitForSeconds _resultPickupPollWait;
         private bool _isFillInProgress;
         private bool _isPlayerInteractionLocked;
 
@@ -34,6 +38,7 @@ namespace DontDillyDally.Data
         {
             _mixToolItem = GetComponent<MixToolItem>();
             _networkOwnership = GetComponent<NetworkItemOwnership>();
+            _resultPickupPollWait = new WaitForSeconds(ResultPickupPollInterval);
 
             if (_actionTimer == null)
             {
@@ -218,34 +223,95 @@ namespace DontDillyDally.Data
             Vector3 spawnPosition = transform.position;
             Quaternion spawnRotation = transform.rotation;
 
-            GameObject spawnedObject = SpawnResult(resultMaterial, spawnPosition, spawnRotation);
-            if (spawnedObject != null && spawnedObject.TryGetComponent(out IInteractable interactable))
+            if (PhotonNetwork.IsMasterClient)
             {
-                heldItemInteractor.TryPickupInteractable(interactable);
+                GameObject spawnedObject = SpawnResult(resultMaterial, spawnPosition, spawnRotation);
+                if (spawnedObject != null && spawnedObject.TryGetComponent(out IInteractable interactable))
+                {
+                    heldItemInteractor.TryPickupInteractable(interactable);
+                }
+
+                FinishCurrentInteraction();
+                return;
             }
 
-            FinishCurrentInteraction();
+            int requesterActorNumber = PhotonNetwork.LocalPlayer != null
+                ? PhotonNetwork.LocalPlayer.ActorNumber
+                : -1;
+
+            _pendingResultPickupInteractor = heldItemInteractor;
+            FinishCurrentInteraction(clearPendingResultPickup: false);
+            photonView.RPC(
+                nameof(RPC_RequestSpawnFillResult),
+                RpcTarget.MasterClient,
+                (int)resultMaterial,
+                spawnPosition,
+                spawnRotation,
+                requesterActorNumber);
         }
 
         private GameObject SpawnResult(CraftedMaterialType resultMaterial, Vector3 position, Quaternion rotation)
         {
-            if (PhotonNetwork.InRoom)
-            {
-                return PhotonNetwork.Instantiate(ResultPrefabName, position, rotation, 0, new object[] { (int)resultMaterial });
-            }
-
-            if (_resultPrefab == null)
+            if (!PhotonNetwork.InRoom)
             {
                 return null;
             }
 
-            GameObject spawnedObject = Instantiate(_resultPrefab, position, rotation);
-            if (spawnedObject.TryGetComponent(out BasicMaterialItem basicMaterialItem))
+            return PhotonNetwork.InstantiateRoomObject(ResultPrefabName, position, rotation, 0, new object[] { (int)resultMaterial });
+        }
+
+        [PunRPC]
+        private void RPC_RequestSpawnFillResult(int resultMaterialValue, Vector3 position, Quaternion rotation, int requesterActorNumber)
+        {
+            if (!PhotonNetwork.IsMasterClient)
             {
-                basicMaterialItem.Initialize(resultMaterial);
+                return;
             }
 
-            return spawnedObject;
+            GameObject spawnedObject = SpawnResult((CraftedMaterialType)resultMaterialValue, position, rotation);
+            if (spawnedObject == null || !spawnedObject.TryGetComponent(out PhotonView resultView))
+            {
+                return;
+            }
+
+            photonView.RPC(nameof(RPC_TryPickupSpawnedResult), RpcTarget.All, requesterActorNumber, resultView.ViewID);
+        }
+
+        [PunRPC]
+        private void RPC_TryPickupSpawnedResult(int requesterActorNumber, int resultViewId)
+        {
+            if (PhotonNetwork.LocalPlayer == null ||
+                PhotonNetwork.LocalPlayer.ActorNumber != requesterActorNumber)
+            {
+                return;
+            }
+
+            if (_pendingResultPickupInteractor == null)
+            {
+                return;
+            }
+
+            StartCoroutine(TryPickupSpawnedResultWhenAvailable(resultViewId));
+        }
+
+        private IEnumerator TryPickupSpawnedResultWhenAvailable(int resultViewId)
+        {
+            float elapsed = 0f;
+            while (elapsed < ResultPickupTimeout)
+            {
+                PhotonView resultView = PhotonView.Find(resultViewId);
+                if (resultView != null && resultView.TryGetComponent(out IInteractable interactable))
+                {
+                    _pendingResultPickupInteractor?.TryPickupInteractable(interactable);
+                    _pendingResultPickupInteractor = null;
+                    yield break;
+                }
+
+                elapsed += ResultPickupPollInterval;
+                yield return _resultPickupPollWait;
+            }
+
+            _pendingResultPickupInteractor = null;
         }
 
         private void ClearPendingState()
@@ -256,13 +322,17 @@ namespace DontDillyDally.Data
             _pendingFillResult = FillResult.Failure();
         }
 
-        private void FinishCurrentInteraction(bool returnOwnershipToMaster = true)
+        private void FinishCurrentInteraction(bool returnOwnershipToMaster = true, bool clearPendingResultPickup = true)
         {
             ReleaseInteractionLockIfNeeded();
             ClearPendingState();
             ClearActiveFillState();
             _isInteractionLocked = false;
             _networkOwnership?.UnlockOwnershipOnController();
+            if (clearPendingResultPickup)
+            {
+                _pendingResultPickupInteractor = null;
+            }
 
             if (returnOwnershipToMaster)
             {

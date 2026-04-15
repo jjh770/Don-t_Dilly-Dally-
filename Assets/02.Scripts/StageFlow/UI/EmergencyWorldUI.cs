@@ -1,6 +1,7 @@
 using DontDillyDally.Data;
 using DontDillyDally.MiniGame;
 using DontDillyDally.StageFlow;
+using DontDillyDally.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
