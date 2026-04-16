@@ -196,9 +196,18 @@ public class CatapultFlingClear : PatientClearBase
             bedTransform.DOMove(slideTarget, _slideDuration)
                 .SetEase(Ease.InQuad));
 
-        // 시퀀스 끝나면 파티클 정리만. 위치 원복은 EntranceDirector가 담당.
+        // 시퀀스 끝나면 환자 원복 + 파티클 정리.
+        // 환자가 분리된 채로 남으면 다음 입장 시 빈 침대만 등장.
         _sequence.OnComplete(() =>
         {
+            if (_originalPatientParent != null && patientTransform.parent != _originalPatientParent)
+            {
+                patientTransform.SetParent(_originalPatientParent, worldPositionStays: false);
+                patientTransform.localPosition = _cachedPatientLocalPosition;
+                patientTransform.localRotation = _cachedPatientLocalRotation;
+                patientTransform.localScale = _originalPatientScale;
+            }
+
             ClearFx(_chargeDustFx);
             ClearFx(_flingTrailFx);
             ClearFx(_catapultSmokeFx);

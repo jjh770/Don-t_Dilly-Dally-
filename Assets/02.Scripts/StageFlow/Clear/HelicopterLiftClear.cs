@@ -10,8 +10,11 @@ public class HelicopterLiftClear : PatientClearBase
     [SerializeField] private Transform _helicopterTransform;
 
     [Header("Rope Object")]
-    [Tooltip("밧줄 오브젝트. 헬기 자식으로 배치, 비활성. 스케일 Y로 길이 조절.")]
+    [Tooltip("밧줄 오브젝트 (레거시, 단일). 아래 배열이 비었을 때 사용됨. 스케일 Y로 길이 조절.")]
     [SerializeField] private Transform _ropeTransform;
+
+    [Tooltip("밧줄 오브젝트 배열. 2개 이상일 때 여기 할당 (예: 헬기 훅↔침대 손잡이 좌/우 2줄). 비어있으면 위 단일 필드 사용.")]
+    [SerializeField] private Transform[] _ropeTransforms;
 
     [Tooltip("밧줄 연결 시 최종 로컬 스케일 Y. 헬기에서 침대까지 닿는 길이.")]
     [SerializeField] private float _ropeFullLengthScaleY = 1f;
@@ -94,13 +97,30 @@ public class HelicopterLiftClear : PatientClearBase
 
     private Sequence _sequence;
     private Tween _swayTween;
-    private Vector3 _originalRopeScale;
+    private Transform[] _activeRopes;
+    private Vector3[] _originalRopeScales;
 
     // ForceComplete용 초기 상태 캐싱.
     private bool _hasCachedState;
     private Vector3 _cachedRootPosition;
     private Vector3 _cachedBedPosition;
     private Quaternion _cachedBedRotation;
+
+    // 배열이 비었으면 단일 필드를 배열화해서 반환.
+    private Transform[] ResolveRopes()
+    {
+        if (_ropeTransforms != null && _ropeTransforms.Length > 0)
+        {
+            return _ropeTransforms;
+        }
+
+        if (_ropeTransform != null)
+        {
+            return new[] { _ropeTransform };
+        }
+
+        return System.Array.Empty<Transform>();
+    }
 
     public override Sequence Play(
         Transform patientRoot,
@@ -132,13 +152,22 @@ public class HelicopterLiftClear : PatientClearBase
         }
 
         // 밧줄 초기 상태: 스케일 Y = 0 (접힌 상태).
-        if (_ropeTransform != null)
+        _activeRopes = ResolveRopes();
+        _originalRopeScales = new Vector3[_activeRopes.Length];
+
+        for (int i = 0; i < _activeRopes.Length; i++)
         {
-            _originalRopeScale = _ropeTransform.localScale;
-            Vector3 ropeStartScale = _ropeTransform.localScale;
-            ropeStartScale.y = 0f;
-            _ropeTransform.localScale = ropeStartScale;
-            _ropeTransform.gameObject.SetActive(false);
+            Transform rope = _activeRopes[i];
+            if (rope == null)
+            {
+                continue;
+            }
+
+            _originalRopeScales[i] = rope.localScale;
+            Vector3 startScale = rope.localScale;
+            startScale.y = 0f;
+            rope.localScale = startScale;
+            rope.gameObject.SetActive(false);
         }
 
         _sequence = DOTween.Sequence();
@@ -155,13 +184,18 @@ public class HelicopterLiftClear : PatientClearBase
         _sequence.InsertCallback(_rotorWindStartTime, () => PlayFx(_rotorWindFx));
         _sequence.InsertCallback(_rotorWindStopTime, () => StopFx(_rotorWindFx));
 
-        // Phase 1: 밧줄 내리기.
+        // Phase 1: 밧줄 내리기 (모든 밧줄 동시).
         _sequence.InsertCallback(_ropeDeployStartTime, () =>
         {
-            if (_ropeTransform != null)
+            foreach (Transform rope in _activeRopes)
             {
-                _ropeTransform.gameObject.SetActive(true);
-                _ropeTransform.DOScaleY(_ropeFullLengthScaleY, _ropeDeployDuration)
+                if (rope == null)
+                {
+                    continue;
+                }
+
+                rope.gameObject.SetActive(true);
+                rope.DOScaleY(_ropeFullLengthScaleY, _ropeDeployDuration)
                     .SetEase(_ropeDeployEase);
             }
         });
@@ -251,11 +285,24 @@ public class HelicopterLiftClear : PatientClearBase
             _helicopterTransform.gameObject.SetActive(false);
         }
 
-        if (_ropeTransform != null)
+        if (_activeRopes != null && _originalRopeScales != null)
         {
-            _ropeTransform.DOKill();
-            _ropeTransform.localScale = _originalRopeScale;
-            _ropeTransform.gameObject.SetActive(false);
+            for (int i = 0; i < _activeRopes.Length; i++)
+            {
+                Transform rope = _activeRopes[i];
+                if (rope == null)
+                {
+                    continue;
+                }
+
+                rope.DOKill();
+                if (i < _originalRopeScales.Length)
+                {
+                    rope.localScale = _originalRopeScales[i];
+                }
+
+                rope.gameObject.SetActive(false);
+            }
         }
 
         ClearFx(_rotorWindFx);
