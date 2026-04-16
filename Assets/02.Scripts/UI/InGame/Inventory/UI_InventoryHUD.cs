@@ -98,7 +98,7 @@ namespace DontDillyDally.UI
             _playerInteraction.OnPushStateChanged += HandlePushStateChanged;
 
             PlayerRegistry.OnPlayerRegistered -= HandlePlayerRegistered;
-            ApplyState(InventoryHUDState.Default, null);
+            UpdateState();
             return true;
         }
 
