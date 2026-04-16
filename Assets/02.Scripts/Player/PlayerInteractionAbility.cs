@@ -27,6 +27,8 @@ public class PlayerInteractionAbility : MonoBehaviour
     [SerializeField] private LayerMask _interactableLayer;
 
     public ItemObject CurrentHeldItem => _heldItemController != null ? _heldItemController.CurrentHeldItem : null;
+    public bool IsPushingItem => _currentPushInteractable != null;
+    public IInteractable CurrentPushInteractable => _currentPushInteractable;
 
     private IInteractable _currentPushInteractable;
     private IInteractable _nearestInteractable;
@@ -34,6 +36,7 @@ public class PlayerInteractionAbility : MonoBehaviour
 
     public event Action<IInteractable, IInteractable> OnNearestInteractableChanged;
     public event Action<ItemObject> OnHeldItemChanged;
+    public event Action<bool> OnPushStateChanged;
 
     private PlayerController _playerController;
     private PlayerAnimator _playerAnimator;
@@ -237,6 +240,7 @@ public class PlayerInteractionAbility : MonoBehaviour
             _currentPushInteractable = interactable;
             _playerAnimator.PlayGrabAnimation(true);
             _playerMovement.SetSpeedMultiplier(_pushSpeedMultiplier, _pushRotationMultiplier);
+            OnPushStateChanged?.Invoke(true);
             return;
         }
 
@@ -283,6 +287,7 @@ public class PlayerInteractionAbility : MonoBehaviour
         _playerAnimator.PlayPushAnimation(false);
         _playerMovement.SetSpeedMultiplier(DefaultSpeedMultiplier, DefaultSpeedMultiplier);
         _currentPushInteractable = null;
+        OnPushStateChanged?.Invoke(false);
     }
 
     private void HandleHeldItemChanged(ItemObject heldItem)
