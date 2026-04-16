@@ -400,8 +400,6 @@ namespace DontDillyDally.Data
 
         private void HandleClosedDoorInteraction()
         {
-            ClearDetachedSterilizationSlots();
-
             if (_door == null)
             {
                 return;
@@ -593,7 +591,6 @@ namespace DontDillyDally.Data
 
         private bool HasAnyStoredItems()
         {
-            ClearDetachedSterilizationSlots();
             return HasAnyStoredItemsWithoutCleanup();
         }
 
@@ -604,8 +601,6 @@ namespace DontDillyDally.Data
 
         private int GetFirstAvailableSlotIndex()
         {
-            ClearDetachedSterilizationSlots();
-
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_slots[i].IsOccupied)
@@ -619,8 +614,6 @@ namespace DontDillyDally.Data
 
         private int GetFirstOccupiedSlotIndex()
         {
-            ClearDetachedSterilizationSlots();
-
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)
@@ -640,6 +633,7 @@ namespace DontDillyDally.Data
             }
 
             bool clearedAny = false;
+            bool hasAnyOccupied = false;
             for (int i = 0; i < _slots.Length; i++)
             {
                 SterilizationSlot slot = _slots[i];
@@ -662,9 +656,13 @@ namespace DontDillyDally.Data
                     slot.Clear();
                     clearedAny = true;
                 }
+                else
+                {
+                    hasAnyOccupied = true;
+                }
             }
 
-            if (clearedAny && _isBatchCompleted && !HasAnyStoredItemsWithoutCleanup())
+            if (clearedAny && _isBatchCompleted && !hasAnyOccupied)
             {
                 _isBatchCompleted = false;
             }

@@ -361,8 +361,6 @@ namespace DontDillyDally.Data
 
         private void TryTakeOutput(IHeldItemInteractor heldItemInteractor)
         {
-            ClearDetachedPotionState();
-
             if (_storedOutputItem == null || !_storedOutputItem.TryGetComponent(out IInteractable interactable))
             {
                 return;
@@ -640,8 +638,6 @@ namespace DontDillyDally.Data
 
         private List<ToolType> GetLoadedPotionToolTypes()
         {
-            ClearDetachedPotionState();
-
             _loadedPotionsBuffer.Clear();
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -656,14 +652,11 @@ namespace DontDillyDally.Data
 
         private bool HasAnyStoredPotions()
         {
-            ClearDetachedPotionState();
             return GetFirstOccupiedSlotIndex() >= 0;
         }
 
         private int GetFirstAvailableSlotIndex()
         {
-            ClearDetachedPotionState();
-
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_slots[i].IsOccupied)
@@ -677,8 +670,6 @@ namespace DontDillyDally.Data
 
         private int GetFirstOccupiedSlotIndex()
         {
-            ClearDetachedPotionState();
-
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)

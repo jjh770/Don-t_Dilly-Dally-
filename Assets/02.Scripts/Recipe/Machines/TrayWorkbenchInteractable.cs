@@ -131,8 +131,6 @@ namespace DontDillyDally.Data
 
         private void TryPlaceMaterialOnTray(IHeldItemInteractor heldItemInteractor, ItemObject itemObject, CraftedMaterialType materialType)
         {
-            ClearDetachedTrayState();
-
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem == null)
             {
@@ -216,8 +214,6 @@ namespace DontDillyDally.Data
 
         private void TryTakeTray(IHeldItemInteractor heldItemInteractor)
         {
-            ClearDetachedTrayState();
-
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
             if (trayItem == null)
             {
@@ -369,7 +365,7 @@ namespace DontDillyDally.Data
         private int NextStateRevision()
         {
             int nextRevision = PhotonNetwork.InRoom ? PhotonNetwork.ServerTimestamp : _stateRevision + 1;
-            if (nextRevision <= _stateRevision)
+            if (_stateRevision != 0 && (nextRevision - _stateRevision) <= 0)
             {
                 nextRevision = _stateRevision + 1;
             }
@@ -380,7 +376,7 @@ namespace DontDillyDally.Data
 
         private bool TryApplyStateRevision(int revision)
         {
-            if (revision < _stateRevision)
+            if (_stateRevision != 0 && (revision - _stateRevision) < 0)
             {
                 return false;
             }
