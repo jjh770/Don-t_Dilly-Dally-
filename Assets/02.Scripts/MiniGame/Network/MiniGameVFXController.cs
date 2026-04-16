@@ -88,12 +88,12 @@ namespace DontDillyDally.MiniGame
 
         // ── RPC 이벤트 핸들러 ───────────────────────────────────────
 
-        private void HandleVFXStarted(MiniGameType type)
+        private void HandleVFXStarted()
         {
             PlaySurgeryLoop();
         }
 
-        private void HandleVFXResult(MiniGameType type, bool isSuccess)
+        private void HandleVFXResult(bool isSuccess)
         {
             StopSurgeryLoop();
 
@@ -170,19 +170,25 @@ namespace DontDillyDally.MiniGame
 
             if (_surgeryLoopInstance == null && _surgeryLoopPrefab != null)
             {
-                _surgeryLoopInstance = Instantiate(_surgeryLoopPrefab, spawnPos, Quaternion.identity);
+                // 프리팹의 원본 회전값을 그대로 유지 (에디터에서 설정한 X=-90 등)
+                _surgeryLoopInstance = Instantiate(_surgeryLoopPrefab, spawnPos, _surgeryLoopPrefab.transform.rotation);
+
+                // 프리팹이 루프가 아니어도 미니게임 종료까지 지속되도록 강제 루프 설정
+                // 루트뿐 아니라 자식 파티클(별, 스파클 등)도 전부 루프로 설정
+                ForceLoopAll(_surgeryLoopInstance);
+
                 _surgeryLoopInstance.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
 
             if (_successInstance == null && _successPrefab != null)
             {
-                _successInstance = Instantiate(_successPrefab, spawnPos, Quaternion.identity);
+                _successInstance = Instantiate(_successPrefab, spawnPos, _successPrefab.transform.rotation);
                 _successInstance.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
 
             if (_failInstance == null && _failPrefab != null)
             {
-                _failInstance = Instantiate(_failPrefab, spawnPos, Quaternion.identity);
+                _failInstance = Instantiate(_failPrefab, spawnPos, _failPrefab.transform.rotation);
                 _failInstance.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             }
         }
@@ -221,6 +227,24 @@ namespace DontDillyDally.MiniGame
             if (instance != null)
             {
                 instance.transform.position = pos;
+            }
+        }
+
+        /// <summary>
+        /// 자식 파티클까지 모두 loop=true로 설정한다.
+        /// 프리팹이 여러 파티클 시스템(연기, 별, 스파클 등)으로 구성되었을 때 사용.
+        /// </summary>
+        private static void ForceLoopAll(ParticleSystem root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            foreach (ParticleSystem ps in root.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                var main = ps.main;
+                main.loop = true;
             }
         }
 

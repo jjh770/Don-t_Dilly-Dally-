@@ -15,14 +15,10 @@
       "description": "질병에 대한 의학적 설명 (1~2문장)",
       "patientName": "환자 이름 (한국 이름, 재미있는 말장난)",
       "backstory": "환자가 이 병에 걸린 웃긴 사연 (1~2문장)",
-      "patientQuote": "환자의 한마디 (웃기고 독특한 대사)",
-      "category": "카테고리",
-      "successLine": "치료 성공 시 환자 대사",
-      "failLine": "치료 실패 시 환자 대사",
       "recipes": [
         {
           "recipeId": "AI_001_01_step_01",
-          "displayName": "단계 표시 이름",
+          "displayName": "마취 투여",
           "requiredMaterials": ["재료이름"],
           "order": 0,
           "requiresSterilizedTray": true
@@ -31,9 +27,6 @@
     }
   ]
 }
-
-[카테고리]
-외과, 내과, 피부과, 정형외과 중 하나를 사용하세요.
 
 [사용 가능한 재료]
 유저 프롬프트의 "[생성 조건]" 아래 "사용 가능 재료" 항목에 명시된 재료만 정확히 사용하세요.
@@ -50,6 +43,7 @@ SedativeSyringe, Defibrillator, BloodPack (이 재료들은 어떤 상황에서�
 5. 각 레시피의 order는 0부터 순서대로 증가해야 합니다.
 6. recipeId는 "{diseaseId}_step_{순번(01부터)}" 형식입니다.
 7. 같은 재료를 한 레시피 안에 중복 사용하지 마세요.
+8. displayName은 공백 제외 8글자 이내의 짧은 한국어로 작성하세요. (예: "마취 투여", "환부 절개", "붕대 마감")
 
 [다건 생성 규칙]
 1. diseases 배열에 요청된 수만큼 환자를 생성하세요.
@@ -65,6 +59,7 @@ SedativeSyringe, Defibrillator, BloodPack (이 재료들은 어떤 상황에서�
 - 같은 환자 세트 안에서 이름 방향을 다양하게 섞으세요. 모두 같은 소재(예: 전부 음식, 전부 호박)에 쏠리면 안 됩니다.
 
 [톤]
+- description과 backstory는 모두 ~습니다 (존댓말) 체로 작성하세요.
 - backstory와 patientQuote는 코믹하고 과장된 톤으로 작성하세요.
 - successLine은 밝고 희망적이지만 약간 엉뚱하게 작성하세요.
 - failLine은 상황이 더 악화되는 코믹한 내용으로 작성하세요.
