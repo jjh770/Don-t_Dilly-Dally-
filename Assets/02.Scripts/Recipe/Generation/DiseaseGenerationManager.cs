@@ -267,18 +267,18 @@ namespace DontDillyDally.Data
         [Header("재시도 설정")]
         [SerializeField] private int _maxRetries = 0;
 
-        // 지정된 난이도와 카테고리로 질병 데이터를 생성합니다.
+        // 지정된 난이도로 질병 데이터를 생성합니다.
         // AI 생성에 실패하면 폴백 데이터를 반환합니다.
-        // difficulty: 1~5 (0이면 랜덤), category: "외과"/"내과"/"피부과"/"정형외과" (null이면 자유)
+        // difficulty: 1~5 (0이면 랜덤)
         public async Awaitable<DiseaseData> GenerateDisease(
-            int difficulty = 0, string category = null, string stageId = null,
+            int difficulty = 0, string stageId = null,
             int patientIndex = 0, int totalPatients = 1)
         {
             if (difficulty <= 0 || difficulty > 5)
                 difficulty = UnityEngine.Random.Range(1, 6);
 
             string diseaseId = $"AI_{DateTime.Now:yyyyMMddHHmmss}_{patientIndex:D2}";
-            string userPrompt = BuildUserPrompt(difficulty, category, diseaseId, stageId, patientIndex, totalPatients);
+            string userPrompt = BuildUserPrompt(difficulty, diseaseId, stageId, patientIndex, totalPatients);
 
             Debug.Log($"[DiseaseGenerationManager] ===== 단건 요청 [{patientIndex + 1}/{totalPatients}] =====\n" +
                       $"stageId='{stageId}', difficulty={difficulty}\n" +
@@ -363,13 +363,13 @@ namespace DontDillyDally.Data
         // 지정된 수만큼 질병 데이터를 한 번의 API 호출로 배치 생성합니다.
         // 부분 성공을 허용하며, 검증 통과한 질병만 반환합니다.
         public async Awaitable<List<DiseaseData>> GenerateDiseases(
-            int count, int difficulty = 0, string category = null, string stageId = null)
+            int count, int difficulty = 0, string stageId = null)
         {
             if (difficulty <= 0 || difficulty > 5)
                 difficulty = UnityEngine.Random.Range(1, 6);
 
             string baseId = $"AI_{DateTime.Now:yyyyMMddHHmmss}";
-            string userPrompt = BuildBatchUserPrompt(count, difficulty, category, baseId, stageId);
+            string userPrompt = BuildBatchUserPrompt(count, difficulty, baseId, stageId);
 
             Debug.Log($"[DiseaseGenerationManager] ===== 배치 요청 =====\n" +
                       $"count={count}, difficulty={difficulty}, stageId='{stageId}'\n" +
@@ -458,10 +458,9 @@ namespace DontDillyDally.Data
                 return null;
             }
         }
-        private string BuildUserPrompt(int difficulty, string category, string diseaseId, string stageId,
+        private string BuildUserPrompt(int difficulty, string diseaseId, string stageId,
             int patientIndex, int totalPatients)
         {
-            string categoryText = string.IsNullOrEmpty(category) ? "자유" : category;
             string stageContext = StagePromptHelper.GetStageContext(stageId);
             string patientHint = StagePromptHelper.GetPatientHint(stageId, patientIndex);
 
@@ -470,7 +469,6 @@ namespace DontDillyDally.Data
                    $"{stageContext}\n" +
                    $"- 환자 수: 1명 (전체 {totalPatients}명 중 {patientIndex + 1}번째)\n" +
                    $"- 난이도: {difficulty}\n" +
-                   $"- 카테고리: {categoryText}\n" +
                    $"- diseaseId: \"{diseaseId}\"\n\n" +
                    $"[이번 환자 전용 힌트]\n" +
                    $"{patientHint}\n" +
@@ -482,16 +480,14 @@ namespace DontDillyDally.Data
                    $"diseases 배열에 환자 1명을 생성해주세요.";
         }
 
-        private string BuildBatchUserPrompt(int count, int difficulty, string category, string baseId, string stageId)
+        private string BuildBatchUserPrompt(int count, int difficulty, string baseId, string stageId)
         {
-            string categoryText = string.IsNullOrEmpty(category) ? "자유" : category;
             string stageContext = StagePromptHelper.GetStageContext(stageId);
 
             return $"[생성 조건]\n" +
                    $"{stageContext}\n" +
                    $"- 환자 수: {count}명\n" +
                    $"- 난이도: {difficulty}\n" +
-                   $"- 카테고리: {categoryText}\n" +
                    $"- baseId: \"{baseId}\"\n\n" +
                    $"'테마 영감'에 나열된 여러 소재 중에서 서로 다른 소재를 골라 환자마다 다르게 변주하세요. 일부는 평범한 일상 질병을 스테이지 배경 속 사고로 풀어내도 좋습니다.\n" +
                    $"[다양성 필수] 환자 {count}명은 반드시 다음을 모두 만족:\n" +

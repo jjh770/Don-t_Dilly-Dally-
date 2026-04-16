@@ -112,6 +112,9 @@ namespace DontDillyDally.StageFlow
 
                 EventManager.Instance?.OnWrongMaterialUsed();
 
+                // 모든 클라이언트에 실패 VFX 재생 (잘못된 재료)
+                _rpc?.BroadcastMiniGameVFXResult(false);
+
                 if (_host != null && _host.IsGameOver)
                 {
                     Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");

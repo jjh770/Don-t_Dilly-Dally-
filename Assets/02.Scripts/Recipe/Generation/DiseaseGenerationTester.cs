@@ -39,11 +39,6 @@ namespace DontDillyDally.Data
             Debug.Log($"질병명: {disease.DiseaseName}");
             Debug.Log($"환자: {disease.PatientName}");
             Debug.Log($"배경: {disease.Backstory}");
-            Debug.Log($"환자 대사: {disease.PatientQuote}");
-            Debug.Log($"카테고리: {disease.Category} | 난이도: {disease.Difficulty} | 제한시간: {disease.TimeLimitSec}초");
-            Debug.Log($"권장인원: {disease.RecommendedPlayers} | 체력감소: {disease.FailHealthPenalty}");
-            Debug.Log($"성공: {disease.SuccessLine}");
-            Debug.Log($"실패: {disease.FailLine}");
             Debug.Log($"출처: {disease.Source}");
             Debug.Log($"레시피 수: {disease.Recipes.Count}");
 
