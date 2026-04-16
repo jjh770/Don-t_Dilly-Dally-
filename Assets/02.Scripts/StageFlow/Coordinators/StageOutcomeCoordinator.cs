@@ -77,7 +77,7 @@ namespace DontDillyDally.StageFlow
             {
                 StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.Timeout);
                 EventManager.Instance?.OnTimeOut();
-            }
+            } 
 
             float remainingTime = _host != null ? _host.RemainingTime : 0f;
             Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 시간: {remainingTime:F1}초");
@@ -172,6 +172,16 @@ namespace DontDillyDally.StageFlow
             }
             catch (OperationCanceledException)
             {
+            }
+
+            if (EGameOverReason.PlayerDisconnected == reason)
+            {
+                Debug.Log("[StageFlow] Player가 게임을 이탈해 대기실로 복귀합니다.");
+
+                await UniTask.Delay(TimeSpan.FromSeconds(2));
+
+                PhotonServerManager.Instance?.ReturnWaitingRoom();
+                return;
             }
 
             await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));

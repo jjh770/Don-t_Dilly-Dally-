@@ -302,6 +302,9 @@ namespace DontDillyDally.StageFlow
             _isGameOver = false;
             OnStageDataChanged?.Invoke(_stageData);
 
+            if (PhotonServerManager.Instance != null)
+                PhotonServerManager.Instance.OnOtherPlayerLeftRoom += HandleOtherPlayerLeftRoom;
+
             // 제출 핸들러와 타이머 바인딩을 현재 스테이지 기준으로 다시 준비합니다.
             _trayHandler = new TraySubmissionHandler(_rpc, () => _isGameOver);
             _patientHealthController = new PatientHealthController();
@@ -468,6 +471,11 @@ namespace DontDillyDally.StageFlow
                 ACK_TIMEOUT_MS);
         }
 
+        private void HandleOtherPlayerLeftRoom()
+        {
+            TriggerGameOver(EGameOverReason.PlayerDisconnected);
+        }
+
         // ── Update ──────────────────────────────────────────────────
 
         // 마스터가 플레이 중일 때 체력 드레인과 랜덤 응급 이벤트를 갱신합니다.
@@ -548,6 +556,9 @@ namespace DontDillyDally.StageFlow
 
             if (_onTimerExpired != null) _timer.OnExpired -= _onTimerExpired;
             if (_onTimerSyncTick != null) _timer.OnSyncTick -= _onTimerSyncTick;
+
+            if (PhotonServerManager.Instance != null)
+                PhotonServerManager.Instance.OnOtherPlayerLeftRoom -= HandleOtherPlayerLeftRoom;
 
             _trayHandler?.Dispose();
             _bootstrapCoordinator?.Dispose();

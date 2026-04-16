@@ -16,6 +16,7 @@ namespace DontDillyDally.StageFlow
     {
         None = 0,
         PatientDeath = 1,
-        TimeExpired = 2
+        TimeExpired = 2,
+        PlayerDisconnected = 3,
     }
 }

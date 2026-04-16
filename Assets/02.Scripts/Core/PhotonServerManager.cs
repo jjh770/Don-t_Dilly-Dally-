@@ -39,6 +39,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public event Action<Player, bool> OnReadyStateChanged;
     public event Action<Player, string> OnNicknameChanged;
     public event Action OnMasterClientChanged;
+    public event Action OnOtherPlayerLeftRoom;
     private bool _isReturningToWaitingRoom;
 
     private void Start()
@@ -172,6 +173,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public override void OnLeftRoom()
     {
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        OnOtherPlayerLeftRoom?.Invoke();
     }
 
     public void CreateNewRoom()
