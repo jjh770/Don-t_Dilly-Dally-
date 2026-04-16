@@ -131,7 +131,7 @@ namespace DontDillyDally.Data
         }
 
         [PunRPC]
-        private void RPC_RequestRecycleOnMaster(int requesterActorNumber, PhotonMessageInfo info)
+        public void RPC_RequestRecycleOnMaster(int requesterActorNumber, PhotonMessageInfo info)
         {
             if (info.Sender == null || info.Sender.ActorNumber != requesterActorNumber)
             {

@@ -29,7 +29,7 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            if (!PhotonNetwork.IsMasterClient && !photonView.IsMine && !photonView.AmController)
+            if (!PhotonNetwork.IsMasterClient && !photonView.IsMine)
             {
                 return false;
             }
@@ -40,13 +40,7 @@ namespace DontDillyDally.Data
                 return true;
             }
 
-            if (!itemObject.TryBeginRecycle())
-            {
-                return true;
-            }
-
-            RecycleAsMaster(itemObject);
-            return true;
+            return TryRecycleAsMaster(itemObject);
         }
 
         public static bool TryRecycleAsMaster(ItemObject itemObject)
@@ -56,16 +50,55 @@ namespace DontDillyDally.Data
                 return false;
             }
 
+            PhotonView photonView = itemObject.PhotonView;
+            if (photonView == null)
+            {
+                return false;
+            }
+
             if (!itemObject.TryBeginRecycle())
             {
                 return true;
             }
 
-            RecycleAsMaster(itemObject);
+            if (photonView.IsMine)
+            {
+                RecycleNetworkedObject(itemObject);
+                return true;
+            }
+
+            NetworkItemOwnership networkOwnership = itemObject.NetworkOwnership;
+            if (networkOwnership == null)
+            {
+                itemObject.ResetRecycleState();
+                return false;
+            }
+
+            networkOwnership.RequestOwnershipWithCallback(
+                onAcquired: () => RecycleAfterMasterOwnershipAcquired(itemObject),
+                onFailed: itemObject.ResetRecycleState);
+
             return true;
         }
 
-        private static void RecycleAsMaster(ItemObject itemObject)
+        private static void RecycleAfterMasterOwnershipAcquired(ItemObject itemObject)
+        {
+            if (itemObject == null)
+            {
+                return;
+            }
+
+            PhotonView photonView = itemObject.PhotonView;
+            if (!PhotonNetwork.InRoom || !PhotonNetwork.IsMasterClient || photonView == null || !photonView.IsMine)
+            {
+                itemObject.ResetRecycleState();
+                return;
+            }
+
+            RecycleNetworkedObject(itemObject);
+        }
+
+        private static void RecycleNetworkedObject(ItemObject itemObject)
         {
             itemObject.PrepareForRecycle();
             PhotonNetwork.Destroy(itemObject.gameObject);
