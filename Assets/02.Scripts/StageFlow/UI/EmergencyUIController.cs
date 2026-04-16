@@ -1,3 +1,4 @@
+using System.Collections;
 using DontDillyDally.StageFlow;
 using UnityEngine;
 
@@ -26,13 +27,18 @@ public sealed class EmergencyUIController : MonoBehaviour
 
     private void Awake()
     {
-        if (_stageFlowManager == null)
-        {
-            _stageFlowManager = StageFlowManager.Instance;
-        }
         ResolveReferences();
         _emergencyView?.UseExternalController();
         SetOverlayVisible(false);
+    }
+
+    private IEnumerator Start()
+    {
+        while (_stageFlowManager == null || !_stageFlowManager.IsInitialized || _worldCamera == null || _canvasRect == null)
+        {
+            ResolveRuntimeReferences();
+            yield return null;
+        }
     }
 
     private void Update()
@@ -59,6 +65,29 @@ public sealed class EmergencyUIController : MonoBehaviour
 
         SetOverlayVisible(true);
         _emergencyView?.Refresh(_stageFlowManager);
+    }
+
+    private void ResolveRuntimeReferences()
+    {
+        if (_stageFlowManager == null)
+        {
+            _stageFlowManager = StageFlowManager.Instance;
+        }
+
+        if (_worldCamera == null)
+        {
+            _worldCamera = Camera.main;
+        }
+
+        if (_canvasRect == null)
+        {
+            _canvas = GetComponentInParent<Canvas>();
+            _canvasRect = _canvas != null ? _canvas.transform as RectTransform : null;
+        }
+        else if (_canvas == null)
+        {
+            _canvas = _canvasRect.GetComponentInParent<Canvas>();
+        }
     }
 
     private void ResolveReferences()
@@ -151,9 +180,5 @@ public sealed class EmergencyUIController : MonoBehaviour
             _overlayPanel.SetActive(visible);
         }
 
-        if (_emergencyView != null)
-        {
-            _emergencyView.SetVisible(visible);
-        }
     }
 }
