@@ -93,6 +93,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            ClearDetachedSterilizationSlots();
+
             IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
             if (heldItemInteractor == null)
             {
@@ -136,6 +138,8 @@ namespace DontDillyDally.Data
 
             if (IsInteracting)
                 return false;
+
+            ClearDetachedSterilizationSlots();
 
             if (_isBatchCompleted)
                 return false;
@@ -213,6 +217,8 @@ namespace DontDillyDally.Data
 
         private void StartSterilizationBatch()
         {
+            ClearDetachedSterilizationSlots();
+
             if (!HasAnyStoredItems() || _isBatchCompleted)
             {
                 return;
@@ -240,6 +246,8 @@ namespace DontDillyDally.Data
 
         private void CompleteSterilizationBatch()
         {
+            ClearDetachedSterilizationSlots();
+
             _operationController.CompleteLocal();
 
             // 결과 아이템의 ViewID를 수집하여 RPC로 전송
@@ -319,27 +327,31 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            _slots[slotIndex].Clear();
-            bool hasRemaining = HasAnyStoredItems();
-            if (!hasRemaining)
-            {
-                _isBatchCompleted = false;
-            }
+            heldItemInteractor.TryPickupInteractable(
+                interactable,
+                onBeforeHold: () =>
+                {
+                    if (_slots[slotIndex].Item != storedItem)
+                    {
+                        return false;
+                    }
 
-            MachineStoredItemUtility.PrepareForPickup(storedItem);
+                    _slots[slotIndex].Clear();
+                    bool hasRemaining = HasAnyStoredItems();
+                    if (!hasRemaining)
+                    {
+                        _isBatchCompleted = false;
+                    }
 
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
-            }
+                    MachineStoredItemUtility.PrepareForPickup(storedItem);
 
-            ItemObject itemToRestore = storedItem;
-            int capturedSlotIndex = slotIndex;
-            heldItemInteractor.TryPickupInteractable(interactable, () =>
-            {
-                RollbackTakeItem(itemToRestore, capturedSlotIndex);
-            });
+                    if (PhotonNetwork.InRoom)
+                    {
+                        photonView.RPC(nameof(RPC_SterilTakeItem), RpcTarget.Others, slotIndex);
+                    }
+
+                    return true;
+                });
         }
 
         private void RollbackTakeItem(ItemObject item, int slotIndex)
@@ -379,6 +391,8 @@ namespace DontDillyDally.Data
 
         private void HandleClosedDoorInteraction()
         {
+            ClearDetachedSterilizationSlots();
+
             if (_door == null)
             {
                 return;
@@ -568,7 +582,8 @@ namespace DontDillyDally.Data
 
         private bool HasAnyStoredItems()
         {
-            return GetFirstOccupiedSlotIndex() >= 0;
+            ClearDetachedSterilizationSlots();
+            return HasAnyStoredItemsWithoutCleanup();
         }
 
         private bool IsDoorOpen()
@@ -578,6 +593,8 @@ namespace DontDillyDally.Data
 
         private int GetFirstAvailableSlotIndex()
         {
+            ClearDetachedSterilizationSlots();
+
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_slots[i].IsOccupied)
@@ -591,6 +608,8 @@ namespace DontDillyDally.Data
 
         private int GetFirstOccupiedSlotIndex()
         {
+            ClearDetachedSterilizationSlots();
+
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)
@@ -600,6 +619,62 @@ namespace DontDillyDally.Data
             }
 
             return -1;
+        }
+
+        private void ClearDetachedSterilizationSlots()
+        {
+            if (_slots == null)
+            {
+                return;
+            }
+
+            bool clearedAny = false;
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                SterilizationSlot slot = _slots[i];
+                ItemObject item = slot.Item;
+                if (item == null)
+                {
+                    if (slot.HasPendingToolResult)
+                    {
+                        slot.Clear();
+                        clearedAny = true;
+                    }
+
+                    continue;
+                }
+
+                if (item.TryGetComponent(out HoldableItem holdable) &&
+                    !holdable.IsStoredInContainer &&
+                    item.transform.parent != GetSlotTransform(i))
+                {
+                    slot.Clear();
+                    clearedAny = true;
+                }
+            }
+
+            if (clearedAny && _isBatchCompleted && !HasAnyStoredItemsWithoutCleanup())
+            {
+                _isBatchCompleted = false;
+            }
+        }
+
+        private bool HasAnyStoredItemsWithoutCleanup()
+        {
+            if (_slots == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                if (_slots[i].IsOccupied)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         #endregion

@@ -14,6 +14,7 @@ namespace DontDillyDally.Data
         [SerializeField] private CraftingRuleDatabase _ruleDatabase;
 
         public bool HasTray => GetResolvedTrayItem() != null;
+        public TrayItem ResolvedCurrentTrayItem => GetResolvedTrayItem();
 
         public void SetCurrentTrayItem(TrayItem trayItem)
         {
@@ -79,13 +80,6 @@ namespace DontDillyDally.Data
         {
             if (CurrentTrayItem == null)
             {
-                return null;
-            }
-
-            NetworkItemOwnership ownership = CurrentTrayItem.NetworkOwnership;
-            if (ownership != null && ownership.IsHeld)
-            {
-                CurrentTrayItem = null;
                 return null;
             }
 

@@ -96,6 +96,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            ClearDetachedPotionState();
+
             IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
             if (heldItemInteractor == null)
             {
@@ -136,6 +138,8 @@ namespace DontDillyDally.Data
         {
             if (_potionMixingMachine == null)
                 return false;
+
+            ClearDetachedPotionState();
 
             if (IsInteracting)
                 return false;
@@ -323,29 +327,31 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            // Clear 이후에는 ToolType이 None으로 지워지므로, 롤백용 메타데이터를 먼저 보관합니다.
-            ToolType capturedToolType = _slots[slotIndex].PotionToolType;
+            heldItemInteractor.TryPickupInteractable(
+                interactable,
+                onBeforeHold: () =>
+                {
+                    if (_slots[slotIndex].Item != storedItem)
+                    {
+                        return false;
+                    }
 
-            // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            _slots[slotIndex].Clear();
-            MachineStoredItemUtility.PrepareForPickup(storedItem);
+                    _slots[slotIndex].Clear();
+                    MachineStoredItemUtility.PrepareForPickup(storedItem);
 
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
-            }
+                    if (PhotonNetwork.InRoom)
+                    {
+                        photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
+                    }
 
-            ItemObject itemToRestore = storedItem;
-            int capturedSlotIndex = slotIndex;
-
-            heldItemInteractor.TryPickupInteractable(interactable, () =>
-            {
-                RollbackTakeInput(itemToRestore, capturedSlotIndex, capturedToolType);
-            });
+                    return true;
+                });
         }
 
         private void TryTakeOutput(IHeldItemInteractor heldItemInteractor)
         {
+            ClearDetachedPotionState();
+
             if (_storedOutputItem == null || !_storedOutputItem.TryGetComponent(out IInteractable interactable))
             {
                 return;
@@ -353,19 +359,25 @@ namespace DontDillyDally.Data
 
             ItemObject itemToRestore = _storedOutputItem;
 
-            // 출력 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            _storedOutputItem = null;
-            MachineStoredItemUtility.PrepareForPickup(itemToRestore);
+            heldItemInteractor.TryPickupInteractable(
+                interactable,
+                onBeforeHold: () =>
+                {
+                    if (_storedOutputItem != itemToRestore)
+                    {
+                        return false;
+                    }
 
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
-            }
+                    _storedOutputItem = null;
+                    MachineStoredItemUtility.PrepareForPickup(itemToRestore);
 
-            heldItemInteractor.TryPickupInteractable(interactable, () =>
-            {
-                RollbackTakeOutput(itemToRestore);
-            });
+                    if (PhotonNetwork.InRoom)
+                    {
+                        photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
+                    }
+
+                    return true;
+                });
         }
 
         private void RollbackTakeInput(ItemObject item, int slotIndex, ToolType potionToolType)
@@ -615,6 +627,8 @@ namespace DontDillyDally.Data
 
         private List<ToolType> GetLoadedPotionToolTypes()
         {
+            ClearDetachedPotionState();
+
             _loadedPotionsBuffer.Clear();
             for (int i = 0; i < _slots.Length; i++)
             {
@@ -629,11 +643,14 @@ namespace DontDillyDally.Data
 
         private bool HasAnyStoredPotions()
         {
+            ClearDetachedPotionState();
             return GetFirstOccupiedSlotIndex() >= 0;
         }
 
         private int GetFirstAvailableSlotIndex()
         {
+            ClearDetachedPotionState();
+
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (!_slots[i].IsOccupied)
@@ -647,6 +664,8 @@ namespace DontDillyDally.Data
 
         private int GetFirstOccupiedSlotIndex()
         {
+            ClearDetachedPotionState();
+
             for (int i = 0; i < _slots.Length; i++)
             {
                 if (_slots[i].IsOccupied)
@@ -656,6 +675,40 @@ namespace DontDillyDally.Data
             }
 
             return -1;
+        }
+
+        private void ClearDetachedPotionState()
+        {
+            if (_slots == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                PotionSlot slot = _slots[i];
+                ItemObject item = slot.Item;
+                if (item == null)
+                {
+                    slot.Clear();
+                    continue;
+                }
+
+                if (item.TryGetComponent(out HoldableItem holdable) &&
+                    !holdable.IsStoredInContainer &&
+                    item.transform.parent != GetSlotTransform(i))
+                {
+                    slot.Clear();
+                }
+            }
+
+            if (_storedOutputItem != null &&
+                _storedOutputItem.TryGetComponent(out HoldableItem outputHoldable) &&
+                !outputHoldable.IsStoredInContainer &&
+                _storedOutputItem.transform.parent != GetOutputTransform())
+            {
+                _storedOutputItem = null;
+            }
         }
 
         #endregion
