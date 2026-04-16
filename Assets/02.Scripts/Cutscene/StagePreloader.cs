@@ -248,7 +248,7 @@ public class StagePreloader : MonoBehaviourPunCallbacks
         {
             ct.ThrowIfCancellationRequested();
             DiseaseData disease = await _diseaseGenManager.GenerateDisease(
-                difficulty, null, stageId, patientIndex, totalPatients);
+                difficulty, stageId, patientIndex, totalPatients);
             return disease;
         }
         catch (OperationCanceledException)

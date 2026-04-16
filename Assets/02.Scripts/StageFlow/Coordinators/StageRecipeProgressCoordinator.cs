@@ -1,6 +1,5 @@
 using Cysharp.Threading.Tasks;
 using DontDillyDally.Data;
-using DontDillyDally.MiniGame;
 using Photon.Realtime;
 using System;
 using System.Threading;
@@ -114,7 +113,7 @@ namespace DontDillyDally.StageFlow
                 EventManager.Instance?.OnWrongMaterialUsed();
 
                 // 모든 클라이언트에 실패 VFX 재생 (잘못된 재료)
-                _rpc?.BroadcastMiniGameVFXResult(MiniGameType.ButtonMash, false);
+                _rpc?.BroadcastMiniGameVFXResult(false);
 
                 if (_host != null && _host.IsGameOver)
                 {

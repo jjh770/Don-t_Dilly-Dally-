@@ -88,12 +88,12 @@ namespace DontDillyDally.MiniGame
 
         // ── RPC 이벤트 핸들러 ───────────────────────────────────────
 
-        private void HandleVFXStarted(MiniGameType type)
+        private void HandleVFXStarted()
         {
             PlaySurgeryLoop();
         }
 
-        private void HandleVFXResult(MiniGameType type, bool isSuccess)
+        private void HandleVFXResult(bool isSuccess)
         {
             StopSurgeryLoop();
 

@@ -53,8 +53,8 @@ namespace DontDillyDally.StageFlow
         public event Action<bool> OnMiniGameResultReceived;
 
         // ── 미니게임 VFX 이벤트 (모든 클라이언트가 구독) ──────────────
-        public event Action<MiniGameType> OnMiniGameVFXStarted;
-        public event Action<MiniGameType, bool> OnMiniGameVFXResult;
+        public event Action OnMiniGameVFXStarted;
+        public event Action<bool> OnMiniGameVFXResult;
 
         // ── ACK 이벤트 (마스터가 구독) ───────────────────────────────
         public event Action<int> OnStageDataAckReceived; // actorNumber
@@ -297,14 +297,16 @@ namespace DontDillyDally.StageFlow
         }
 
         // ── 미니게임 VFX 브로드캐스트 (모든 클라이언트) ─────────────
-        public void BroadcastMiniGameVFXStarted(MiniGameType type)
+        // VFX는 성공/실패만 신경쓰므로 미니게임 타입은 전달하지 않음.
+        // 잘못된 재료 제출처럼 미니게임과 무관한 시점에서도 호출되기 때문.
+        public void BroadcastMiniGameVFXStarted()
         {
-            photonView.RPC(nameof(RPC_MiniGameVFXStarted), RpcTarget.All, (int)type);
+            photonView.RPC(nameof(RPC_MiniGameVFXStarted), RpcTarget.All);
         }
 
-        public void BroadcastMiniGameVFXResult(MiniGameType type, bool isSuccess)
+        public void BroadcastMiniGameVFXResult(bool isSuccess)
         {
-            photonView.RPC(nameof(RPC_MiniGameVFXResult), RpcTarget.All, (int)type, isSuccess);
+            photonView.RPC(nameof(RPC_MiniGameVFXResult), RpcTarget.All, isSuccess);
         }
 
         // ── 보상 ────────────────────────────────────────────────────
@@ -492,19 +494,17 @@ namespace DontDillyDally.StageFlow
         }
 
         [PunRPC]
-        private void RPC_MiniGameVFXStarted(int miniGameType)
+        private void RPC_MiniGameVFXStarted()
         {
-            var type = (MiniGameType)miniGameType;
-            Debug.Log($"[StageFlow] [RPC] 미니게임 VFX 시작: {type}");
-            OnMiniGameVFXStarted?.Invoke(type);
+            Debug.Log("[StageFlow] [RPC] 미니게임 VFX 시작");
+            OnMiniGameVFXStarted?.Invoke();
         }
 
         [PunRPC]
-        private void RPC_MiniGameVFXResult(int miniGameType, bool isSuccess)
+        private void RPC_MiniGameVFXResult(bool isSuccess)
         {
-            var type = (MiniGameType)miniGameType;
-            Debug.Log($"[StageFlow] [RPC] 미니게임 VFX 결과: {type}, 성공={isSuccess}");
-            OnMiniGameVFXResult?.Invoke(type, isSuccess);
+            Debug.Log($"[StageFlow] [RPC] 미니게임 VFX 결과: 성공={isSuccess}");
+            OnMiniGameVFXResult?.Invoke(isSuccess);
         }
 
         // ── 보상 ────────────────────────────────────────────────────
