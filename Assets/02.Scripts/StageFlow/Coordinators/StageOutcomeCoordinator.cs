@@ -1,8 +1,9 @@
-using Cysharp.Threading.Tasks;
-using DontDillyDally.Data;
-using Photon.Realtime;
 using System;
 using System.Threading;
+using Cysharp.Threading.Tasks;
+using DontDillyDally.Data;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
@@ -93,6 +94,11 @@ namespace DontDillyDally.StageFlow
 
         public async UniTask ApplyReward()
         {
+            if (!PhotonServerManager.Instance.IsMasterClient)
+            {
+                return;
+            }
+
             StageRuntimeData stageData = _host?.StageData;
             if (stageData == null || _rpc == null)
             {
@@ -177,7 +183,7 @@ namespace DontDillyDally.StageFlow
             if (EGameOverReason.PlayerDisconnected == reason)
             {
                 Debug.Log("[StageFlow] Player가 게임을 이탈해 대기실로 복귀합니다.");
-                NotifyUIService.Show(ENotifyType.OtherPlayerLeft);
+                NotifyUIService.QueueForNextScene(ENotifyType.OtherPlayerLeft);
 
                 await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
                 PhotonServerManager.Instance?.ReturnWaitingRoom();

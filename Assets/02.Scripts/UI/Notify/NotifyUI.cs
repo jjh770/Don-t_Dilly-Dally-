@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 public enum ENotifyType
@@ -13,12 +14,29 @@ public enum ENotifyType
 public static class NotifyUIService
 {
     public static event Action<ENotifyType> OnShowRequested;
-    public static ENotifyType CurrentNotify { get; private set; }
+    public static ENotifyType? PendingNotify { get; private set; }
+
+    public static void QueueForNextScene(ENotifyType type)
+    {
+        PendingNotify = type;
+    }
+
+    public static bool TryConsumePending(out ENotifyType type)
+    {
+        if (PendingNotify.HasValue)
+        {
+            type = PendingNotify.Value;
+            PendingNotify = null;
+            return true;
+        }
+
+        type = default;
+        return false;
+    }
 
     public static void Show(ENotifyType type)
     {
-        CurrentNotify = type;
-        OnShowRequested?.Invoke(CurrentNotify);
+        OnShowRequested?.Invoke(type);
     }
 
 }
@@ -39,10 +57,19 @@ public class NotifyUI : UIPopupBase
     private void OnEnable()
     {
         NotifyUIService.OnShowRequested += Show;
+        SceneManager.sceneLoaded += HandleSceneLoaded;
 
         if (_closeButton != null)
         {
             _closeButton.onClick.AddListener(Hide);
+        }
+    }
+
+    private void HandleSceneLoaded(Scene arg0, LoadSceneMode arg1)
+    {
+        if (NotifyUIService.TryConsumePending(out ENotifyType type))
+        {
+            Show(type);
         }
     }
 
@@ -63,7 +90,8 @@ public class NotifyUI : UIPopupBase
     private void OnDisable()
     {
         NotifyUIService.OnShowRequested -= Show;
- 
+        SceneManager.sceneLoaded -= HandleSceneLoaded;
+
         if (_closeButton != null)
         {
             _closeButton.onClick.RemoveListener(Hide);
