@@ -37,8 +37,9 @@ namespace DontDillyDally.Data
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
         private MachineOperationController _operationController;
+        private bool _isCompletionPending;
 
-        public bool IsInteracting => _operationController != null && _operationController.IsRunning;
+        public bool IsInteracting => _operationController != null && (_operationController.IsRunning || _isCompletionPending);
         public Transform Transform => transform;
 
         private void Awake()
@@ -234,6 +235,11 @@ namespace DontDillyDally.Data
 
         private void StartMixingProcess(IReadOnlyList<ToolType> loadedPotions)
         {
+            if (_isCompletionPending)
+            {
+                return;
+            }
+
             int playerId = PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
             CraftingResult result = _potionMixingMachine.TryMixPotions(loadedPotions, playerId);
 
@@ -256,6 +262,8 @@ namespace DontDillyDally.Data
 
         private void OnMixingTimerComplete()
         {
+            _isCompletionPending = true;
+
             if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
             {
                 // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
@@ -273,6 +281,7 @@ namespace DontDillyDally.Data
 
             if (_pendingResultMaterial == CraftedMaterialType.Unknown)
             {
+                _isCompletionPending = false;
                 _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
@@ -289,6 +298,7 @@ namespace DontDillyDally.Data
 
             if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
             {
+                _isCompletionPending = false;
                 _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
@@ -301,6 +311,7 @@ namespace DontDillyDally.Data
 
             MachineStoredItemUtility.StoreInMachine(resultItem, outputTransform);
             _storedOutputItem = resultItem;
+            _isCompletionPending = false;
             _operationController.UnlockDoor();
 
             if (PhotonNetwork.InRoom)
@@ -461,15 +472,17 @@ namespace DontDillyDally.Data
         [PunRPC]
         private void RPC_PotionStartMixing(int resultMaterial, float duration)
         {
+            _isCompletionPending = false;
             _pendingResultMaterial = (CraftedMaterialType)resultMaterial;
             _pendingCraftingDuration = duration;
-            _operationController.StartRemote(duration);
+            _operationController.StartRemote(duration, () => _isCompletionPending = true);
         }
 
         [PunRPC]
         private void RPC_PotionCompleteMixing(int resultItemViewId)
         {
             _operationController.CompleteRemote();
+            _isCompletionPending = false;
 
             // 슬롯 초기화 (아이템은 PhotonNetwork.Destroy로 이미 제거됨)
             for (int i = 0; i < _slots.Length; i++)

@@ -33,9 +33,10 @@ namespace DontDillyDally.Data
 
         private SterilizationSlot[] _slots;
         private bool _isBatchCompleted;
+        private bool _isCompletionPending;
         private MachineOperationController _operationController;
 
-        public bool IsInteracting => _operationController != null && _operationController.IsRunning;
+        public bool IsInteracting => _operationController != null && (_operationController.IsRunning || _isCompletionPending);
         public Transform Transform => transform;
 
         private void Awake()
@@ -217,6 +218,11 @@ namespace DontDillyDally.Data
 
         private void StartSterilizationBatch()
         {
+            if (_isCompletionPending)
+            {
+                return;
+            }
+
             ClearDetachedSterilizationSlots();
 
             if (!HasAnyStoredItems() || _isBatchCompleted)
@@ -234,6 +240,8 @@ namespace DontDillyDally.Data
 
         private void OnSterilizationTimerComplete()
         {
+            _isCompletionPending = true;
+
             if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
             {
                 // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
@@ -294,6 +302,7 @@ namespace DontDillyDally.Data
             }
 
             _isBatchCompleted = HasAnyStoredItems();
+            _isCompletionPending = false;
             _operationController.UnlockDoor();
 
             if (PhotonNetwork.InRoom)
@@ -447,13 +456,15 @@ namespace DontDillyDally.Data
         [PunRPC]
         private void RPC_SterilStartBatch(float duration)
         {
-            _operationController.StartRemote(duration);
+            _isCompletionPending = false;
+            _operationController.StartRemote(duration, () => _isCompletionPending = true);
         }
 
         [PunRPC]
         private void RPC_SterilCompleteBatch(int[] resultViewIds)
         {
             _operationController.CompleteRemote();
+            _isCompletionPending = false;
 
             // 모든 슬롯 초기화 후 결과 아이템 재배치
             for (int i = 0; i < _slots.Length; i++)
