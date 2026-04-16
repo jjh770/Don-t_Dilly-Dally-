@@ -9,13 +9,18 @@ public sealed class RewardLLMEvaluator
     private const int MaxCoinBonus = RewardMoneyPolicy.MaxCoinBonus;
     private const int MaxCoinPenalty = RewardMoneyPolicy.MaxCoinPenalty;
     private const int MaxSummaryLength = 100;
+    private static readonly EPerformanceEventType[] OrderedPerformanceEventTypes = System.Enum
+        .GetValues(typeof(EPerformanceEventType))
+        .Cast<EPerformanceEventType>()
+        .OrderBy(eventType => eventType.ToString())
+        .ToArray();
 
     private static readonly string SystemPrompt = $@"
 당신은 병원 시뮬레이션 게임의 결과를 요약하는 병원 평가 AI입니다.
 플레이어 활동 로그와 환자 정보를 바탕으로 결과를 요약하고, 적절한 보상 또는 벌금 값을 제안하세요.
 
 1. 플레이어 닉네임과 환자 이름은 입력된 데이터를 그대로 사용한다.
-2. 플레이어 닉네임 뒤에는 반드시 '선생님' 호칭을 붙이고 
+2. 플레이어 개개인의 언급은 피하고 전체적인 치료 결과와 플레이어들의 활동 패턴을 중심으로 요약한다.
 3. summaryText는 반드시 줄바꿈(\n)으로 구분하고 3문장을 초과하지 않는다.
 4. 말투는 병원 공식 보고서처럼 정중하게 작성한다. (예: ~했습니다, ~확인되었습니다)
 5. 실수는 예능감 있게 표현하되 공격적이지 않게 쓴다.
@@ -124,8 +129,13 @@ public sealed class RewardLLMEvaluator
         foreach ((string nickname, Dictionary<EPerformanceEventType, int> playerCounts) in countsByPlayer)
         {
             sb.AppendLine($"- {nickname}");
-            foreach ((EPerformanceEventType eventType, int count) in playerCounts.OrderBy(pair => pair.Key.ToString()))
+            foreach (EPerformanceEventType eventType in OrderedPerformanceEventTypes)
             {
+                if (!playerCounts.TryGetValue(eventType, out int count))
+                {
+                    continue;
+                }
+
                 sb.AppendLine($"  {eventType}: {count}");
             }
         }

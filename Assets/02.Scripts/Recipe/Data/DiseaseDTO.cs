@@ -18,14 +18,6 @@ namespace DontDillyDally.Data
         public string description;
         public string patientName;
         public string backstory;
-        public string patientQuote;
-        public string category;
-        public int difficulty;
-        public float timeLimitSec;
-        public int recommendedPlayers;
-        public string successLine;
-        public string failLine;
-        public float failHealthPenalty;
         public List<RecipeStepDTO> recipes;
     }
 

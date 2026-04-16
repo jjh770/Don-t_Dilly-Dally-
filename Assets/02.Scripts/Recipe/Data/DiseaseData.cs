@@ -49,15 +49,7 @@ namespace DontDillyDally.Data
         [TextArea(2, 4)]
         public string Backstory;
 
-        [Tooltip("환자 대사")]
-        [FormerlySerializedAs("patientQuote")]
-        public string PatientQuote;
-
         [Header("게임 설정")]
-        [Tooltip("질병 카테고리 (외과, 내과, 피부과, 정형외과 등)")]
-        [FormerlySerializedAs("category")]
-        public string Category;
-
         [Tooltip("난이도 (1~5)")]
         [FormerlySerializedAs("difficulty")]
         [Range(1, 5)]
@@ -71,15 +63,6 @@ namespace DontDillyDally.Data
         [FormerlySerializedAs("recommendedPlayers")]
         [Range(2, 4)]
         public int RecommendedPlayers = 2;
-
-        [Header("결과 대사")]
-        [Tooltip("치료 성공 시 표시할 문구")]
-        [FormerlySerializedAs("successLine")]
-        public string SuccessLine;
-
-        [Tooltip("치료 실패 시 표시할 문구")]
-        [FormerlySerializedAs("failLine")]
-        public string FailLine;
 
         [Header("메타 정보")]
         [FormerlySerializedAs("source")]

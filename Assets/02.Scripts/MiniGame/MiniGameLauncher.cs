@@ -68,7 +68,7 @@ namespace DontDillyDally.MiniGame
             // 모든 클라이언트에 수술 VFX 시작 알림
             if (IsPlaying)
             {
-                ResolveRpc()?.BroadcastMiniGameVFXStarted(type);
+                ResolveRpc()?.BroadcastMiniGameVFXStarted();
             }
 
             // Begin()에서 Config 캐스팅 실패 등으로 Playing 상태가 아니면 정리.
@@ -114,7 +114,7 @@ namespace DontDillyDally.MiniGame
         private IEnumerator DelayedComplete(MiniGameResult result, Action<MiniGameResult> onComplete)
         {
             // 모든 클라이언트에 결과 VFX 알림 (성공/실패 이펙트)
-            ResolveRpc()?.BroadcastMiniGameVFXResult(result.GameType, result.IsSuccess);
+            ResolveRpc()?.BroadcastMiniGameVFXResult(result.IsSuccess);
 
             // 결과 연출용 대기 (UI는 그대로 보여줌).
             _uiController.ShowResult(result.IsSuccess);
