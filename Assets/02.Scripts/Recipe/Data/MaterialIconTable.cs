@@ -48,6 +48,7 @@ namespace DontDillyDally.Data
             return ActionType.None;
         }
 
+        /// <summary>액션 아이콘을 반환합니다.</summary>
         public Sprite GetActionIcon(ActionType type)
         {
             BuildActionCacheIfNeeded();
@@ -58,11 +59,6 @@ namespace DontDillyDally.Data
             }
 
             return _fallbackActionIcon;
-        }
-
-        public Sprite GetFallbackMaterialIcon()
-        {
-            return _fallbackMaterialIcon;
         }
 
         private void BuildMaterialCacheIfNeeded()
