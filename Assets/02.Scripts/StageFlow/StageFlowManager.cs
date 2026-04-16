@@ -303,7 +303,9 @@ namespace DontDillyDally.StageFlow
             OnStageDataChanged?.Invoke(_stageData);
 
             if (PhotonServerManager.Instance != null)
+            {
                 PhotonServerManager.Instance.OnOtherPlayerLeftRoom += HandleOtherPlayerLeftRoom;
+            }
 
             // 제출 핸들러와 타이머 바인딩을 현재 스테이지 기준으로 다시 준비합니다.
             _trayHandler = new TraySubmissionHandler(_rpc, () => _isGameOver);
@@ -558,8 +560,10 @@ namespace DontDillyDally.StageFlow
             if (_onTimerSyncTick != null) _timer.OnSyncTick -= _onTimerSyncTick;
 
             if (PhotonServerManager.Instance != null)
+            {
                 PhotonServerManager.Instance.OnOtherPlayerLeftRoom -= HandleOtherPlayerLeftRoom;
-
+            }
+                
             _trayHandler?.Dispose();
             _bootstrapCoordinator?.Dispose();
             _movementCoordinator?.Dispose();
