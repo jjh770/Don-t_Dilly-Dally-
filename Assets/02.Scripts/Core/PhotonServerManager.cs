@@ -28,7 +28,6 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     private readonly System.Random _random = new System.Random();
 
     private bool _isEnabled = true;
-
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
     public string RoomCode => PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom.Name : null;
@@ -39,6 +38,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public event Action<Player, bool> OnReadyStateChanged;
     public event Action<Player, string> OnNicknameChanged;
     public event Action OnMasterClientChanged;
+    public event Action OnOtherPlayerLeftRoom;
     private bool _isReturningToWaitingRoom;
 
     private void Start()
@@ -75,7 +75,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         {
             _isEnabled = false;
             Debug.LogError($"[PhotonServerManager] Connect Error: {log}");
-            LoadingUIEvents.Show(ELoadingStep.NoInternet);
+            LoadingUIService.Show(ELoadingStep.NoInternet);
         }
     }
 
@@ -172,6 +172,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public override void OnLeftRoom()
     {
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
+    }
+
+    public override void OnPlayerLeftRoom(Player otherPlayer)
+    {
+        OnOtherPlayerLeftRoom?.Invoke();
     }
 
     public void CreateNewRoom()
@@ -533,6 +538,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         if (photonEvent.Code == KickEventCode)
         {
+            NotifyUIService.QueueForNextScene(ENotifyType.KickedByHost);
             LeaveRoom();
         }
     }

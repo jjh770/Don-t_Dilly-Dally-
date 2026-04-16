@@ -1,8 +1,9 @@
-using Cysharp.Threading.Tasks;
-using DontDillyDally.Data;
-using Photon.Realtime;
 using System;
 using System.Threading;
+using Cysharp.Threading.Tasks;
+using DontDillyDally.Data;
+using Photon.Pun;
+using Photon.Realtime;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
@@ -77,7 +78,7 @@ namespace DontDillyDally.StageFlow
             {
                 StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.Timeout);
                 EventManager.Instance?.OnTimeOut();
-            }
+            } 
 
             float remainingTime = _host != null ? _host.RemainingTime : 0f;
             Debug.Log($"[StageFlow] 게임 오버: {reason} | 남은 시간: {remainingTime:F1}초");
@@ -93,6 +94,11 @@ namespace DontDillyDally.StageFlow
 
         public async UniTask ApplyReward()
         {
+            if (!PhotonServerManager.Instance.IsMasterClient)
+            {
+                return;
+            }
+
             StageRuntimeData stageData = _host?.StageData;
             if (stageData == null || _rpc == null)
             {
@@ -172,6 +178,16 @@ namespace DontDillyDally.StageFlow
             }
             catch (OperationCanceledException)
             {
+            }
+
+            if (EGameOverReason.PlayerDisconnected == reason)
+            {
+                Debug.Log("[StageFlow] Player가 게임을 이탈해 대기실로 복귀합니다.");
+                NotifyUIService.QueueForNextScene(ENotifyType.OtherPlayerLeft);
+
+                await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
+                PhotonServerManager.Instance?.ReturnWaitingRoom();
+                return;
             }
 
             await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
