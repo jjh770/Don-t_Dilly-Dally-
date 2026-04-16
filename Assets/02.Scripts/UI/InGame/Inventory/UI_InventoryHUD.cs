@@ -39,7 +39,6 @@ namespace DontDillyDally.UI
         [SerializeField] private EmergencyUiCatalogSO _emergencyUiCatalog;
 
         private PlayerInteractionAbility _playerInteraction;
-        private InventoryHUDState _currentState = InventoryHUDState.Default;
         private IInteractable _cachedNearestInteractable;
         private bool _isInitialized;
 
@@ -146,7 +145,7 @@ namespace DontDillyDally.UI
             else if (_cachedNearestInteractable is IPushable)
             {
                 newState = InventoryHUDState.CanPush;
-                icon = GetNearbyPushableIcon(_cachedNearestInteractable);
+                icon = GetPushableIcon(_cachedNearestInteractable);
             }
             // 4순위: 기본 상태
             else
@@ -159,8 +158,6 @@ namespace DontDillyDally.UI
 
         private void ApplyState(InventoryHUDState state, Sprite icon)
         {
-            _currentState = state;
-
             switch (state)
             {
                 case InventoryHUDState.Default:
@@ -247,12 +244,7 @@ namespace DontDillyDally.UI
 
             if (itemObject is BasicMaterialItem materialItem)
             {
-                Sprite icon = _iconTable.GetMaterialIcon(materialItem.MaterialType);
-                if (icon == null)
-                {
-                    Debug.LogWarning($"[UI_InventoryHUD] MaterialType={materialItem.MaterialType} 아이콘 없음");
-                }
-                return icon;
+                return _iconTable.GetMaterialIcon(materialItem.MaterialType);
             }
 
             if (itemObject is MixToolItem mixToolItem)
@@ -318,21 +310,10 @@ namespace DontDillyDally.UI
 
         private Sprite GetPushableItemIcon()
         {
-            IInteractable pushInteractable = _playerInteraction.CurrentPushInteractable;
-            if (pushInteractable is not Component component)
-            {
-                return null;
-            }
-
-            if (component.TryGetComponent(out DiagnosisEmergencyMachine machine) && _emergencyUiCatalog != null)
-            {
-                return _emergencyUiCatalog.GetDiagnosisIcon(machine.MachineType);
-            }
-
-            return GetInteractableIcon(pushInteractable);
+            return GetPushableIcon(_playerInteraction.CurrentPushInteractable);
         }
 
-        private Sprite GetNearbyPushableIcon(IInteractable interactable)
+        private Sprite GetPushableIcon(IInteractable interactable)
         {
             if (interactable is not Component component)
             {
