@@ -177,9 +177,9 @@ namespace DontDillyDally.StageFlow
             if (EGameOverReason.PlayerDisconnected == reason)
             {
                 Debug.Log("[StageFlow] Player가 게임을 이탈해 대기실로 복귀합니다.");
+                NotifyUIService.Show(ENotifyType.OtherPlayerLeft);
 
-                await UniTask.Delay(TimeSpan.FromSeconds(2));
-
+                await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
                 PhotonServerManager.Instance?.ReturnWaitingRoom();
                 return;
             }

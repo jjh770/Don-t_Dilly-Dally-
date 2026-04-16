@@ -28,7 +28,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     private readonly System.Random _random = new System.Random();
 
     private bool _isEnabled = true;
-
+    private bool _isKicked = false;
     public bool IsMasterClient => PhotonNetwork.IsMasterClient;
     public bool GetLocalPlayerReadyState() => PlayerProperty.GetReadyState(PhotonNetwork.LocalPlayer);
     public string RoomCode => PhotonNetwork.InRoom ? PhotonNetwork.CurrentRoom.Name : null;
@@ -76,7 +76,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         {
             _isEnabled = false;
             Debug.LogError($"[PhotonServerManager] Connect Error: {log}");
-            LoadingUIEvents.Show(ELoadingStep.NoInternet);
+            LoadingUIService.Show(ELoadingStep.NoInternet);
         }
     }
 
@@ -173,6 +173,11 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public override void OnLeftRoom()
     {
         SceneLoadManager.Instance.BeginSceneLoad(ESceneType.Lobby);
+        if (_isKicked)
+        {
+            NotifyUIService.Show(ENotifyType.KickedByHost);
+            _isKicked = false;
+        }
     }
 
     public override void OnPlayerLeftRoom(Player otherPlayer)
@@ -539,6 +544,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         if (photonEvent.Code == KickEventCode)
         {
+            _isKicked = true;
             LeaveRoom();
         }
     }

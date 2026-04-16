@@ -11,7 +11,7 @@ public enum ELoadingStep
     NoInternet,
 }
 
-public static class LoadingUIEvents
+public static class LoadingUIService
 {
     public static event Action<ELoadingStep> OnShowRequested;
     public static event Action OnHideRequested;
@@ -33,8 +33,10 @@ public static class LoadingUIEvents
     }
 }
 
-public class LoadingUI : PersistentSingleton<LoadingUI>
+public class LoadingUI : MonoBehaviour
 {
+    private static LoadingUI _instance;
+
     [SerializeField] private GameObject _panel;
     [SerializeField] private TMP_Text _messageText;
     [SerializeField] private Button _quitGameButton;
@@ -43,13 +45,13 @@ public class LoadingUI : PersistentSingleton<LoadingUI>
     {
         { ELoadingStep.FirebaseInit,    "서버에 연결하는 중..." },
         { ELoadingStep.PlayerDataLoad,  "플레이어 데이터를 불러오는 중..." },
-        {ELoadingStep.NoInternet, "서버 연결에 실패하였습니다.\n연결 상태를 확인하여 재접속 해주세요." },
+        { ELoadingStep.NoInternet, "서버 연결에 실패하였습니다.\n연결 상태를 확인하여 재접속 해주세요." },
     };
 
     private void OnEnable()
     {
-        LoadingUIEvents.OnShowRequested += Show;
-        LoadingUIEvents.OnHideRequested += Hide;
+        LoadingUIService.OnShowRequested += Show;
+        LoadingUIService.OnHideRequested += Hide;
 
         if (_quitGameButton != null)
         {
@@ -57,14 +59,26 @@ public class LoadingUI : PersistentSingleton<LoadingUI>
             _quitGameButton.gameObject.SetActive(false);
         }
 
-        if (LoadingUIEvents.IsVisible)
+        if (LoadingUIService.IsVisible)
         {
-            Show(LoadingUIEvents.CurrentStep);
+            Show(LoadingUIService.CurrentStep);
         }
         else
         {
             Hide();
         }
+    }
+
+    private void Awake()
+    {
+        if (_instance != null && _instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        _instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void HandleQuitButtonClicked()
@@ -78,8 +92,8 @@ public class LoadingUI : PersistentSingleton<LoadingUI>
 
     private void OnDisable()
     {
-        LoadingUIEvents.OnShowRequested -= Show;
-        LoadingUIEvents.OnHideRequested -= Hide;
+        LoadingUIService.OnShowRequested -= Show;
+        LoadingUIService.OnHideRequested -= Hide;
         if (_quitGameButton != null)
         {
             _quitGameButton.onClick.RemoveListener(HandleQuitButtonClicked);
