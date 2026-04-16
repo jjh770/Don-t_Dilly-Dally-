@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using UnityEngine;
+
 public sealed class RewardMoneyPolicy
 {
-    private const int MaxCoinBonus = 100;
-    private const int MaxCoinPenalty = -50;
+    public const int MaxCoinBonus = 100;
+    public const int MaxCoinPenalty = -100;
 
     private static readonly Dictionary<EPerformanceEventType, int> EventDeltaTable = new()
     {
@@ -30,6 +31,11 @@ public sealed class RewardMoneyPolicy
                 requestedDelta += delta;
         }
 
+        return ApplyRequestedDelta(requestedDelta, currentMoney);
+    }
+
+    public RewardMoneyAdjustment ApplyRequestedDelta(int requestedDelta, int currentMoney)
+    {
         requestedDelta = Mathf.Clamp(requestedDelta, MaxCoinPenalty, MaxCoinBonus);
 
         int appliedDelta = requestedDelta;

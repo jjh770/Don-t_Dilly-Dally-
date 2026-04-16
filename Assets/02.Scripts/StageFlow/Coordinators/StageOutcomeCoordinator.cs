@@ -106,22 +106,21 @@ namespace DontDillyDally.StageFlow
 
             StageStars previousStars = RoomDataManager.Instance.GetStageStars(stageData.StageId);
             int currentMoney = RoomDataManager.Instance.Coin.Value;
-            RewardMoneyAdjustment adjustment = _moneyPolicy.Evaluate(
-                StageFlowManager.Instance.PerformanceTracker.Events,
-                currentMoney);
-
             RewardNarrativeResult narrative = await _rewardEvaluator.EvaluateAsync(
                 StageFlowManager.Instance.PerformanceTracker.Events,
                 stageData.SavedCount,
                 stageData.Settings.PatientSettings.PatientCount,
                 _host?.IsGameOver ?? false,
-                currentMoney,
-                adjustment);
+                currentMoney);
+
+            RewardMoneyAdjustment finalAdjustment = narrative.HasRequestedMoneyDelta
+                ? _moneyPolicy.ApplyRequestedDelta(narrative.requestedMoneyDelta, currentMoney)
+                : _moneyPolicy.ApplyRequestedDelta(0, currentMoney);
 
             StageReward finalReward = _rewardSettlementService.Build(
                 result,
                 previousStars,
-                adjustment,
+                finalAdjustment,
                 narrative);
 
             finalReward = RoomDataManager.Instance.ApplyReward(stageData.StageId, finalReward);
