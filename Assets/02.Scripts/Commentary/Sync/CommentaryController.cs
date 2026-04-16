@@ -10,6 +10,8 @@ public class CommentaryController : MonoBehaviour
 
     public event Action<string> OnNarrationGenerated;
 
+    public CommentaryPlaybackManager PlaybackManager => _playbackManager;
+
     [Header("참조")]
     [SerializeField] private CommentarySyncManager _syncManager;
     [SerializeField] private CommentaryPlaybackManager _playbackManager;
@@ -45,6 +47,7 @@ public class CommentaryController : MonoBehaviour
             return;
         }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()

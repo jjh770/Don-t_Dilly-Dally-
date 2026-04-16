@@ -2,7 +2,7 @@ using System;
 
 namespace DontDillyDally.StageFlow
 {
-    // 현재 환자의 체력 초기화, 회복, 자연 감소를 전담합니다.
+    // 현재 환자의 체력 초기화, 회복, 자연 감소를 전담
     public sealed class StagePatientStatusCoordinator : IDisposable
     {
         private const float CRITICAL_HEALTH_THRESHOLD = 0.3f;

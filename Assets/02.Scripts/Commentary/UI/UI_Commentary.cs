@@ -7,7 +7,8 @@ public class UI_Commentary : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject _narrationPanel;
     [SerializeField] private TextMeshProUGUI _narrationText;
-    [SerializeField] private CommentaryPlaybackManager _playbackManager;
+
+    private CommentaryPlaybackManager _playbackManager;
 
     [Header("Settings")]
     [SerializeField] private float _fadeInDuration = 0.3f;
@@ -45,6 +46,11 @@ public class UI_Commentary : MonoBehaviour
     private void TrySubscribe()
     {
         if (_isSubscribed) return;
+
+        if (_playbackManager == null && CommentaryController.Instance != null)
+        {
+            _playbackManager = CommentaryController.Instance.PlaybackManager;
+        }
 
         if (_playbackManager != null)
         {

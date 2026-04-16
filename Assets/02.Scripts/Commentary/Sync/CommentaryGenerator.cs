@@ -219,12 +219,15 @@ public class CommentaryGenerator : MonoBehaviour
         {
             EventType.NewPatientAppeared, new[]
             {
-                        "새 환자 들어왔어. 준비해.",
-                        "환자 한 명 더 왔어. 바로 움직여.",
-                        "새로운 환자 도착했어. 자리 잡아.",
-                        "다음 환자야. 빨리 준비해.",
-                        "환자 왔어. 움직여.",
-                        "새 환자다. 바로 시작해."
+                        "새 환자가 들어왔어. 준비해.",
+                        "다음 환자 들어왔어. 시작하자.",
+                        "환자 도착했어. 바로 시작해.",
+                        "새 환자야. 준비됐지?",
+                        "다음 환자 왔어. 집중해.",
+                        "환자 왔어. 바로 처치 들어가자.",
+                        "새 환자 도착. 준비해.",
+                        "다음 환자야. 시작하자.",
+                        "환자 들어왔어. 바로 가자."
             }
         },
         {
@@ -277,25 +280,34 @@ public class CommentaryGenerator : MonoBehaviour
 
     public async Awaitable<GeneratedCommentaryData> GeneratePatientIntro(string patientName, string diseaseName)
     {
+        Debug.Log($"[CommentaryGenerator] 환자 소개 생성 시작 - 환자: {patientName}, 병명: {diseaseName}");
+
         var result = new GeneratedCommentaryData();
 
         if (_llmService == null)
         {
+            Debug.LogWarning("[CommentaryGenerator] LLMService가 없습니다. Fallback 사용.");
             result.Text = GetPatientIntroFallback(patientName, diseaseName);
             result.EstimatedDuration = EstimateDuration(result.Text);
+            Debug.Log($"[CommentaryGenerator] Fallback 텍스트: {result.Text}");
             return result;
         }
 
         string systemPrompt = _systemPromptFile != null ? _systemPromptFile.text : "";
         string userPrompt = $"환자 이름: {patientName}\n병명: {diseaseName}\n\n이 환자를 짧게 소개해.";
+        Debug.Log($"[CommentaryGenerator] LLM 요청 - 프롬프트: {userPrompt}");
+
         string generatedText = await _llmService.SendRequest(systemPrompt, userPrompt);
 
         if (string.IsNullOrEmpty(generatedText))
         {
+            Debug.LogWarning($"[CommentaryGenerator] LLM 생성 실패. Fallback 사용.");
             result.Text = GetPatientIntroFallback(patientName, diseaseName);
+            Debug.Log($"[CommentaryGenerator] Fallback 텍스트: {result.Text}");
         }
         else
         {
+            Debug.Log($"[CommentaryGenerator] LLM 생성 성공: {generatedText}");
             result.Text = generatedText;
         }
 
