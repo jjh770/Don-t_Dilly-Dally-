@@ -195,8 +195,12 @@ public class StagePreloader : MonoBehaviourPunCallbacks
                     infos.Add((patient.PatientName, patient.DiseaseName));
                 }
                 await CommentaryController.Instance.PreGeneratePatientIntros(infos, ct);
+                Debug.Log("[StagePreloader] (2/2) 환자 소개 음성 사전 생성 완료");
             }
-            Debug.Log("[StagePreloader] (2/2) 환자 소개 음성 사전 생성 완료");
+            else
+            {
+                Debug.LogWarning("[StagePreloader] CommentaryController.Instance가 null입니다. 환자 소개 사전 생성 스킵.");
+            }
 
             CompleteDataPrep();
             RoomProperties.SetStageDataPrepComplete(true);

@@ -10,6 +10,8 @@ public class CommentaryController : MonoBehaviour
 
     public event Action<string> OnNarrationGenerated;
 
+    public CommentaryPlaybackManager PlaybackManager => _playbackManager;
+
     [Header("참조")]
     [SerializeField] private CommentarySyncManager _syncManager;
     [SerializeField] private CommentaryPlaybackManager _playbackManager;
@@ -32,6 +34,7 @@ public class CommentaryController : MonoBehaviour
 
     private int _sequenceCounter = 0;
     private bool _isProcessing = false;
+    private bool _isGameEnded = false;
     private CommentarySyncData _currentCommentary = null;
 
     private bool IsHost => _syncManager != null && _syncManager.IsHost;
@@ -44,6 +47,7 @@ public class CommentaryController : MonoBehaviour
             return;
         }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
     }
 
     private void OnEnable()
@@ -72,7 +76,7 @@ public class CommentaryController : MonoBehaviour
 
     private void Update()
     {
-        // 호스트만 큐 처리
+            // 호스트만 큐 처리
         if (IsHost && !_isProcessing && _eventQueue.Count > 0)
         {
             ProcessNextEvent();
@@ -81,21 +85,35 @@ public class CommentaryController : MonoBehaviour
 
     private void OnEventPublished(GameEvent gameEvent)
     {
-        // 호스트에게 이벤트 전달
+            // 호스트에게 이벤트 전달
         _syncManager.SendEventToHost(gameEvent);
     }
 
     public void HandleEventAsHost(GameEvent gameEvent)
     {
         if (!IsHost) return;
+        if (_isGameEnded) return;
         if (IsDuplicateEvent(gameEvent)) return;
 
-        // 우선순위 기반 처리
+        bool isEndingEvent = gameEvent.Type == EventType.TimeOut || gameEvent.Type == EventType.PatientDeath;
+        if (isEndingEvent)
+        {
+            _isGameEnded = true;
+            _eventQueue.Clear();
+            if (_isProcessing)
+            {
+                _playbackManager.StopPlayback();
+                _isProcessing = false;
+            }
+            ProcessEventImmediately(gameEvent);
+            return;
+        }
+
+            // 우선순위 기반 처리
         if (_isProcessing && _currentCommentary != null)
         {
             if (gameEvent.Priority > _currentCommentary.Priority)
             {
-                // 현재 재생 중단하고 새 이벤트 처리
                 _playbackManager.StopPlayback();
                 _isProcessing = false;
                 ProcessEventImmediately(gameEvent);
@@ -103,7 +121,7 @@ public class CommentaryController : MonoBehaviour
             }
         }
 
-        // 큐에 추가
+            // 큐에 추가
         EnqueueEvent(gameEvent);
     }
 
@@ -123,7 +141,7 @@ public class CommentaryController : MonoBehaviour
 
     private void EnqueueEvent(GameEvent gameEvent)
     {
-        // 큐가 가득 찼으면 낮은 우선순위 이벤트 제거
+            // 큐가 가득 찼으면 낮은 우선순위 이벤트 제거
         while (_eventQueue.Count >= _maxQueueSize)
         {
             _eventQueue.Dequeue();
@@ -146,7 +164,7 @@ public class CommentaryController : MonoBehaviour
 
         GeneratedCommentaryData generatedData;
 
-        // 사전 생성된 환자 소개가 있으면 사용
+            // 사전 생성된 환자 소개가 있으면 사용
         if (gameEvent.Type == EventType.NewPatientAppeared && TryGetCurrentPatientIntro(out var introText, out var introDuration))
         {
             generatedData = new GeneratedCommentaryData
@@ -179,7 +197,7 @@ public class CommentaryController : MonoBehaviour
 
         _currentCommentary = syncData;
 
-        // 모든 클라이언트에게 브로드캐스트
+            // 모든 클라이언트에게 브로드캐스트
         _syncManager.BroadcastCommentary(syncData);
     }
 
@@ -187,7 +205,7 @@ public class CommentaryController : MonoBehaviour
     {
         _currentCommentary = syncData;
 
-        // 예약된 시간에 재생
+            // 예약된 시간에 재생
         float delay = (float)(syncData.ScheduledNetworkTime - _syncManager.NetworkTime);
         delay = Mathf.Max(0, delay);
 
@@ -235,7 +253,7 @@ public class CommentaryController : MonoBehaviour
     {
         try
         {
-            // 1. 텍스트 생성
+                // 1. 텍스트 생성
             var generatedData = await _generator.GeneratePatientIntro(patientName, diseaseName);
 
             if (ct.IsCancellationRequested) return;
@@ -246,12 +264,12 @@ public class CommentaryController : MonoBehaviour
                 return;
             }
 
-            // 2. TTS 음성 사전 생성 및 캐싱
+                  // 2. TTS 음성 사전 생성 및 캐싱
             await _playbackManager.PreGenerateAndCache(generatedData.Text);
 
             if (ct.IsCancellationRequested) return;
 
-            // 3. 저장
+                  // 3. 저장
             _preGeneratedIntros[patientIndex] = new PreGeneratedIntro
             {
                 Text = generatedData.Text,
@@ -294,5 +312,14 @@ public class CommentaryController : MonoBehaviour
     {
         _preGeneratedIntros.Clear();
         _currentPatientIndex = -1;
+    }
+
+    public void ResetGameState()
+    {
+        _isGameEnded = false;
+        _eventQueue.Clear();
+        _lastEventTimes.Clear();
+        _isProcessing = false;
+        _currentCommentary = null;
     }
 }
