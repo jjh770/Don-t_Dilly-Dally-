@@ -314,6 +314,54 @@ public class CommentaryController : MonoBehaviour
         _currentPatientIndex = -1;
     }
 
+    // ========== 고정형/템플릿형 텍스트 사전 생성 ==========
+
+    private const int TtsBatchSize = 5;
+    private const int TtsBatchDelayMs = 1000;
+
+    public async UniTask PreGeneratePredefinedTexts(CancellationToken ct)
+    {
+        List<string> texts = CommentaryGenerator.GetAllPredefinedTexts();
+        Debug.Log($"[CommentaryController] 고정/템플릿 텍스트 사전 생성 시작: {texts.Count}개");
+
+        // 배치 단위로 처리 (TTS API 속도 제한 대비)
+        for (int i = 0; i < texts.Count; i += TtsBatchSize)
+        {
+            if (ct.IsCancellationRequested) return;
+
+            int batchEnd = Mathf.Min(i + TtsBatchSize, texts.Count);
+            List<UniTask> batch = [];
+
+            for (int j = i; j < batchEnd; j++)
+            {
+                batch.Add(PreGenerateTextAsync(texts[j], ct));
+            }
+
+            await UniTask.WhenAll(batch);
+
+            if (batchEnd < texts.Count)
+            {
+                await UniTask.Delay(TtsBatchDelayMs, cancellationToken: ct);
+            }
+        }
+
+        Debug.Log($"[CommentaryController] 고정/템플릿 텍스트 사전 생성 완료");
+    }
+
+    private async UniTask PreGenerateTextAsync(string text, CancellationToken ct)
+    {
+        if (ct.IsCancellationRequested) return;
+
+        try
+        {
+            await _playbackManager.PreGenerateAndCache(text);
+        }
+        catch (System.Exception e)
+        {
+            Debug.LogError($"[CommentaryController] 텍스트 사전 생성 실패: {text} - {e.Message}");
+        }
+    }
+
     public void ResetGameState()
     {
         _isGameEnded = false;
