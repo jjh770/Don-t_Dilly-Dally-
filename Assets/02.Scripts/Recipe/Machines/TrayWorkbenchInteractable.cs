@@ -9,6 +9,8 @@ namespace DontDillyDally.Data
         [SerializeField] private TrayWorkbench _trayWorkbench;
         [SerializeField] private Transform _traySlotPoint;
 
+        private int _stateRevision;
+
         public bool IsInteracting => false;
         public Transform Transform => transform;
 
@@ -27,6 +29,8 @@ namespace DontDillyDally.Data
 
         private void LateUpdate()
         {
+            ClearDetachedTrayState();
+
             TrayItem tray = _trayWorkbench != null ? _trayWorkbench.CurrentTrayItem : null;
             if (tray == null)
             {
@@ -43,6 +47,8 @@ namespace DontDillyDally.Data
             {
                 return;
             }
+
+            ClearDetachedTrayState();
 
             IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
             if (heldItemInteractor == null)
@@ -84,6 +90,8 @@ namespace DontDillyDally.Data
             if (_trayWorkbench == null)
                 return false;
 
+            ClearDetachedTrayState();
+
             if (item is TrayItem trayItem)
                 return _trayWorkbench.CanPlaceTrayItem(trayItem);
 
@@ -113,10 +121,11 @@ namespace DontDillyDally.Data
 
             _trayWorkbench.SetCurrentTrayItem(trayItem);
             TrayWorkbenchItemUtility.PlaceTrayOnWorkbench(trayItem, _traySlotPoint);
+            int revision = NextStateRevision();
 
             if (PhotonNetwork.InRoom)
             {
-                photonView.RPC(nameof(RPC_WorkbenchPlaceTray), RpcTarget.Others, trayViewId);
+                photonView.RPC(nameof(RPC_WorkbenchPlaceTray), RpcTarget.Others, trayViewId, revision);
             }
         }
 
@@ -182,6 +191,27 @@ namespace DontDillyDally.Data
             return CraftedMaterialType.None;
         }
 
+        private void ClearDetachedTrayState()
+        {
+            if (_trayWorkbench == null)
+            {
+                return;
+            }
+
+            TrayItem trayItem = _trayWorkbench.ResolvedCurrentTrayItem;
+            if (trayItem == null)
+            {
+                return;
+            }
+
+            if (trayItem.TryGetComponent(out HoldableItem holdable) &&
+                !holdable.IsStoredInContainer &&
+                trayItem.transform.parent != _traySlotPoint)
+            {
+                _trayWorkbench.ClearCurrentTrayItem(trayItem);
+            }
+        }
+
         private void TryTakeTray(IHeldItemInteractor heldItemInteractor)
         {
             TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
@@ -195,20 +225,26 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            // 워크벤치 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            TrayWorkbenchItemUtility.PrepareTrayForPickup(trayItem);
-            _trayWorkbench.ClearCurrentTrayItem(trayItem);
+            heldItemInteractor.TryPickupInteractable(
+                holdable,
+                onBeforeHold: () =>
+                {
+                    if (_trayWorkbench.CurrentTrayItem != trayItem)
+                    {
+                        return false;
+                    }
 
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_WorkbenchTakeTray), RpcTarget.Others);
-            }
+                    TrayWorkbenchItemUtility.PrepareTrayForPickup(trayItem);
+                    _trayWorkbench.ClearCurrentTrayItem(trayItem);
+                    int revision = NextStateRevision();
 
-            TrayItem trayToRestore = trayItem;
-            heldItemInteractor.TryPickupInteractable(holdable, () =>
-            {
-                RollbackTakeTray(trayToRestore);
-            });
+                    if (PhotonNetwork.InRoom)
+                    {
+                        photonView.RPC(nameof(RPC_WorkbenchTakeTray), RpcTarget.Others, trayItem.ViewId, revision);
+                    }
+
+                    return true;
+                });
         }
 
         private void RollbackTakeTray(TrayItem trayItem)
@@ -226,7 +262,7 @@ namespace DontDillyDally.Data
             if (PhotonNetwork.InRoom)
             {
                 int viewId = trayItem.ViewId;
-                photonView.RPC(nameof(RPC_WorkbenchRollbackTakeTray), RpcTarget.Others, viewId);
+                photonView.RPC(nameof(RPC_WorkbenchRollbackTakeTray), RpcTarget.Others, viewId, NextStateRevision());
             }
         }
 
@@ -235,8 +271,13 @@ namespace DontDillyDally.Data
         #region RPC Handlers
 
         [PunRPC]
-        private void RPC_WorkbenchRollbackTakeTray(int trayViewId)
+        private void RPC_WorkbenchRollbackTakeTray(int trayViewId, int revision)
         {
+            if (!TryApplyStateRevision(revision))
+            {
+                return;
+            }
+
             PhotonView trayPV = PhotonView.Find(trayViewId);
             if (trayPV == null || !trayPV.TryGetComponent(out TrayItem trayItem))
                 return;
@@ -250,8 +291,13 @@ namespace DontDillyDally.Data
         }
 
         [PunRPC]
-        private void RPC_WorkbenchPlaceTray(int trayViewId)
+        private void RPC_WorkbenchPlaceTray(int trayViewId, int revision)
         {
+            if (!TryApplyStateRevision(revision))
+            {
+                return;
+            }
+
             PhotonView trayPV = PhotonView.Find(trayViewId);
             if (trayPV == null || !trayPV.TryGetComponent(out TrayItem trayItem))
             {
@@ -287,14 +333,56 @@ namespace DontDillyDally.Data
         }
 
         [PunRPC]
-        private void RPC_WorkbenchTakeTray()
+        private void RPC_WorkbenchTakeTray(int trayViewId, int revision)
         {
-            TrayItem trayItem = _trayWorkbench.CurrentTrayItem;
+            if (!TryApplyStateRevision(revision))
+            {
+                return;
+            }
+
+            TrayItem trayItem = null;
+            PhotonView trayPV = PhotonView.Find(trayViewId);
+            if (trayPV != null)
+            {
+                trayPV.TryGetComponent(out trayItem);
+            }
+
+            if (trayItem == null)
+            {
+                trayItem = _trayWorkbench.CurrentTrayItem;
+            }
+
             if (trayItem != null)
             {
                 TrayWorkbenchItemUtility.PrepareTrayForPickup(trayItem);
-                _trayWorkbench.ClearCurrentTrayItem(trayItem);
+                if (_trayWorkbench.CurrentTrayItem == trayItem)
+                {
+                    _trayWorkbench.ClearCurrentTrayItem(trayItem);
+                }
             }
+        }
+
+        private int NextStateRevision()
+        {
+            int nextRevision = PhotonNetwork.InRoom ? PhotonNetwork.ServerTimestamp : _stateRevision + 1;
+            if (_stateRevision != 0 && (nextRevision - _stateRevision) <= 0)
+            {
+                nextRevision = _stateRevision + 1;
+            }
+
+            _stateRevision = nextRevision;
+            return _stateRevision;
+        }
+
+        private bool TryApplyStateRevision(int revision)
+        {
+            if (_stateRevision != 0 && (revision - _stateRevision) < 0)
+            {
+                return false;
+            }
+
+            _stateRevision = revision;
+            return true;
         }
 
         #endregion

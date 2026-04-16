@@ -41,7 +41,6 @@ public class EmergencyWorldUI : MonoBehaviour
     private void Awake()
     {
         EnsureInitialized();
-        SetVisible(false);
     }
 
     private void Update()
@@ -77,7 +76,7 @@ public class EmergencyWorldUI : MonoBehaviour
     {
         _isExternallyControlled = true;
         EnsureInitialized();
-        SetVisible(false);
+        SetVisible(true);
     }
 
     public void Refresh(StageFlowManager stageFlowManager)

@@ -23,6 +23,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     private ItemObject _pendingHeldItem;
     private NetworkItemOwnership _pendingOwnership;
     private Action _onPendingHoldFailed;
+    private Func<bool> _onPendingHoldBeforeHold;
     private bool _isExternalInteractionLocked;
     private bool _isThrowing;
 
@@ -57,7 +58,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         EndHeldItemInteractionLock();
     }
 
-    public bool TryPickupInteractable(IInteractable interactable, Action onFailed = null)
+    public bool TryPickupInteractable(IInteractable interactable, Action onFailed = null, Func<bool> onBeforeHold = null)
     {
         if (!TryResolveInteractableComponent(interactable, out _))
         {
@@ -74,7 +75,10 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             return false;
         }
 
+        ClearPendingHold();
+
         _onPendingHoldFailed = onFailed;
+        _onPendingHoldBeforeHold = onBeforeHold;
         return TryStartHold(interactable);
     }
 
@@ -243,8 +247,6 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             return false;
         }
 
-        ClearPendingHold();
-
         _pendingHoldInteractable = interactable;
         _pendingHeldItem = itemObject;
         _pendingOwnership = ownership;
@@ -254,6 +256,13 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             {
                 // 소유권 콜백은 늦게 도착할 수 있으므로, 아직도 같은 아이템을 정상적으로 집을 수 있는지 다시 확인합니다.
                 if (!TryGetPendingHoldContext(out IInteractable pendingInteractable, out IHoldable pendingHoldable, out ItemObject pendingHeldItem))
+                {
+                    FailPendingHold();
+                    return;
+                }
+
+                Func<bool> beforeHold = _onPendingHoldBeforeHold;
+                if (beforeHold != null && !beforeHold())
                 {
                     FailPendingHold();
                     return;
@@ -389,6 +398,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         _pendingHeldItem = null;
         _pendingOwnership = null;
         _onPendingHoldFailed = null;
+        _onPendingHoldBeforeHold = null;
     }
 
     private void SetCurrentHeldItem(ItemObject newItem)

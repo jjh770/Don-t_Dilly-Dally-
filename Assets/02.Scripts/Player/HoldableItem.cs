@@ -353,6 +353,9 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         if (_rigidbody == null)
             return;
 
+        if (_rigidbody.isKinematic)
+            return;
+
         _rigidbody.linearVelocity = Vector3.zero;
         _rigidbody.angularVelocity = Vector3.zero;
     }

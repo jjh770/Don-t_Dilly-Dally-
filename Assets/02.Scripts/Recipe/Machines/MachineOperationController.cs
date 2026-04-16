@@ -53,11 +53,15 @@ namespace DontDillyDally.Data
             }
         }
 
-        public void StartRemote(float duration)
+        public void StartRemote(float duration, Action onCompleted = null)
         {
             _door?.LockClosed();
             _runningMotion?.TryStart();
-            _actionTimer?.TryStart(duration, StopRunningFeedback);
+            _actionTimer?.TryStart(duration, () =>
+            {
+                StopRunningFeedback();
+                onCompleted?.Invoke();
+            });
             StartLoop();
         }
 

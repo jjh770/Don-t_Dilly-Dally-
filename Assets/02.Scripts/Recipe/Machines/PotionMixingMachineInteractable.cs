@@ -37,8 +37,9 @@ namespace DontDillyDally.Data
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
         private MachineOperationController _operationController;
+        private bool _isCompletionPending;
 
-        public bool IsInteracting => _operationController != null && _operationController.IsRunning;
+        public bool IsInteracting => _operationController != null && (_operationController.IsRunning || _isCompletionPending);
         public Transform Transform => transform;
 
         private void Awake()
@@ -96,6 +97,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            ClearDetachedPotionState();
+
             IHeldItemInteractor heldItemInteractor = interactor.GetComponent<IHeldItemInteractor>();
             if (heldItemInteractor == null)
             {
@@ -136,6 +139,8 @@ namespace DontDillyDally.Data
         {
             if (_potionMixingMachine == null)
                 return false;
+
+            ClearDetachedPotionState();
 
             if (IsInteracting)
                 return false;
@@ -230,6 +235,11 @@ namespace DontDillyDally.Data
 
         private void StartMixingProcess(IReadOnlyList<ToolType> loadedPotions)
         {
+            if (_isCompletionPending)
+            {
+                return;
+            }
+
             int playerId = PhotonNetwork.LocalPlayer != null ? PhotonNetwork.LocalPlayer.ActorNumber : 0;
             CraftingResult result = _potionMixingMachine.TryMixPotions(loadedPotions, playerId);
 
@@ -252,6 +262,8 @@ namespace DontDillyDally.Data
 
         private void OnMixingTimerComplete()
         {
+            _isCompletionPending = true;
+
             if (PhotonNetwork.InRoom && !PhotonNetwork.IsMasterClient)
             {
                 // 마스터에게 완료 처리 요청 (아이템 소유권이 마스터에 있으므로)
@@ -269,6 +281,7 @@ namespace DontDillyDally.Data
 
             if (_pendingResultMaterial == CraftedMaterialType.Unknown)
             {
+                _isCompletionPending = false;
                 _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
@@ -285,6 +298,7 @@ namespace DontDillyDally.Data
 
             if (resultObject == null || !resultObject.TryGetComponent(out ItemObject resultItem))
             {
+                _isCompletionPending = false;
                 _operationController.UnlockDoor();
 
                 if (PhotonNetwork.InRoom)
@@ -297,6 +311,7 @@ namespace DontDillyDally.Data
 
             MachineStoredItemUtility.StoreInMachine(resultItem, outputTransform);
             _storedOutputItem = resultItem;
+            _isCompletionPending = false;
             _operationController.UnlockDoor();
 
             if (PhotonNetwork.InRoom)
@@ -323,25 +338,25 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            // Clear 이후에는 ToolType이 None으로 지워지므로, 롤백용 메타데이터를 먼저 보관합니다.
-            ToolType capturedToolType = _slots[slotIndex].PotionToolType;
+            heldItemInteractor.TryPickupInteractable(
+                interactable,
+                onBeforeHold: () =>
+                {
+                    if (_slots[slotIndex].Item != storedItem)
+                    {
+                        return false;
+                    }
 
-            // 슬롯 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            _slots[slotIndex].Clear();
-            MachineStoredItemUtility.PrepareForPickup(storedItem);
+                    _slots[slotIndex].Clear();
+                    MachineStoredItemUtility.PrepareForPickup(storedItem);
 
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
-            }
+                    if (PhotonNetwork.InRoom)
+                    {
+                        photonView.RPC(nameof(RPC_PotionTakeInput), RpcTarget.Others, slotIndex);
+                    }
 
-            ItemObject itemToRestore = storedItem;
-            int capturedSlotIndex = slotIndex;
-
-            heldItemInteractor.TryPickupInteractable(interactable, () =>
-            {
-                RollbackTakeInput(itemToRestore, capturedSlotIndex, capturedToolType);
-            });
+                    return true;
+                });
         }
 
         private void TryTakeOutput(IHeldItemInteractor heldItemInteractor)
@@ -353,19 +368,25 @@ namespace DontDillyDally.Data
 
             ItemObject itemToRestore = _storedOutputItem;
 
-            // 출력 상태를 먼저 정리 (비마스터의 소유권 대기 중에도 즉시 반영)
-            _storedOutputItem = null;
-            MachineStoredItemUtility.PrepareForPickup(itemToRestore);
+            heldItemInteractor.TryPickupInteractable(
+                interactable,
+                onBeforeHold: () =>
+                {
+                    if (_storedOutputItem != itemToRestore)
+                    {
+                        return false;
+                    }
 
-            if (PhotonNetwork.InRoom)
-            {
-                photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
-            }
+                    _storedOutputItem = null;
+                    MachineStoredItemUtility.PrepareForPickup(itemToRestore);
 
-            heldItemInteractor.TryPickupInteractable(interactable, () =>
-            {
-                RollbackTakeOutput(itemToRestore);
-            });
+                    if (PhotonNetwork.InRoom)
+                    {
+                        photonView.RPC(nameof(RPC_PotionTakeOutput), RpcTarget.Others);
+                    }
+
+                    return true;
+                });
         }
 
         private void RollbackTakeInput(ItemObject item, int slotIndex, ToolType potionToolType)
@@ -449,15 +470,17 @@ namespace DontDillyDally.Data
         [PunRPC]
         private void RPC_PotionStartMixing(int resultMaterial, float duration)
         {
+            _isCompletionPending = false;
             _pendingResultMaterial = (CraftedMaterialType)resultMaterial;
             _pendingCraftingDuration = duration;
-            _operationController.StartRemote(duration);
+            _operationController.StartRemote(duration, () => _isCompletionPending = true);
         }
 
         [PunRPC]
         private void RPC_PotionCompleteMixing(int resultItemViewId)
         {
             _operationController.CompleteRemote();
+            _isCompletionPending = false;
 
             // 슬롯 초기화 (아이템은 PhotonNetwork.Destroy로 이미 제거됨)
             for (int i = 0; i < _slots.Length; i++)
@@ -656,6 +679,40 @@ namespace DontDillyDally.Data
             }
 
             return -1;
+        }
+
+        private void ClearDetachedPotionState()
+        {
+            if (_slots == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _slots.Length; i++)
+            {
+                PotionSlot slot = _slots[i];
+                ItemObject item = slot.Item;
+                if (item == null)
+                {
+                    slot.Clear();
+                    continue;
+                }
+
+                if (item.TryGetComponent(out HoldableItem holdable) &&
+                    !holdable.IsStoredInContainer &&
+                    item.transform.parent != GetSlotTransform(i))
+                {
+                    slot.Clear();
+                }
+            }
+
+            if (_storedOutputItem != null &&
+                _storedOutputItem.TryGetComponent(out HoldableItem outputHoldable) &&
+                !outputHoldable.IsStoredInContainer &&
+                _storedOutputItem.transform.parent != GetOutputTransform())
+            {
+                _storedOutputItem = null;
+            }
         }
 
         #endregion
