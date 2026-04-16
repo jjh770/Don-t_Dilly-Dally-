@@ -461,7 +461,6 @@ namespace DontDillyDally.Data
         private string BuildUserPrompt(int difficulty, string category, string diseaseId, string stageId,
             int patientIndex, int totalPatients)
         {
-            string categoryText = string.IsNullOrEmpty(category) ? "자유" : category;
             string stageContext = StagePromptHelper.GetStageContext(stageId);
             string patientHint = StagePromptHelper.GetPatientHint(stageId, patientIndex);
 
@@ -470,7 +469,6 @@ namespace DontDillyDally.Data
                    $"{stageContext}\n" +
                    $"- 환자 수: 1명 (전체 {totalPatients}명 중 {patientIndex + 1}번째)\n" +
                    $"- 난이도: {difficulty}\n" +
-                   $"- 카테고리: {categoryText}\n" +
                    $"- diseaseId: \"{diseaseId}\"\n\n" +
                    $"[이번 환자 전용 힌트]\n" +
                    $"{patientHint}\n" +
@@ -484,14 +482,12 @@ namespace DontDillyDally.Data
 
         private string BuildBatchUserPrompt(int count, int difficulty, string category, string baseId, string stageId)
         {
-            string categoryText = string.IsNullOrEmpty(category) ? "자유" : category;
             string stageContext = StagePromptHelper.GetStageContext(stageId);
 
             return $"[생성 조건]\n" +
                    $"{stageContext}\n" +
                    $"- 환자 수: {count}명\n" +
                    $"- 난이도: {difficulty}\n" +
-                   $"- 카테고리: {categoryText}\n" +
                    $"- baseId: \"{baseId}\"\n\n" +
                    $"'테마 영감'에 나열된 여러 소재 중에서 서로 다른 소재를 골라 환자마다 다르게 변주하세요. 일부는 평범한 일상 질병을 스테이지 배경 속 사고로 풀어내도 좋습니다.\n" +
                    $"[다양성 필수] 환자 {count}명은 반드시 다음을 모두 만족:\n" +

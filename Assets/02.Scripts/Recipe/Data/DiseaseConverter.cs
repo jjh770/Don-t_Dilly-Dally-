@@ -24,10 +24,6 @@ namespace DontDillyDally.Data
                 Description = dto.description,
                 PatientName = dto.patientName,
                 Backstory = dto.backstory,
-                PatientQuote = dto.patientQuote,
-                Category = dto.category,
-                SuccessLine = dto.successLine,
-                FailLine = dto.failLine,
                 Source = RecipeSource.Predefined,
                 Recipes = new List<RecipeData>()
             };
