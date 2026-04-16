@@ -330,7 +330,7 @@ public class CommentaryController : MonoBehaviour
             if (ct.IsCancellationRequested) return;
 
             int batchEnd = Mathf.Min(i + TtsBatchSize, texts.Count);
-            List<UniTask> batch = [];
+            var batch = new List<UniTask>();
 
             for (int j = i; j < batchEnd; j++)
             {
