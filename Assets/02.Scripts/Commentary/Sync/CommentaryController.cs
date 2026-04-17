@@ -76,7 +76,7 @@ public class CommentaryController : MonoBehaviour
 
     private void Update()
     {
-            // 호스트만 큐 처리
+        // 호스트만 큐 처리
         if (IsHost && !_isProcessing && _eventQueue.Count > 0)
         {
             ProcessNextEvent();
@@ -85,7 +85,7 @@ public class CommentaryController : MonoBehaviour
 
     private void OnEventPublished(GameEvent gameEvent)
     {
-            // 호스트에게 이벤트 전달
+        // 호스트에게 이벤트 전달
         _syncManager.SendEventToHost(gameEvent);
     }
 
@@ -109,7 +109,7 @@ public class CommentaryController : MonoBehaviour
             return;
         }
 
-            // 우선순위 기반 처리
+        // 우선순위 기반 처리
         if (_isProcessing && _currentCommentary != null)
         {
             if (gameEvent.Priority > _currentCommentary.Priority)
@@ -121,7 +121,7 @@ public class CommentaryController : MonoBehaviour
             }
         }
 
-            // 큐에 추가
+        // 큐에 추가
         EnqueueEvent(gameEvent);
     }
 
@@ -141,7 +141,7 @@ public class CommentaryController : MonoBehaviour
 
     private void EnqueueEvent(GameEvent gameEvent)
     {
-            // 큐가 가득 찼으면 낮은 우선순위 이벤트 제거
+        // 큐가 가득 찼으면 낮은 우선순위 이벤트 제거
         while (_eventQueue.Count >= _maxQueueSize)
         {
             _eventQueue.Dequeue();
@@ -162,50 +162,61 @@ public class CommentaryController : MonoBehaviour
     {
         _isProcessing = true;
 
-        GeneratedCommentaryData generatedData;
-
-            // 사전 생성된 환자 소개가 있으면 사용
-        if (gameEvent.Type == EventType.NewPatientAppeared && TryGetCurrentPatientIntro(out var introText, out var introDuration))
+        try
         {
-            generatedData = new GeneratedCommentaryData
+            GeneratedCommentaryData generatedData;
+
+            // 사전 생성된 환자 소개가 있으면 사용 (동적형)
+            if (gameEvent.Type == EventType.NewPatientAppeared && TryGetCurrentPatientIntro(out var introText, out var introDuration))
             {
-                Text = introText,
-                EstimatedDuration = introDuration
-            };
-        }
-        else
-        {
-            // 코멘터리 생성 (호스트만)
-            generatedData = await _generator.GenerateCommentary(gameEvent);
-        }
+                generatedData = new GeneratedCommentaryData
+                {
+                    Text = introText,
+                    EstimatedDuration = introDuration,
+                    IsDynamic = true
+                };
+            }
+            else
+            {
+                // 코멘터리 생성 (호스트만)
+                generatedData = await _generator.GenerateCommentary(gameEvent);
+            }
 
-        if (generatedData == null)
-        {
-            Debug.LogWarning($"[CommentaryController] 코멘터리 생성 실패: {gameEvent.Type}");
-            _isProcessing = false;
-            return;
-        }
+            if (generatedData == null)
+            {
+                Debug.LogWarning($"[CommentaryController] 코멘터리 생성 실패: {gameEvent.Type}");
+                _isProcessing = false;
+                return;
+            }
 
-        // SyncData 생성
-        var syncData = CommentarySyncData.CreateFromEvent(
-            gameEvent,
-            ++_sequenceCounter,
-            generatedData.Text,
-            _syncManager.NetworkTime,
-            generatedData.EstimatedDuration
-        );
+            // SyncData 생성
+            var syncData = CommentarySyncData.CreateFromEvent(
+                gameEvent,
+                ++_sequenceCounter,
+                generatedData.Text,
+                _syncManager.NetworkTime,
+                generatedData.EstimatedDuration,
+                generatedData.IsDynamic
+            );
 
-        _currentCommentary = syncData;
+            _currentCommentary = syncData;
 
             // 모든 클라이언트에게 브로드캐스트
-        _syncManager.BroadcastCommentary(syncData);
+            _syncManager.BroadcastCommentary(syncData);
+            // _isProcessing은 OnPlaybackCompleted에서 false로 설정됨
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"[CommentaryController] 코멘터리 처리 중 예외 발생: {e.Message}");
+            _isProcessing = false;
+        }
     }
 
     private void OnCommentaryReceived(CommentarySyncData syncData)
     {
         _currentCommentary = syncData;
 
-            // 예약된 시간에 재생
+        // 예약된 시간에 재생
         float delay = (float)(syncData.ScheduledNetworkTime - _syncManager.NetworkTime);
         delay = Mathf.Max(0, delay);
 
@@ -220,7 +231,11 @@ public class CommentaryController : MonoBehaviour
         }
 
         _playbackManager.PlayCommentary(syncData);
-        OnNarrationGenerated?.Invoke(syncData.FinalText);
+
+        if (syncData.IsDynamic && !string.IsNullOrEmpty(syncData.FinalText))
+        {
+            OnNarrationGenerated?.Invoke(syncData.FinalText);
+        }
     }
 
     private void OnPlaybackCompleted()
@@ -229,7 +244,7 @@ public class CommentaryController : MonoBehaviour
         _currentCommentary = null;
     }
 
-    // ========== 환자 소개 사전 생성 ==========
+    // ========== 환자 소개 사전 생성 (동적형) ==========
 
     public async UniTask PreGeneratePatientIntros(List<(string patientName, string diseaseName)> patients, CancellationToken ct)
     {
@@ -253,7 +268,7 @@ public class CommentaryController : MonoBehaviour
     {
         try
         {
-                // 1. 텍스트 생성
+            // 1. 텍스트 생성
             var generatedData = await _generator.GeneratePatientIntro(patientName, diseaseName);
 
             if (ct.IsCancellationRequested) return;
@@ -264,12 +279,12 @@ public class CommentaryController : MonoBehaviour
                 return;
             }
 
-                  // 2. TTS 음성 사전 생성 및 캐싱
+            // 2. TTS 음성 사전 생성 및 캐싱 (동적형은 TTS 사용)
             await _playbackManager.PreGenerateAndCache(generatedData.Text);
 
             if (ct.IsCancellationRequested) return;
 
-                  // 3. 저장
+            // 3. 저장
             _preGeneratedIntros[patientIndex] = new PreGeneratedIntro
             {
                 Text = generatedData.Text,
@@ -306,68 +321,5 @@ public class CommentaryController : MonoBehaviour
     public void SetCurrentPatientIndex(int patientIndex)
     {
         _currentPatientIndex = patientIndex;
-    }
-
-    public void ClearPreGeneratedIntros()
-    {
-        _preGeneratedIntros.Clear();
-        _currentPatientIndex = -1;
-    }
-
-    // ========== 고정형/템플릿형 텍스트 사전 생성 ==========
-
-    private const int TtsBatchSize = 5;
-    private const int TtsBatchDelayMs = 1000;
-
-    public async UniTask PreGeneratePredefinedTexts(CancellationToken ct)
-    {
-        List<string> texts = CommentaryGenerator.GetAllPredefinedTexts();
-        Debug.Log($"[CommentaryController] 고정/템플릿 텍스트 사전 생성 시작: {texts.Count}개");
-
-        // 배치 단위로 처리 (TTS API 속도 제한 대비)
-        for (int i = 0; i < texts.Count; i += TtsBatchSize)
-        {
-            if (ct.IsCancellationRequested) return;
-
-            int batchEnd = Mathf.Min(i + TtsBatchSize, texts.Count);
-            var batch = new List<UniTask>();
-
-            for (int j = i; j < batchEnd; j++)
-            {
-                batch.Add(PreGenerateTextAsync(texts[j], ct));
-            }
-
-            await UniTask.WhenAll(batch);
-
-            if (batchEnd < texts.Count)
-            {
-                await UniTask.Delay(TtsBatchDelayMs, cancellationToken: ct);
-            }
-        }
-
-        Debug.Log($"[CommentaryController] 고정/템플릿 텍스트 사전 생성 완료");
-    }
-
-    private async UniTask PreGenerateTextAsync(string text, CancellationToken ct)
-    {
-        if (ct.IsCancellationRequested) return;
-
-        try
-        {
-            await _playbackManager.PreGenerateAndCache(text);
-        }
-        catch (System.Exception e)
-        {
-            Debug.LogError($"[CommentaryController] 텍스트 사전 생성 실패: {text} - {e.Message}");
-        }
-    }
-
-    public void ResetGameState()
-    {
-        _isGameEnded = false;
-        _eventQueue.Clear();
-        _lastEventTimes.Clear();
-        _isProcessing = false;
-        _currentCommentary = null;
     }
 }
