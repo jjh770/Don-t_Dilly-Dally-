@@ -13,31 +13,45 @@ public class CommentaryPlaybackManager : MonoBehaviour
     [Header("TTS")]
     [SerializeField] private TTSManager _ttsManager;
 
+    [Header("고정형/템플릿형 클립")]
+    [SerializeField] private EventTypeClipGroup[] _eventTypeClips;
+
     [Header("설정")]
     [SerializeField] private float _defaultDuration = 3f;
 
     public bool IsPlaying { get; private set; }
 
-    private readonly Dictionary<string, AudioClip> _clipCache = new();
+    private Dictionary<EventType, EventTypeClipGroup> _clipGroupMap;
+    private readonly Dictionary<EventType, int> _lastSelectedIndex = new();
+    private readonly Dictionary<string, AudioClip> _ttsCache = new();
+
     private CommentarySyncData _currentData;
     private Coroutine _playbackCoroutine;
 
-    public void CacheClip(string clipName, AudioClip clip)
+    private void Awake()
     {
-        if (string.IsNullOrEmpty(clipName) || clip == null) return;
-        _clipCache[clipName] = clip;
+        BuildClipGroupMap();
     }
 
-    public AudioClip GetCachedClip(string clipName)
+    private void BuildClipGroupMap()
     {
-        if (string.IsNullOrEmpty(clipName)) return null;
-        _clipCache.TryGetValue(clipName, out AudioClip clip);
-        return clip;
+        _clipGroupMap = new Dictionary<EventType, EventTypeClipGroup>();
+
+        if (_eventTypeClips == null) return;
+
+        foreach (var group in _eventTypeClips)
+        {
+            if (group.ClipData != null && group.ClipData.Length > 0)
+            {
+                _clipGroupMap[group.EventType] = group;
+            }
+        }
     }
 
-    public bool HasCachedClip(string clipName)
+    public void SetEventTypeClips(EventTypeClipGroup[] clipGroups)
     {
-        return !string.IsNullOrEmpty(clipName) && _clipCache.ContainsKey(clipName);
+        _eventTypeClips = clipGroups;
+        BuildClipGroupMap();
     }
 
     public void PlayCommentary(CommentarySyncData syncData)
@@ -52,17 +66,26 @@ public class CommentaryPlaybackManager : MonoBehaviour
         _currentData = syncData;
         IsPlaying = true;
 
-        // 비동기로 오디오 재생 시작
-        _ = PlayCommentaryAsync(syncData);
+        // 동적형 vs 고정형/템플릿형
+        if (syncData.IsDynamic)
+        {
+            _ = PlayDynamicCommentaryAsync(syncData);
+        }
+        else
+        {
+            PlayEventTypeClip(syncData);
+        }
     }
 
-    private async Awaitable PlayCommentaryAsync(CommentarySyncData syncData)
+    // 동적형 코멘터리 재생
+    private async Awaitable PlayDynamicCommentaryAsync(CommentarySyncData syncData)
     {
         if (string.IsNullOrEmpty(syncData.FinalText)) return;
 
-        // 캐시 키: 동일 텍스트는 동일 음성 재사용
+        AudioClip clip = null;
         string cacheKey = syncData.FinalText.GetHashCode().ToString();
-        AudioClip clip = GetCachedClip(cacheKey);
+
+        _ttsCache.TryGetValue(cacheKey, out clip);
 
         // 캐시에 없으면 TTS 생성
         if (clip == null && _ttsManager != null)
@@ -72,7 +95,7 @@ public class CommentaryPlaybackManager : MonoBehaviour
                 clip = await _ttsManager.GenerateSpeech(syncData.FinalText);
                 if (clip != null)
                 {
-                    CacheClip(cacheKey, clip);
+                    _ttsCache[cacheKey] = clip;
                 }
             }
             catch (Exception e)
@@ -81,10 +104,8 @@ public class CommentaryPlaybackManager : MonoBehaviour
             }
         }
 
-        // 재생 중인 상태 확인 (비동기 중 StopPlayback이 호출됐을 수 있음)
         if (!IsPlaying || _currentData != syncData) return;
 
-        // 음성 재생 시작과 동시에 자막 표시
         OnSubtitleChanged?.Invoke(syncData.FinalText);
 
         if (clip != null)
@@ -96,6 +117,40 @@ public class CommentaryPlaybackManager : MonoBehaviour
             float duration = syncData.EstimatedDuration > 0 ? syncData.EstimatedDuration : _defaultDuration;
             _playbackCoroutine = StartCoroutine(WaitForDuration(duration));
         }
+    }
+
+    // 고정형/템플릿형 코멘터리 재생
+    private void PlayEventTypeClip(CommentarySyncData syncData)
+    {
+        if (!_clipGroupMap.TryGetValue(syncData.EventType, out var group))
+        {
+            Debug.LogWarning($"[CommentaryPlaybackManager] EventType {syncData.EventType}에 등록된 클립이 없습니다.");
+            CompletePlayback();
+            return;
+        }
+
+        if (group.ClipData == null || group.ClipData.Length == 0)
+        {
+            Debug.LogWarning($"[CommentaryPlaybackManager] EventType {syncData.EventType}의 클립 배열이 비어있습니다.");
+            CompletePlayback();
+            return;
+        }
+
+        // 이전에 선택한 인덱스를 제외하고 랜덤 선택
+        int selectedIndex = SelectRandomIndexExcludingLast(syncData.EventType, group.ClipData.Length);
+        var selectedData = group.ClipData[selectedIndex];
+
+        if (selectedData.Clip == null)
+        {
+            Debug.LogWarning($"[CommentaryPlaybackManager] 선택된 클립이 null입니다. EventType: {syncData.EventType}");
+            CompletePlayback();
+            return;
+        }
+
+        string subtitle = !string.IsNullOrEmpty(selectedData.Subtitle) ? selectedData.Subtitle : syncData.FinalText;
+        OnSubtitleChanged?.Invoke(subtitle);
+
+        PlayAudioClip(selectedData.Clip);
     }
 
     private void PlayAudioClip(AudioClip clip)
@@ -153,18 +208,46 @@ public class CommentaryPlaybackManager : MonoBehaviour
         OnPlaybackCompleted?.Invoke();
     }
 
-    public CommentarySyncData GetCurrentCommentary() => _currentData;
+    public void ClearTTSCache()
+    {
+        _ttsCache.Clear();
+    }
 
-    // 텍스트로 TTS 음성을 미리 생성하고 캐싱
+    private int SelectRandomIndexExcludingLast(EventType eventType, int count)
+    {
+        if (count <= 1)
+        {
+            return 0;
+        }
+
+        int newIndex;
+
+        if (!_lastSelectedIndex.TryGetValue(eventType, out int lastIndex))
+        {
+            newIndex = UnityEngine.Random.Range(0, count);
+        }
+        else
+        {
+            newIndex = UnityEngine.Random.Range(0, count - 1);
+            if (newIndex >= lastIndex)
+            {
+                newIndex++;
+            }
+        }
+
+        _lastSelectedIndex[eventType] = newIndex;
+        return newIndex;
+    }
+
     public async Awaitable<AudioClip> PreGenerateAndCache(string text)
     {
         if (string.IsNullOrEmpty(text) || _ttsManager == null) return null;
 
         string cacheKey = text.GetHashCode().ToString();
 
-        if (HasCachedClip(cacheKey))
+        if (_ttsCache.TryGetValue(cacheKey, out var cachedClip))
         {
-            return GetCachedClip(cacheKey);
+            return cachedClip;
         }
 
         try
@@ -172,11 +255,11 @@ public class CommentaryPlaybackManager : MonoBehaviour
             AudioClip clip = await _ttsManager.GenerateSpeech(text);
             if (clip != null)
             {
-                CacheClip(cacheKey, clip);
+                _ttsCache[cacheKey] = clip;
             }
             return clip;
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
             Debug.LogError($"[CommentaryPlaybackManager] 사전 생성 실패: {e.Message}");
             return null;
