@@ -104,10 +104,8 @@ public class CommentaryPlaybackManager : MonoBehaviour
             }
         }
 
-        // 재생 중인 상태 확인 (비동기 중 StopPlayback이 호출됐을 수 있음)
         if (!IsPlaying || _currentData != syncData) return;
 
-        // 자막 표시
         OnSubtitleChanged?.Invoke(syncData.FinalText);
 
         if (clip != null)
@@ -222,12 +220,19 @@ public class CommentaryPlaybackManager : MonoBehaviour
             return 0;
         }
 
-        _lastSelectedIndex.TryGetValue(eventType, out int lastIndex);
+        int newIndex;
 
-        int newIndex = UnityEngine.Random.Range(0, count - 1);
-        if (newIndex >= lastIndex)
+        if (!_lastSelectedIndex.TryGetValue(eventType, out int lastIndex))
         {
-            newIndex++;
+            newIndex = UnityEngine.Random.Range(0, count);
+        }
+        else
+        {
+            newIndex = UnityEngine.Random.Range(0, count - 1);
+            if (newIndex >= lastIndex)
+            {
+                newIndex++;
+            }
         }
 
         _lastSelectedIndex[eventType] = newIndex;

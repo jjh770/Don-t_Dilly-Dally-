@@ -162,46 +162,54 @@ public class CommentaryController : MonoBehaviour
     {
         _isProcessing = true;
 
-        GeneratedCommentaryData generatedData;
-        bool isDynamic = CommentaryGenerator.IsDynamicEventType(gameEvent.Type);
-
-        // 사전 생성된 환자 소개가 있으면 사용 (동적형)
-        if (gameEvent.Type == EventType.NewPatientAppeared && TryGetCurrentPatientIntro(out var introText, out var introDuration))
+        try
         {
-            generatedData = new GeneratedCommentaryData
+            GeneratedCommentaryData generatedData;
+
+            // 사전 생성된 환자 소개가 있으면 사용 (동적형)
+            if (gameEvent.Type == EventType.NewPatientAppeared && TryGetCurrentPatientIntro(out var introText, out var introDuration))
             {
-                Text = introText,
-                EstimatedDuration = introDuration,
-                IsDynamic = true
-            };
-        }
-        else
-        {
-            // 코멘터리 생성 (호스트만)
-            generatedData = await _generator.GenerateCommentary(gameEvent);
-        }
+                generatedData = new GeneratedCommentaryData
+                {
+                    Text = introText,
+                    EstimatedDuration = introDuration,
+                    IsDynamic = true
+                };
+            }
+            else
+            {
+                // 코멘터리 생성 (호스트만)
+                generatedData = await _generator.GenerateCommentary(gameEvent);
+            }
 
-        if (generatedData == null)
+            if (generatedData == null)
+            {
+                Debug.LogWarning($"[CommentaryController] 코멘터리 생성 실패: {gameEvent.Type}");
+                _isProcessing = false;
+                return;
+            }
+
+            // SyncData 생성
+            var syncData = CommentarySyncData.CreateFromEvent(
+                gameEvent,
+                ++_sequenceCounter,
+                generatedData.Text,
+                _syncManager.NetworkTime,
+                generatedData.EstimatedDuration,
+                generatedData.IsDynamic
+            );
+
+            _currentCommentary = syncData;
+
+            // 모든 클라이언트에게 브로드캐스트
+            _syncManager.BroadcastCommentary(syncData);
+            // _isProcessing은 OnPlaybackCompleted에서 false로 설정됨
+        }
+        catch (Exception e)
         {
-            Debug.LogWarning($"[CommentaryController] 코멘터리 생성 실패: {gameEvent.Type}");
+            Debug.LogError($"[CommentaryController] 코멘터리 처리 중 예외 발생: {e.Message}");
             _isProcessing = false;
-            return;
         }
-
-        // SyncData 생성
-        var syncData = CommentarySyncData.CreateFromEvent(
-            gameEvent,
-            ++_sequenceCounter,
-            generatedData.Text,
-            _syncManager.NetworkTime,
-            generatedData.EstimatedDuration,
-            generatedData.IsDynamic
-        );
-
-        _currentCommentary = syncData;
-
-        // 모든 클라이언트에게 브로드캐스트
-        _syncManager.BroadcastCommentary(syncData);
     }
 
     private void OnCommentaryReceived(CommentarySyncData syncData)
@@ -224,7 +232,6 @@ public class CommentaryController : MonoBehaviour
 
         _playbackManager.PlayCommentary(syncData);
 
-        // 동적형은 FinalText가 있으므로 이벤트 발생
         if (syncData.IsDynamic && !string.IsNullOrEmpty(syncData.FinalText))
         {
             OnNarrationGenerated?.Invoke(syncData.FinalText);
@@ -314,31 +321,5 @@ public class CommentaryController : MonoBehaviour
     public void SetCurrentPatientIndex(int patientIndex)
     {
         _currentPatientIndex = patientIndex;
-    }
-
-    public void ClearPreGeneratedIntros()
-    {
-        _preGeneratedIntros.Clear();
-        _currentPatientIndex = -1;
-    }
-
-    // ========== 클립 그룹 설정 ==========
-
-    /// <summary>
-    /// 외부에서 EventType별 클립 그룹을 설정합니다.
-    /// </summary>
-    public void SetEventTypeClips(EventTypeClipGroup[] clipGroups)
-    {
-        _playbackManager.SetEventTypeClips(clipGroups);
-    }
-
-    public void ResetGameState()
-    {
-        _isGameEnded = false;
-        _eventQueue.Clear();
-        _lastEventTimes.Clear();
-        _isProcessing = false;
-        _currentCommentary = null;
-        _playbackManager.ClearTTSCache();
     }
 }
