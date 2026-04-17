@@ -1,3 +1,4 @@
+using DG.Tweening;
 using DontDillyDally.Data;
 using DontDillyDally.StageFlow;
 using TMPro;
@@ -38,9 +39,16 @@ namespace DontDillyDally.UI
         [SerializeField] private MaterialIconTable _iconTable;
         [SerializeField] private EmergencyUiCatalogSO _emergencyUiCatalog;
 
+        [Header("아이콘 팝 효과")]
+        [SerializeField] private float _popStartScale = 0.5f;
+        [SerializeField] private float _popDuration = 0.25f;
+        [SerializeField] private Ease _popEase = Ease.OutBack;
+
         private PlayerInteractionAbility _playerInteraction;
         private IInteractable _cachedNearestInteractable;
         private bool _isInitialized;
+        private InventoryHUDState _currentState = InventoryHUDState.Default;
+        private Tween _popTween;
 
         private void OnEnable()
         {
@@ -65,6 +73,9 @@ namespace DontDillyDally.UI
 
             _playerInteraction = null;
             _isInitialized = false;
+
+            _popTween?.Kill();
+            _popTween = null;
         }
 
         private void HandlePlayerRegistered(PlayerController player)
@@ -158,6 +169,9 @@ namespace DontDillyDally.UI
 
         private void ApplyState(InventoryHUDState state, Sprite icon)
         {
+            bool shouldPop = IsHoldingState(state) && !IsHoldingState(_currentState);
+            _currentState = state;
+
             switch (state)
             {
                 case InventoryHUDState.Default:
@@ -185,6 +199,42 @@ namespace DontDillyDally.UI
                     SetGuideTexts(FormatGuideText(_dropKey, _dropAction), FormatGuideText(_moveKey, _moveAction));
                     break;
             }
+
+            if (shouldPop)
+            {
+                PopIcon();
+            }
+        }
+
+        private static bool IsHoldingState(InventoryHUDState state)
+        {
+            return state == InventoryHUDState.HoldingSmallItem ||
+                   state == InventoryHUDState.HoldingLargeItem;
+        }
+
+        private void PopIcon()
+        {
+            if (_itemImage == null)
+            {
+                return;
+            }
+
+            RectTransform rectTransform = _itemImage.rectTransform;
+
+            _popTween?.Kill();
+            rectTransform.localScale = Vector3.one * _popStartScale;
+
+            _popTween = rectTransform
+                .DOScale(Vector3.one, _popDuration)
+                .SetEase(_popEase)
+                .OnKill(() =>
+                {
+                    _popTween = null;
+                    if (rectTransform != null)
+                    {
+                        rectTransform.localScale = Vector3.one;
+                    }
+                });
         }
 
         private string FormatGuideText(string key, string action)

@@ -30,6 +30,8 @@ namespace DontDillyDally.Data
 
         [Tooltip("해당 기본 재료에 사용할 모델 프리팹")]
         public GameObject ModelPrefab;
+
+        public Material[] OverrideMaterials;
     }
 
     // 타입별 표시 이름과 모델 프리팹을 주입하기 위한 카탈로그입니다.
@@ -67,7 +69,8 @@ namespace DontDillyDally.Data
         public bool TryGetBasicMaterialPresentation(
             CraftedMaterialType materialType,
             out string displayName,
-            out GameObject modelPrefab)
+            out GameObject modelPrefab,
+            out Material[] overrideMaterials)
         {
             foreach (BasicMaterialPresentationEntry entry in BasicMaterialEntries)
             {
@@ -76,11 +79,13 @@ namespace DontDillyDally.Data
 
                 displayName = entry.DisplayName;
                 modelPrefab = entry.ModelPrefab;
+                overrideMaterials = entry.OverrideMaterials;
                 return true;
             }
 
             displayName = null;
             modelPrefab = null;
+            overrideMaterials = null;
             return false;
         }
     }
