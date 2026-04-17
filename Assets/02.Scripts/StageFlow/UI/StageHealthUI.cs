@@ -8,24 +8,39 @@ using UnityEngine.UI;
 
 public class StageHealthUI : MonoBehaviour
 {
-    [Header("UI References")]
+    [Header("UI 참조")]
     [SerializeField] private GameObject _panelRoot;
     [SerializeField] private Slider _healthGauge;
     [SerializeField] private TextMeshProUGUI _patientCountText;
     [SerializeField] private TextMeshProUGUI _patientNameText;
+    [SerializeField] private RectTransform _floatingIcon;
 
-    [Header("Health Tween")]
+    [Header("Health 트윈")]
     [SerializeField] private float _healthTweenDuration = 0.25f;
     [SerializeField] private Ease _healthTweenEase = Ease.OutCubic;
+
+    [Header("패널 팝 효과")]
+    [SerializeField] private float _popScale = 0.5f;
+    [SerializeField] private float _popDuration = 0.5f;
+    [SerializeField] private int _popVibrato = 1;
+    [SerializeField] private float _popElasticity = 0.5f;
+
+    [Header("아이콘 둥둥 효과")]
+    [SerializeField] private float _floatDistance = 5f;
+    [SerializeField] private float _floatDuration = 1f;
+    [SerializeField] private Ease _floatEase = Ease.InOutSine;
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
     private StageFlowManager _stageFlowManager;
     private Tween _healthTween;
+    private Tween _popTween;
+    private Tween _floatTween;
     private float _cachedHealth;
     private float _maxHealth = 1f;
     private bool _hasAppliedGaugeValue;
     private bool _isStageDataBound;
+    private int _lastPatientIndex = -1;
 
     private void Start()
     {
@@ -33,6 +48,23 @@ public class StageHealthUI : MonoBehaviour
         {
             StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
+
+        StartFloatingAnimation();
+    }
+
+    private void StartFloatingAnimation()
+    {
+        if (_floatingIcon == null)
+        {
+            return;
+        }
+
+        _floatTween?.Kill();
+
+        _floatTween = _floatingIcon
+            .DOAnchorPosY(_floatingIcon.anchoredPosition.y + _floatDistance, _floatDuration)
+            .SetEase(_floatEase)
+            .SetLoops(-1, LoopType.Yoyo);
     }
 
     private void OnDestroy()
@@ -47,6 +79,10 @@ public class StageHealthUI : MonoBehaviour
         _disposables.Dispose();
         _healthTween?.Kill();
         _healthTween = null;
+        _popTween?.Kill();
+        _popTween = null;
+        _floatTween?.Kill();
+        _floatTween = null;
     }
 
     private bool TryBind()
@@ -83,7 +119,7 @@ public class StageHealthUI : MonoBehaviour
             .AddTo(_disposables);
 
         _stageFlowManager.CurrentPatientIndex
-            .Subscribe(_ => RefreshUi(snapGaugeValue: true))
+            .Subscribe(OnPatientIndexChanged)
             .AddTo(_disposables);
 
         StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
@@ -93,6 +129,46 @@ public class StageHealthUI : MonoBehaviour
     private void HandleStageFlowReady()
     {
         TryBind();
+    }
+
+    private void OnPatientIndexChanged(int patientIndex)
+    {
+        RefreshUi(snapGaugeValue: true);
+
+        // 첫 환자가 아닌 경우에만 팝 효과 재생
+        if (_lastPatientIndex >= 0 && patientIndex != _lastPatientIndex)
+        {
+            PopPanel();
+        }
+
+        _lastPatientIndex = patientIndex;
+    }
+
+    private void PopPanel()
+    {
+        if (_panelRoot == null)
+        {
+            return;
+        }
+
+        if (!_panelRoot.TryGetComponent(out RectTransform rectTransform))
+        {
+            return;
+        }
+
+        _popTween?.Kill();
+        rectTransform.localScale = Vector3.one;
+
+        _popTween = rectTransform
+            .DOPunchScale(Vector3.one * _popScale, _popDuration, _popVibrato, _popElasticity)
+            .OnKill(() =>
+            {
+                _popTween = null;
+                if (rectTransform != null)
+                {
+                    rectTransform.localScale = Vector3.one;
+                }
+            });
     }
 
     private void HandleStageDataChanged(StageRuntimeData stageData)
@@ -171,11 +247,26 @@ public class StageHealthUI : MonoBehaviour
         if (_patientNameText != null)
         {
             _patientNameText.text = GetPatientNameText();
+            ForceRebuildParentLayout(_patientNameText.rectTransform);
         }
 
         if (_patientCountText != null)
         {
             _patientCountText.text = GetPatientCountText();
+            ForceRebuildParentLayout(_patientCountText.rectTransform);
+        }
+    }
+
+    private static void ForceRebuildParentLayout(RectTransform child)
+    {
+        if (child == null || child.parent == null)
+        {
+            return;
+        }
+
+        if (child.parent is RectTransform parentRect)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
         }
     }
 
