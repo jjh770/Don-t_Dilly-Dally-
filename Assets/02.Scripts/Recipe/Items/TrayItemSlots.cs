@@ -7,7 +7,6 @@ namespace DontDillyDally.Data
     public class TrayItemSlots : MonoBehaviour
     {
         private const int MaxItemSlots = 4;
-
         [SerializeField] private Transform[] _itemSlotPoints = new Transform[MaxItemSlots];
 
         private ItemObject[] _storedSlotItems;
@@ -26,6 +25,14 @@ namespace DontDillyDally.Data
                 ItemObject item = _storedSlotItems[i];
                 if (item == null)
                 {
+                    continue;
+                }
+
+                Transform expectedParent = GetSlotTransform(i);
+                if (IsStaleStoredItem(item, expectedParent))
+                {
+                    LogStoredSlot("LateUpdate stale reference cleared", i, item, expectedParent);
+                    ClearSlot(i);
                     continue;
                 }
 
@@ -102,7 +109,43 @@ namespace DontDillyDally.Data
             DisableItemInteraction(itemObject);
             _storedSlotItems[slotIndex] = itemObject;
             _storedLocalPositions[slotIndex] = itemObject.transform.localPosition;
+            itemObject.Recycled += OnStoredItemRecycled;
             return true;
+        }
+
+        // 풀 반납된 아이템이 다른 역할로 재사용될 때 stale 참조가 LateUpdate에서
+        // localPosition을 덮어써 (0, 0.2, 0)에 박히는 버그 방지.
+        private void OnStoredItemRecycled(ItemObject item)
+        {
+            if (item == null || _storedSlotItems == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < _storedSlotItems.Length; i++)
+            {
+                if (_storedSlotItems[i] == item)
+                {
+                    ClearSlot(i);
+                }
+            }
+        }
+
+        private void ClearSlot(int slotIndex)
+        {
+            if (_storedSlotItems == null || slotIndex < 0 || slotIndex >= _storedSlotItems.Length)
+            {
+                return;
+            }
+
+            ItemObject item = _storedSlotItems[slotIndex];
+            if (item != null)
+            {
+                item.Recycled -= OnStoredItemRecycled;
+            }
+
+            _storedSlotItems[slotIndex] = null;
+            _storedLocalPositions[slotIndex] = Vector3.zero;
         }
 
         /// <summary>
@@ -166,6 +209,8 @@ namespace DontDillyDally.Data
                     continue;
                 }
 
+                storedItem.Recycled -= OnStoredItemRecycled;
+
                 // 트레이가 먼저 파괴되더라도 자식 PhotonView가 로컬에서 함께 지워지지 않도록
                 // 보관 중이던 아이템을 먼저 트레이 계층에서 분리합니다.
                 storedItem.transform.SetParent(null, true);
@@ -205,6 +250,40 @@ namespace DontDillyDally.Data
             }
 
             return transform;
+        }
+
+        private bool IsStaleStoredItem(ItemObject item, Transform expectedParent)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            bool isInactive = !item.gameObject.activeInHierarchy;
+            bool parentMismatch = item.transform.parent != expectedParent;
+            bool isNoLongerStored = item.TryGetComponent(out HoldableItem holdable) && !holdable.IsStoredInContainer;
+
+            return isInactive || item.IsPendingRecycle || parentMismatch || isNoLongerStored;
+        }
+
+        private void LogStoredSlot(string context, int slotIndex, ItemObject item, Transform expectedParent)
+        {
+            if (item == null)
+            {
+                return;
+            }
+
+            bool hasHoldable = item.TryGetComponent(out HoldableItem holdable);
+            string expectedParentName = expectedParent != null ? expectedParent.name : "null";
+            Transform actualParent = item.transform.parent;
+            string actualParentName = actualParent != null ? actualParent.name : "null";
+
+            Debug.LogWarning(
+                $"[TrayItemSlots] {context} | tray={name} slot={slotIndex} " +
+                $"item={item.name} viewId={item.ViewId} active={item.gameObject.activeInHierarchy} " +
+                $"pendingRecycle={item.IsPendingRecycle} stored={(hasHoldable && holdable.IsStoredInContainer)} " +
+                $"expectedParent={expectedParentName} actualParent={actualParentName} " +
+                $"local={item.transform.localPosition} world={item.transform.position}");
         }
 
         private static void DisableItemInteraction(ItemObject itemObject)

@@ -27,7 +27,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     private Rigidbody _rigidbody;
     private PhotonView _photonView;
     private HoldableItemNetworkSync _networkSync;
-    private PhotonTransformView[] _transformViews;
     private TemporaryCollisionIgnore _temporaryCollisionIgnore;
     private Transform _currentHoldPoint;
     private Transform _holdAnchor;
@@ -47,7 +46,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _rigidbody = GetComponent<Rigidbody>();
         _photonView = GetComponent<PhotonView>();
         _networkSync = GetComponent<HoldableItemNetworkSync>();
-        _transformViews = GetComponents<PhotonTransformView>();
         _temporaryCollisionIgnore = GetComponent<TemporaryCollisionIgnore>();
         _itemObject = GetComponent<DontDillyDally.Data.ItemObject>();
 
@@ -151,7 +149,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
         IsStoredInContainer = false;
-        SetTransformSyncEnabled(true);
 
         IsInteracting = true;
         _currentHoldPoint = holdPoint;
@@ -178,7 +175,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
         IsInteracting = false;
         IsStoredInContainer = false;
-        SetTransformSyncEnabled(false);
         _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
         _currentHoldPoint = null;
@@ -241,7 +237,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     public void ApplyNetworkContainerState(bool isStored)
     {
         IsStoredInContainer = isStored;
-        SetTransformSyncEnabled(!isStored);
 
         if (isStored)
         {
@@ -254,7 +249,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     public void SetStoredInContainer(bool stored)
     {
         IsStoredInContainer = stored;
-        SetTransformSyncEnabled(!stored);
 
         if (stored)
         {
@@ -272,7 +266,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
         IsInteracting = false;
         IsStoredInContainer = false;
-        SetTransformSyncEnabled(false);
         _isWaitingForOwnershipReturn = false;
         _settledTime = 0f;
         _currentHoldPoint = null;
@@ -433,18 +426,6 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
                 continue;
 
             collider.enabled = isEnabled;
-        }
-    }
-
-    private void SetTransformSyncEnabled(bool enabled)
-    {
-        if (_transformViews == null)
-            return;
-
-        for (int i = 0; i < _transformViews.Length; i++)
-        {
-            if (_transformViews[i] != null)
-                _transformViews[i].enabled = enabled;
         }
     }
 
