@@ -1,3 +1,4 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
@@ -28,7 +29,12 @@ public class UI_Customizing : UIPopupBase
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
     [SerializeField] private Color _tabNormalColor = Color.white;
 
+    [Header("탭 인디케이터 애니메이션")]
+    [SerializeField] private float _tabSlideDuration = 0.25f;
+    [SerializeField] private Ease _tabSlideEase = Ease.OutCubic;
+
     private CustomizingUIViewModel _viewModel;
+    private Tween _tabSlideTween;
     private List<UI_CustomizingItem> _itemButtons = new();
     private bool _canClose = true;
 
@@ -64,6 +70,8 @@ public class UI_Customizing : UIPopupBase
 
     private void OnDestroy()
     {
+        _tabSlideTween?.Kill();
+        _tabSlideTween = null;
         UnsubscribeFromViewModel();
         _viewModel?.Dispose();
     }
@@ -170,9 +178,9 @@ public class UI_Customizing : UIPopupBase
 
     private void RefreshItemList()
     {
-        ClearItemButtons();
-
         if (_viewModel == null) return;
+
+        ClearItemButtons();
 
         // 지금 카테고리에서 보여야 하는 아이템 목록을 가져와서
         // 버튼을 하나씩 새로 생성
@@ -203,7 +211,10 @@ public class UI_Customizing : UIPopupBase
     {
         foreach (var button in _itemButtons)
         {
-            if (button != null) Destroy(button.gameObject);
+            if (button != null)
+            {
+                Destroy(button.gameObject);
+            }
         }
         _itemButtons.Clear();
     }
@@ -248,15 +259,42 @@ public class UI_Customizing : UIPopupBase
     {
         if (_tabSelectionIndicator == null || tabButton == null) return;
 
-        _tabSelectionIndicator.SetParent(tabButton);
-        _tabSelectionIndicator.anchoredPosition = new Vector2(0f, -55f);
         _tabSelectionIndicator.gameObject.SetActive(true);
+
+        RectTransform tabRect = tabButton as RectTransform;
+        if (tabRect == null) return;
+
+        // 같은 부모 기준 X 위치 계산
+        Vector3 targetWorldPos = tabRect.position;
+        Transform indicatorParent = _tabSelectionIndicator.parent;
+
+        if (indicatorParent == null)
+        {
+            _tabSelectionIndicator.SetParent(tabButton);
+            _tabSelectionIndicator.anchoredPosition = new Vector2(0f, -55f);
+            return;
+        }
+
+        // 월드 좌표를 인디케이터 부모 기준 로컬 좌표로 변환
+        Vector3 localPos = indicatorParent.InverseTransformPoint(targetWorldPos);
+        float targetX = localPos.x;
+
+        _tabSlideTween?.Kill();
+        _tabSlideTween = _tabSelectionIndicator
+            .DOAnchorPosX(targetX, _tabSlideDuration)
+            .SetEase(_tabSlideEase)
+            .OnKill(() => _tabSlideTween = null);
     }
 
 
     protected override void OnShow()
     {
         _viewModel?.OpenCustomizingUI();
+
+        if (_viewModel != null)
+        {
+            SelectCategory(_viewModel.CurrentCategory);
+        }
     }
 
     protected override void HandleCloseHotkey()
