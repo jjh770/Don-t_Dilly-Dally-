@@ -1348,6 +1348,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::StageTimerUI
   _timerText: {fileID: 4302183032286231528}
   _timerSlider: {fileID: 4302183033472978641}
+  _timerIcon: {fileID: 7101840493852048333}
+  _shakeInterval: 10
+  _shakeDuration: 0.5
+  _shakeStrength: 13
+  _shakeVibrato: 13
+  _iconBaseRotationZ: 11
 --- !u!114 &808008472
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2496,6 +2502,14 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4231948608844363178, guid: b981db21c34f3294199a405ab74d3482, type: 3}
+      propertyPath: _floatingIcon
+      value: 
+      objectReference: {fileID: 4463597294057043518}
+    - target: {fileID: 4231948608844363178, guid: b981db21c34f3294199a405ab74d3482, type: 3}
+      propertyPath: _floatDistance
+      value: 5
+      objectReference: {fileID: 0}
     - target: {fileID: 4828276569492635625, guid: b981db21c34f3294199a405ab74d3482, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1
@@ -2673,6 +2687,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b981db21c34f3294199a405ab74d3482, type: 3}
+--- !u!224 &4463597294057043518 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 6853666109795408217, guid: b981db21c34f3294199a405ab74d3482, type: 3}
+  m_PrefabInstance: {fileID: 4463597294057043517}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &5441211995802628800
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3019,6 +3038,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4a07d1fed19c1a34da7eabdde4f66898, type: 3}
+--- !u!224 &7101840493852048333 stripped
+RectTransform:
+  m_CorrespondingSourceObject: {fileID: 5765217442492155641, guid: 4a07d1fed19c1a34da7eabdde4f66898, type: 3}
+  m_PrefabInstance: {fileID: 7101840493852048332}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8896099529998234202
 PrefabInstance:
   m_ObjectHideFlags: 0
