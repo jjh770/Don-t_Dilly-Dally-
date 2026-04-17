@@ -121,7 +121,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -164,7 +163,7 @@ MonoBehaviour:
   m_SynchronizePosition: 1
   m_SynchronizeRotation: 1
   m_SynchronizeScale: 0
-  m_UseLocal: 1
+  m_UseLocal: 0
 --- !u!114 &5587489277933949863
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,8 +201,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
   _hasLeftSource: 0
-  _isHeld: 0
-  _holderActorNumber: -1
 --- !u!114 &-5006571336115383354
 MonoBehaviour:
   m_ObjectHideFlags: 0
