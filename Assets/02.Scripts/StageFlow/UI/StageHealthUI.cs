@@ -43,14 +43,6 @@ public class StageHealthUI : MonoBehaviour
         }
     }
 
-    private void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.P))
-        {
-            PopPanel();
-        }
-    }
-
     private void OnDestroy()
     {
         StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
