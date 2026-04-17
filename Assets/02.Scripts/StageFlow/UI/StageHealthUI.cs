@@ -13,6 +13,7 @@ public class StageHealthUI : MonoBehaviour
     [SerializeField] private Slider _healthGauge;
     [SerializeField] private TextMeshProUGUI _patientCountText;
     [SerializeField] private TextMeshProUGUI _patientNameText;
+    [SerializeField] private RectTransform _floatingIcon;
 
     [Header("Health 트윈")]
     [SerializeField] private float _healthTweenDuration = 0.25f;
@@ -24,11 +25,17 @@ public class StageHealthUI : MonoBehaviour
     [SerializeField] private int _popVibrato = 1;
     [SerializeField] private float _popElasticity = 0.5f;
 
+    [Header("아이콘 둥둥 효과")]
+    [SerializeField] private float _floatDistance = 5f;
+    [SerializeField] private float _floatDuration = 1f;
+    [SerializeField] private Ease _floatEase = Ease.InOutSine;
+
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
     private StageFlowManager _stageFlowManager;
     private Tween _healthTween;
     private Tween _popTween;
+    private Tween _floatTween;
     private float _cachedHealth;
     private float _maxHealth = 1f;
     private bool _hasAppliedGaugeValue;
@@ -41,6 +48,23 @@ public class StageHealthUI : MonoBehaviour
         {
             StageFlowBootstrapper.StageFlowReady += HandleStageFlowReady;
         }
+
+        StartFloatingAnimation();
+    }
+
+    private void StartFloatingAnimation()
+    {
+        if (_floatingIcon == null)
+        {
+            return;
+        }
+
+        _floatTween?.Kill();
+
+        _floatTween = _floatingIcon
+            .DOAnchorPosY(_floatingIcon.anchoredPosition.y + _floatDistance, _floatDuration)
+            .SetEase(_floatEase)
+            .SetLoops(-1, LoopType.Yoyo);
     }
 
     private void OnDestroy()
@@ -57,6 +81,8 @@ public class StageHealthUI : MonoBehaviour
         _healthTween = null;
         _popTween?.Kill();
         _popTween = null;
+        _floatTween?.Kill();
+        _floatTween = null;
     }
 
     private bool TryBind()
