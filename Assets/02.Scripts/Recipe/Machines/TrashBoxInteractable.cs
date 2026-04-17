@@ -1,4 +1,5 @@
 using Photon.Pun;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -12,6 +13,12 @@ namespace DontDillyDally.Data
 
         public bool IsInteracting => false;
         public Transform Transform => transform;
+
+        /// <summary>
+        /// 아이템이 쓰레기통에서 처리된 직후(사운드 재생과 동일 시점) 발행된다.
+        /// VFX 등 부가 피드백 컴포넌트가 구독하여 사용한다.
+        /// </summary>
+        public event Action ItemTrashed;
 
         public void Interact(Transform interactor)
         {
@@ -37,11 +44,12 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (ItemRecycleUtility.TryRecycle(heldItem))
+            if (!ItemRecycleUtility.TryRecycle(heldItem))
             {
-                SoundManager.Instance.Play(SFXKey.RecycleBin, SoundType.Local);
                 return;
             }
+
+            PlayTrashFeedback();
         }
 
         public void StopInteract()
@@ -100,7 +108,13 @@ namespace DontDillyDally.Data
 
             StartCoroutine(ReleaseProcessingLockNextFrame(itemInstanceId));
             ItemRecycleUtility.TryRecycle(itemObject);
+            PlayTrashFeedback();
+        }
+
+        private void PlayTrashFeedback()
+        {
             SoundManager.Instance.Play(SFXKey.RecycleBin, SoundType.Local);
+            ItemTrashed?.Invoke();
         }
 
         private IEnumerator ReleaseProcessingLockNextFrame(int itemInstanceId)
