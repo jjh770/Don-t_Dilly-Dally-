@@ -33,6 +33,10 @@ public class UI_Customizing : UIPopupBase
     [SerializeField] private float _tabSlideDuration = 0.25f;
     [SerializeField] private Ease _tabSlideEase = Ease.OutCubic;
 
+    [Header("버튼 팝 효과")]
+    [SerializeField] private float _buttonPopScale = 1.15f;
+    [SerializeField] private float _buttonPopDuration = 0.15f;
+
     private CustomizingUIViewModel _viewModel;
     private Tween _tabSlideTween;
     private List<UI_CustomizingItem> _itemButtons = new();
@@ -150,6 +154,7 @@ public class UI_Customizing : UIPopupBase
 
     private void OnSaveClicked()
     {
+        PlayButtonPop(_saveButton);
         _viewModel?.SaveToSelectedSlot();   // 먼저 슬롯에 현재 상태 저장
         _viewModel?.Save();                 // 전체 저장 (MergeMetaFrom에서 업데이트된 슬롯 반영)
         OnSaved?.Invoke();
@@ -157,7 +162,25 @@ public class UI_Customizing : UIPopupBase
 
     private void OnResetClicked()
     {
+        PlayButtonPop(_resetButton);
         _viewModel?.ResetToSaved();
+    }
+
+    private void PlayButtonPop(Button button)
+    {
+        if (button == null) return;
+
+        Transform t = button.transform;
+        t.DOKill();
+        t.localScale = Vector3.one;
+
+        t.DOScale(_buttonPopScale, _buttonPopDuration * 0.5f)
+            .SetEase(Ease.OutQuad)
+            .OnComplete(() =>
+            {
+                t.DOScale(1f, _buttonPopDuration * 0.5f)
+                    .SetEase(Ease.OutQuad);
+            });
     }
 
     private void OnCloseClicked()
