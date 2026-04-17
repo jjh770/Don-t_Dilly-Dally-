@@ -282,7 +282,9 @@ public class HelicopterLiftClear : PatientClearBase
             {
                 if (spark != null) ClearFx(spark);
             }
-            ClearFx(_liftDustFx);
+            // 먼지는 StopFx로 방출만 멈춤 — 이미 생성된 입자는 수명대로 페이드아웃.
+            // (ForceComplete에서는 ClearFx로 즉시 정리)
+            StopFx(_liftDustFx);
         });
 
         return _sequence;
