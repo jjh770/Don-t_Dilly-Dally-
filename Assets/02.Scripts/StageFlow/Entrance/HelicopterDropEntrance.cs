@@ -96,8 +96,11 @@ public class HelicopterDropEntrance : PatientEntranceBase
     [SerializeField] private float _rotorWindStopTime = 4.0f;
 
     [Header("VFX: Unhook Spark (연결 해제 불꽃)")]
-    [Tooltip("연결 해제 시 불꽃 파티클. null이면 생략.")]
+    [Tooltip("연결 해제 시 불꽃 파티클 (레거시, 단일). 아래 배열이 비었을 때 사용됨.")]
     [SerializeField] private ParticleSystem _unhookSparkFx;
+
+    [Tooltip("연결 해제 시 불꽃 파티클 배열. 2개 이상일 때 여기 할당 (예: 좌/우 2개). 비어있으면 위 단일 필드 사용.")]
+    [SerializeField] private ParticleSystem[] _unhookSparkFxs;
 
     [Header("VFX: Landing Dust (착지 먼지)")]
     [Tooltip("침대 착지 시 바닥 먼지 파티클. null이면 생략.")]
@@ -125,6 +128,22 @@ public class HelicopterDropEntrance : PatientEntranceBase
         }
 
         return System.Array.Empty<Transform>();
+    }
+
+    // 배열이 비었으면 단일 필드를 배열화해서 반환.
+    private ParticleSystem[] ResolveUnhookSparks()
+    {
+        if (_unhookSparkFxs != null && _unhookSparkFxs.Length > 0)
+        {
+            return _unhookSparkFxs;
+        }
+
+        if (_unhookSparkFx != null)
+        {
+            return new[] { _unhookSparkFx };
+        }
+
+        return System.Array.Empty<ParticleSystem>();
     }
 
     public override Sequence Play(
@@ -217,7 +236,13 @@ public class HelicopterDropEntrance : PatientEntranceBase
         _sequence.InsertCallback(_landingDustStartTime, () => PlayFx(_landingDustFx));
 
         // Phase 2: 연결 해제 — 살짝 흔들림 + 불꽃.
-        _sequence.InsertCallback(_unhookTime, () => PlayFx(_unhookSparkFx));
+        _sequence.InsertCallback(_unhookTime, () =>
+        {
+            foreach (ParticleSystem spark in ResolveUnhookSparks())
+            {
+                if (spark != null) PlayFx(spark);
+            }
+        });
 
         _sequence.Insert(_unhookTime,
             bedTransform.DOShakePosition(_unhookShakeDuration, _unhookShakeStrength,
@@ -257,8 +282,13 @@ public class HelicopterDropEntrance : PatientEntranceBase
             }
 
             ClearFx(_rotorWindFx);
-            ClearFx(_unhookSparkFx);
-            ClearFx(_landingDustFx);
+            foreach (ParticleSystem spark in ResolveUnhookSparks())
+            {
+                if (spark != null) ClearFx(spark);
+            }
+            // 먼지는 StopFx로 방출만 멈춤 — 이미 생성된 입자는 수명대로 페이드아웃.
+            // (ForceComplete에서는 ClearFx로 즉시 정리)
+            StopFx(_landingDustFx);
         });
 
         return _sequence;
@@ -306,7 +336,10 @@ public class HelicopterDropEntrance : PatientEntranceBase
         }
 
         ClearFx(_rotorWindFx);
-        ClearFx(_unhookSparkFx);
+        foreach (ParticleSystem spark in ResolveUnhookSparks())
+        {
+            if (spark != null) ClearFx(spark);
+        }
         ClearFx(_landingDustFx);
     }
 }
