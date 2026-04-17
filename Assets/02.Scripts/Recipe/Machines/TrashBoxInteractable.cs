@@ -14,10 +14,8 @@ namespace DontDillyDally.Data
         public bool IsInteracting => false;
         public Transform Transform => transform;
 
-        /// <summary>
-        /// 아이템이 쓰레기통에서 처리된 직후(사운드 재생과 동일 시점) 발행된다.
-        /// VFX 등 부가 피드백 컴포넌트가 구독하여 사용한다.
-        /// </summary>
+        // 아이템이 쓰레기통에서 처리된 직후(사운드 재생과 동일 시점) 발행된다.
+        // VFX 등 부가 피드백 컴포넌트가 구독하여 사용한다.
         public event Action ItemTrashed;
 
         public void Interact(Transform interactor)

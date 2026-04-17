@@ -2,11 +2,6 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    /// <summary>
-    /// 쓰레기통 피드백용 연기 VFX 재생 컴포넌트.
-    /// TrashBoxInteractable.ItemTrashed 이벤트를 구독하여 아이템이
-    /// 버려질 때마다 연기 파티클을 스폰한다. (E키 / 던지기 공통)
-    /// </summary>
     [DisallowMultipleComponent]
     public sealed class TrashBoxSmokeEffect : MonoBehaviour
     {
