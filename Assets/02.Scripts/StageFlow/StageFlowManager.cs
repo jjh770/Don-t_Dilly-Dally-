@@ -38,7 +38,7 @@ namespace DontDillyDally.StageFlow
         private const float STAGE_CLEAR_DELAY_SEC = 5f;
         private const float PATIENT_TRANSITION_DELAY_SEC = 4f;
         private const float RETURN_TO_WAITING_ROOM_DELAY_SEC = 5f;
-        private const float NO_SURGERY_TIMEOUT_SEC = 20f;
+        private const float NO_SURGERY_TIMEOUT_SEC = 30f;
 
         // ── 위임 컴포넌트 ────────────────────────────────────────────
         [Header("핸들러")]

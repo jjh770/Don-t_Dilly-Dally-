@@ -183,22 +183,10 @@ public class StagePreloader : MonoBehaviourPunCallbacks
                 StageData.Patients.Add(disease);
             }
 
-            Debug.Log($"[StagePreloader] (1/3) 질병 데이터 생성 완료: {StageData.Patients.Count}개 (소요: {Time.realtimeSinceStartup - startTime:F1}초)");
+            Debug.Log($"[StagePreloader] (1/2) 질병 데이터 생성 완료: {StageData.Patients.Count}개 (소요: {Time.realtimeSinceStartup - startTime:F1}초)");
 
-            // 2. 고정/템플릿 텍스트 TTS 사전 생성
-            Debug.Log("[StagePreloader] (2/3) 고정/템플릿 텍스트 TTS 사전 생성 중...");
-            if (CommentaryController.Instance != null)
-            {
-                await CommentaryController.Instance.PreGeneratePredefinedTexts(ct);
-                Debug.Log("[StagePreloader] (2/3) 고정/템플릿 텍스트 TTS 사전 생성 완료");
-            }
-            else
-            {
-                Debug.LogWarning("[StagePreloader] CommentaryController.Instance가 null입니다. 고정/템플릿 사전 생성 스킵.");
-            }
-
-            // 3. 환자 소개 음성 사전 생성
-            Debug.Log("[StagePreloader] (3/3) 환자 소개 음성 사전 생성 중...");
+            // 2. 환자 소개 음성 사전 생성 (동적형만 TTS 사용)
+            Debug.Log("[StagePreloader] (2/2) 환자 소개 음성 사전 생성 중...");
             if (CommentaryController.Instance != null)
             {
                 var infos = new List<(string, string)>();
@@ -207,7 +195,7 @@ public class StagePreloader : MonoBehaviourPunCallbacks
                     infos.Add((patient.PatientName, patient.DiseaseName));
                 }
                 await CommentaryController.Instance.PreGeneratePatientIntros(infos, ct);
-                Debug.Log("[StagePreloader] (3/3) 환자 소개 음성 사전 생성 완료");
+                Debug.Log("[StagePreloader] (2/2) 환자 소개 음성 사전 생성 완료");
             }
             else
             {
