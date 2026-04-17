@@ -171,11 +171,26 @@ public class StageHealthUI : MonoBehaviour
         if (_patientNameText != null)
         {
             _patientNameText.text = GetPatientNameText();
+            ForceRebuildParentLayout(_patientNameText.rectTransform);
         }
 
         if (_patientCountText != null)
         {
             _patientCountText.text = GetPatientCountText();
+            ForceRebuildParentLayout(_patientCountText.rectTransform);
+        }
+    }
+
+    private static void ForceRebuildParentLayout(RectTransform child)
+    {
+        if (child == null || child.parent == null)
+        {
+            return;
+        }
+
+        if (child.parent is RectTransform parentRect)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(parentRect);
         }
     }
 
