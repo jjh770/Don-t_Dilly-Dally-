@@ -1,3 +1,4 @@
+using DG.Tweening;
 using DontDillyDally.StageFlow;
 using Photon.Pun;
 using TMPro;
@@ -9,6 +10,14 @@ public class StageTimerUI : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _timerText;
     [SerializeField] private Slider _timerSlider;
+    [SerializeField] private RectTransform _timerIcon;
+
+    [Header("아이콘 흔들림 설정")]
+    [SerializeField] private float _shakeInterval = 10f;
+    [SerializeField] private float _shakeDuration = 0.5f;
+    [SerializeField] private float _shakeStrength = 13f;
+    [SerializeField] private int _shakeVibrato = 13;
+    [SerializeField] private float _iconBaseRotationZ = 11f;
 
     private readonly CompositeDisposable _disposables = new CompositeDisposable();
 
@@ -17,6 +26,8 @@ public class StageTimerUI : MonoBehaviour
     private float _totalTimeLimit;
     private float _lastSyncedTime;
     private float _lastSyncRealtime;
+    private int _lastShakeThreshold = -1;
+    private Tween _shakeTween;
 
     private bool IsBound => _stageFlowManager != null;
 
@@ -51,6 +62,8 @@ public class StageTimerUI : MonoBehaviour
             _stageFlowManager.OnStageDataChanged -= OnStageDataChanged;
         }
 
+        _shakeTween?.Kill();
+        _shakeTween = null;
         _disposables.Dispose();
     }
 
@@ -142,6 +155,7 @@ public class StageTimerUI : MonoBehaviour
         float displayTime = GetDisplayTime();
         UpdateTimerText(displayTime);
         UpdateSlider(displayTime);
+        CheckShakeTrigger(displayTime);
     }
 
     private void SetVisibility(bool visible)
@@ -213,5 +227,41 @@ public class StageTimerUI : MonoBehaviour
         }
 
         return Mathf.Max(0f, _lastSyncedTime);
+    }
+
+    private void CheckShakeTrigger(float displayTime)
+    {
+        if (_timerIcon == null || _shakeInterval <= 0f)
+        {
+            return;
+        }
+
+        int currentThreshold = Mathf.FloorToInt(displayTime / _shakeInterval);
+
+        if (_lastShakeThreshold >= 0 && currentThreshold < _lastShakeThreshold)
+        {
+            ShakeIcon();
+        }
+
+        _lastShakeThreshold = currentThreshold;
+    }
+
+    private void ShakeIcon()
+    {
+        if (_timerIcon == null) return;
+
+        _shakeTween?.Kill();
+        _timerIcon.localRotation = Quaternion.Euler(0f, 0f, _iconBaseRotationZ);
+
+        _shakeTween = _timerIcon
+            .DOShakeRotation(_shakeDuration, new Vector3(0f, 0f, _shakeStrength), _shakeVibrato)
+            .OnKill(() =>
+            {
+                _shakeTween = null;
+                if (_timerIcon != null)
+                {
+                    _timerIcon.localRotation = Quaternion.Euler(0f, 0f, _iconBaseRotationZ);
+                }
+            });
     }
 }
