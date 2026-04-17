@@ -211,7 +211,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
                 ? recipe.RecipeId
                 : recipe.DisplayName;
 
-            int displayOrder = i - currentRecipeIndex + 1;
+            int displayOrder = i + 1;
 
             item.SetData(
                 $"{displayOrder}. {recipeName}",
@@ -344,7 +344,7 @@ public class StageCurrentRecipeUI : MonoBehaviour
 
 
             _visibleItems[i].SetData(
-                $"{i + 1}. {recipeName}",
+                $"{recipeDataIndex + 1}. {recipeName}",
                 recipe.RequiredMaterials,
                 _iconTable,
                 isCurrent ? _currentTextColor : _pendingTextColor,
