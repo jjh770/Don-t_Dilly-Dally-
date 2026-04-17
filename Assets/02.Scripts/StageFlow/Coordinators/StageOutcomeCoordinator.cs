@@ -185,7 +185,6 @@ namespace DontDillyDally.StageFlow
                 Debug.Log("[StageFlow] Player가 게임을 이탈해 대기실로 복귀합니다.");
                 NotifyUIService.QueueForNextScene(ENotifyType.OtherPlayerLeft);
 
-                await UniTask.Delay(TimeSpan.FromSeconds(returnToWaitingRoomDelaySec));
                 PhotonServerManager.Instance?.ReturnWaitingRoom();
                 return;
             }
