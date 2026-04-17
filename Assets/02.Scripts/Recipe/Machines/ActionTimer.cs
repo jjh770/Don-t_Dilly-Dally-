@@ -1,5 +1,5 @@
-using System;
 using DontDillyDally.UI;
+using System;
 using UnityEngine;
 
 namespace DontDillyDally.Data
@@ -16,6 +16,8 @@ namespace DontDillyDally.Data
         [SerializeField] private RadialTimerView _timerView = new RadialTimerView();
         [SerializeField] private bool _hideWhenIdle = true;
         [SerializeField] private bool _useUnscaledTime = false;
+
+        private const float FillImageAlpha = 0.75f;
 
         private float _duration;
         private float _elapsed;
@@ -103,6 +105,7 @@ namespace DontDillyDally.Data
 
             SetOverlayVisible(true);
             _timerView.SetRatio(RemainingRatio);
+            _timerView.SetAlpha(FillImageAlpha);
         }
 
         private void EnsureInitialized()
@@ -124,6 +127,7 @@ namespace DontDillyDally.Data
 
             _timerView ??= new RadialTimerView();
             _timerView.Initialize();
+            _timerView.SetAlpha(FillImageAlpha);
             _isInitialized = true;
         }
 
