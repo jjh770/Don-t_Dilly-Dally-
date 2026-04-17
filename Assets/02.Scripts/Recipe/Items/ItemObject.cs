@@ -244,7 +244,7 @@ namespace DontDillyDally.Data
                 }
 
                 Material[] targetMaterials = BuildOverrideMaterials(renderer.sharedMaterials, overrideMaterials);
-                renderer.materials = targetMaterials;
+                renderer.sharedMaterials = targetMaterials;
             }
         }
 
@@ -252,13 +252,10 @@ namespace DontDillyDally.Data
         {
             if (currentMaterials == null || currentMaterials.Length == 0)
             {
-                Material[] singleMaterial = new Material[overrideMaterials.Length];
-                for (int i = 0; i < overrideMaterials.Length; i++)
+                if (currentMaterials == null || currentMaterials.Length == 0)
                 {
-                    singleMaterial[i] = overrideMaterials[i];
+                    return (Material[])overrideMaterials.Clone();
                 }
-
-                return singleMaterial;
             }
 
             Material[] result = new Material[currentMaterials.Length];

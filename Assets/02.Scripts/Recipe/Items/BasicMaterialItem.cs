@@ -52,7 +52,7 @@ namespace DontDillyDally.Data
             }
 
             Initialize(resolvedDisplayName, resolvedModelPrefab);
-            ApplyBoxColliderFromPresentationModel(resolvedModelPrefab);
+            TryApplyBoxColliderFromModelPrefab(resolvedModelPrefab);
             ApplyOverrideMaterials(overrideMaterials);
         }
 
@@ -75,16 +75,6 @@ namespace DontDillyDally.Data
 
             CraftedMaterialType materialType = (CraftedMaterialType)materialTypeValue;
             Initialize(materialType);
-        }
-
-        private void ApplyBoxColliderFromPresentationModel(GameObject modelPrefab)
-        {
-            if (modelPrefab == null)
-            {
-                return;
-            }
-
-            TryApplyBoxColliderFromModelPrefab(modelPrefab);
         }
     }
 }
