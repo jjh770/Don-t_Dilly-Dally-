@@ -88,8 +88,11 @@ public class HelicopterLiftClear : PatientClearBase
     [SerializeField] private float _rotorWindStopTime = 3.5f;
 
     [Header("VFX: Hook Spark (연결 불꽃)")]
-    [Tooltip("밧줄 연결 시 불꽃 파티클. null이면 생략.")]
+    [Tooltip("밧줄 연결 시 불꽃 파티클 (레거시, 단일). 아래 배열이 비었을 때 사용됨.")]
     [SerializeField] private ParticleSystem _hookSparkFx;
+
+    [Tooltip("밧줄 연결 시 불꽃 파티클 배열. 2개 이상일 때 여기 할당 (예: 좌/우 2개). 비어있으면 위 단일 필드 사용.")]
+    [SerializeField] private ParticleSystem[] _hookSparkFxs;
 
     [Header("VFX: Lift Dust (인양 먼지)")]
     [Tooltip("인양 시 바닥에서 일어나는 먼지. null이면 생략.")]
@@ -120,6 +123,22 @@ public class HelicopterLiftClear : PatientClearBase
         }
 
         return System.Array.Empty<Transform>();
+    }
+
+    // 배열이 비었으면 단일 필드를 배열화해서 반환.
+    private ParticleSystem[] ResolveHookSparks()
+    {
+        if (_hookSparkFxs != null && _hookSparkFxs.Length > 0)
+        {
+            return _hookSparkFxs;
+        }
+
+        if (_hookSparkFx != null)
+        {
+            return new[] { _hookSparkFx };
+        }
+
+        return System.Array.Empty<ParticleSystem>();
     }
 
     public override Sequence Play(
@@ -201,18 +220,27 @@ public class HelicopterLiftClear : PatientClearBase
         });
 
         // Phase 2: 밧줄 연결 — 침대 흔들림 + 불꽃.
-        _sequence.InsertCallback(_hookTime, () => PlayFx(_hookSparkFx));
+        // 주의: patientRoot가 아니라 bedTransform을 흔든다.
+        // patientRoot에는 RoomEffect 같은 환경 장식이 같이 있어 함께 흔들리면 안 됨.
+        _sequence.InsertCallback(_hookTime, () =>
+        {
+            foreach (ParticleSystem spark in ResolveHookSparks())
+            {
+                if (spark != null) PlayFx(spark);
+            }
+        });
 
         _sequence.Insert(_hookTime,
-            patientRoot.DOShakePosition(_hookShakeDuration, _hookShakeStrength,
+            bedTransform.DOShakePosition(_hookShakeDuration, _hookShakeStrength,
                 vibrato: _hookShakeVibrato, fadeOut: true));
 
-        // Phase 3: 인양 — patientRoot + 헬기 동시 이동.
+        // Phase 3: 인양 — 침대(+자식인 환자) + 헬기 동시 상승.
+        // 주의: patientRoot를 올리면 형제인 RoomEffect도 같이 올라가므로 bedTransform만 이동.
         _sequence.InsertCallback(_liftStartTime, () => PlayFx(_liftDustFx));
 
         _sequence.Insert(_liftStartTime,
-            patientRoot.DOMove(
-                patientRoot.position + _liftExitOffset, _liftDuration)
+            bedTransform.DOMove(
+                bedTransform.position + _liftExitOffset, _liftDuration)
                 .SetEase(_liftEase));
 
         if (_helicopterTransform != null)
@@ -250,7 +278,10 @@ public class HelicopterLiftClear : PatientClearBase
         _sequence.OnComplete(() =>
         {
             ClearFx(_rotorWindFx);
-            ClearFx(_hookSparkFx);
+            foreach (ParticleSystem spark in ResolveHookSparks())
+            {
+                if (spark != null) ClearFx(spark);
+            }
             ClearFx(_liftDustFx);
         });
 
@@ -306,7 +337,10 @@ public class HelicopterLiftClear : PatientClearBase
         }
 
         ClearFx(_rotorWindFx);
-        ClearFx(_hookSparkFx);
+        foreach (ParticleSystem spark in ResolveHookSparks())
+        {
+            if (spark != null) ClearFx(spark);
+        }
         ClearFx(_liftDustFx);
     }
 }
