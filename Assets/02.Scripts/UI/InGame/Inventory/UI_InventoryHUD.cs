@@ -244,6 +244,12 @@ namespace DontDillyDally.UI
 
             if (itemObject is BasicMaterialItem materialItem)
             {
+                // 주사기 결과물은 Fill 아이콘 사용
+                if (materialItem.MaterialType == CraftedMaterialType.AnestheticSyringe ||
+                    materialItem.MaterialType == CraftedMaterialType.SedativeSyringe)
+                {
+                    return _iconTable.GetActionIcon(ActionType.Fill);
+                }
                 return _iconTable.GetMaterialIcon(materialItem.MaterialType);
             }
 
