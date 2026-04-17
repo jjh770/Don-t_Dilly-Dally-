@@ -10,7 +10,7 @@ public class CommentaryPlaybackManager : MonoBehaviour
     [Header("오디오")]
     [SerializeField] private AudioSource _audioSource;
 
-    [Header("TTS (동적형 전용)")]
+    [Header("TTS")]
     [SerializeField] private TTSManager _ttsManager;
 
     [Header("고정형/템플릿형 클립")]
@@ -21,10 +21,8 @@ public class CommentaryPlaybackManager : MonoBehaviour
 
     public bool IsPlaying { get; private set; }
 
-    // EventType → ClipGroup 빠른 조회용
     private Dictionary<EventType, EventTypeClipGroup> _clipGroupMap;
-
-    // 동적형 TTS 캐시
+    private readonly Dictionary<EventType, int> _lastSelectedIndex = new();
     private readonly Dictionary<string, AudioClip> _ttsCache = new();
 
     private CommentarySyncData _currentData;
@@ -123,7 +121,7 @@ public class CommentaryPlaybackManager : MonoBehaviour
         }
     }
 
-    // 고정형/템플릿형 코멘터리 재생 (EventType 기반 클립)
+    // 고정형/템플릿형 코멘터리 재생
     private void PlayEventTypeClip(CommentarySyncData syncData)
     {
         if (!_clipGroupMap.TryGetValue(syncData.EventType, out var group))
@@ -140,7 +138,9 @@ public class CommentaryPlaybackManager : MonoBehaviour
             return;
         }
 
-        var selectedData = group.ClipData[UnityEngine.Random.Range(0, group.ClipData.Length)];
+        // 이전에 선택한 인덱스를 제외하고 랜덤 선택
+        int selectedIndex = SelectRandomIndexExcludingLast(syncData.EventType, group.ClipData.Length);
+        var selectedData = group.ClipData[selectedIndex];
 
         if (selectedData.Clip == null)
         {
@@ -213,6 +213,25 @@ public class CommentaryPlaybackManager : MonoBehaviour
     public void ClearTTSCache()
     {
         _ttsCache.Clear();
+    }
+
+    private int SelectRandomIndexExcludingLast(EventType eventType, int count)
+    {
+        if (count <= 1)
+        {
+            return 0;
+        }
+
+        _lastSelectedIndex.TryGetValue(eventType, out int lastIndex);
+
+        int newIndex = UnityEngine.Random.Range(0, count - 1);
+        if (newIndex >= lastIndex)
+        {
+            newIndex++;
+        }
+
+        _lastSelectedIndex[eventType] = newIndex;
+        return newIndex;
     }
 
     public async Awaitable<AudioClip> PreGenerateAndCache(string text)
