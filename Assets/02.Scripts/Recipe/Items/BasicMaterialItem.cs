@@ -27,15 +27,33 @@ namespace DontDillyDally.Data
 
             MaterialType = materialType;
 
-            PresentationResolver<CraftedMaterialType> resolver =
-                PresentationCatalog != null
-                    ? PresentationCatalog.TryGetBasicMaterialPresentation
-                    : null;
+            string resolvedDisplayName = materialType.ToString();
+            GameObject resolvedModelPrefab = ModelPrefab;
+            Material[] overrideMaterials = null;
 
-            InitializeWithPresentation(
-                materialType,
-                materialType.ToString(),
-                resolver);
+            if (PresentationCatalog != null &&
+                PresentationCatalog.TryGetBasicMaterialPresentation(
+                    materialType,
+                    out string catalogDisplayName,
+                    out GameObject catalogModelPrefab,
+                    out Material[] catalogOverrideMaterials))
+            {
+                if (!string.IsNullOrWhiteSpace(catalogDisplayName))
+                {
+                    resolvedDisplayName = catalogDisplayName;
+                }
+
+                if (catalogModelPrefab != null)
+                {
+                    resolvedModelPrefab = catalogModelPrefab;
+                }
+
+                overrideMaterials = catalogOverrideMaterials;
+            }
+
+            Initialize(resolvedDisplayName, resolvedModelPrefab);
+            ApplyBoxColliderFromPresentationModel(resolvedModelPrefab);
+            ApplyOverrideMaterials(overrideMaterials);
         }
 
         public void OnPhotonInstantiate(PhotonMessageInfo info)
@@ -57,6 +75,16 @@ namespace DontDillyDally.Data
 
             CraftedMaterialType materialType = (CraftedMaterialType)materialTypeValue;
             Initialize(materialType);
+        }
+
+        private void ApplyBoxColliderFromPresentationModel(GameObject modelPrefab)
+        {
+            if (modelPrefab == null)
+            {
+                return;
+            }
+
+            TryApplyBoxColliderFromModelPrefab(modelPrefab);
         }
     }
 }

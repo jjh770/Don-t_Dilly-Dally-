@@ -18,6 +18,8 @@ namespace DontDillyDally.Data
         [Tooltip("현재 트레이가 담고 있는 실제 제출 데이터입니다.")]
         [FormerlySerializedAs("TrayData")]
         [SerializeField] private SubmittedTray _trayData = new SubmittedTray();
+        [SerializeField] private GameObject _normalVisual;
+        [SerializeField] private GameObject _sterilizedVisual;
 
         public TrayKind Kind => _trayData != null ? _trayData.Kind : TrayKind.Normal;
         public bool IsSterilizedTray => Kind == TrayKind.Sterilized;
@@ -27,6 +29,7 @@ namespace DontDillyDally.Data
         {
             base.Awake();
             _slots = GetComponent<TrayItemSlots>();
+            RefreshTrayVisual();
         }
 
         public override void Initialize(string displayName, GameObject modelPrefab = null)
@@ -66,6 +69,7 @@ namespace DontDillyDally.Data
         {
             _trayData = new SubmittedTray();
             _trayData.SetTrayKind(isSterilized ? TrayKind.Sterilized : TrayKind.Normal);
+            RefreshTrayVisual();
         }
 
         private void ResetTrayStateAndSync(bool isSterilized = false)
@@ -157,12 +161,14 @@ namespace DontDillyDally.Data
         public void ApplyTraySnapshot(SubmittedTray trayData)
         {
             _trayData = trayData != null ? trayData.Clone() : new SubmittedTray();
+            RefreshTrayVisual();
         }
 
         private void SetTrayKind(TrayKind trayKind)
         {
             EnsureTrayData();
             _trayData.SetTrayKind(trayKind);
+            RefreshTrayVisual();
         }
 
         public int GetFirstAvailableSlotIndex()
@@ -273,6 +279,21 @@ namespace DontDillyDally.Data
             ResetSourceState();
             SetAsSupplyItem();
             ResetTrayState(false);
+        }
+
+        private void RefreshTrayVisual()
+        {
+            bool isSterilized = IsSterilizedTray;
+
+            if (_normalVisual != null)
+            {
+                _normalVisual.SetActive(!isSterilized);
+            }
+
+            if (_sterilizedVisual != null)
+            {
+                _sterilizedVisual.SetActive(isSterilized);
+            }
         }
     }
 }

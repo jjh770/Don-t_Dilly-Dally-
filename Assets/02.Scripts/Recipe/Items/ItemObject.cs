@@ -228,6 +228,52 @@ namespace DontDillyDally.Data
             return true;
         }
 
+        protected void ApplyOverrideMaterials(Material[] overrideMaterials)
+        {
+            if (overrideMaterials == null || overrideMaterials.Length == 0 || CurrentModelInstance == null)
+            {
+                return;
+            }
+
+            Renderer[] renderers = CurrentModelInstance.GetComponentsInChildren<Renderer>(true);
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null)
+                {
+                    continue;
+                }
+
+                Material[] targetMaterials = BuildOverrideMaterials(renderer.sharedMaterials, overrideMaterials);
+                renderer.materials = targetMaterials;
+            }
+        }
+
+        private static Material[] BuildOverrideMaterials(Material[] currentMaterials, Material[] overrideMaterials)
+        {
+            if (currentMaterials == null || currentMaterials.Length == 0)
+            {
+                Material[] singleMaterial = new Material[overrideMaterials.Length];
+                for (int i = 0; i < overrideMaterials.Length; i++)
+                {
+                    singleMaterial[i] = overrideMaterials[i];
+                }
+
+                return singleMaterial;
+            }
+
+            Material[] result = new Material[currentMaterials.Length];
+            for (int i = 0; i < currentMaterials.Length; i++)
+            {
+                Material selectedMaterial = i < overrideMaterials.Length
+                    ? overrideMaterials[i]
+                    : overrideMaterials[overrideMaterials.Length - 1];
+
+                result[i] = selectedMaterial != null ? selectedMaterial : currentMaterials[i];
+            }
+
+            return result;
+        }
+
         public virtual void RefreshModel()
         {
             ClearCurrentModel();
