@@ -2,6 +2,7 @@ using Cysharp.Threading.Tasks;
 using Photon.Pun;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace DontDillyDally.StageFlow
 {
@@ -14,6 +15,7 @@ namespace DontDillyDally.StageFlow
     public class StageFlowBootstrapper : MonoBehaviour
     {
         private const float StageFlowManagerWaitTimeoutSec = 5f;
+        private const string WaitingRoomSceneName = "WaitingRoom";
 
         public static StageFlowBootstrapper Instance { get; private set; }
         public static event Action StageFlowReady;
@@ -36,11 +38,12 @@ namespace DontDillyDally.StageFlow
             Instance = this;
             IsStageFlowReady = false;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnUnitySceneLoaded;
         }
 
         private void Start()
         {
-            if (RoomDataManager.Instance == null) 
+            if (RoomDataManager.Instance == null)
             {
                 Debug.LogWarning("[StageFlowBootstrapper] RoomDataManager 인스턴스가 아직 준비되지 않았습니다.");
                 return;
@@ -65,9 +68,19 @@ namespace DontDillyDally.StageFlow
             SceneLoadManager.Instance.OnSceneLoadComplete += HandleSceneLoadComplete;
         }
 
+        // 비마스터 클라이언트에서는 WaitingRoom 복귀가 SceneLoadManager.BeginSceneLoad를 거치지
+        // 않아 OnSceneLoadComplete(WaitingRoom)이 발화하지 않는다. 누가 씬 전환을 트리거했는지와
+        // 무관하게 Unity의 SceneManager.sceneLoaded로 감지해 Cleanup을 보장한다.
+        private void OnUnitySceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if (scene.name == WaitingRoomSceneName)
+            {
+                Cleanup();
+            }
+        }
+
         private void HandleSceneLoadComplete(ESceneType sceneType)
         {
-            Debug.Log(sceneType);
             if (sceneType == ESceneType.Gameplay)
             {
                 InitializeGameplay().Forget();
@@ -120,6 +133,11 @@ namespace DontDillyDally.StageFlow
 
         private void Cleanup()
         {
+            if (_isCleaningUp)
+            {
+                return;
+            }
+
             CleanupSpawnedStageInstance();
             ReleaseResources();
             Destroy(gameObject);
@@ -128,6 +146,7 @@ namespace DontDillyDally.StageFlow
         private void OnDestroy()
         {
             ReleaseResources();
+            SceneManager.sceneLoaded -= OnUnitySceneLoaded;
 
             if (Instance == this)
             {

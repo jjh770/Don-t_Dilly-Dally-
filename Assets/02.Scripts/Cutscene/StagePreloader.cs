@@ -109,6 +109,11 @@ public class StagePreloader : MonoBehaviourPunCallbacks
     /// </summary>
     public void StartDataPrep()
     {
+        if (_cts == null)
+        {
+            return;
+        }
+
         RunDataPrepAsync(_cts.Token).Forget();
     }
 
@@ -209,6 +214,10 @@ public class StagePreloader : MonoBehaviourPunCallbacks
         catch (OperationCanceledException)
         {
             Debug.Log("[StagePreloader] 데이터 준비 취소됨");
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[StagePreloader] 데이터 준비 중 예외: {ex}");
         }
     }
 
