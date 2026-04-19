@@ -1,8 +1,7 @@
-using Photon.Pun;
 using UnityEngine;
 
-[RequireComponent(typeof(PhotonView), typeof(PlayerMovementAbility))]
-public class PlayerWalkDustPresenter : MonoBehaviourPun
+[RequireComponent(typeof(Animator))]
+public class PlayerWalkDustPresenter : MonoBehaviour
 {
     [Header("발먼지 VFX")]
     [Tooltip("걸음 시작 순간 팍 터지는 버스트 파티클")]
@@ -17,56 +16,36 @@ public class PlayerWalkDustPresenter : MonoBehaviourPun
     [Tooltip("버스트 재방출 쿨다운 (초). 짧게 멈췄다 다시 걸을 땐 동일한 걸음의 연속으로 간주해 중복 버스트를 막습니다.")]
     [SerializeField, Min(0f)] private float _burstCooldown = 0.5f;
 
-    private PlayerMovementAbility _movementAbility;
+    private static readonly int IsWalkingHash = Animator.StringToHash("IsWalking");
+
+    private Animator _animator;
+    private bool _wasWalking;
     private float _lastBurstTime = float.NegativeInfinity;
 
     private void Awake()
     {
-        _movementAbility = GetComponent<PlayerMovementAbility>();
-        ResolveParticlesIfMissing();
-    }
+        _animator = GetComponent<Animator>();
 
-    private void ResolveParticlesIfMissing()
-    {
-        if (_burstParticles != null && _loopParticles != null)
+        if (_burstParticles == null || _loopParticles == null)
         {
-            return;
+            Debug.LogError($"[{nameof(PlayerWalkDustPresenter)}] 파티클 참조 누락. 인스펙터에서 _burstParticles, _loopParticles를 할당하세요.", this);
         }
-
-        ParticleSystem[] children = GetComponentsInChildren<ParticleSystem>(true);
-        foreach (ParticleSystem ps in children)
-        {
-            if (_burstParticles == null && ps.gameObject.name == "Player_Walk")
-            {
-                _burstParticles = ps;
-                continue;
-            }
-
-            if (_loopParticles == null && ps.gameObject.name == "Smoke")
-            {
-                _loopParticles = ps;
-            }
-        }
-    }
-
-    private void OnEnable()
-    {
-        _movementAbility.WalkStateChanged += HandleWalkStateChanged;
     }
 
     private void OnDisable()
     {
-        _movementAbility.WalkStateChanged -= HandleWalkStateChanged;
         StopDustImmediate();
     }
 
-    private void HandleWalkStateChanged(bool isWalking)
+    private void Update()
     {
-        if (!photonView.IsMine)
+        bool isWalking = _animator.GetBool(IsWalkingHash);
+        if (isWalking == _wasWalking)
         {
             return;
         }
 
+        _wasWalking = isWalking;
         if (isWalking)
         {
             PlayDust();
@@ -75,20 +54,6 @@ public class PlayerWalkDustPresenter : MonoBehaviourPun
         {
             StopDust();
         }
-
-        photonView.RPC(nameof(RPC_SetDust), RpcTarget.Others, isWalking);
-    }
-
-    [PunRPC]
-    private void RPC_SetDust(bool isWalking)
-    {
-        if (isWalking)
-        {
-            PlayDust();
-            return;
-        }
-
-        StopDust();
     }
 
     private void PlayDust()
