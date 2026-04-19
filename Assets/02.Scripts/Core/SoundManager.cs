@@ -71,6 +71,8 @@ public enum SFXKey
     Result2Star = 45,
     Result3Star = 46,
     AmbHelicopterLoop = 47,
+    PatientBurnout = 48,
+    PlayerHeavyMachineMove = 49,
 }
 
 // 사운드 재생 타입.

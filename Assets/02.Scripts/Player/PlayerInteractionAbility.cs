@@ -44,6 +44,8 @@ public class PlayerInteractionAbility : MonoBehaviour
     private PlayerHeldItemController _heldItemController;
     private float _detectionAngleCos;
 
+    private AudioSource _heavyMachineLoopHandle;
+
     private void Awake()
     {
         _playerController = GetComponent<PlayerController>();
@@ -62,6 +64,7 @@ public class PlayerInteractionAbility : MonoBehaviour
     private void OnDisable()
     {
         _heldItemController.HeldItemChanged -= HandleHeldItemChanged;
+        StopHeavyMachineLoopSfx(fade: false);
     }
 
     private void Update()
@@ -279,6 +282,30 @@ public class PlayerInteractionAbility : MonoBehaviour
         Vector3 moveDirection = _playerMovement.MoveDirection;
         bool isMoving = moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
         _playerAnimator.PlayPushAnimation(isMoving);
+        UpdateHeavyMachineLoopSfx(isMoving);
+    }
+
+    private void UpdateHeavyMachineLoopSfx(bool isMoving)
+    {
+        if (isMoving && _heavyMachineLoopHandle == null)
+        {
+            _heavyMachineLoopHandle = SoundManager.Instance.PlayLoop(SFXKey.PlayerHeavyMachineMove);
+        }
+        else if (!isMoving && _heavyMachineLoopHandle != null)
+        {
+            StopHeavyMachineLoopSfx(fade: true);
+        }
+    }
+
+    private void StopHeavyMachineLoopSfx(bool fade)
+    {
+        if (_heavyMachineLoopHandle == null)
+        {
+            return;
+        }
+
+        SoundManager.Instance.StopSFX(_heavyMachineLoopHandle, fade);
+        _heavyMachineLoopHandle = null;
     }
 
     private void ClearCurrentPushInteractable()
@@ -288,6 +315,8 @@ public class PlayerInteractionAbility : MonoBehaviour
         _playerMovement.SetSpeedMultiplier(DefaultSpeedMultiplier, DefaultSpeedMultiplier);
         _currentPushInteractable = null;
         OnPushStateChanged?.Invoke(false);
+
+        StopHeavyMachineLoopSfx(fade: true);
     }
 
     private void HandleHeldItemChanged(ItemObject heldItem)
