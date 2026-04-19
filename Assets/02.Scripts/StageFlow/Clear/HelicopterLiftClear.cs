@@ -102,6 +102,7 @@ public class HelicopterLiftClear : PatientClearBase
     private Tween _swayTween;
     private Transform[] _activeRopes;
     private Vector3[] _originalRopeScales;
+    private AudioSource _heliLoopHandle;
 
     // ForceComplete용 초기 상태 캐싱.
     private bool _hasCachedState;
@@ -164,10 +165,13 @@ public class HelicopterLiftClear : PatientClearBase
         // 침대 인양 목표.
         Vector3 liftExitPos = bedPosition + _liftExitOffset;
 
+        SoundManager.Instance.Play(SFXKey.PatientSurgeryComplete, SoundType.Local);
+
         if (_helicopterTransform != null)
         {
             _helicopterTransform.position = heliStartPos;
             _helicopterTransform.gameObject.SetActive(true);
+            _heliLoopHandle = SoundManager.Instance.PlayLoop(SFXKey.AmbHelicopterLoop);
         }
 
         // 밧줄 초기 상태: 스케일 Y = 0 (접힌 상태).
@@ -206,6 +210,8 @@ public class HelicopterLiftClear : PatientClearBase
         // Phase 1: 밧줄 내리기 (모든 밧줄 동시).
         _sequence.InsertCallback(_ropeDeployStartTime, () =>
         {
+            SoundManager.Instance.Play(SFXKey.PatientWirePullDown, SoundType.Local);
+
             foreach (Transform rope in _activeRopes)
             {
                 if (rope == null)
@@ -224,6 +230,8 @@ public class HelicopterLiftClear : PatientClearBase
         // patientRoot에는 RoomEffect 같은 환경 장식이 같이 있어 함께 흔들리면 안 됨.
         _sequence.InsertCallback(_hookTime, () =>
         {
+            SoundManager.Instance.Play(SFXKey.PatientWireHook, SoundType.Local);
+
             foreach (ParticleSystem spark in ResolveHookSparks())
             {
                 if (spark != null) PlayFx(spark);
@@ -277,6 +285,9 @@ public class HelicopterLiftClear : PatientClearBase
         // 시퀀스 완료 시 파티클 정리만. 위치 원복은 EntranceDirector가 담당.
         _sequence.OnComplete(() =>
         {
+            SoundManager.Instance.StopSFX(_heliLoopHandle, fade: true);
+            _heliLoopHandle = null;
+
             ClearFx(_rotorWindFx);
             foreach (ParticleSystem spark in ResolveHookSparks())
             {
@@ -300,6 +311,9 @@ public class HelicopterLiftClear : PatientClearBase
 
         _swayTween?.Kill();
         _swayTween = null;
+
+        SoundManager.Instance.StopSFX(_heliLoopHandle, fade: false);
+        _heliLoopHandle = null;
 
         patientRoot.DOKill();
         bedTransform.DOKill();

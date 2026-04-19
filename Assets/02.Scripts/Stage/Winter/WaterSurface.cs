@@ -25,8 +25,11 @@ public class WaterSurface : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (_splashPrefab == null) return;
         if (!other.CompareTag(_playerTag)) return;
+
+        SoundManager.Instance.Play(SFXKey.PlayerWaterSplash, SoundType.Local);
+
+        if (_splashPrefab == null) return;
 
         Vector3 playerPos = other.transform.position;
         float baseY = _surfaceAnchor != null

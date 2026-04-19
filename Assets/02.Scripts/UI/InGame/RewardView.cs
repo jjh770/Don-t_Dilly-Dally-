@@ -164,6 +164,18 @@ public class RewardView : UIPopupBase
     {
         int clamped = Mathf.Clamp(count, 0, _stars.Length);
 
+        seq.AppendCallback(() =>
+        {
+            if (clamped == 2)
+            {
+                SoundManager.Instance.Play(SFXKey.Result2Star, SoundType.Local);
+            }
+            else if (clamped == 3)
+            {
+                SoundManager.Instance.Play(SFXKey.Result3Star, SoundType.Local);
+            }
+        });
+
         for (int i = 0; i < clamped; i++)
         {
             if (_stars[i] == null) continue;

@@ -92,6 +92,8 @@ public class BurnoutLaunchClear : PatientClearBase
         Vector3 startPosition = _cachedBedPosition;
         Quaternion startRotation = _cachedBedRotation;
 
+        SoundManager.Instance.Play(SFXKey.PatientSurgeryComplete, SoundType.Local);
+
         _sequence = DOTween.Sequence();
 
         // Phase 0: 번아웃 — 침대가 부들부들 떨림.
@@ -117,6 +119,9 @@ public class BurnoutLaunchClear : PatientClearBase
         // Phase 2: 발사! 드래그 레이싱처럼 튀어나감.
         Vector3 launchTarget = startPosition + _launchOffset;
         Quaternion launchRotation = startRotation * Quaternion.Euler(_launchTiltAngle);
+
+        _sequence.InsertCallback(_launchStartTime,
+            () => SoundManager.Instance.Play(SFXKey.PatientBurnout, SoundType.Local));
 
         _sequence.Insert(_launchStartTime,
             bedTransform.DORotateQuaternion(launchRotation, _launchTiltDuration)
