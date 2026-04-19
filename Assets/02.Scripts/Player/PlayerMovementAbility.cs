@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -14,9 +15,12 @@ public class PlayerMovementAbility : PlayerAbility
     private readonly HashSet<object> _movementLockSources = new();
     private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
+    private bool _isWalking;
 
     public Vector3 MoveDirection => _moveDirection;
     public float CurrentSpeed => _currentSpeed * _moveSpeedMultiplier;
+    public bool IsWalking => _isWalking;
+    public event Action<bool> WalkStateChanged;
 
     private const string HorizontalAxis = "Horizontal";
     private const string VerticalAxis = "Vertical";
@@ -137,6 +141,12 @@ public class PlayerMovementAbility : PlayerAbility
     private void UpdateAnimation()
     {
         bool isWalking = _moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
+        if (isWalking != _isWalking)
+        {
+            _isWalking = isWalking;
+            WalkStateChanged?.Invoke(isWalking);
+        }
+
         _playerAnimator.PlayWalkAnimation(isWalking);
     }
 }
