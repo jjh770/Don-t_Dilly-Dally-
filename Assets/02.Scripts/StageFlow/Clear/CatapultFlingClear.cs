@@ -109,6 +109,8 @@ public class CatapultFlingClear : PatientClearBase
         Vector3 bedStartPos = _cachedBedPosition;
         Quaternion bedStartRot = _cachedBedRotation;
 
+        SoundManager.Instance.Play(SFXKey.PatientSurgeryComplete, SoundType.Local);
+
         _sequence = DOTween.Sequence();
 
         // Phase 0: 충전 떨림.
@@ -141,6 +143,8 @@ public class CatapultFlingClear : PatientClearBase
 
         _sequence.InsertCallback(_flingStartTime, () =>
         {
+            SoundManager.Instance.Play(SFXKey.PatientCatapultFling, SoundType.Local);
+
             // 분리 전 환자의 right 축 = 공중제비 회전 축.
             spinAxis = patientTransform.right;
             spinBaseRotation = patientTransform.rotation;
