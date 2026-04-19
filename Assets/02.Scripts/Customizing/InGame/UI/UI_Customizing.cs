@@ -2,6 +2,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 
@@ -37,10 +38,20 @@ public class UI_Customizing : UIPopupBase
     [SerializeField] private float _buttonPopScale = 1.15f;
     [SerializeField] private float _buttonPopDuration = 0.15f;
 
+    [Header("아이템 등장 효과")]
+    [SerializeField] private float _itemAppearStartScale = 0.85f;
+    [SerializeField] private float _itemAppearDuration = 0.32f;
+    [SerializeField] private float _itemAppearDelayInterval = 0.08f;
+    [SerializeField] private Ease _itemAppearEase = Ease.OutBounce;
+
     private CustomizingUIViewModel _viewModel;
     private Tween _tabSlideTween;
     private List<UI_CustomizingItem> _itemButtons = new();
     private bool _canClose = true;
+
+    private bool _playItemListAppearWhenShown = true;
+    private bool _playItemListAppearOnNextRefresh = false;
+    private Coroutine _itemListAppearCoroutine;
 
     public event Action OnClosed;
     public event Action OnSaved;
@@ -48,6 +59,12 @@ public class UI_Customizing : UIPopupBase
     public void SetCanClose(bool canClose)
     {
         _canClose = canClose;
+    }
+
+    public void ShowImmediateWithItemList()
+    {
+        ShowImmediate();
+        HandleShown();
     }
 
     public void Initialize(CustomizingUIViewModel viewModel)
@@ -66,8 +83,8 @@ public class UI_Customizing : UIPopupBase
 
         SetupButtons();
         SetupCategoryTabs();
-        _viewModel.OpenCustomizingUI();                          // 화면 열기 처리
-        _viewModel.AutoSelectSlot();                // 현재 상태에 맞는 슬롯 선택
+        _viewModel.OpenCustomizingUI();              // 화면 열기 처리
+        _viewModel.AutoSelectSlot();                 // 현재 상태에 맞는 슬롯 선택
         SelectCategory(_viewModel.CurrentCategory);
         UpdateSaveButtonState();
     }
@@ -76,6 +93,7 @@ public class UI_Customizing : UIPopupBase
     {
         _tabSlideTween?.Kill();
         _tabSlideTween = null;
+        StopItemListAppearCoroutine();
         UnsubscribeFromViewModel();
         _viewModel?.Dispose();
     }
@@ -132,6 +150,7 @@ public class UI_Customizing : UIPopupBase
 
     private void HandleCategoryChanged(CustomizingType type)
     {
+        _playItemListAppearOnNextRefresh = true;
         UpdateTabVisuals();
 
         if (_scrollRect != null)  _scrollRect.verticalNormalizedPosition = 1f;
@@ -188,6 +207,7 @@ public class UI_Customizing : UIPopupBase
         if (!_canClose) return;
 
         _viewModel?.CloseCustomizingUI();
+        _playItemListAppearWhenShown = true;
 
         if (OnClosed != null)
         {
@@ -211,6 +231,12 @@ public class UI_Customizing : UIPopupBase
         {
             var button = CreateItemButton(viewData);
             _itemButtons.Add(button);
+        }
+
+        if (_playItemListAppearOnNextRefresh)
+        {
+            _playItemListAppearOnNextRefresh = false;
+            StartItemListAppear();
         }
     }
 
@@ -236,6 +262,7 @@ public class UI_Customizing : UIPopupBase
         {
             if (button != null)
             {
+                StopItemTween(button);
                 Destroy(button.gameObject);
             }
         }
@@ -312,6 +339,17 @@ public class UI_Customizing : UIPopupBase
 
     protected override void OnShow()
     {
+        HandleShown();
+    }
+
+    private void HandleShown()
+    {
+        if (_playItemListAppearWhenShown)
+        {
+            _playItemListAppearWhenShown = false;
+            _playItemListAppearOnNextRefresh = true;
+        }
+
         _viewModel?.OpenCustomizingUI();
 
         if (_viewModel != null)
@@ -323,6 +361,77 @@ public class UI_Customizing : UIPopupBase
     protected override void HandleCloseHotkey()
     {
         OnCloseClicked();
+    }
+
+    private void PlayItemListAppear()
+    {
+        for (int i = 0; i < _itemButtons.Count; i++)
+        {
+            PlayItemAppear(_itemButtons[i], i);
+        }
+    }
+
+    private void StartItemListAppear()
+    {
+        StopItemListAppearCoroutine();
+        _itemListAppearCoroutine = StartCoroutine(PlayItemListAppearAfterLayout());
+    }
+
+    private IEnumerator PlayItemListAppearAfterLayout()
+    {
+        yield return null;
+
+        PlayItemListAppear();
+        _itemListAppearCoroutine = null;
+    }
+
+    private void PlayItemAppear(UI_CustomizingItem item, int index)
+    {
+        if (item == null) return;
+
+        CanvasGroup canvasGroup = item.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = item.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        StopItemTween(item);
+
+        item.transform.localScale = Vector3.one * _itemAppearStartScale;
+        canvasGroup.alpha = 0f;
+
+        float delay = index * _itemAppearDelayInterval;
+
+        canvasGroup
+            .DOFade(1f, _itemAppearDuration)
+            .SetDelay(delay)
+            .SetEase(Ease.OutQuad);
+
+        item.transform
+            .DOScale(1f, _itemAppearDuration)
+            .SetDelay(delay)
+            .SetEase(_itemAppearEase);
+    }
+
+    private void StopItemTween(UI_CustomizingItem item)
+    {
+        if (item == null) return;
+
+        item.transform.DOKill();
+
+        CanvasGroup canvasGroup = item.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            canvasGroup.DOKill();
+        }
+    }
+
+    private void StopItemListAppearCoroutine()
+    {
+        if (_itemListAppearCoroutine == null) return;
+
+        StopCoroutine(_itemListAppearCoroutine);
+        _itemListAppearCoroutine = null;
     }
 
     [Serializable]

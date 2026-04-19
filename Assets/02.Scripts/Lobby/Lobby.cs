@@ -126,7 +126,7 @@ public class Lobby : MonoBehaviour
         }
         if (_customizingUI != null)
         {
-            _customizingUI.ShowImmediate();
+            _customizingUI.ShowImmediateWithItemList();
         }
     }
 
