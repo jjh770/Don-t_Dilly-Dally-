@@ -1,5 +1,7 @@
 using System;
 using DontDillyDally.Data;
+using Photon.Pun;
+using UnityEngine;
 
 public interface IHeldItemInteractor
 {
@@ -9,4 +11,6 @@ public interface IHeldItemInteractor
     bool TryPickupInteractable(IInteractable interactable, Action onFailed = null, Func<bool> onBeforeHold = null);
     bool TryBeginHeldItemInteractionLock(ItemObject expectedHeldItem);
     void EndHeldItemInteractionLock();
+    PhotonView GetInteractorPhotonView();
+    Transform GetHandAttachPoint();
 }

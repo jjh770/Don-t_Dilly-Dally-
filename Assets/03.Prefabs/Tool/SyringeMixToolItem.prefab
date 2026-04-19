@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: -3053839934825863675}
   - component: {fileID: -5006571336115383354}
   - component: {fileID: 2145957373760086868}
+  - component: {fileID: -2418000344487608796}
   m_Layer: 8
   m_Name: SyringeMixToolItem
   m_TagString: Untagged
@@ -197,6 +198,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+  _positionLerpSpeed: 10
+  _rotationLerpSpeed: 10
 --- !u!114 &2145957373760086868
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -211,6 +214,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SyringeFillTarget
   _ruleDatabase: {fileID: 11400000, guid: a4f094ae39ed15445941c28717164cca, type: 2}
   _actionTimer: {fileID: 3983290462789081204}
+--- !u!114 &-2418000344487608796
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7393820928385347151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4b3b0d1a880e2e469dced899a1d3614, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SyringeFillVfxPresenter
+  _smokeVfxPrefab: {fileID: 8300489435268232668, guid: e0bbfe83f4603a04e9b1d8f2988af0ee, type: 3}
 --- !u!1001 &8319291016620014696
 PrefabInstance:
   m_ObjectHideFlags: 0
