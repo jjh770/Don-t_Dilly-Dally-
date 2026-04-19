@@ -51,6 +51,7 @@ public class UI_Customizing : UIPopupBase
 
     private bool _playItemListAppearWhenShown = true;
     private bool _playItemListAppearOnNextRefresh = false;
+    private bool _skipNextItemSelectionRefresh = false;
     private Coroutine _itemListAppearCoroutine;
 
     public event Action OnClosed;
@@ -136,6 +137,13 @@ public class UI_Customizing : UIPopupBase
 
     private void HandleStateChanged()
     {
+        if (_skipNextItemSelectionRefresh)
+        {
+            _skipNextItemSelectionRefresh = false;
+            UpdateSaveButtonState();
+            return;
+        }
+
         RefreshItemList();       // 상태가 바뀌면 아이템 목록 다시 그리고
         UpdateSaveButtonState(); // 저장 버튼도 업데이트하기
     }
@@ -189,15 +197,28 @@ public class UI_Customizing : UIPopupBase
     {
         if (button == null) return;
 
-        Transform t = button.transform;
-        t.DOKill();
-        t.localScale = Vector3.one;
+        PlayPop(button.transform);
+    }
 
-        t.DOScale(_buttonPopScale, _buttonPopDuration * 0.5f)
+    private void PlayItemPop(UI_CustomizingItem item)
+    {
+        if (item == null) return;
+
+        PlayPop(item.transform);
+    }
+
+    private void PlayPop(Transform target)
+    {
+        if (target == null) return;
+
+        target.DOKill();
+        target.localScale = Vector3.one;
+
+        target.DOScale(_buttonPopScale, _buttonPopDuration * 0.5f)
             .SetEase(Ease.OutQuad)
             .OnComplete(() =>
             {
-                t.DOScale(1f, _buttonPopDuration * 0.5f)
+                target.DOScale(1f, _buttonPopDuration * 0.5f)
                     .SetEase(Ease.OutQuad);
             });
     }
@@ -251,7 +272,26 @@ public class UI_Customizing : UIPopupBase
 
         var buttonObj = Instantiate(prefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
-        button.Setup(viewData, () => OnItemClicked(viewData.ItemId));
+        button.Setup(viewData, () =>
+        {
+            PlayItemPop(button);
+
+            if (viewData.IsLocked)
+            {
+                OnItemClicked(viewData.ItemId);
+                return;
+            }
+
+            _skipNextItemSelectionRefresh = true;
+            try
+            {
+                OnItemClicked(viewData.ItemId);
+            }
+            finally
+            {
+                _skipNextItemSelectionRefresh = false;
+            }
+        });
 
         return button;
     }
