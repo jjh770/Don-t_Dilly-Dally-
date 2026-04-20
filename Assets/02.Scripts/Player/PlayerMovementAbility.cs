@@ -10,11 +10,10 @@ public class PlayerMovementAbility : PlayerAbility
     [Header("얼음 미끄러짐")]
     [SerializeField] private float _iceDeceleration = 1.5f;
     [SerializeField] private float _iceRotationMultiplier = 0.6f;
-    [SerializeField] private LayerMask _iceLayerMask;
 
     private Vector3 _moveDirection;
-    private bool _isOnIce;
-    private int _iceZoneCount;
+    private PlayerGroundDetector _groundDetector;
+    private bool IsOnIce => _groundDetector != null && _groundDetector.IsOnIce;
     private float _currentSpeed;
     private float _moveSpeedMultiplier = 1f;
     private float _rotationSpeedMultiplier = 1f;
@@ -35,6 +34,7 @@ public class PlayerMovementAbility : PlayerAbility
         base.Awake();
         _rigidbody = GetComponent<Rigidbody>();
         _playerAnimator = GetComponent<PlayerAnimator>();
+        _groundDetector = GetComponent<PlayerGroundDetector>();
     }
 
     private void Start()
@@ -97,7 +97,7 @@ public class PlayerMovementAbility : PlayerAbility
         {
             Quaternion targetRotation = Quaternion.LookRotation(_moveDirection);
             float rotSpeed = _rotationSpeed * _rotationSpeedMultiplier;
-            if (_isOnIce) rotSpeed *= _iceRotationMultiplier;
+            if (IsOnIce) rotSpeed *= _iceRotationMultiplier;
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotSpeed * Time.deltaTime);
         }
     }
@@ -109,7 +109,7 @@ public class PlayerMovementAbility : PlayerAbility
 
         // 얼음 위에서 감속 시에만 낮은 감속 적용
         float accel = _acceleration;
-        if (_isOnIce && targetSpeed < _currentSpeed)
+        if (IsOnIce && targetSpeed < _currentSpeed)
         {
             accel = _iceDeceleration;
         }
@@ -118,7 +118,7 @@ public class PlayerMovementAbility : PlayerAbility
 
         // 얼음 위에서 입력 없을 때 관성 유지
         Vector3 moveDir = _moveDirection;
-        if (_isOnIce && moveDir.sqrMagnitude < MinMoveSqrMagnitude && _currentSpeed > 0f)
+        if (IsOnIce && moveDir.sqrMagnitude < MinMoveSqrMagnitude && _currentSpeed > 0f)
         {
             moveDir = transform.forward;
         }
@@ -164,30 +164,4 @@ public class PlayerMovementAbility : PlayerAbility
         _playerAnimator.PlayWalkAnimation(isWalking);
     }
 
-    private void OnTriggerEnter(Collider other)
-    {
-        if (IsInIceLayer(other.gameObject))
-        {
-            _iceZoneCount++;
-            _isOnIce = true;
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (IsInIceLayer(other.gameObject))
-        {
-            _iceZoneCount--;
-            if (_iceZoneCount <= 0)
-            {
-                _iceZoneCount = 0;
-                _isOnIce = false;
-            }
-        }
-    }
-
-    private bool IsInIceLayer(GameObject obj)
-    {
-        return (_iceLayerMask & (1 << obj.layer)) != 0;
-    }
 }
