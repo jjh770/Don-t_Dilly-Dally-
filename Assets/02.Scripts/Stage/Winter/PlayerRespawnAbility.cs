@@ -30,11 +30,8 @@ public class PlayerRespawnAbility : MonoBehaviour
     private PlayerMovementAbility _movementAbility;
     private RigidbodyConstraints _originalConstraints;
     private bool _isRespawning;
-    private bool _isTeleporting;
     private int _safeZoneCount;
     private readonly object _movementLockSource = new();
-
-    public bool IsTeleporting => _isTeleporting;
 
     private void Awake()
     {
@@ -120,15 +117,8 @@ public class PlayerRespawnAbility : MonoBehaviour
                 _rigidbody.linearVelocity = Vector3.zero;
             }
 
-            // 순간이동은 Unity가 OnTriggerEnter로 감지하므로 guard 플래그를 세운다.
-            // Water Collider와 겹치는 리스폰 포인트에서 잘못된 splash가 나오는 것을 방지.
-            _isTeleporting = true;
             transform.position = GetPositionWithOffset(respawnPoint.position);
             transform.rotation = respawnPoint.rotation;
-
-            // Physics가 teleport로 인한 trigger 이벤트를 처리한 뒤 해제한다.
-            yield return new WaitForFixedUpdate();
-            _isTeleporting = false;
         }
 
         if (_rigidbody != null)
