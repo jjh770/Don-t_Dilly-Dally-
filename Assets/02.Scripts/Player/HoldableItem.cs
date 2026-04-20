@@ -453,5 +453,4 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
             collider.enabled = shouldEnableColliders;
         }
     }
-
 }
