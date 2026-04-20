@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,8 +20,6 @@ public class PlayerMovementAbility : PlayerAbility
     private readonly HashSet<object> _movementLockSources = new();
     private Rigidbody _rigidbody;
     private PlayerAnimator _playerAnimator;
-
-    private Coroutine _speedDebuffCoroutine;
 
     public Vector3 MoveDirection => _moveDirection;
     public float CurrentSpeed => _currentSpeed * _moveSpeedMultiplier;
@@ -165,25 +162,5 @@ public class PlayerMovementAbility : PlayerAbility
     {
         bool isWalking = _moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
         _playerAnimator.PlayWalkAnimation(isWalking);
-    }
-
-    public void ApplySpeedDebuff(float multiplier, float duration)
-    {
-        if (_speedDebuffCoroutine != null)
-        {
-            StopCoroutine(_speedDebuffCoroutine);
-        }
-
-        _speedDebuffCoroutine = StartCoroutine(SpeedDebuffCoroutine(multiplier, duration));
-    }
-
-    private IEnumerator SpeedDebuffCoroutine(float multiplier, float duration)
-    {
-        _moveSpeedMultiplier = multiplier;
-
-        yield return new WaitForSeconds(duration);
-
-        _moveSpeedMultiplier = 1f;
-        _speedDebuffCoroutine = null;
     }
 }
