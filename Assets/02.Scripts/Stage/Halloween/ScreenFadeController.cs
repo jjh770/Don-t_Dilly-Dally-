@@ -1,6 +1,6 @@
-using UnityEngine;
-using System.Collections;
 using Photon.Pun;
+using System.Collections;
+using UnityEngine;
 
 public class ScreenFadeController : MonoBehaviour
 {
@@ -57,6 +57,7 @@ public class ScreenFadeController : MonoBehaviour
         {
             StopCoroutine(_blackoutCoroutine);
         }
+        //SoundManager.Instance.Play(SFXKey.StartBlackOut, SoundType.Local);
         _blackoutCoroutine = StartCoroutine(FadeToBlack());
     }
 
@@ -67,6 +68,7 @@ public class ScreenFadeController : MonoBehaviour
         {
             StopCoroutine(_blackoutCoroutine);
         }
+        //SoundManager.Instance.Play(SFXKey.EndBlackOut, SoundType.Local);
         _blackoutCoroutine = StartCoroutine(FadeToNormal());
     }
 
