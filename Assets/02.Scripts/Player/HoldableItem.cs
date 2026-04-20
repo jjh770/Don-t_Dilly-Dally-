@@ -24,6 +24,14 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     [SerializeField] private float _upAngle = 0.5f;
     [SerializeField] private float _ignoreCollisionDuration = 0.3f;
 
+    [Header("던지기 VFX")]
+    [SerializeField] private GameObject _throwTrailPrefab;
+    [SerializeField] private GameObject _landingDustPrefab;
+    [SerializeField] private float _throwTrailDestroyDelay = 2f;
+    [SerializeField] private float _landingDustDestroyDelay = 3f;
+
+    private GameObject _activeThrowTrailInstance;
+
     private Rigidbody _rigidbody;
     private PhotonView _photonView;
     private HoldableItemNetworkSync _networkSync;
@@ -71,6 +79,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     {
         if (_itemObject != null)
             _itemObject.ModelRefreshed -= RefreshCachedComponents;
+
+        StopThrowTrailLocal();
     }
 
     private void LateUpdate()
@@ -126,12 +136,38 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
             {
                 _isWaitingForOwnershipReturn = false;
                 _settledTime = 0f;
+                NotifyLandingVfx();
                 NetworkItemOwnership.ReturnOwnershipToMaster(_photonView);
             }
         }
         else
         {
             _settledTime = 0f;
+        }
+    }
+
+    private void NotifyThrowVfx()
+    {
+        if (_photonView != null && PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InRoom)
+        {
+            _photonView.RPC(nameof(RpcPlayThrowTrail), RpcTarget.All);
+        }
+        else
+        {
+            PlayThrowTrailLocal();
+        }
+    }
+
+    private void NotifyLandingVfx()
+    {
+        if (_photonView != null && PhotonNetwork.IsConnectedAndReady && PhotonNetwork.InRoom)
+        {
+            _photonView.RPC(nameof(RpcStopThrowTrailAndLand), RpcTarget.All);
+        }
+        else
+        {
+            StopThrowTrailLocal();
+            SpawnLandingDustLocal();
         }
     }
 
@@ -211,6 +247,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _settledTime = 0f;
 
         _holderActorNumber = InvalidActorNumber;
+
+        NotifyThrowVfx();
     }
 
     public void Place(Transform placePoint)
@@ -445,5 +483,62 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
             collider.enabled = shouldEnableColliders;
         }
+    }
+
+    [PunRPC]
+    private void RpcPlayThrowTrail()
+    {
+        PlayThrowTrailLocal();
+    }
+
+    [PunRPC]
+    private void RpcStopThrowTrailAndLand()
+    {
+        StopThrowTrailLocal();
+        SpawnLandingDustLocal();
+    }
+
+    private void PlayThrowTrailLocal()
+    {
+        StopThrowTrailLocal();
+
+        if (_throwTrailPrefab == null)
+            return;
+
+        _activeThrowTrailInstance = Instantiate(_throwTrailPrefab, transform);
+        _activeThrowTrailInstance.transform.localPosition = Vector3.zero;
+        _activeThrowTrailInstance.transform.localRotation = Quaternion.identity;
+
+        ParticleSystem[] systems = _activeThrowTrailInstance.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < systems.Length; i++)
+        {
+            systems[i].Play(true);
+        }
+    }
+
+    private void StopThrowTrailLocal()
+    {
+        if (_activeThrowTrailInstance == null)
+            return;
+
+        ParticleSystem[] systems = _activeThrowTrailInstance.GetComponentsInChildren<ParticleSystem>(true);
+        for (int i = 0; i < systems.Length; i++)
+        {
+            systems[i].Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+
+        // 아이템이 풀로 반환되어도 잔여 파티클이 자연스럽게 페이드아웃 되도록 부모를 분리합니다.
+        _activeThrowTrailInstance.transform.SetParent(null);
+        Destroy(_activeThrowTrailInstance, _throwTrailDestroyDelay);
+        _activeThrowTrailInstance = null;
+    }
+
+    private void SpawnLandingDustLocal()
+    {
+        if (_landingDustPrefab == null)
+            return;
+
+        GameObject dust = Instantiate(_landingDustPrefab, transform.position, Quaternion.identity);
+        Destroy(dust, _landingDustDestroyDelay);
     }
 }
