@@ -30,43 +30,18 @@ public class UI_Respawn : MonoBehaviour
         }
     }
 
-    private PlayerRespawnAbility _subscribedInstance;
-
-    private void Update()
+    private void OnEnable()
     {
-        TrySubscribeToLocalPlayer();
+        PlayerRespawnAbility.OnRespawnStarted += Show;
+        PlayerRespawnAbility.OnRespawnCountdown += SetCountdown;
+        PlayerRespawnAbility.OnRespawnEnded += Hide;
     }
 
     private void OnDisable()
     {
-        Unsubscribe();
-    }
-
-    private void TrySubscribeToLocalPlayer()
-    {
-        var local = PlayerRespawnAbility.LocalInstance;
-        if (local == _subscribedInstance) return;
-
-        Unsubscribe();
-
-        if (local != null)
-        {
-            _subscribedInstance = local;
-            _subscribedInstance.OnRespawnStarted += Show;
-            _subscribedInstance.OnRespawnCountdown += SetCountdown;
-            _subscribedInstance.OnRespawnEnded += Hide;
-        }
-    }
-
-    private void Unsubscribe()
-    {
-        if (_subscribedInstance != null)
-        {
-            _subscribedInstance.OnRespawnStarted -= Show;
-            _subscribedInstance.OnRespawnCountdown -= SetCountdown;
-            _subscribedInstance.OnRespawnEnded -= Hide;
-            _subscribedInstance = null;
-        }
+        PlayerRespawnAbility.OnRespawnStarted -= Show;
+        PlayerRespawnAbility.OnRespawnCountdown -= SetCountdown;
+        PlayerRespawnAbility.OnRespawnEnded -= Hide;
     }
 
     public void Show()
