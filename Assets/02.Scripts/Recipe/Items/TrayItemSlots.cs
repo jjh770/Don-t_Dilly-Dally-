@@ -150,10 +150,7 @@ namespace DontDillyDally.Data
             }
 
             _storedSlotItems[slotIndex] = null;
-            if (_storedSlotData != null)
-            {
-                _storedSlotData[slotIndex] = null;
-            }
+            _storedSlotData[slotIndex] = null;
             _storedLocalPositions[slotIndex] = Vector3.zero;
 
             if (removeTrayData)
@@ -216,10 +213,7 @@ namespace DontDillyDally.Data
             {
                 ItemObject storedItem = _storedSlotItems[i];
                 _storedSlotItems[i] = null;
-                if (_storedSlotData != null)
-                {
-                    _storedSlotData[i] = null;
-                }
+                _storedSlotData[i] = null;
                 _storedLocalPositions[i] = Vector3.zero;
 
                 if (storedItem == null)

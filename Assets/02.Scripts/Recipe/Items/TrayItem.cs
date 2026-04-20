@@ -244,7 +244,6 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            EnsureTrayData();
             for (int i = 0; i < storedItems.Length; i++)
             {
                 CraftedItem item = storedItems[i];
