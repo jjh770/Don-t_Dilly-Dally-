@@ -47,7 +47,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfectionZone
   _speedMultiplier: 0.5
-  _debuffDuration: 5
 --- !u!65 &6552138102920126282
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -138,6 +137,10 @@ PrefabInstance:
       value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4611953073509470932, guid: 5ecfc0d60f76dc7459be8d2b0fea045a, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 4611953073509470932, guid: 5ecfc0d60f76dc7459be8d2b0fea045a, type: 3}
       propertyPath: InitialModule.startColor.maxColor.b
       value: 0.5511268
       objectReference: {fileID: 0}
@@ -156,6 +159,10 @@ PrefabInstance:
     - target: {fileID: 5625464679859984886, guid: 5ecfc0d60f76dc7459be8d2b0fea045a, type: 3}
       propertyPath: m_Materials.Array.size
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 5625464679859984887, guid: 5ecfc0d60f76dc7459be8d2b0fea045a, type: 3}
+      propertyPath: InitialModule.startLifetime.scalar
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 5625464679859984887, guid: 5ecfc0d60f76dc7459be8d2b0fea045a, type: 3}
       propertyPath: InitialModule.startColor.maxColor.b
