@@ -60,6 +60,19 @@ public enum SFXKey
     AmbHelicopter2 = 34,
     AmbJetFly2 = 35,
     AmbJetFly3 = 36,
+    PatientWirePullDown = 37,
+    PatientWirePullUp = 38,
+    PatientWireHook = 39,
+    PatientRecipeSuccess = 40,
+    PatientSurgeryComplete = 41,
+    SurgeryFail = 42,
+    PatientCatapultFling = 43,
+    PlayerWaterSplash = 44,
+    Result2Star = 45,
+    Result3Star = 46,
+    AmbHelicopterLoop = 47,
+    PatientBurnout = 48,
+    PlayerHeavyMachineMove = 49,
 }
 
 // 사운드 재생 타입.

@@ -113,6 +113,7 @@ public class HelicopterDropEntrance : PatientEntranceBase
     private Tween _swayTween;
     private Transform[] _activeRopes;
     private Vector3[] _originalRopeScales;
+    private AudioSource _heliLoopHandle;
 
     // 배열이 비었으면 단일 필드를 배열화해서 반환.
     private Transform[] ResolveRopes()
@@ -167,6 +168,7 @@ public class HelicopterDropEntrance : PatientEntranceBase
         {
             _helicopterTransform.position = heliStartPos;
             _helicopterTransform.gameObject.SetActive(true);
+            _heliLoopHandle = SoundManager.Instance.PlayLoop(SFXKey.AmbHelicopterLoop);
         }
 
         // 밧줄 초기 상태: 풀 길이 (처음부터 연결된 상태).
@@ -238,6 +240,8 @@ public class HelicopterDropEntrance : PatientEntranceBase
         // Phase 2: 연결 해제 — 살짝 흔들림 + 불꽃.
         _sequence.InsertCallback(_unhookTime, () =>
         {
+            SoundManager.Instance.Play(SFXKey.PatientWireHook, SoundType.Local);
+
             foreach (ParticleSystem spark in ResolveUnhookSparks())
             {
                 if (spark != null) PlayFx(spark);
@@ -251,6 +255,8 @@ public class HelicopterDropEntrance : PatientEntranceBase
         // Phase 3: 밧줄 회수 (스케일 Y → 0, 모든 밧줄 동시).
         _sequence.InsertCallback(_ropeRetractStartTime, () =>
         {
+            SoundManager.Instance.Play(SFXKey.PatientWirePullUp, SoundType.Local);
+
             foreach (Transform rope in _activeRopes)
             {
                 if (rope == null)
@@ -276,6 +282,9 @@ public class HelicopterDropEntrance : PatientEntranceBase
         // 시퀀스 완료 시 정리.
         _sequence.OnComplete(() =>
         {
+            SoundManager.Instance.StopSFX(_heliLoopHandle, fade: true);
+            _heliLoopHandle = null;
+
             if (_helicopterTransform != null)
             {
                 _helicopterTransform.gameObject.SetActive(false);
@@ -304,6 +313,9 @@ public class HelicopterDropEntrance : PatientEntranceBase
 
         _swayTween?.Kill();
         _swayTween = null;
+
+        SoundManager.Instance.StopSFX(_heliLoopHandle, fade: false);
+        _heliLoopHandle = null;
 
         bedTransform.DOKill();
         bedTransform.position = finalPosition;

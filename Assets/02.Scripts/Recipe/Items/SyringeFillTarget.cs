@@ -1,4 +1,5 @@
 using Photon.Pun;
+using System;
 using System.Collections;
 using UnityEngine;
 
@@ -7,6 +8,9 @@ namespace DontDillyDally.Data
     [RequireComponent(typeof(MixToolItem), typeof(PhotonView))]
     public class SyringeFillTarget : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
+        public event Action<IHeldItemInteractor> FillStarted;
+        public event Action FillEnded;
+
         private const string ResultPrefabName = "BasicMaterialItem";
         private const ToolType FillInputMask = ToolType.Syringe | ToolType.AnestheticFluid | ToolType.SedativeFluid;
         private const float ResultPickupTimeout = 2f;
@@ -182,6 +186,8 @@ namespace DontDillyDally.Data
 
             _networkOwnership?.LockOwnershipOnController();
 
+            FillStarted?.Invoke(heldItemInteractor);
+
             if (_actionTimer != null)
             {
                 bool started = _actionTimer.TryStart(fillResult.FillDuration, () => CompleteFill(fillResult.ResultMaterial));
@@ -324,6 +330,8 @@ namespace DontDillyDally.Data
 
         private void FinishCurrentInteraction(bool returnOwnershipToMaster = true, bool clearPendingResultPickup = true)
         {
+            bool wasFillInProgress = _isFillInProgress;
+
             ReleaseInteractionLockIfNeeded();
             ClearPendingState();
             ClearActiveFillState();
@@ -337,6 +345,11 @@ namespace DontDillyDally.Data
             if (returnOwnershipToMaster)
             {
                 ReleaseOwnershipToMasterIfNeeded();
+            }
+
+            if (wasFillInProgress)
+            {
+                FillEnded?.Invoke();
             }
         }
 

@@ -46,6 +46,18 @@ namespace DontDillyDally.UI
             _image.color = EvaluateColor(clampedRatio);
         }
 
+        public void SetAlpha(float alpha)
+        {
+            if (_image == null)
+            {
+                return;
+            }
+
+            Color color = _image.color;
+            color.a = Mathf.Clamp01(alpha);
+            _image.color = color;
+        }
+
         public void BindImageIfEmpty(Image image)
         {
             if (_image != null || image == null)

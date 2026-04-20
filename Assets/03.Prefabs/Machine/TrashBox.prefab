@@ -1,5 +1,36 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &955343383105196044
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4250578735932948931}
+  m_Layer: 6
+  m_Name: TrashEffectPos
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4250578735932948931
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 955343383105196044}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.73, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5454379518074707033}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &7957228542305432919
 GameObject:
   m_ObjectHideFlags: 0
@@ -103,6 +134,8 @@ GameObject:
   - component: {fileID: 9191533287544681265}
   - component: {fileID: 5889619483373533065}
   - component: {fileID: 8633992771691737086}
+  - component: {fileID: 4084171569598614997}
+  - component: {fileID: 8701937068062022500}
   m_Layer: 6
   m_Name: TrashBox
   m_TagString: Untagged
@@ -124,6 +157,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 6869889986633057592}
+  - {fileID: 4250578735932948931}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
 --- !u!65 &9191533287544681265
@@ -175,3 +209,40 @@ NavMeshObstacle:
   m_CarveOnlyStationary: 1
   m_Center: {x: 0, y: 0, z: 0}
   m_TimeToStationary: 0.5
+--- !u!114 &4084171569598614997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8405717699730403148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5a4cf6ae0af2f2549ae75452d128b786, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrashBoxSmokeEffect
+  _smokePrefab: {fileID: 7895987943349747808, guid: 5749fd1a94ff0aa4f8714cc10dc8b07a, type: 3}
+  _spawnPoint: {fileID: 4250578735932948931}
+  _destroyDelay: 3
+  _trashBox: {fileID: 5889619483373533065}
+--- !u!114 &8701937068062022500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8405717699730403148}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 623404dbb44641d49afe46930a0095e8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.TrashBoxShakeEffect
+  _target: {fileID: 5454379518074707033}
+  _squashDuration: 0.12
+  _squashAmount: 0.18
+  _stretchAmount: 0.12
+  _shakeDuration: 0.35
+  _shakeAngle: 8
+  _shakeFrequency: 10
+  _shakeAxis: {x: 0, y: 0, z: 1}
+  _trashBox: {fileID: 5889619483373533065}

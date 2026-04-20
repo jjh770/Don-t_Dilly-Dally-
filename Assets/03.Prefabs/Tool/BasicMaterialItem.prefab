@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 4421100366412799022}
   - component: {fileID: 8923651404678155923}
   - component: {fileID: 1175571662515814056}
-  - component: {fileID: 48412726582969723}
   - component: {fileID: -5116465143776554139}
   - component: {fileID: -2038748914800578273}
   - component: {fileID: -1863655098183050787}
@@ -121,7 +120,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItem
   _settleVelocityThreshold: 0.05
   _settleAngularVelocityThreshold: 0.05
-  _settleCheckDelay: 0.1
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
@@ -145,26 +143,9 @@ MonoBehaviour:
   observableSearch: 2
   ObservedComponents:
   - {fileID: 8923651404678155923}
-  - {fileID: 48412726582969723}
   sceneViewId: 0
   InstantiationId: 0
   isRuntimeInstantiated: 0
---- !u!114 &48412726582969723
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2241975781096926272}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: PhotonUnityNetworking::Photon.Pun.PhotonTransformView
-  m_SynchronizePosition: 1
-  m_SynchronizeRotation: 1
-  m_SynchronizeScale: 0
-  m_UseLocal: 1
 --- !u!114 &-5116465143776554139
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,8 +183,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.NetworkItemState
   _hasLeftSource: 0
-  _isHeld: 0
-  _holderActorNumber: -1
 --- !u!114 &-5190905549071868481
 MonoBehaviour:
   m_ObjectHideFlags: 0

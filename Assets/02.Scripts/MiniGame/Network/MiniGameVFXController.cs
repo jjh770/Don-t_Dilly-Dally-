@@ -99,10 +99,12 @@ namespace DontDillyDally.MiniGame
 
             if (isSuccess)
             {
+                SoundManager.Instance.Play(SFXKey.PatientRecipeSuccess, SoundType.Local);
                 PlaySuccess();
             }
             else
             {
+                SoundManager.Instance.Play(SFXKey.SurgeryFail, SoundType.Local);
                 PlayFail();
             }
         }
