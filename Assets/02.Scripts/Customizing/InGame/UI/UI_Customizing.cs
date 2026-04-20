@@ -1,8 +1,10 @@
-using UnityEngine;
-using UnityEngine.UI;
+using DG.Tweening;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class UI_Customizing : UIPopupBase
 {
@@ -28,9 +30,33 @@ public class UI_Customizing : UIPopupBase
     [SerializeField] private Color _tabSelectedColor = new Color(0.447f, 0.612f, 0.945f, 1f);
     [SerializeField] private Color _tabNormalColor = Color.white;
 
+    [Header("탭 인디케이터 애니메이션")]
+    [SerializeField] private float _tabSlideDuration = 0.25f;
+    [SerializeField] private Ease _tabSlideEase = Ease.OutCubic;
+
+    [Header("버튼 팝 효과")]
+    [SerializeField] private float _buttonPopScale = 1.15f;
+    [SerializeField] private float _buttonPopDuration = 0.15f;
+
+    [Header("아이템 등장 효과")]
+    [SerializeField] private float _itemAppearStartScale = 0.85f;
+    [SerializeField] private float _itemAppearDuration = 0.32f;
+    [SerializeField] private float _itemAppearDelayInterval = 0.08f;
+    [SerializeField] private Ease _itemAppearEase = Ease.OutBounce;
+
+    [Header("저장 파티클")]
+    [SerializeField] private ParticleSystem _saveParticlePrefab;
+    [SerializeField] private Vector3 _saveParticleOffset = new Vector3(0f, 0.5f, 0.5f);
+
     private CustomizingUIViewModel _viewModel;
+    private Tween _tabSlideTween;
     private List<UI_CustomizingItem> _itemButtons = new();
     private bool _canClose = true;
+
+    private bool _playItemListAppearWhenShown = true;
+    private bool _playItemListAppearOnNextRefresh = false;
+    private bool _skipNextItemSelectionRefresh = false;
+    private Coroutine _itemListAppearCoroutine;
 
     public event Action OnClosed;
     public event Action OnSaved;
@@ -38,6 +64,12 @@ public class UI_Customizing : UIPopupBase
     public void SetCanClose(bool canClose)
     {
         _canClose = canClose;
+    }
+
+    public void ShowImmediateWithItemList()
+    {
+        ShowImmediate();
+        HandleShown();
     }
 
     public void Initialize(CustomizingUIViewModel viewModel)
@@ -56,14 +88,17 @@ public class UI_Customizing : UIPopupBase
 
         SetupButtons();
         SetupCategoryTabs();
-        _viewModel.OpenCustomizingUI();                          // 화면 열기 처리
-        _viewModel.AutoSelectSlot();                // 현재 상태에 맞는 슬롯 선택
+        _viewModel.OpenCustomizingUI();              // 화면 열기 처리
+        _viewModel.AutoSelectSlot();                 // 현재 상태에 맞는 슬롯 선택
         SelectCategory(_viewModel.CurrentCategory);
         UpdateSaveButtonState();
     }
 
     private void OnDestroy()
     {
+        _tabSlideTween?.Kill();
+        _tabSlideTween = null;
+        StopItemListAppearCoroutine();
         UnsubscribeFromViewModel();
         _viewModel?.Dispose();
     }
@@ -106,6 +141,13 @@ public class UI_Customizing : UIPopupBase
 
     private void HandleStateChanged()
     {
+        if (_skipNextItemSelectionRefresh)
+        {
+            _skipNextItemSelectionRefresh = false;
+            UpdateSaveButtonState();
+            return;
+        }
+
         RefreshItemList();       // 상태가 바뀌면 아이템 목록 다시 그리고
         UpdateSaveButtonState(); // 저장 버튼도 업데이트하기
     }
@@ -120,6 +162,7 @@ public class UI_Customizing : UIPopupBase
 
     private void HandleCategoryChanged(CustomizingType type)
     {
+        _playItemListAppearOnNextRefresh = true;
         UpdateTabVisuals();
 
         if (_scrollRect != null)  _scrollRect.verticalNormalizedPosition = 1f;
@@ -142,14 +185,77 @@ public class UI_Customizing : UIPopupBase
 
     private void OnSaveClicked()
     {
+        PlayButtonPop(_saveButton);
         _viewModel?.SaveToSelectedSlot();   // 먼저 슬롯에 현재 상태 저장
         _viewModel?.Save();                 // 전체 저장 (MergeMetaFrom에서 업데이트된 슬롯 반영)
+        PlaySaveParticle();
         OnSaved?.Invoke();
+    }
+
+    private void PlaySaveParticle()
+    {
+        if (_saveParticlePrefab == null) return;
+
+        var localPlayer = FindPlayer();
+        if (localPlayer == null) return;
+
+        Vector3 spawnPos = localPlayer.position + localPlayer.TransformDirection(_saveParticleOffset);
+        var particle = Instantiate(_saveParticlePrefab, spawnPos, Quaternion.identity);
+        particle.Play();
+
+        float lifetime = particle.main.duration + particle.main.startLifetime.constantMax;
+        Destroy(particle.gameObject, lifetime);
+    }
+
+    private Transform FindPlayer()
+    {
+        var lobbyController = FindFirstObjectByType<LobbyPreviewController>();
+        if (lobbyController != null) return lobbyController.transform;
+
+        var controllers = FindObjectsByType<CustomizingCharacterController>(FindObjectsSortMode.None);
+        foreach (var controller in controllers)
+        {
+            if (controller.IsLocalPlayer)
+                return controller.transform;
+        }
+
+        return null;
     }
 
     private void OnResetClicked()
     {
+        PlayButtonPop(_resetButton);
         _viewModel?.ResetToSaved();
+    }
+
+    private void PlayButtonPop(Button button)
+    {
+        if (button == null) return;
+
+        PlayPop(button.transform);
+    }
+
+    private void PlayItemPop(UI_CustomizingItem item)
+    {
+        if (item == null) return;
+
+        PlayPop(item.transform);
+    }
+
+    private void PlayPop(Transform target)
+    {
+        if (target == null) return;
+
+        target.DOKill();
+        target.localScale = Vector3.one;
+
+        target.DOScale(_buttonPopScale, _buttonPopDuration * 0.5f)
+            .SetEase(Ease.OutQuad)
+            .OnComplete(() =>
+            {
+                target.DOScale(1f, _buttonPopDuration * 0.5f)
+                    .SetEase(Ease.OutQuad);
+            });
     }
 
     private void OnCloseClicked()
@@ -157,6 +263,7 @@ public class UI_Customizing : UIPopupBase
         if (!_canClose) return;
 
         _viewModel?.CloseCustomizingUI();
+        _playItemListAppearWhenShown = true;
 
         if (OnClosed != null)
         {
@@ -170,9 +277,9 @@ public class UI_Customizing : UIPopupBase
 
     private void RefreshItemList()
     {
-        ClearItemButtons();
-
         if (_viewModel == null) return;
+
+        ClearItemButtons();
 
         // 지금 카테고리에서 보여야 하는 아이템 목록을 가져와서
         // 버튼을 하나씩 새로 생성
@@ -180,6 +287,12 @@ public class UI_Customizing : UIPopupBase
         {
             var button = CreateItemButton(viewData);
             _itemButtons.Add(button);
+        }
+
+        if (_playItemListAppearOnNextRefresh)
+        {
+            _playItemListAppearOnNextRefresh = false;
+            StartItemListAppear();
         }
     }
 
@@ -194,7 +307,26 @@ public class UI_Customizing : UIPopupBase
 
         var buttonObj = Instantiate(prefab.gameObject, _itemListParent);
         var button = buttonObj.GetComponent<UI_CustomizingItem>();
-        button.Setup(viewData, () => OnItemClicked(viewData.ItemId));
+        button.Setup(viewData, () =>
+        {
+            PlayItemPop(button);
+
+            if (viewData.IsLocked)
+            {
+                OnItemClicked(viewData.ItemId);
+                return;
+            }
+
+            _skipNextItemSelectionRefresh = true;
+            try
+            {
+                OnItemClicked(viewData.ItemId);
+            }
+            finally
+            {
+                _skipNextItemSelectionRefresh = false;
+            }
+        });
 
         return button;
     }
@@ -203,7 +335,11 @@ public class UI_Customizing : UIPopupBase
     {
         foreach (var button in _itemButtons)
         {
-            if (button != null) Destroy(button.gameObject);
+            if (button != null)
+            {
+                StopItemTween(button);
+                Destroy(button.gameObject);
+            }
         }
         _itemButtons.Clear();
     }
@@ -248,20 +384,129 @@ public class UI_Customizing : UIPopupBase
     {
         if (_tabSelectionIndicator == null || tabButton == null) return;
 
-        _tabSelectionIndicator.SetParent(tabButton);
-        _tabSelectionIndicator.anchoredPosition = new Vector2(0f, -55f);
         _tabSelectionIndicator.gameObject.SetActive(true);
+
+        RectTransform tabRect = tabButton as RectTransform;
+        if (tabRect == null) return;
+
+        // 같은 부모 기준 X 위치 계산
+        Vector3 targetWorldPos = tabRect.position;
+        Transform indicatorParent = _tabSelectionIndicator.parent;
+
+        if (indicatorParent == null)
+        {
+            _tabSelectionIndicator.SetParent(tabButton);
+            _tabSelectionIndicator.anchoredPosition = new Vector2(0f, -55f);
+            return;
+        }
+
+        // 월드 좌표를 인디케이터 부모 기준 로컬 좌표로 변환
+        Vector3 localPos = indicatorParent.InverseTransformPoint(targetWorldPos);
+        float targetX = localPos.x;
+
+        _tabSlideTween?.Kill();
+        _tabSlideTween = _tabSelectionIndicator
+            .DOAnchorPosX(targetX, _tabSlideDuration)
+            .SetEase(_tabSlideEase)
+            .OnKill(() => _tabSlideTween = null);
     }
 
 
     protected override void OnShow()
     {
+        HandleShown();
+    }
+
+    private void HandleShown()
+    {
+        if (_playItemListAppearWhenShown)
+        {
+            _playItemListAppearWhenShown = false;
+            _playItemListAppearOnNextRefresh = true;
+        }
+
         _viewModel?.OpenCustomizingUI();
+
+        if (_viewModel != null)
+        {
+            SelectCategory(_viewModel.CurrentCategory);
+        }
     }
 
     protected override void HandleCloseHotkey()
     {
         OnCloseClicked();
+    }
+
+    private void PlayItemListAppear()
+    {
+        for (int i = 0; i < _itemButtons.Count; i++)
+        {
+            PlayItemAppear(_itemButtons[i], i);
+        }
+    }
+
+    private void StartItemListAppear()
+    {
+        StopItemListAppearCoroutine();
+        _itemListAppearCoroutine = StartCoroutine(PlayItemListAppearAfterLayout());
+    }
+
+    private IEnumerator PlayItemListAppearAfterLayout()
+    {
+        yield return null;
+
+        PlayItemListAppear();
+        _itemListAppearCoroutine = null;
+    }
+
+    private void PlayItemAppear(UI_CustomizingItem item, int index)
+    {
+        if (item == null) return;
+
+        CanvasGroup canvasGroup = item.GetComponent<CanvasGroup>();
+        if (canvasGroup == null)
+        {
+            canvasGroup = item.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        StopItemTween(item);
+
+        item.transform.localScale = Vector3.one * _itemAppearStartScale;
+        canvasGroup.alpha = 0f;
+
+        float delay = index * _itemAppearDelayInterval;
+
+        canvasGroup
+            .DOFade(1f, _itemAppearDuration)
+            .SetDelay(delay)
+            .SetEase(Ease.OutQuad);
+
+        item.transform
+            .DOScale(1f, _itemAppearDuration)
+            .SetDelay(delay)
+            .SetEase(_itemAppearEase);
+    }
+
+    private void StopItemTween(UI_CustomizingItem item)
+    {
+        if (item == null) return;
+
+        item.transform.DOKill();
+
+        CanvasGroup canvasGroup = item.GetComponent<CanvasGroup>();
+        if (canvasGroup != null)
+        {
+            canvasGroup.DOKill();
+        }
+    }
+
+    private void StopItemListAppearCoroutine()
+    {
+        if (_itemListAppearCoroutine == null) return;
+
+        StopCoroutine(_itemListAppearCoroutine);
+        _itemListAppearCoroutine = null;
     }
 
     [Serializable]
