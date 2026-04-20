@@ -20,6 +20,8 @@ public class ScreenFadeController : MonoBehaviour
     private PhotonView _photonView;
     private Coroutine _blackoutCoroutine;
 
+    private AudioSource _horrorTheme;
+
     private void Start()
     {
         _photonView = GetComponent<PhotonView>();
@@ -57,7 +59,9 @@ public class ScreenFadeController : MonoBehaviour
         {
             StopCoroutine(_blackoutCoroutine);
         }
-        //SoundManager.Instance.Play(SFXKey.StartBlackOut, SoundType.Local);
+        SoundManager.Instance.Play(SFXKey.StartBlackOut, SoundType.Local);
+        _horrorTheme = SoundManager.Instance.PlayLoop(SFXKey.HorrorTheme);
+        SoundManager.Instance.DuckBGM(0.1f, 0.3f);
         _blackoutCoroutine = StartCoroutine(FadeToBlack());
     }
 
@@ -68,7 +72,9 @@ public class ScreenFadeController : MonoBehaviour
         {
             StopCoroutine(_blackoutCoroutine);
         }
-        //SoundManager.Instance.Play(SFXKey.EndBlackOut, SoundType.Local);
+        SoundManager.Instance.Play(SFXKey.EndBlackOut, SoundType.Local);
+        SoundManager.Instance.StopSFX(_horrorTheme, true);
+        SoundManager.Instance.DuckBGM(1f, 0.4f);
         _blackoutCoroutine = StartCoroutine(FadeToNormal());
     }
 
