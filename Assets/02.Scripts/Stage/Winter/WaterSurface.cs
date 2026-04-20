@@ -27,6 +27,13 @@ public class WaterSurface : MonoBehaviour
     {
         if (!other.CompareTag(_playerTag)) return;
 
+        // 리스폰 순간이동도 Unity는 OnTriggerEnter로 감지한다.
+        // sink 단계의 정상 splash는 살리고, teleport 순간의 잘못된 splash만 차단한다.
+        if (other.TryGetComponent(out PlayerRespawnAbility respawn) && respawn.IsTeleporting)
+        {
+            return;
+        }
+
         SoundManager.Instance.Play(SFXKey.PlayerWaterSplash, SoundType.Local);
 
         if (_splashPrefab == null) return;
