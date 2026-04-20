@@ -21,6 +21,10 @@ public class PlayerRespawnAbility : MonoBehaviour
     [SerializeField] private float _sinkDuration = 1.5f;
     [SerializeField] private float _sinkSpeed = 3f;
 
+    [Header("리스폰 이펙트")]
+    [SerializeField] private ParticleSystem _respawnFx;
+    [SerializeField] private float _respawnFxDuration = 1f;
+
     private PhotonView _photonView;
     private Rigidbody _rigidbody;
     private PlayerMovementAbility _movementAbility;
@@ -127,6 +131,7 @@ public class PlayerRespawnAbility : MonoBehaviour
             _movementAbility.SetMovementLocked(_movementLockSource, false);
         }
 
+        _photonView.RPC(nameof(RPC_PlayRespawnFx), RpcTarget.All);
         OnRespawnEnded?.Invoke();
         _isRespawning = false;
     }
@@ -165,5 +170,20 @@ public class PlayerRespawnAbility : MonoBehaviour
 
         Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * _randomOffsetRange;
         return basePosition + new Vector3(randomOffset.x, 0f, randomOffset.y);
+    }
+
+    [PunRPC]
+    private void RPC_PlayRespawnFx()
+    {
+        StartCoroutine(PlayRespawnFxCoroutine());
+    }
+
+    private IEnumerator PlayRespawnFxCoroutine()
+    {
+        if (_respawnFx == null) yield break;
+
+        FxHelper.Play(_respawnFx);
+        yield return new WaitForSeconds(_respawnFxDuration);
+        FxHelper.Stop(_respawnFx);
     }
 }
