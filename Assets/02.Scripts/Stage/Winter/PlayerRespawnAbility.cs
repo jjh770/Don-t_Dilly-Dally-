@@ -1,10 +1,15 @@
 using UnityEngine;
+using System;
 using System.Collections;
 using Photon.Pun;
 using DontDillyDally.StageFlow;
 
 public class PlayerRespawnAbility : MonoBehaviour
 {
+    public static event Action OnRespawnStarted;
+    public static event Action<float> OnRespawnCountdown;
+    public static event Action OnRespawnEnded;
+
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;
     [SerializeField] private string _safeZoneTag = "SafeZone";
@@ -15,6 +20,10 @@ public class PlayerRespawnAbility : MonoBehaviour
     [Header("물에 빠지는 연출")]
     [SerializeField] private float _sinkDuration = 1.5f;
     [SerializeField] private float _sinkSpeed = 3f;
+
+    [Header("리스폰 이펙트")]
+    [SerializeField] private ParticleSystem _respawnFx;
+    [SerializeField] private float _respawnFxDuration = 1f;
 
     private PhotonView _photonView;
     private Rigidbody _rigidbody;
@@ -78,7 +87,7 @@ public class PlayerRespawnAbility : MonoBehaviour
             _rigidbody.isKinematic = true;
         }
 
-        // 2. 싱크 연출 - 강제로 아래로 이동 (Kinematic이라 바닥 충돌 무시)
+        // 2. 싱크 연출 - 강제로 아래로 이동 
         float elapsed = 0f;
         while (elapsed < _sinkDuration)
         {
@@ -87,8 +96,17 @@ public class PlayerRespawnAbility : MonoBehaviour
             yield return null;
         }
 
-        // 3. 리스폰 대기
-        yield return new WaitForSeconds(_respawnDelay);
+        // 3. 리스폰 대기 (UI는 로컬 플레이어만)
+        bool isLocal = _photonView == null || _photonView.IsMine;
+        if (isLocal) OnRespawnStarted?.Invoke();
+
+        float remaining = _respawnDelay;
+        while (remaining > 0f)
+        {
+            if (isLocal) OnRespawnCountdown?.Invoke(remaining);
+            yield return null;
+            remaining -= Time.deltaTime;
+        }
 
         // 4. 리스폰 처리
         Transform respawnPoint = GetRespawnPointByRole();
@@ -114,6 +132,8 @@ public class PlayerRespawnAbility : MonoBehaviour
             _movementAbility.SetMovementLocked(_movementLockSource, false);
         }
 
+        _photonView.RPC(nameof(RPC_PlayRespawnFx), RpcTarget.All);
+        if (isLocal) OnRespawnEnded?.Invoke();
         _isRespawning = false;
     }
 
@@ -149,7 +169,22 @@ public class PlayerRespawnAbility : MonoBehaviour
             return basePosition;
         }
 
-        Vector2 randomOffset = Random.insideUnitCircle * _randomOffsetRange;
+        Vector2 randomOffset = UnityEngine.Random.insideUnitCircle * _randomOffsetRange;
         return basePosition + new Vector3(randomOffset.x, 0f, randomOffset.y);
+    }
+
+    [PunRPC]
+    private void RPC_PlayRespawnFx()
+    {
+        StartCoroutine(PlayRespawnFxCoroutine());
+    }
+
+    private IEnumerator PlayRespawnFxCoroutine()
+    {
+        if (_respawnFx == null) yield break;
+
+        FxHelper.Play(_respawnFx);
+        yield return new WaitForSeconds(_respawnFxDuration);
+        FxHelper.Stop(_respawnFx);
     }
 }
