@@ -33,6 +33,12 @@ public class PatientClearDirector : MonoBehaviour
     private bool _hasPlayed;
     private bool _isBound;
 
+    // Clear 시퀀스가 종료(자연 완료 또는 강제 Kill)되면 호출. EntranceDirector가 구독.
+    public event System.Action OnClearFinished;
+
+    // Clear 연출이 현재 재생 중인지 여부.
+    public bool IsClearPlaying => _activeClear != null;
+
     // 디버그 원복용 초기 상태 캐싱.
     private Vector3 _initialRootPosition;
     private Quaternion _initialRootRotation;
@@ -104,14 +110,8 @@ public class PatientClearDirector : MonoBehaviour
         {
             PlaySelectedClear();
         }
-
-        // Playing 복귀 시 트윈만 Kill하고 플래그 리셋.
-        // 위치 원복은 EntranceDirector가 담당하므로 여기서 건드리지 않는다.
-        if (phase == EStagePhase.Playing && _hasPlayed)
-        {
-            KillActiveTweensOnly();
-            _hasPlayed = false;
-        }
+        // Playing 페이즈에서 Clear를 강제 중단하지 않는다.
+        // Clear 시퀀스의 OnKill 콜백이 자연 완료/강제 Kill 양쪽에서 상태 정리 + OnClearFinished 발화.
     }
 
     private void PlaySelectedClear()
@@ -122,11 +122,30 @@ public class PatientClearDirector : MonoBehaviour
         if (clear == null)
         {
             Debug.LogWarning("[PatientClearDirector] No valid clear animation found.");
+            HandleClearSequenceEnded();
             return;
         }
 
         _activeClear = clear;
-        _activeClear.Play(_patientRoot, _bedTransform, _patientTransform);
+        Sequence seq = _activeClear.Play(_patientRoot, _bedTransform, _patientTransform);
+        if (seq != null)
+        {
+            // OnKill은 자연 완료(auto-kill) + 외부 Kill() 양쪽에서 정확히 한 번 호출됨.
+            // 기존 구현체들의 OnComplete(VFX 정리)와 슬롯이 달라 충돌 없음.
+            seq.OnKill(HandleClearSequenceEnded);
+        }
+        else
+        {
+            // Play가 Sequence를 반환하지 않은 예외 케이스 — 즉시 상태 정리.
+            HandleClearSequenceEnded();
+        }
+    }
+
+    private void HandleClearSequenceEnded()
+    {
+        _activeClear = null;
+        _hasPlayed = false;
+        OnClearFinished?.Invoke();
     }
 
     private PatientClearBase SelectClear()
@@ -159,22 +178,8 @@ public class PatientClearDirector : MonoBehaviour
         }
 
         _activeClear.ForceComplete(_patientRoot, _bedTransform, _patientTransform);
-        _activeClear = null;
-    }
-
-    // 위치 원복 없이 트윈만 Kill.
-    // Playing 복귀 시 EntranceDirector와의 순서 경합 방지용.
-    private void KillActiveTweensOnly()
-    {
-        if (_activeClear == null)
-        {
-            return;
-        }
-
-        _patientRoot.DOKill();
-        _bedTransform.DOKill();
-        _patientTransform.DOKill();
-        _activeClear = null;
+        // _activeClear 및 _hasPlayed 정리와 OnClearFinished 발화는
+        // 시퀀스 Kill로 인해 호출되는 HandleClearSequenceEnded에서 수행됨.
     }
 
     // ── Debug Mode ───────────────────────────────────────────────
