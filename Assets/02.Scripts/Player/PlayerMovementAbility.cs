@@ -163,5 +163,4 @@ public class PlayerMovementAbility : PlayerAbility
         bool isWalking = _moveDirection.sqrMagnitude > MinMoveSqrMagnitude;
         _playerAnimator.PlayWalkAnimation(isWalking);
     }
-
 }
