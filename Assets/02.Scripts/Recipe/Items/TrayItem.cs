@@ -67,8 +67,8 @@ namespace DontDillyDally.Data
 
         private void ResetTrayState(bool isSterilized = false)
         {
-            _trayData = new SubmittedTray();
-            _trayData.SetTrayKind(isSterilized ? TrayKind.Sterilized : TrayKind.Normal);
+            EnsureTrayData();
+            _trayData.Reset(isSterilized ? TrayKind.Sterilized : TrayKind.Normal);
             RefreshTrayVisual();
         }
 
@@ -160,7 +160,8 @@ namespace DontDillyDally.Data
 
         public void ApplyTraySnapshot(SubmittedTray trayData)
         {
-            _trayData = trayData != null ? trayData.Clone() : new SubmittedTray();
+            EnsureTrayData();
+            _trayData.CopyFrom(trayData);
             RefreshTrayVisual();
         }
 
@@ -235,9 +236,9 @@ namespace DontDillyDally.Data
 
         public void RebuildStoredItemData(CraftedItem[] storedItems)
         {
-            bool isSterilized = IsSterilizedTray;
-            _trayData = new SubmittedTray();
-            _trayData.SetTrayKind(isSterilized ? TrayKind.Sterilized : TrayKind.Normal);
+            TrayKind currentKind = IsSterilizedTray ? TrayKind.Sterilized : TrayKind.Normal;
+            EnsureTrayData();
+            _trayData.Reset(currentKind);
 
             if (storedItems == null)
             {
