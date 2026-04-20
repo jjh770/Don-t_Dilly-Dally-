@@ -37,6 +37,7 @@ public class BGMController : PersistentSingleton<BGMController>
 
         if (_sceneLoadManager != null)
         {
+            _sceneLoadManager.OnSceneLoadStart -= HandleSceneLoadStart;
             _sceneLoadManager.OnSceneLoadComplete -= HandleSceneLoadComplete;
             _sceneLoadManager = null;
         }
@@ -45,7 +46,12 @@ public class BGMController : PersistentSingleton<BGMController>
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         TryBindSceneLoadManager();
-        ApplySceneBgm(ResolveSceneType(scene.name));
+        ApplySceneBgm(ResolveSceneType(scene.name), forceRestart: true);
+    }
+
+    private void HandleSceneLoadStart(ESceneType sceneType)
+    {
+        _currentKey = BGMKey.None;
     }
 
     private void HandleSceneLoadComplete(ESceneType sceneType)
@@ -67,6 +73,7 @@ public class BGMController : PersistentSingleton<BGMController>
 
         if (_sceneLoadManager != null)
         {
+            _sceneLoadManager.OnSceneLoadStart -= HandleSceneLoadStart;
             _sceneLoadManager.OnSceneLoadComplete -= HandleSceneLoadComplete;
         }
 
@@ -74,6 +81,7 @@ public class BGMController : PersistentSingleton<BGMController>
 
         if (_sceneLoadManager != null)
         {
+            _sceneLoadManager.OnSceneLoadStart += HandleSceneLoadStart;
             _sceneLoadManager.OnSceneLoadComplete += HandleSceneLoadComplete;
         }
     }
@@ -89,11 +97,11 @@ public class BGMController : PersistentSingleton<BGMController>
         ApplySceneBgm(ResolveCurrentSceneType());
     }
 
-    private void ApplySceneBgm(ESceneType sceneType)
+    private void ApplySceneBgm(ESceneType sceneType, bool forceRestart = false)
     {
         if (sceneType == ESceneType.Gameplay && TryResolveCurrentStageBgm(out BGMKey stageKey))
         {
-            PlayIfNeeded(stageKey);
+            PlayIfNeeded(stageKey, forceRestart);
             return;
         }
 
@@ -105,7 +113,7 @@ public class BGMController : PersistentSingleton<BGMController>
             _ => BGMKey.None
         };
 
-        PlayIfNeeded(key);
+        PlayIfNeeded(key, forceRestart);
     }
 
     private void ApplyStageBgm()
@@ -159,7 +167,7 @@ public class BGMController : PersistentSingleton<BGMController>
         return key != BGMKey.None;
     }
 
-    private void PlayIfNeeded(BGMKey key)
+    private void PlayIfNeeded(BGMKey key, bool forceRestart = false)
     {
         if (SoundManager.Instance == null)
         {
@@ -177,7 +185,7 @@ public class BGMController : PersistentSingleton<BGMController>
             return;
         }
 
-        if (_currentKey == key)
+        if (!forceRestart && _currentKey == key)
         {
             return;
         }
