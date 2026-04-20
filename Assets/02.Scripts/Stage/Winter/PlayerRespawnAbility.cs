@@ -6,11 +6,9 @@ using DontDillyDally.StageFlow;
 
 public class PlayerRespawnAbility : MonoBehaviour
 {
-    public static PlayerRespawnAbility LocalInstance { get; private set; }
-
-    public event Action OnRespawnStarted;
-    public event Action<float> OnRespawnCountdown;
-    public event Action OnRespawnEnded;
+    public static event Action OnRespawnStarted;
+    public static event Action<float> OnRespawnCountdown;
+    public static event Action OnRespawnEnded;
 
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;
@@ -44,19 +42,6 @@ public class PlayerRespawnAbility : MonoBehaviour
         if (_rigidbody != null)
         {
             _originalConstraints = _rigidbody.constraints;
-        }
-
-        if (_photonView != null && _photonView.IsMine)
-        {
-            LocalInstance = this;
-        }
-    }
-
-    private void OnDestroy()
-    {
-        if (LocalInstance == this)
-        {
-            LocalInstance = null;
         }
     }
 
@@ -111,13 +96,14 @@ public class PlayerRespawnAbility : MonoBehaviour
             yield return null;
         }
 
-        // 3. 리스폰 대기
-        OnRespawnStarted?.Invoke();
+        // 3. 리스폰 대기 (UI는 로컬 플레이어만)
+        bool isLocal = _photonView == null || _photonView.IsMine;
+        if (isLocal) OnRespawnStarted?.Invoke();
 
         float remaining = _respawnDelay;
         while (remaining > 0f)
         {
-            OnRespawnCountdown?.Invoke(remaining);
+            if (isLocal) OnRespawnCountdown?.Invoke(remaining);
             yield return null;
             remaining -= Time.deltaTime;
         }
@@ -147,7 +133,7 @@ public class PlayerRespawnAbility : MonoBehaviour
         }
 
         _photonView.RPC(nameof(RPC_PlayRespawnFx), RpcTarget.All);
-        OnRespawnEnded?.Invoke();
+        if (isLocal) OnRespawnEnded?.Invoke();
         _isRespawning = false;
     }
 
