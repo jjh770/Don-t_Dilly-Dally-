@@ -80,6 +80,8 @@ public enum SFXKey
     StartBlackOut = 54,
     EndBlackOut = 55,
     HorrorTheme = 56,
+    Ambulance = 57,
+    Infection = 58,
 }
 
 // 사운드 재생 타입.

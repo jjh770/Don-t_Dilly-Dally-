@@ -1,5 +1,5 @@
-using System.Collections;
 using Photon.Pun;
+using System.Collections;
 using UnityEngine;
 
 public class InfectionZoneSpawner : MonoBehaviourPun
@@ -63,6 +63,7 @@ public class InfectionZoneSpawner : MonoBehaviourPun
 
         DestroyCurrentZone();
         _currentZone = Instantiate(_infectionZonePrefab, spawnPoint.position, spawnPoint.rotation);
+        SoundManager.Instance.Play(SFXKey.Infection, SoundType.Local);
     }
 
     [PunRPC]
