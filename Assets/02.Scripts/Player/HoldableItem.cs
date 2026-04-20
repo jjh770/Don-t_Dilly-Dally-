@@ -1,3 +1,4 @@
+using System;
 using DontDillyDally.Data;
 using Photon.Pun;
 using UnityEngine;
@@ -23,6 +24,9 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
     [Header("던지기 설정")]
     [SerializeField] private float _upAngle = 0.5f;
     [SerializeField] private float _ignoreCollisionDuration = 0.3f;
+
+    public event Action ThrowStarted;
+    public event Action Landed;
 
     private Rigidbody _rigidbody;
     private PhotonView _photonView;
@@ -126,6 +130,7 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
             {
                 _isWaitingForOwnershipReturn = false;
                 _settledTime = 0f;
+                Landed?.Invoke();
                 NetworkItemOwnership.ReturnOwnershipToMaster(_photonView);
             }
         }
@@ -211,6 +216,8 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
         _settledTime = 0f;
 
         _holderActorNumber = InvalidActorNumber;
+
+        ThrowStarted?.Invoke();
     }
 
     public void Place(Transform placePoint)

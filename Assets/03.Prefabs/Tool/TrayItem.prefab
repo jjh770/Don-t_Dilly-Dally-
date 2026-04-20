@@ -191,6 +191,7 @@ GameObject:
   - component: {fileID: -1772153683941332363}
   - component: {fileID: -7736740239746226323}
   - component: {fileID: 3832377213191296125}
+  - component: {fileID: 1304498981792552553}
   m_Layer: 6
   m_Name: TrayItem
   m_TagString: Untagged
@@ -374,6 +375,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f8b62fd5916452428776635d44e1959, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HoldableItemNetworkSync
+  _positionLerpSpeed: 10
+  _rotationLerpSpeed: 10
 --- !u!114 &3832377213191296125
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -391,6 +394,21 @@ MonoBehaviour:
   - {fileID: 125332956406020682}
   - {fileID: 5542147022594818750}
   - {fileID: 1168175247191014072}
+--- !u!114 &1304498981792552553
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4657800919395383540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c417dbe191fff5409fee73e55b023a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemThrowVfx
+  _trailPrefab: {fileID: 6401382415872884299, guid: 0c4a01650ea5be1428d2e4aeb79453e0, type: 3}
+  _landingDustPrefab: {fileID: 0}
+  _landingDustDestroyDelay: 3
 --- !u!1 &5484516849669585106
 GameObject:
   m_ObjectHideFlags: 0
