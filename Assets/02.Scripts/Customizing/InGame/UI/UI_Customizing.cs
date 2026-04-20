@@ -1,10 +1,10 @@
 using DG.Tweening;
-using UnityEngine;
-using UnityEngine.UI;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
 
 public class UI_Customizing : UIPopupBase
 {
@@ -43,6 +43,10 @@ public class UI_Customizing : UIPopupBase
     [SerializeField] private float _itemAppearDuration = 0.32f;
     [SerializeField] private float _itemAppearDelayInterval = 0.08f;
     [SerializeField] private Ease _itemAppearEase = Ease.OutBounce;
+
+    [Header("저장 파티클")]
+    [SerializeField] private ParticleSystem _saveParticlePrefab;
+    [SerializeField] private Vector3 _saveParticleOffset = new Vector3(0f, 0.5f, 0.5f);
 
     private CustomizingUIViewModel _viewModel;
     private Tween _tabSlideTween;
@@ -184,7 +188,31 @@ public class UI_Customizing : UIPopupBase
         PlayButtonPop(_saveButton);
         _viewModel?.SaveToSelectedSlot();   // 먼저 슬롯에 현재 상태 저장
         _viewModel?.Save();                 // 전체 저장 (MergeMetaFrom에서 업데이트된 슬롯 반영)
+        PlaySaveParticle();
         OnSaved?.Invoke();
+    }
+
+    private void PlaySaveParticle()
+    {
+        if (_saveParticlePrefab == null) return;
+
+        var localPlayer = FindPlayer();
+        if (localPlayer == null) return;
+
+        Vector3 spawnPos = localPlayer.position + localPlayer.TransformDirection(_saveParticleOffset);
+        var particle = Instantiate(_saveParticlePrefab, spawnPos, Quaternion.identity);
+        particle.Play();
+
+        float lifetime = particle.main.duration + particle.main.startLifetime.constantMax;
+        Destroy(particle.gameObject, lifetime);
+    }
+
+    private Transform FindPlayer()
+    {
+        var controller = FindFirstObjectByType<LobbyPreviewController>();
+        if (controller == null) return null;
+
+        return controller.transform;
     }
 
     private void OnResetClicked()

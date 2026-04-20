@@ -59,7 +59,6 @@ public class CustomizingSlotManager
         slotData.Name = existingSlot?.Name ?? string.Format(DefaultSlotNameFormat, index + 1);
 
         saveData.SetSlot(index, slotData);
-        _repository.Save(saveData).Forget();
 
         OnSlotSaved?.Invoke(index);
     }
