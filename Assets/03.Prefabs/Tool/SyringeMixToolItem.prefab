@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: -5006571336115383354}
   - component: {fileID: 2145957373760086868}
   - component: {fileID: -2418000344487608796}
+  - component: {fileID: 9198037072260679324}
   m_Layer: 8
   m_Name: SyringeMixToolItem
   m_TagString: Untagged
@@ -126,10 +127,6 @@ MonoBehaviour:
   _settleRequiredDuration: 0.25
   _upAngle: 0.5
   _ignoreCollisionDuration: 0.3
-  _throwTrailPrefab: {fileID: 5509305661840162670, guid: 0c4a01650ea5be1428d2e4aeb79453e0, type: 3}
-  _landingDustPrefab: {fileID: 0}
-  _throwTrailDestroyDelay: 2
-  _landingDustDestroyDelay: 3
 --- !u!114 &386016823710401840
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -231,6 +228,21 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.SyringeFillVfxPresenter
   _smokeVfxPrefab: {fileID: 8300489435268232668, guid: e0bbfe83f4603a04e9b1d8f2988af0ee, type: 3}
+--- !u!114 &9198037072260679324
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7393820928385347151}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0c417dbe191fff5409fee73e55b023a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HoldableItemThrowVfx
+  _trailPrefab: {fileID: 6401382415872884299, guid: 0c4a01650ea5be1428d2e4aeb79453e0, type: 3}
+  _landingDustPrefab: {fileID: 0}
+  _landingDustDestroyDelay: 3
 --- !u!1001 &8319291016620014696
 PrefabInstance:
   m_ObjectHideFlags: 0
