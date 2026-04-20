@@ -209,10 +209,17 @@ public class UI_Customizing : UIPopupBase
 
     private Transform FindPlayer()
     {
-        var controller = FindFirstObjectByType<LobbyPreviewController>();
-        if (controller == null) return null;
+        var lobbyController = FindFirstObjectByType<LobbyPreviewController>();
+        if (lobbyController != null) return lobbyController.transform;
 
-        return controller.transform;
+        var controllers = FindObjectsByType<CustomizingCharacterController>(FindObjectsSortMode.None);
+        foreach (var controller in controllers)
+        {
+            if (controller.IsLocalPlayer)
+                return controller.transform;
+        }
+
+        return null;
     }
 
     private void OnResetClicked()
