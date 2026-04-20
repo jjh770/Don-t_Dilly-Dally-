@@ -204,12 +204,25 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (trayItem.TryGetComponent(out HoldableItem holdable) &&
-                !holdable.IsStoredInContainer &&
-                trayItem.transform.parent != _traySlotPoint)
+            if (IsDetachedFromWorkbenchSlot(trayItem, _traySlotPoint))
             {
                 _trayWorkbench.ClearCurrentTrayItem(trayItem);
             }
+        }
+
+        private static bool IsDetachedFromWorkbenchSlot(TrayItem trayItem, Transform expectedParent)
+        {
+            if (trayItem == null)
+            {
+                return false;
+            }
+
+            bool isInactive = !trayItem.gameObject.activeInHierarchy;
+            bool parentMismatch = trayItem.transform.parent != expectedParent;
+            bool isPendingRecycle = trayItem.IsPendingRecycle;
+            bool isNoLongerStored = trayItem.TryGetComponent(out HoldableItem holdable) && !holdable.IsStoredInContainer;
+
+            return isInactive || parentMismatch || isPendingRecycle || isNoLongerStored;
         }
 
         private void TryTakeTray(IHeldItemInteractor heldItemInteractor)

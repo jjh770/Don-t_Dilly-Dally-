@@ -669,9 +669,7 @@ namespace DontDillyDally.Data
                     continue;
                 }
 
-                if (item.TryGetComponent(out HoldableItem holdable) &&
-                    !holdable.IsStoredInContainer &&
-                    item.transform.parent != GetSlotTransform(i))
+                if (IsDetachedFromSterilizationSlot(item, GetSlotTransform(i)))
                 {
                     slot.Clear();
                     clearedAny = true;
@@ -686,6 +684,21 @@ namespace DontDillyDally.Data
             {
                 _isBatchCompleted = false;
             }
+        }
+
+        private static bool IsDetachedFromSterilizationSlot(ItemObject item, Transform expectedParent)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            bool isInactive = !item.gameObject.activeInHierarchy;
+            bool parentMismatch = item.transform.parent != expectedParent;
+            bool isPendingRecycle = item.IsPendingRecycle;
+            bool isNoLongerStored = item.TryGetComponent(out HoldableItem holdable) && !holdable.IsStoredInContainer;
+
+            return isInactive || parentMismatch || isPendingRecycle || isNoLongerStored;
         }
 
         private bool HasAnyStoredItemsWithoutCleanup()

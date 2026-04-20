@@ -60,6 +60,42 @@ namespace DontDillyDally.Data
             _kind = trayKind;
         }
 
+        public void Reset(TrayKind trayKind)
+        {
+            _kind = trayKind;
+            if (_containedItems == null)
+            {
+                _containedItems = new List<CraftedItem>();
+                return;
+            }
+
+            _containedItems.Clear();
+        }
+
+        public void CopyFrom(SubmittedTray other)
+        {
+            if (_containedItems == null)
+            {
+                _containedItems = new List<CraftedItem>();
+            }
+            else
+            {
+                _containedItems.Clear();
+            }
+
+            if (other == null)
+            {
+                _kind = TrayKind.Normal;
+                return;
+            }
+
+            _kind = other._kind;
+            if (other._containedItems != null)
+            {
+                _containedItems.AddRange(other._containedItems);
+            }
+        }
+
         public bool HasAnyItems()
         {
             return _containedItems != null && _containedItems.Count > 0;

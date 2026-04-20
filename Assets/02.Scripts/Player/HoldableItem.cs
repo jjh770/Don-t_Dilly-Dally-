@@ -252,6 +252,9 @@ public class HoldableItem : MonoBehaviour, IHoldable, IPunObservable, IRecyclabl
 
         if (stored)
         {
+            _isWaitingForOwnershipReturn = false;
+            _settledTime = 0f;
+
             // 루트 콜라이더뿐 아니라 자식 콜라이더도 모두 비활성화
             // (자식 콜라이더가 남아있으면 소유권 이전 대기 중 플레이어를 밀어냄)
             SetAllCollidersEnabled(false);

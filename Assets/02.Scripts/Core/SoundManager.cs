@@ -77,6 +77,9 @@ public enum SFXKey
     MiniGameQTEFinal = 51,
     MiniGameGaugeClickSuccess = 52,
     MiniGameFail = 53,
+    StartBlackOut = 54,
+    EndBlackOut = 55,
+    HorrorTheme = 56,
 }
 
 // 사운드 재생 타입.
@@ -142,9 +145,12 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     private Dictionary<SFXKey, SFXEntry> _sfxDict = new Dictionary<SFXKey, SFXEntry>();
 
     private Coroutine _bgmFadeCoroutine;
+    private Coroutine _bgmDuckCoroutine;
     private readonly Dictionary<AudioSource, Coroutine> _sfxFadeCoroutines = new Dictionary<AudioSource, Coroutine>();
     private readonly Dictionary<AudioSource, float> _sfxFadeDurations = new Dictionary<AudioSource, float>();
     private float _currentBgmEntryVolume = 1f;
+    private float _nominalBgmVolume = 0f;
+    private float _bgmDuckMultiplier = 1f;
 
     public float BGMVolume => _bgmVolume;
     public float SFXVolume => _sfxVolume;
@@ -166,7 +172,8 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         _bgmSource = gameObject.AddComponent<AudioSource>();
         _bgmSource.loop = true;
         _bgmSource.playOnAwake = false;
-        _bgmSource.volume = _bgmVolume;
+        _nominalBgmVolume = _bgmVolume;
+        ApplyBgmVolume();
     }
 
     private void InitSFXPool()
@@ -253,8 +260,29 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     /// <summary>현재 BGM을 정지합니다.</summary>
     public void StopBGM(bool fade = true)
     {
-        if (fade) StartFade(_bgmSource, _bgmFadeDuration, 0f, () => _bgmSource.Stop());
+        if (fade) StartBGMFade(_bgmFadeDuration, 0f, () => _bgmSource.Stop());
         else _bgmSource.Stop();
+    }
+
+    /// <summary>BGM 볼륨을 일시적으로 덕킹합니다. multiplier 0 이면 무음, 1 이면 원복.</summary>
+    public void DuckBGM(float multiplier, float fadeDuration = 0.3f)
+    {
+        multiplier = Mathf.Clamp01(multiplier);
+
+        if (_bgmDuckCoroutine != null)
+        {
+            StopCoroutine(_bgmDuckCoroutine);
+            _bgmDuckCoroutine = null;
+        }
+
+        if (fadeDuration <= 0f)
+        {
+            _bgmDuckMultiplier = multiplier;
+            ApplyBgmVolume();
+            return;
+        }
+
+        _bgmDuckCoroutine = StartCoroutine(BgmDuckRoutine(multiplier, fadeDuration));
     }
 
     /// <summary>루프 SFX를 명시적으로 정지하고 풀에 반납합니다.</summary>
@@ -277,7 +305,12 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         StartSFXFade(source, fadeDuration, 0f, () => _sfxPool.Release(source));
     }
 
-    public void SetBGMVolume(float volume) { _bgmVolume = Mathf.Clamp01(volume); _bgmSource.volume = _bgmVolume * _currentBgmEntryVolume; }
+    public void SetBGMVolume(float volume)
+    {
+        _bgmVolume = Mathf.Clamp01(volume);
+        _nominalBgmVolume = _bgmVolume * _currentBgmEntryVolume;
+        ApplyBgmVolume();
+    }
     public void SetSFXVolume(float volume) { _sfxVolume = Mathf.Clamp01(volume); }
 
     // ══════════════════════════════════════════
@@ -293,16 +326,16 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
 
         if (_bgmSource.isPlaying)
         {
-            StartFade(_bgmSource, _bgmFadeDuration * 0.5f, 0f, () =>
+            StartBGMFade(_bgmFadeDuration * 0.5f, 0f, () =>
             {
                 SetBGMClip(data);
-                StartFade(_bgmSource, _bgmFadeDuration * 0.5f, _bgmVolume * data.Volume);
+                StartBGMFade(_bgmFadeDuration * 0.5f, _bgmVolume * data.Volume);
             });
         }
         else
         {
             SetBGMClip(data);
-            StartFade(_bgmSource, _bgmFadeDuration, _bgmVolume * data.Volume);
+            StartBGMFade(_bgmFadeDuration, _bgmVolume * data.Volume);
         }
     }
 
@@ -311,7 +344,8 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         _currentBgmEntryVolume = Mathf.Clamp01(data.Volume);
         _bgmSource.clip = data.Clip;
         _bgmSource.pitch = data.Pitch;
-        _bgmSource.volume = 0f;
+        _nominalBgmVolume = 0f;
+        ApplyBgmVolume();
         _bgmSource.Play();
     }
 
@@ -388,10 +422,48 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     // ══════════════════════════════════════════
     //  페이드 유틸리티
     // ══════════════════════════════════════════
-    private void StartFade(AudioSource source, float duration, float targetVolume, Action onComplete = null)
+    private void ApplyBgmVolume()
+    {
+        if (_bgmSource == null) return;
+        _bgmSource.volume = _nominalBgmVolume * _bgmDuckMultiplier;
+    }
+
+    private void StartBGMFade(float duration, float targetNominal, Action onComplete = null)
     {
         if (_bgmFadeCoroutine != null) StopCoroutine(_bgmFadeCoroutine);
-        _bgmFadeCoroutine = StartCoroutine(FadeRoutine(source, duration, targetVolume, onComplete));
+        _bgmFadeCoroutine = StartCoroutine(BgmFadeRoutine(duration, targetNominal, onComplete));
+    }
+
+    private IEnumerator BgmFadeRoutine(float duration, float target, Action onComplete)
+    {
+        float start = _nominalBgmVolume;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            _nominalBgmVolume = Mathf.Lerp(start, target, elapsed / duration);
+            ApplyBgmVolume();
+            yield return null;
+        }
+        _nominalBgmVolume = target;
+        ApplyBgmVolume();
+        onComplete?.Invoke();
+    }
+
+    private IEnumerator BgmDuckRoutine(float target, float duration)
+    {
+        float start = _bgmDuckMultiplier;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            _bgmDuckMultiplier = Mathf.Lerp(start, target, elapsed / duration);
+            ApplyBgmVolume();
+            yield return null;
+        }
+        _bgmDuckMultiplier = target;
+        ApplyBgmVolume();
+        _bgmDuckCoroutine = null;
     }
 
     private void StartSFXFade(AudioSource source, float duration, float targetVolume, Action onComplete = null)

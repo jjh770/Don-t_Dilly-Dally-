@@ -158,7 +158,9 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
             return false;
         }
 
-        return GetCurrentSceneType() != ESceneType.Lobby;
+        ESceneType currentSceneType = GetCurrentSceneType();
+        return currentSceneType != ESceneType.Lobby
+            && currentSceneType != ESceneType.Cutscene;
     }
 
     public bool ShouldUseWhiteOverlayText()
