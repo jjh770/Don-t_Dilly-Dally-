@@ -217,7 +217,7 @@ namespace DontDillyDally.Data
                 return false;
             }
 
-            if (_slots.TryStoreItem(itemObject, slotIndex))
+            if (_slots.TryStoreItem(itemObject, slotIndex, item))
             {
                 return true;
             }
@@ -231,6 +231,28 @@ namespace DontDillyDally.Data
         {
             EnsureTrayData();
             return _trayData.HasAnyItems();
+        }
+
+        public void RebuildStoredItemData(CraftedItem[] storedItems)
+        {
+            bool isSterilized = IsSterilizedTray;
+            _trayData = new SubmittedTray();
+            _trayData.SetTrayKind(isSterilized ? TrayKind.Sterilized : TrayKind.Normal);
+
+            if (storedItems == null)
+            {
+                return;
+            }
+
+            EnsureTrayData();
+            for (int i = 0; i < storedItems.Length; i++)
+            {
+                CraftedItem item = storedItems[i];
+                if (item != null)
+                {
+                    _trayData.TryAddItem(item);
+                }
+            }
         }
 
         public bool CanBeSterilized()

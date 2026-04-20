@@ -10,11 +10,15 @@ namespace DontDillyDally.Data
         [SerializeField] private Transform[] _itemSlotPoints = new Transform[MaxItemSlots];
 
         private ItemObject[] _storedSlotItems;
+        private CraftedItem[] _storedSlotData;
         private Vector3[] _storedLocalPositions;
+        private TrayItem _trayItem;
 
         private void Awake()
         {
+            _trayItem = GetComponent<TrayItem>();
             _storedSlotItems = new ItemObject[MaxItemSlots];
+            _storedSlotData = new CraftedItem[MaxItemSlots];
             _storedLocalPositions = new Vector3[MaxItemSlots];
         }
 
@@ -32,7 +36,7 @@ namespace DontDillyDally.Data
                 if (IsStaleStoredItem(item, expectedParent))
                 {
                     LogStoredSlot("LateUpdate stale reference cleared", i, item, expectedParent);
-                    ClearSlot(i);
+                    ClearSlot(i, removeTrayData: true);
                     continue;
                 }
 
@@ -87,9 +91,9 @@ namespace DontDillyDally.Data
             return _storedSlotItems[slotIndex] == null;
         }
 
-        public bool TryStoreItem(ItemObject itemObject, int slotIndex)
+        public bool TryStoreItem(ItemObject itemObject, int slotIndex, CraftedItem itemData)
         {
-            if (itemObject == null)
+            if (itemObject == null || itemData == null)
             {
                 return false;
             }
@@ -108,6 +112,7 @@ namespace DontDillyDally.Data
             PlaceStoredItem(itemObject, slotTransform);
             DisableItemInteraction(itemObject);
             _storedSlotItems[slotIndex] = itemObject;
+            _storedSlotData[slotIndex] = itemData;
             _storedLocalPositions[slotIndex] = itemObject.transform.localPosition;
             itemObject.Recycled += OnStoredItemRecycled;
             return true;
@@ -126,12 +131,12 @@ namespace DontDillyDally.Data
             {
                 if (_storedSlotItems[i] == item)
                 {
-                    ClearSlot(i);
+                    ClearSlot(i, removeTrayData: true);
                 }
             }
         }
 
-        private void ClearSlot(int slotIndex)
+        private void ClearSlot(int slotIndex, bool removeTrayData = false)
         {
             if (_storedSlotItems == null || slotIndex < 0 || slotIndex >= _storedSlotItems.Length)
             {
@@ -145,7 +150,16 @@ namespace DontDillyDally.Data
             }
 
             _storedSlotItems[slotIndex] = null;
+            if (_storedSlotData != null)
+            {
+                _storedSlotData[slotIndex] = null;
+            }
             _storedLocalPositions[slotIndex] = Vector3.zero;
+
+            if (removeTrayData)
+            {
+                _trayItem?.RebuildStoredItemData(_storedSlotData);
+            }
         }
 
         /// <summary>
@@ -202,6 +216,10 @@ namespace DontDillyDally.Data
             {
                 ItemObject storedItem = _storedSlotItems[i];
                 _storedSlotItems[i] = null;
+                if (_storedSlotData != null)
+                {
+                    _storedSlotData[i] = null;
+                }
                 _storedLocalPositions[i] = Vector3.zero;
 
                 if (storedItem == null)

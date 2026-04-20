@@ -698,21 +698,31 @@ namespace DontDillyDally.Data
                     continue;
                 }
 
-                if (item.TryGetComponent(out HoldableItem holdable) &&
-                    !holdable.IsStoredInContainer &&
-                    item.transform.parent != GetSlotTransform(i))
+                if (IsDetachedFromPotionSlot(item, GetSlotTransform(i)))
                 {
                     slot.Clear();
                 }
             }
 
-            if (_storedOutputItem != null &&
-                _storedOutputItem.TryGetComponent(out HoldableItem outputHoldable) &&
-                !outputHoldable.IsStoredInContainer &&
-                _storedOutputItem.transform.parent != GetOutputTransform())
+            if (_storedOutputItem != null && IsDetachedFromPotionSlot(_storedOutputItem, GetOutputTransform()))
             {
                 _storedOutputItem = null;
             }
+        }
+
+        private static bool IsDetachedFromPotionSlot(ItemObject item, Transform expectedParent)
+        {
+            if (item == null)
+            {
+                return false;
+            }
+
+            bool isInactive = !item.gameObject.activeInHierarchy;
+            bool parentMismatch = item.transform.parent != expectedParent;
+            bool isPendingRecycle = item.IsPendingRecycle;
+            bool isNoLongerStored = item.TryGetComponent(out HoldableItem holdable) && !holdable.IsStoredInContainer;
+
+            return isInactive || parentMismatch || isPendingRecycle || isNoLongerStored;
         }
 
         #endregion
