@@ -6,9 +6,11 @@ using DontDillyDally.StageFlow;
 
 public class PlayerRespawnAbility : MonoBehaviour
 {
-    public static event Action OnRespawnStarted;
-    public static event Action<float> OnRespawnCountdown;
-    public static event Action OnRespawnEnded;
+    public static PlayerRespawnAbility LocalInstance { get; private set; }
+
+    public event Action OnRespawnStarted;
+    public event Action<float> OnRespawnCountdown;
+    public event Action OnRespawnEnded;
 
     [Header("설정")]
     [SerializeField] private float _respawnDelay = 3f;
@@ -42,6 +44,19 @@ public class PlayerRespawnAbility : MonoBehaviour
         if (_rigidbody != null)
         {
             _originalConstraints = _rigidbody.constraints;
+        }
+
+        if (_photonView != null && _photonView.IsMine)
+        {
+            LocalInstance = this;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (LocalInstance == this)
+        {
+            LocalInstance = null;
         }
     }
 

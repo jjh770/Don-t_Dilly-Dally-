@@ -29,16 +29,41 @@ public class RespawnScreenEffectController : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    private PlayerRespawnAbility _subscribedInstance;
+
+    private void Update()
     {
-        PlayerRespawnAbility.OnRespawnStarted += EnableGrayscale;
-        PlayerRespawnAbility.OnRespawnEnded += DisableGrayscale;
+        TrySubscribeToLocalPlayer();
     }
 
     private void OnDisable()
     {
-        PlayerRespawnAbility.OnRespawnStarted -= EnableGrayscale;
-        PlayerRespawnAbility.OnRespawnEnded -= DisableGrayscale;
+        Unsubscribe();
+    }
+
+    private void TrySubscribeToLocalPlayer()
+    {
+        var local = PlayerRespawnAbility.LocalInstance;
+        if (local == _subscribedInstance) return;
+
+        Unsubscribe();
+
+        if (local != null)
+        {
+            _subscribedInstance = local;
+            _subscribedInstance.OnRespawnStarted += EnableGrayscale;
+            _subscribedInstance.OnRespawnEnded += DisableGrayscale;
+        }
+    }
+
+    private void Unsubscribe()
+    {
+        if (_subscribedInstance != null)
+        {
+            _subscribedInstance.OnRespawnStarted -= EnableGrayscale;
+            _subscribedInstance.OnRespawnEnded -= DisableGrayscale;
+            _subscribedInstance = null;
+        }
     }
 
     public void EnableGrayscale()
