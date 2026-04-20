@@ -134,10 +134,16 @@ namespace DontDillyDally.MiniGame
                 }
             }
 
-            // 실패 시 전체 UI 흔들림 (ButtonMash Fail 스타일)
-            if (!isSuccess)
+            // 최종 정답 사운드 (미니게임 전체 성공 = 마지막 방향키까지 정답)
+            if (isSuccess)
             {
+                PlayLocalSfx(SFXKey.MiniGameQTEFinal);
+            }
+            else
+            {
+                // 실패 시 전체 UI 흔들림 (ButtonMash Fail 스타일)
                 PlayFailShake();
+                PlayLocalSfx(SFXKey.MiniGameFail);
             }
         }
 
@@ -215,10 +221,11 @@ namespace DontDillyDally.MiniGame
                 bool wasSuccess = Game.LastInputResult == true;
                 _slots[_lastPromptIndex].SetState(wasSuccess ? ESlotState.Cleared : ESlotState.Failed);
 
-                // 정답 시 글로우 테두리 띠용 (전체 UI 펀치)
+                // 정답 시 글로우 테두리 띠용 (전체 UI 펀치) + 중간 정답 사운드
                 if (wasSuccess)
                 {
                     PlayGlowPunch();
+                    PlayLocalSfx(SFXKey.MiniGameQTEGood);
                 }
             }
 

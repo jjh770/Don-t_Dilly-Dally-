@@ -43,7 +43,7 @@ namespace DontDillyDally.StageFlow
         public event Action<CraftedMaterialType, int, int> OnEmergencyMaterialSubmittedReceived; // materialType, itemViewId, submitterActorNumber
         public event Action<DiagnosisScanType, int> OnEmergencyDiagnosisOperateReceived; // diagnosisType, submitterActorNumber
         public event Action<EmergencyEventKind, EmergencyTriggerSource, CraftedMaterialType, DiagnosisScanType> OnEmergencyStartedReceived;
-        public event Action OnEmergencyEndedReceived;
+        public event Action<bool> OnEmergencyEndedReceived;
 
         // ── 리워드 이벤트 ─────────────────────────────────────────────
         public event Action<StageReward, StageResult> OnStageRewardGrantedReceived;
@@ -179,6 +179,10 @@ namespace DontDillyDally.StageFlow
             CraftedMaterialType trayTarget,
             DiagnosisScanType diagnosisTarget)
         {
+            // 마스터 자신도 VFX 등 구독자가 반응하도록 로컬 invoke.
+            // HandleEmergencyStartedReceived는 마스터 분기에서 early-return하므로 상태 이중 처리 없음.
+            OnEmergencyStartedReceived?.Invoke(kind, triggerSource, trayTarget, diagnosisTarget);
+
             if (PhotonNetwork.IsMasterClient)
             {
                 photonView.RPC(
@@ -191,11 +195,13 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        public void BroadcastEmergencyEnd()
+        public void BroadcastEmergencyEnd(bool isSuccess)
         {
+            OnEmergencyEndedReceived?.Invoke(isSuccess);
+
             if (PhotonNetwork.IsMasterClient)
             {
-                photonView.RPC(nameof(RPC_EndEmergency), RpcTarget.Others);
+                photonView.RPC(nameof(RPC_EndEmergency), RpcTarget.Others, isSuccess);
             }
         }
 
@@ -437,9 +443,9 @@ namespace DontDillyDally.StageFlow
         }
 
         [PunRPC]
-        private void RPC_EndEmergency()
+        private void RPC_EndEmergency(bool isSuccess)
         {
-            OnEmergencyEndedReceived?.Invoke();
+            OnEmergencyEndedReceived?.Invoke(isSuccess);
         }
 
         [PunRPC]

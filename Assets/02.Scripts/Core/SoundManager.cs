@@ -73,6 +73,10 @@ public enum SFXKey
     AmbHelicopterLoop = 47,
     PatientBurnout = 48,
     PlayerHeavyMachineMove = 49,
+    MiniGameQTEGood = 50,
+    MiniGameQTEFinal = 51,
+    MiniGameGaugeClickSuccess = 52,
+    MiniGameFail = 53,
 }
 
 // 사운드 재생 타입.

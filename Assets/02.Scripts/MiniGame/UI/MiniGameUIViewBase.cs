@@ -67,5 +67,15 @@ namespace DontDillyDally.MiniGame
 
         // 결과 연출 재생 직전에 실행할 전처리 (예: 성공 시 게이지 꽉 채우기).
         protected virtual void OnBeforeShowResult(bool isSuccess) { }
+
+        // 미니게임 수행자(집도의) 로컬에게만 들리는 효과음 재생.
+        // 미니게임 UI는 로컬 클라이언트에서만 동작하므로 SoundType.Local이면 충분하다 (다른 플레이어에게 들리지 않음).
+        protected static void PlayLocalSfx(SFXKey key)
+        {
+            if (SoundManager.Instance != null)
+            {
+                SoundManager.Instance.Play(key, SoundType.Local);
+            }
+        }
     }
 }
