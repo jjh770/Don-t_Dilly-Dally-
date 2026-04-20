@@ -20,7 +20,7 @@ public class RespawnScreenEffectController : MonoBehaviour
     {
         if (_volume == null)
         {
-            _volume = GetComponent<Volume>();
+            _volume = FindFirstObjectByType<Volume>();
         }
 
         if (_volume != null && _volume.profile.TryGet(out _colorAdjustments))
