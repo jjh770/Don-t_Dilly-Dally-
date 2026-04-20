@@ -210,7 +210,7 @@ namespace DontDillyDally.StageFlow
             StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.EmergencySuccess);
             CancelDiagnosisOperateTask();
             EmergencyResumeResult result = Controller.ResolveSuccess();
-            _rpc?.BroadcastEmergencyEnd();
+            _rpc?.BroadcastEmergencyEnd(true);
             _emergencyResultTcs?.TrySetResult(result);
             _emergencyResultTcs = null;
             _currentEmergencyActorNumber = -1;
@@ -233,7 +233,7 @@ namespace DontDillyDally.StageFlow
             float newHealth = _patientFlow != null ? _patientFlow.ApplyDamage(_emergencyFailPenalty) : 0f;
             Debug.Log($"[StageFlow] 긴급 이벤트 실패. 체력 -{_emergencyFailPenalty} | 현재 체력: {newHealth}");
             EmergencyResumeResult result = Controller.ResolveFailure();
-            _rpc?.BroadcastEmergencyEnd();
+            _rpc?.BroadcastEmergencyEnd(false);
             _emergencyResultTcs?.TrySetResult(result);
             _emergencyResultTcs = null;
             _currentEmergencyActorNumber = -1;
@@ -255,7 +255,7 @@ namespace DontDillyDally.StageFlow
             Controller.SyncBegin(kind, triggerSource, trayTarget, diagnosisTarget);
         }
 
-        private void HandleEmergencyEndedReceived()
+        private void HandleEmergencyEndedReceived(bool isSuccess)
         {
             if (PhotonNetwork.IsMasterClient || Controller == null)
             {

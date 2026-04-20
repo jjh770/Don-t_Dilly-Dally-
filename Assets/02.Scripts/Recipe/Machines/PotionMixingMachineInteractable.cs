@@ -32,11 +32,16 @@ namespace DontDillyDally.Data
         [SerializeField] private ActionTimer _actionTimer;
         [SerializeField] private RunningMotion _runningMotion;
 
+        [Header("파티클")]
+        [SerializeField] private ParticleSystem _workingParticle;
+        [SerializeField] private ParticleSystem _openedParticle;
+
         private PotionSlot[] _slots;
         private readonly List<ToolType> _loadedPotionsBuffer = new List<ToolType>(MaxSlots);
         private ItemObject _storedOutputItem;
         private CraftedMaterialType _pendingResultMaterial = CraftedMaterialType.Unknown;
         private MachineOperationController _operationController;
+        private MachineParticleController _particleController;
         private bool _isCompletionPending;
 
         public bool IsInteracting => _operationController != null && (_operationController.IsRunning || _isCompletionPending);
@@ -72,6 +77,9 @@ namespace DontDillyDally.Data
                 SFXKey.PotionMixerOpen,
                 SFXKey.PotionMixerClose,
                 SFXKey.PotionMixerComplete);
+
+            _particleController = new MachineParticleController(_workingParticle, _openedParticle);
+            _particleController.ClearAll();
 
             _slots = new PotionSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
@@ -257,6 +265,8 @@ namespace DontDillyDally.Data
                     (int)result.ResultMaterial, result.CraftingDuration);
             }
 
+            _particleController.SetOpenedParticle(false);
+            _particleController.SetWorkingParticle(true);
             _operationController.StartLocal(_pendingCraftingDuration, OnMixingTimerComplete);
         }
 
@@ -276,6 +286,7 @@ namespace DontDillyDally.Data
 
         private void CompleteMixingProcess()
         {
+            _particleController.SetWorkingParticle(false);
             _operationController.CompleteLocal();
             ConsumeAllStoredInputs();
 
@@ -473,12 +484,15 @@ namespace DontDillyDally.Data
             _isCompletionPending = false;
             _pendingResultMaterial = (CraftedMaterialType)resultMaterial;
             _pendingCraftingDuration = duration;
+            _particleController.SetOpenedParticle(false);
+            _particleController.SetWorkingParticle(true);
             _operationController.StartRemote(duration, () => _isCompletionPending = true);
         }
 
         [PunRPC]
         private void RPC_PotionCompleteMixing(int resultItemViewId)
         {
+            _particleController.SetWorkingParticle(false);
             _operationController.CompleteRemote();
             _isCompletionPending = false;
 
@@ -577,12 +591,14 @@ namespace DontDillyDally.Data
         private void RPC_PotionOpenDoor()
         {
             _operationController?.TryOpenDoor();
+            _particleController?.SetOpenedParticle(true);
         }
 
         [PunRPC]
         private void RPC_PotionCloseDoor()
         {
             _operationController?.TryCloseDoor();
+            _particleController?.SetOpenedParticle(false);
         }
 
         #endregion
@@ -596,6 +612,8 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            _particleController.SetOpenedParticle(true);
+
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_PotionOpenDoor), RpcTarget.Others);
@@ -608,6 +626,8 @@ namespace DontDillyDally.Data
             {
                 return;
             }
+
+            _particleController.SetOpenedParticle(false);
 
             if (PhotonNetwork.InRoom)
             {

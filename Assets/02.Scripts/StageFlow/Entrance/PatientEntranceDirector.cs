@@ -21,6 +21,10 @@ public class PatientEntranceDirector : MonoBehaviour
     [Header("Target")]
     [SerializeField] private Transform _bedTransform;
 
+    [Header("Coordination")]
+    [Tooltip("Clear 연출 완료를 기다렸다가 Entrance를 시작하기 위해 참조. 비어있으면 대기 없이 즉시 시작(기존 동작).")]
+    [SerializeField] private PatientClearDirector _clearDirector;
+
     [Header("Debug")]
     [SerializeField] private bool _debugMode;
     [SerializeField] private float _debugDelay = 1.0f;
@@ -36,6 +40,9 @@ public class PatientEntranceDirector : MonoBehaviour
     private bool _hasPlayed;
     private bool _isBound;
     private bool _wasInTransition;
+
+    // Playing 페이즈로 진입했지만 Clear가 아직 진행 중이라 Entrance를 대기 중인 상태.
+    private bool _pendingNextEntrance;
 
     private void Awake()
     {
@@ -76,6 +83,11 @@ public class PatientEntranceDirector : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_clearDirector != null)
+        {
+            _clearDirector.OnClearFinished -= HandleClearFinishedForEntrance;
+        }
+
         _disposables.Dispose();
         ForceCompleteIfNeeded();
     }
@@ -138,19 +150,52 @@ public class PatientEntranceDirector : MonoBehaviour
             if (_wasInTransition)
             {
                 _wasInTransition = false;
-                _hasPlayed = false;
-                ForceCompleteIfNeeded();
+                _pendingNextEntrance = true;
 
-                // 퇴장 연출이 부모(patientRoot)를 움직였을 수 있으므로 부모부터 원복.
-                ResetParentPose();
-                SnapBedToFinalPose();
-                PlaySelectedEntrance();
+                // Clear가 아직 진행 중이면 OnClearFinished를 기다렸다가 Entrance를 시작.
+                // 이렇게 해야 리프트 중인 침대가 공중에서 순간이동하는 현상이 사라짐.
+                if (_clearDirector != null && _clearDirector.IsClearPlaying)
+                {
+                    // 중복 구독 방지 — -= 는 미구독이어도 안전.
+                    _clearDirector.OnClearFinished -= HandleClearFinishedForEntrance;
+                    _clearDirector.OnClearFinished += HandleClearFinishedForEntrance;
+                }
+                else
+                {
+                    ExecutePendingEntrance();
+                }
             }
         }
         else if (phase == EStagePhase.PatientTransition)
         {
             _wasInTransition = true;
         }
+    }
+
+    // Clear 시퀀스 종료(자연 완료 또는 강제 Kill) 시 PatientClearDirector가 호출.
+    private void HandleClearFinishedForEntrance()
+    {
+        if (_clearDirector != null)
+        {
+            _clearDirector.OnClearFinished -= HandleClearFinishedForEntrance;
+        }
+
+        if (_pendingNextEntrance)
+        {
+            ExecutePendingEntrance();
+        }
+    }
+
+    private void ExecutePendingEntrance()
+    {
+        _pendingNextEntrance = false;
+        _hasPlayed = false;
+        ForceCompleteIfNeeded();
+
+        // 퇴장 연출이 부모(patientRoot)를 움직였을 수 있으므로 부모부터 원복.
+        ResetParentPose();
+        SnapBedToFinalPose();
+        PlaySelectedEntrance();
     }
 
     private void PlaySelectedEntrance()

@@ -31,6 +31,12 @@ namespace DontDillyDally.Data
         [SerializeField] private ActionTimer _actionTimer;
         [SerializeField] private RunningMotion _runningMotion;
 
+        [Header("파티클")]
+        [SerializeField] private ParticleSystem _workingParticle;
+        [SerializeField] private ParticleSystem _openedParticle;
+
+        private MachineParticleController _particleController;
+
         private SterilizationSlot[] _slots;
         private bool _isBatchCompleted;
         private bool _isCompletionPending;
@@ -69,6 +75,9 @@ namespace DontDillyDally.Data
                 SFXKey.SterilizerOpen,
                 SFXKey.SterilizerClose,
                 SFXKey.SterilizerComplete);
+
+            _particleController = new MachineParticleController(_workingParticle, _openedParticle);
+            _particleController.ClearAll();
 
             _slots = new SterilizationSlot[MaxSlots];
             for (int i = 0; i < _slots.Length; i++)
@@ -235,6 +244,8 @@ namespace DontDillyDally.Data
                 photonView.RPC(nameof(RPC_SterilStartBatch), RpcTarget.Others, _sterilizationDuration);
             }
 
+            _particleController.SetOpenedParticle(false);
+            _particleController.SetWorkingParticle(true);
             _operationController.StartLocal(_sterilizationDuration, OnSterilizationTimerComplete);
         }
 
@@ -256,6 +267,7 @@ namespace DontDillyDally.Data
         {
             ClearDetachedSterilizationSlots();
 
+            _particleController.SetWorkingParticle(false);
             _operationController.CompleteLocal();
 
             // 결과 아이템의 ViewID를 수집하여 RPC로 전송
@@ -455,12 +467,15 @@ namespace DontDillyDally.Data
         private void RPC_SterilStartBatch(float duration)
         {
             _isCompletionPending = false;
+            _particleController.SetOpenedParticle(false);
+            _particleController.SetWorkingParticle(true);
             _operationController.StartRemote(duration, () => _isCompletionPending = true);
         }
 
         [PunRPC]
         private void RPC_SterilCompleteBatch(int[] resultViewIds)
         {
+            _particleController.SetWorkingParticle(false);
             _operationController.CompleteRemote();
             _isCompletionPending = false;
 
@@ -546,12 +561,14 @@ namespace DontDillyDally.Data
         private void RPC_SterilOpenDoor()
         {
             _operationController?.TryOpenDoor();
+            _particleController?.SetOpenedParticle(true);
         }
 
         [PunRPC]
         private void RPC_SterilCloseDoor()
         {
             _operationController?.TryCloseDoor();
+            _particleController?.SetOpenedParticle(false);
         }
 
         #endregion
@@ -565,10 +582,11 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            _particleController.SetOpenedParticle(true);
+
             if (PhotonNetwork.InRoom)
             {
                 photonView.RPC(nameof(RPC_SterilOpenDoor), RpcTarget.Others);
-
             }
         }
 
@@ -578,6 +596,8 @@ namespace DontDillyDally.Data
             {
                 return;
             }
+
+            _particleController.SetOpenedParticle(false);
 
             if (PhotonNetwork.InRoom)
             {

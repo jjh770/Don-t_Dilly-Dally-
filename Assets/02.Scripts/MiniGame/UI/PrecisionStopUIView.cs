@@ -87,6 +87,14 @@ namespace DontDillyDally.MiniGame
             UpdateFeedback();
         }
 
+        protected override void OnBeforeShowResult(bool isSuccess)
+        {
+            if (!isSuccess)
+            {
+                PlayLocalSfx(SFXKey.MiniGameFail);
+            }
+        }
+
         private void UpdateCursorPosition()
         {
             if (_cursor == null || _gaugeBar == null)
@@ -151,6 +159,7 @@ namespace DontDillyDally.MiniGame
                 }
 
                 PlayHitShake();
+                PlayLocalSfx(SFXKey.MiniGameGaugeClickSuccess);
             }
             else if (currentResult == false)
             {
