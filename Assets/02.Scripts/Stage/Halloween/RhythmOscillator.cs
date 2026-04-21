@@ -21,12 +21,14 @@ public class RhythmOscillator : MonoBehaviour
 
     private Quaternion _startLocalRotation;
     private Vector3 _startLocalScale;
+    private Vector3 _tiltAxisNormalized;
     private float _phaseOffset;
 
     private void Start()
     {
         _startLocalRotation = transform.localRotation;
         _startLocalScale = transform.localScale;
+        _tiltAxisNormalized = _tiltAxis.normalized;
 
         if (_useRandomPhase)
         {
@@ -50,7 +52,7 @@ public class RhythmOscillator : MonoBehaviour
         }
 
         float phase = Mathf.Sin(time * Mathf.PI * 2f / _tiltPeriod);
-        Quaternion tilt = Quaternion.AngleAxis(_tiltAngle * phase, _tiltAxis.normalized);
+        Quaternion tilt = Quaternion.AngleAxis(_tiltAngle * phase, _tiltAxisNormalized);
         transform.localRotation = _startLocalRotation * tilt;
     }
 
