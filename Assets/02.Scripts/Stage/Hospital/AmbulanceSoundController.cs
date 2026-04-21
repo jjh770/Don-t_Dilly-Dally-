@@ -1,24 +1,40 @@
 using Photon.Pun;
+using Photon.Realtime;
 using System.Collections;
 using UnityEngine;
 
-public class AmbulanceSoundController : MonoBehaviour
+public class AmbulanceSoundController : MonoBehaviourPunCallbacks
 {
     [Header("재생 설정")]
     [SerializeField] private SFXKey _sfxKey = SFXKey.None;
     [SerializeField] private float _minInterval = 30f;
     [SerializeField] private float _maxInterval = 60f;
 
-    private PhotonView _photonView;
+    private Coroutine _playCycleCoroutine;
 
     private void Start()
     {
-        _photonView = GetComponent<PhotonView>();
+        TryStartPlayCycle();
+    }
 
-        if (PhotonNetwork.IsMasterClient)
+    public override void OnMasterClientSwitched(Player newMasterClient)
+    {
+        TryStartPlayCycle();
+    }
+
+    private void TryStartPlayCycle()
+    {
+        if (!PhotonNetwork.IsMasterClient)
         {
-            StartCoroutine(PlayCycle());
+            return;
         }
+
+        if (_playCycleCoroutine != null)
+        {
+            return;
+        }
+
+        _playCycleCoroutine = StartCoroutine(PlayCycle());
     }
 
     private IEnumerator PlayCycle()
@@ -28,7 +44,7 @@ public class AmbulanceSoundController : MonoBehaviour
             float waitTime = Random.Range(_minInterval, _maxInterval);
             yield return new WaitForSeconds(waitTime);
 
-            _photonView.RPC(nameof(RPC_PlaySound), RpcTarget.All);
+            photonView.RPC(nameof(RPC_PlaySound), RpcTarget.All);
         }
     }
 
