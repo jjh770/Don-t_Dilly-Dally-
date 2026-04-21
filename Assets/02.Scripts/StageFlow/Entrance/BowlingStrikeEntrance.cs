@@ -42,6 +42,9 @@ public class BowlingStrikeEntrance : PatientEntranceBase
     [Tooltip("핀이 사라지는 시간 (초). 흩어진 후 축소되며 사라짐.")]
     [SerializeField] private float _pinFadeDuration = 0.3f;
 
+    [Tooltip("볼링핀 타격 사운드 이후 스트라이크 보이스가 재생되기까지의 딜레이 (초).")]
+    [SerializeField] private float _strikeVoiceDelay = 0.35f;
+
     [Header("Door Settings")]
     [Tooltip("Door1 오브젝트 (자식 문짝 2개를 자동으로 찾음).")]
     [SerializeField] private Transform _doorParent;
@@ -193,6 +196,9 @@ public class BowlingStrikeEntrance : PatientEntranceBase
                 .SetDelay(_scatterDuration * 0.7f);
         }
         SoundManager.Instance.Play(SFXKey.PatientBowlingStrike, SoundType.Local);
+        DOVirtual.DelayedCall(
+            _strikeVoiceDelay,
+            () => SoundManager.Instance.Play(SFXKey.PatientStrikeVoice, SoundType.Local));
     }
 
     private void CleanupPins()
