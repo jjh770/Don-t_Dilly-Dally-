@@ -105,6 +105,14 @@ public class PatientClearDirector : MonoBehaviour
 
     private void OnPhaseChanged(EStagePhase phase)
     {
+        if (phase == EStagePhase.GameOver)
+        {
+            // 환자 사망 연출과 충돌하지 않도록 진행 중인 Clear 강제 종료 후 재생 차단.
+            ForceCompleteIfNeeded();
+            _hasPlayed = true;
+            return;
+        }
+
         if (!_hasPlayed &&
             (phase == EStagePhase.PatientTransition || phase == EStagePhase.StageClear))
         {
