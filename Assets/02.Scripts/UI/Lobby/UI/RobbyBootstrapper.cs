@@ -37,8 +37,20 @@ public class RobbyBootstrapper : MonoBehaviour
         _attendanceView.Init(_attendancePresenter);
 
         _roomView.AttendancePopupButton.onClick.AddListener(_attendancePresenter.AttendancePopupOpen);
-        _tutorialOpenButton.onClick.AddListener(_tutorialView.Show);
-        _settingOpenButton.onClick.AddListener(_settingView.Show);
+        _tutorialOpenButton.onClick.AddListener(OnTutorialOpenClicked);
+        _settingOpenButton.onClick.AddListener(OnSettingOpenClicked);
+    }
+
+    private void OnTutorialOpenClicked()
+    {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
+        _tutorialView.Show();
+    }
+
+    private void OnSettingOpenClicked()
+    {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
+        _settingView.Show();
     }
 
     private void OnDestroy()
@@ -47,7 +59,7 @@ public class RobbyBootstrapper : MonoBehaviour
         _attendancePresenter.Dispose();
         _settingPresenter?.Dispose();
         _roomView.AttendancePopupButton.onClick.RemoveListener(_attendancePresenter.AttendancePopupOpen);
-        _tutorialOpenButton.onClick.RemoveListener(_tutorialView.Show);
-        _settingOpenButton.onClick.RemoveListener(_settingView.Show);
+        _tutorialOpenButton.onClick.RemoveListener(OnTutorialOpenClicked);
+        _settingOpenButton.onClick.RemoveListener(OnSettingOpenClicked);
     }
 }

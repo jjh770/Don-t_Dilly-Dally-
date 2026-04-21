@@ -175,16 +175,19 @@ public class UI_Customizing : UIPopupBase
 
     private void SelectCategory(CustomizingType type)
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _viewModel?.SelectCategory(type);
     }
 
     private void OnItemClicked(string itemId)
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _viewModel?.SelectOrToggleItem(itemId);
     }
 
     private void OnSaveClicked()
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         PlayButtonPop(_saveButton);
         _viewModel?.SaveToSelectedSlot();   // 먼저 슬롯에 현재 상태 저장
         _viewModel?.Save();                 // 전체 저장 (MergeMetaFrom에서 업데이트된 슬롯 반영)
@@ -224,6 +227,7 @@ public class UI_Customizing : UIPopupBase
 
     private void OnResetClicked()
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         PlayButtonPop(_resetButton);
         _viewModel?.ResetToSaved();
     }
@@ -261,6 +265,8 @@ public class UI_Customizing : UIPopupBase
     private void OnCloseClicked()
     {
         if (!_canClose) return;
+
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
 
         _viewModel?.CloseCustomizingUI();
         _playItemListAppearWhenShown = true;

@@ -75,6 +75,7 @@ public class UI_CustomizingSlotPanel : MonoBehaviour
 
     private void OnSlotClicked(int index)
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _viewModel?.SelectSlot(index);
     }
 
