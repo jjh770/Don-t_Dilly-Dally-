@@ -24,7 +24,6 @@ public class AttendanceManager : MonoBehaviour
     {
         _attendanceRepo = attendanceRepo;
         _rewardRepo = rewardRepo;
-        _rewardRepo = rewardRepo;
         _checkPolicy = checkPolicy ?? new DailyAttendanceCheckPolicy();
 
         _domainService = new AttendanceDomainService(_rewardRepo);
@@ -65,7 +64,7 @@ public class AttendanceManager : MonoBehaviour
 
             if (token.IsCancellationRequested) return;
 
-            if (!record.CanCheckToday())
+            if (!record.CanCheckNow())
             {
                 Debug.Log($"[AttendanceManager] {record.LastCheckedDate} : 이미 출석체크를 완료하였습니다.");
                 return;

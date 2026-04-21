@@ -282,12 +282,34 @@ namespace DontDillyDally.StageFlow
         // ── 이벤트 ──────────────────────────────────────────────────
         public event Action<StageRuntimeData> OnStageDataChanged;
         public event Action<StageReward, StageResult> OnStageRewardGranted;
+        public event Action OnEmergencyStarted;
+        public event Action<bool> OnEmergencyEnded;
 
 
         protected override void Awake()
         {
             base.Awake();
             _llmService = GetComponent<LLMService>();
+
+            if (_rpc != null)
+            {
+                _rpc.OnEmergencyStartedReceived += HandleEmergencyStartedRelay;
+                _rpc.OnEmergencyEndedReceived += HandleEmergencyEndedRelay;
+            }
+        }
+
+        private void HandleEmergencyStartedRelay(
+            EmergencyEventKind kind,
+            EmergencyTriggerSource triggerSource,
+            CraftedMaterialType trayTarget,
+            DiagnosisScanType diagnosisTarget)
+        {
+            OnEmergencyStarted?.Invoke();
+        }
+
+        private void HandleEmergencyEndedRelay(bool isSuccess)
+        {
+            OnEmergencyEnded?.Invoke(isSuccess);
         }
         // ================================================================
         //  초기화
@@ -563,7 +585,13 @@ namespace DontDillyDally.StageFlow
             {
                 PhotonServerManager.Instance.OnOtherPlayerLeftRoom -= HandleOtherPlayerLeftRoom;
             }
-                
+
+            if (_rpc != null)
+            {
+                _rpc.OnEmergencyStartedReceived -= HandleEmergencyStartedRelay;
+                _rpc.OnEmergencyEndedReceived -= HandleEmergencyEndedRelay;
+            }
+
             _trayHandler?.Dispose();
             _bootstrapCoordinator?.Dispose();
             _movementCoordinator?.Dispose();
