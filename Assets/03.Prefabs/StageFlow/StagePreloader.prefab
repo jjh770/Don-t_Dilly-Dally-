@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.DiseaseGenerationManager
   _generationService: {fileID: 3798566684079080676}
-  _maxRetries: 1
+  _maxRetries: 0
 --- !u!114 &3798566684079080676
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -60,10 +60,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.Data.DiseaseGenerationService
   _apiKeyConfig: {fileID: 11400000, guid: 6354bde06737cf049a270cb7be729a7c, type: 2}
-  _model: gemini-3-flash-preview
+  _model: gemini-3.1-flash-lite-preview
   _maxTokens: 4096
   _temperature: 0.85
-  _timeout: 15
+  _timeout: 10
   _systemPromptFile: {fileID: 4900000, guid: b2e33ac3f380e0a4eb556ce2bc8ef812, type: 3}
 --- !u!1 &6746352755665066306
 GameObject:
