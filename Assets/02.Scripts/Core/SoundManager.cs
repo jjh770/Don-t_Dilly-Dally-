@@ -83,6 +83,8 @@ public enum SFXKey
     Ambulance = 57,
     Infection = 58,
     PlayerRespawn = 59,
+    ResultStarStamp = 60,
+    ResultZeroStar = 61,
 }
 
 // 사운드 재생 타입.
