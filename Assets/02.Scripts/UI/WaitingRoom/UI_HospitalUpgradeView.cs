@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 public class UI_HospitalUpgradeView : MonoBehaviour
 {
+    [SerializeField] private GameObject _upgradeButtonRoot;
     [SerializeField] private Button _upgradeButton;
     [SerializeField] private GameObject _maxLevelTextObject;
     [SerializeField] private GameObject _requirementStampImageObject;
@@ -63,7 +64,7 @@ public class UI_HospitalUpgradeView : MonoBehaviour
         if (_upgradeButton != null)
         {
             _upgradeButton.interactable = hasNextLevel && canUpgrade;
-            _upgradeButton.gameObject.SetActive(hasNextLevel && isMaster);
+            _upgradeButtonRoot.gameObject.SetActive(hasNextLevel && isMaster);
         }
     }
 
