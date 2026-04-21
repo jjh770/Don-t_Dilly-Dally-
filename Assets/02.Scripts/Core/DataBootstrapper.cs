@@ -6,6 +6,7 @@ public class DataBootstrapper : MonoBehaviour
     [Header("출석체크")]
     [SerializeField] private AttendanceManager _attendanceManager;
     [SerializeField] private AttendanceRewardSO _rewardSO;
+    [SerializeField] private AttendanceCheckUnit _attendanceCheckUnit = AttendanceCheckUnit.Daily;
 
     [Header("세팅")]
     [SerializeField] private string _testUserId = "local_user";
@@ -64,7 +65,7 @@ public class DataBootstrapper : MonoBehaviour
         LoadingUIService.Hide();
 
         IAttendanceRepository attendanceRepository = new FirebaseAttendanceRepository(FirebaseInitializer.Instance.Database, PlayerDataManager.Instance.PlayerID);
-        _attendanceManager.Initialize(attendanceRepository, _rewardRepository);
+        _attendanceManager.Initialize(attendanceRepository, _rewardRepository, AttendanceCheckPolicyFactory.Create(_attendanceCheckUnit));
     }
 
     private void OnDestroy()
