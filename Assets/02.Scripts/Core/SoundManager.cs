@@ -82,6 +82,7 @@ public enum SFXKey
     HorrorTheme = 56,
     Ambulance = 57,
     Infection = 58,
+    PlayerRespawn = 59,
 }
 
 // 사운드 재생 타입.
