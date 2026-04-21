@@ -12,6 +12,7 @@ public class PlayerPresenter
         _owner = owner;
         PhotonServerManager.Instance.OnNicknameChanged += SetNickname;
         PhotonServerManager.Instance.OnReadyStateChanged += ReadyStateChange;
+        PhotonServerManager.Instance.OnGameInProgressChanged += GameInProgressChange;
         PhotonServerManager.Instance.OnMasterClientChanged += MasterClientChanged;
     }
 
@@ -55,10 +56,31 @@ public class PlayerPresenter
         _view.SetNickname(PlayerProperty.GetNickname(_owner));
 
         bool isInProgress = RoomProperties.GetGameInProgress();
-        _view.SetVisible(!isInProgress);
+        ApplyGameInProgress(isInProgress);
 
         if (isInProgress) return;
 
+        ApplyWaitingRoomState();
+    }
+
+    private void GameInProgressChange(bool isInProgress)
+    {
+        ApplyGameInProgress(isInProgress);
+
+        if (!isInProgress)
+        {
+            _view.SetNickname(PlayerProperty.GetNickname(_owner));
+            ApplyWaitingRoomState();
+        }
+    }
+
+    private void ApplyGameInProgress(bool isInProgress)
+    {
+        _view.SetVisible(!isInProgress);
+    }
+
+    private void ApplyWaitingRoomState()
+    {
         if (_owner.IsMasterClient)
         {
             _view.SetMasterNickname();
@@ -73,6 +95,7 @@ public class PlayerPresenter
     {
         PhotonServerManager.Instance.OnNicknameChanged -= SetNickname;
         PhotonServerManager.Instance.OnReadyStateChanged -= ReadyStateChange;
+        PhotonServerManager.Instance.OnGameInProgressChanged -= GameInProgressChange;
         PhotonServerManager.Instance.OnMasterClientChanged -= MasterClientChanged;
     }
 }
