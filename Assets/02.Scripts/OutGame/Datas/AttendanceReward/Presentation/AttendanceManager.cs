@@ -8,8 +8,9 @@ public class AttendanceManager : MonoBehaviour
     private IAttendanceRepository _attendanceRepo;
     private AttendanceDomainService _domainService;
     private IRewardRepository _rewardRepo;
+    private IAttendanceCheckPolicy _checkPolicy = new DailyAttendanceCheckPolicy();
 
-    private bool _isCheckedToday = false;
+    private bool _isChecking = false;
     public IRewardRepository RewardRepo => _rewardRepo;
 
     public event Action<AttendanceRecord> OnAttendanceRecordLoaded;
@@ -19,22 +20,25 @@ public class AttendanceManager : MonoBehaviour
 
     public bool IsReady { get; private set; }
 
-    public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo)
+    public void Initialize(IAttendanceRepository attendanceRepo, IRewardRepository rewardRepo, IAttendanceCheckPolicy checkPolicy = null)
     {
         _attendanceRepo = attendanceRepo;
         _rewardRepo = rewardRepo;
+        _rewardRepo = rewardRepo;
+        _checkPolicy = checkPolicy ?? new DailyAttendanceCheckPolicy();
 
         _domainService = new AttendanceDomainService(_rewardRepo);
 
         OnAttendanceManagerReady?.Invoke();
-  
+
         IsReady = true;
     }
 
     public void CheckAttendance(CancellationToken token)
     {
-        if (_isCheckedToday) return;
+        if (_isChecking) return;
 
+        _isChecking = true;
         CheckAttendanceAsync(token).Forget(Debug.LogException);
     }
 
@@ -45,16 +49,9 @@ public class AttendanceManager : MonoBehaviour
 
     private async UniTask<AttendanceRecord> LoadAttendanceAsync(CancellationToken token)
     {
-        var record = await _attendanceRepo.LoadAsync()
-            .AttachExternalCancellation(token);
+        var record = await LoadOrCreateRecordAsync(token);
 
         if (token.IsCancellationRequested) return null;
-
-        if (record == null)
-        {
-            record = new AttendanceRecord();
-            Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
-        }
 
         OnAttendanceRecordLoaded?.Invoke(record);
         return record;
@@ -62,42 +59,55 @@ public class AttendanceManager : MonoBehaviour
 
     private async UniTask CheckAttendanceAsync(CancellationToken token)
     {
+        try
+        {
+            var record = await LoadOrCreateRecordAsync(token);
+
+            if (token.IsCancellationRequested) return;
+
+            if (!record.CanCheckToday())
+            {
+                Debug.Log($"[AttendanceManager] {record.LastCheckedDate} : 이미 출석체크를 완료하였습니다.");
+                return;
+            }
+
+            if (_domainService.RewardComplete(record))
+            {
+                Debug.Log("[AttendanceManager] 모든 보상을 수령 완료하였습니다.");
+                return;
+            }
+
+            var reward = _domainService.CheckAndGetReward(record);
+            Debug.Log($"{record.TotalDays} attendance checked: {reward.ItemId}");
+
+            if (!string.IsNullOrEmpty(reward.ItemId) && CustomizingManager.Instance != null)
+            {
+                CustomizingManager.Instance.UnlockItem(reward.ItemId);
+            }
+
+            OnAttendanceChecked?.Invoke(record.TotalDays);
+
+            await _attendanceRepo.SaveAsync(record)
+                .AttachExternalCancellation(token);
+        }
+        finally
+        {
+            _isChecking = false;
+        }
+    }
+
+    private async UniTask<AttendanceRecord> LoadOrCreateRecordAsync(CancellationToken token)
+    {
         var record = await _attendanceRepo.LoadAsync()
             .AttachExternalCancellation(token);
 
-        if (token.IsCancellationRequested) return;
-
         if (record == null)
         {
-            record = new AttendanceRecord();
-            Debug.Log($"[AttendanceManager] 새로운 데이터를 생성합니다.");
+            record = new AttendanceRecord(0, null, _checkPolicy);
+            Debug.Log("[AttendanceManager] Created a new attendance record.");
         }
 
-        _isCheckedToday = true;
-
-        if (!record.CanCheckToday())
-        {
-            Debug.Log($"{record.TotalDays}일차 출석 이미 완료");
-            return;
-        }
-
-        if (_domainService.RewardComplete(record))
-        {
-            Debug.Log($"모든 보상을 수령 완료");
-            return;
-        }
-
-        var reward = _domainService.CheckAndGetReward(record);
-        Debug.Log($"{record.TotalDays}일차 출석 : {reward.ItemId} 수령");
-
-        if (!string.IsNullOrEmpty(reward.ItemId) && CustomizingManager.Instance != null)
-        {
-            CustomizingManager.Instance.UnlockItem(reward.ItemId);
-        }
-
-        OnAttendanceChecked?.Invoke(record.TotalDays);
-
-        await _attendanceRepo.SaveAsync(record)
-            .AttachExternalCancellation(token);
+        record.SetCheckPolicy(_checkPolicy);
+        return record;
     }
 }
