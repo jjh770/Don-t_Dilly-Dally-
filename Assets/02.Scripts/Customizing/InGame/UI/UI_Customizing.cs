@@ -135,7 +135,11 @@ public class UI_Customizing : UIPopupBase
             if (tab.Button == null) continue;
 
             CustomizingType type = tab.Type;
-            tab.Button.onClick.AddListener(() => SelectCategory(type));
+            tab.Button.onClick.AddListener(() =>
+            {
+                SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
+                SelectCategory(type);
+            });
         }
     }
 
@@ -175,7 +179,6 @@ public class UI_Customizing : UIPopupBase
 
     private void SelectCategory(CustomizingType type)
     {
-        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _viewModel?.SelectCategory(type);
     }
 
