@@ -27931,6 +27931,7 @@ Transform:
   - {fileID: 7743656556748899599}
   - {fileID: 417113206635990850}
   - {fileID: 7953168404472950972}
+  - {fileID: 4128685240051104529}
   - {fileID: 6056465775769927428}
   - {fileID: 5890684877515695430}
   - {fileID: 5708317186695222520}
@@ -28043,6 +28044,7 @@ MonoBehaviour:
   - {fileID: 618314406236856092}
   - {fileID: 1861866668217386721}
   _infectionZonePrefab: {fileID: 1757582032351673251, guid: 4371a010e3be63647acb75aaaeb1d37f, type: 3}
+  _spawnSfxKey: 58
   _spawnInterval: 30
   _zoneDuration: 15
 --- !u!114 &949786956873116910
@@ -57086,6 +57088,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: AmbulanceSoundController
       objectReference: {fileID: 0}
+    - target: {fileID: 2300481969918188514, guid: e36262b60f6923346b6c405396b29473, type: 3}
+      propertyPath: sceneViewId
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 3572058265490338033, guid: e36262b60f6923346b6c405396b29473, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.42025
@@ -59150,6 +59156,76 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 3491866398516753091, guid: 3f72852f2fccfba4f9770892f2a43982, type: 3}
   m_PrefabInstance: {fileID: 6253561099036702033}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &6465076677920856426
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 3362144873813857083}
+    m_Modifications:
+    - target: {fileID: 6986377859441780539, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: InitialModule.maxNumParticles
+      value: 15
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455647320, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: clearBehavior
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455647323, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_Name
+      value: CFXR3 Falling Leaves A (Lit, Green, Large)
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+--- !u!4 &4128685240051104529 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6986377859455935099, guid: 7d28fb626449d984092c170f7297bf24, type: 3}
+  m_PrefabInstance: {fileID: 6465076677920856426}
   m_PrefabAsset: {fileID: 0}
 --- !u!1001 &6509127077853792390
 PrefabInstance:
