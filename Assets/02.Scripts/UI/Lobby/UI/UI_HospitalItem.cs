@@ -23,13 +23,11 @@ public class UI_HospitalItem : MonoBehaviour
 
     private void OnItemClick()
     {
-        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         OnSelected?.Invoke(this);
     }
 
     private void OnDeleteButtonClick()
     {
-        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         OnDeleted?.Invoke(this);
     }
 

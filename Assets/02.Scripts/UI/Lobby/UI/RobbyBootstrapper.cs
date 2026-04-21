@@ -43,13 +43,11 @@ public class RobbyBootstrapper : MonoBehaviour
 
     private void OnTutorialOpenClicked()
     {
-        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _tutorialView.Show();
     }
 
     private void OnSettingOpenClicked()
     {
-        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _settingView.Show();
     }
 

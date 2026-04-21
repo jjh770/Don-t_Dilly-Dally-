@@ -69,7 +69,11 @@ namespace DontDillyDally.StageFlow
             StageFlowManager.Instance?.TryGetCurrentDisease(out disease);
             Player player = GetSurgeonPlayer();
 
-            if (reason == EGameOverReason.PatientDeath)
+            if (reason == EGameOverReason.PlayerDisconnected)
+            {
+                NotifyUIService.QueueForNextScene(ENotifyType.OtherPlayerLeft);
+            }
+            else if (reason == EGameOverReason.PatientDeath)
             {
                 StageFlowManager.Instance?.PerformanceTracker.Record(player, disease, EPerformanceEventType.PatientDied);
                 EventManager.Instance?.OnPatientDeath();
@@ -183,8 +187,6 @@ namespace DontDillyDally.StageFlow
             if (EGameOverReason.PlayerDisconnected == reason)
             {
                 Debug.Log("[StageFlow] Player가 게임을 이탈해 대기실로 복귀합니다.");
-                NotifyUIService.QueueForNextScene(ENotifyType.OtherPlayerLeft);
-
                 PhotonServerManager.Instance?.ReturnWaitingRoom();
                 return;
             }
@@ -197,7 +199,11 @@ namespace DontDillyDally.StageFlow
         {
             _host?.PublishGameOver(reason);
 
-            if (reason == EGameOverReason.PatientDeath)
+            if (reason == EGameOverReason.PlayerDisconnected)
+            {
+                NotifyUIService.QueueForNextScene(ENotifyType.OtherPlayerLeft);
+            }
+            else if (reason == EGameOverReason.PatientDeath)
             {
                 EventManager.Instance?.OnPatientDeath();
             }

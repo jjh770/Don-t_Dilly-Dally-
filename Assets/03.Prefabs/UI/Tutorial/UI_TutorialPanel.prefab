@@ -104,6 +104,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TutorialView
   _canvasGroup: {fileID: 4587800852703855550}
   _panel: {fileID: 8475797007129870657}
+  _closeOnEscape: 1
   _fadeDuration: 0.2
   _scaleDuration: 0.2
   _overshootScale: 1.1
@@ -626,6 +627,7 @@ GameObject:
   - component: {fileID: 4304036284117916744}
   - component: {fileID: 3738546913103411493}
   - component: {fileID: 8674006484146998888}
+  - component: {fileID: 6332747128231888417}
   m_Layer: 0
   m_Name: Button_Light
   m_TagString: Untagged
@@ -750,6 +752,22 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.101960786}
   m_EffectDistance: {x: 0, y: -5}
   m_UseGraphicAlpha: 1
+--- !u!114 &6332747128231888417
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4236763069951062250}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85c88b3d0975d0a4b9069987d5480707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_SoundTrigger
+  _soundType: 2
+  _buttonSfxKey: 1
+  _playHoverSound: 0
+  _hoverSfxKey: 1
 --- !u!1 &4847655046013855020
 GameObject:
   m_ObjectHideFlags: 0
@@ -932,6 +950,7 @@ GameObject:
   - component: {fileID: 8008140490992263226}
   - component: {fileID: 4789878506296256635}
   - component: {fileID: 6900488661194410962}
+  - component: {fileID: 9109031309845056315}
   m_Layer: 0
   m_Name: Button_Close
   m_TagString: Untagged
@@ -1041,6 +1060,22 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &9109031309845056315
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5747685299223648302}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85c88b3d0975d0a4b9069987d5480707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_SoundTrigger
+  _soundType: 2
+  _buttonSfxKey: 1
+  _playHoverSound: 0
+  _hoverSfxKey: 1
 --- !u!1 &5753318410472769255
 GameObject:
   m_ObjectHideFlags: 0
@@ -1054,6 +1089,7 @@ GameObject:
   - component: {fileID: 6399192675172097391}
   - component: {fileID: 3990031581143414405}
   - component: {fileID: 1711181023758397678}
+  - component: {fileID: 3774366323141132500}
   m_Layer: 0
   m_Name: Button_Left
   m_TagString: Untagged
@@ -1178,6 +1214,22 @@ MonoBehaviour:
   m_EffectColor: {r: 0, g: 0, b: 0, a: 0.101960786}
   m_EffectDistance: {x: 0, y: -5}
   m_UseGraphicAlpha: 1
+--- !u!114 &3774366323141132500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5753318410472769255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 85c88b3d0975d0a4b9069987d5480707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_SoundTrigger
+  _soundType: 2
+  _buttonSfxKey: 1
+  _playHoverSound: 0
+  _hoverSfxKey: 1
 --- !u!1 &7043903874733595751
 GameObject:
   m_ObjectHideFlags: 0
