@@ -133,7 +133,11 @@ public class PlayerRespawnAbility : MonoBehaviour
         }
 
         _photonView.RPC(nameof(RPC_PlayRespawnFx), RpcTarget.All);
-        if (isLocal) OnRespawnEnded?.Invoke();
+        if (isLocal)
+        {
+            SoundManager.Instance.Play(SFXKey.PlayerRespawn, SoundType.Local);
+            OnRespawnEnded?.Invoke();
+        }
         _isRespawning = false;
     }
 
