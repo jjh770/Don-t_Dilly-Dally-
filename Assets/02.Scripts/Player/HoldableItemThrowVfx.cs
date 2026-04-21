@@ -32,7 +32,8 @@ public class HoldableItemThrowVfx : MonoBehaviour
             _holdableItem.Landed -= HandleLanded;
         }
 
-        StopTrailLocal();
+        // OnDisable 시점에는 부모 GameObject가 이미 비활성화 중이므로 SetParent 없이 즉시 정리합니다.
+        StopTrailLocal(immediate: true);
     }
 
     private void HandleThrowStarted()
@@ -89,12 +90,12 @@ public class HoldableItemThrowVfx : MonoBehaviour
         _activeTrail.Play();
     }
 
-    private void StopTrailLocal()
+    private void StopTrailLocal(bool immediate = false)
     {
         if (_activeTrail == null)
             return;
 
-        _activeTrail.Stop();
+        _activeTrail.Stop(immediate);
         _activeTrail = null;
     }
 

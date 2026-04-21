@@ -137,6 +137,18 @@ public class PatientEntranceDirector : MonoBehaviour
 
     private void OnPhaseChanged(EStagePhase phase)
     {
+        if (phase == EStagePhase.GameOver)
+        {
+            // 사망 연출과 충돌 방지: 대기 중/진행 중 Entrance 취소.
+            _pendingNextEntrance = false;
+            _wasInTransition = false;
+            if (_clearDirector != null)
+            {
+                _clearDirector.OnClearFinished -= HandleClearFinishedForEntrance;
+            }
+            return;
+        }
+
         if (phase == EStagePhase.Countdown && !_hasPlayed)
         {
             PlaySelectedEntrance();
@@ -178,6 +190,14 @@ public class PatientEntranceDirector : MonoBehaviour
         if (_clearDirector != null)
         {
             _clearDirector.OnClearFinished -= HandleClearFinishedForEntrance;
+        }
+
+        // GameOver 이후엔 입장 연출 실행 금지 (Clear가 GameOver로 인해 강제 종료된 경우).
+        if (_stageFlowManager != null &&
+            _stageFlowManager.CurrentPhase.Value >= EStagePhase.GameOver)
+        {
+            _pendingNextEntrance = false;
+            return;
         }
 
         if (_pendingNextEntrance)
