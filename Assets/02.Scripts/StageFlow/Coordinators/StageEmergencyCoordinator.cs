@@ -90,7 +90,6 @@ namespace DontDillyDally.StageFlow
             _emergencyResultTcs = new UniTaskCompletionSource<EmergencyResumeResult>();
             _currentEmergencyActorNumber = -1;
 
-            EventManager.Instance?.OnPatientCritical("긴급 처치가 필요합니다.");
             _rpc.BroadcastEmergency(
                 kind,
                 triggerSource,
