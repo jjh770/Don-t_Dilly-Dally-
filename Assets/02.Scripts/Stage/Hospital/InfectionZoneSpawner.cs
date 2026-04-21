@@ -1,5 +1,5 @@
-using System.Collections;
 using Photon.Pun;
+using System.Collections;
 using UnityEngine;
 
 public class InfectionZoneSpawner : MonoBehaviourPun
@@ -7,6 +7,7 @@ public class InfectionZoneSpawner : MonoBehaviourPun
     [Header("스폰 설정")]
     [SerializeField] private Transform[] _spawnPoints;
     [SerializeField] private GameObject _infectionZonePrefab;
+    [SerializeField] private SFXKey _spawnSfxKey = SFXKey.Infection;
 
     [Header("타이밍")]
     [SerializeField] private float _spawnInterval = 60f;
@@ -63,6 +64,11 @@ public class InfectionZoneSpawner : MonoBehaviourPun
 
         DestroyCurrentZone();
         _currentZone = Instantiate(_infectionZonePrefab, spawnPoint.position, spawnPoint.rotation);
+
+        if (_spawnSfxKey != SFXKey.None)
+        {
+            SoundManager.Instance.Play(_spawnSfxKey, SoundType.Local);
+        }
     }
 
     [PunRPC]
