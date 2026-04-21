@@ -86,6 +86,7 @@ public enum SFXKey
     ResultStarStamp = 60,
     ResultZeroStar = 61,
     PatientDeathBeep = 62,
+    StampSound = 63,
 }
 
 // 사운드 재생 타입.
