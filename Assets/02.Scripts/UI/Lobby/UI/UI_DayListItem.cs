@@ -41,8 +41,8 @@ public class UI_DayListItem : MonoBehaviour
              .AppendCallback(() => _completeImage.enabled = true)
 
             .Append(t.DOScale(0.8f, 0.08f)
-            .SetEase(Ease.InQuad))         
-
+            .SetEase(Ease.InQuad))
+            .AppendCallback(() => SoundManager.Instance.Play(SFXKey.StampSound, SoundType.Local))
            .Append(t.DOScale(1.15f, 0.12f)
             .SetEase(Ease.OutBack))       
 
