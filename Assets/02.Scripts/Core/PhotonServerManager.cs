@@ -37,6 +37,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public event Action<string> OnFailedToJoinRoom;
     public event Action<Player, bool> OnReadyStateChanged;
     public event Action<Player, string> OnNicknameChanged;
+    public event Action<bool> OnGameInProgressChanged;
     public event Action OnMasterClientChanged;
     public event Action OnOtherPlayerLeftRoom;
     private bool _isReturningToWaitingRoom;
@@ -161,6 +162,14 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         if (changedProps.TryGetValue(PlayerProperty.NicknameKey, out object nicknameValue) && nicknameValue is string nickname)
         {
             OnNicknameChanged?.Invoke(targetPlayer, nickname);
+        }
+    }
+
+    public override void OnRoomPropertiesUpdate(Hashtable changedProps)
+    {
+        if (changedProps.TryGetValue(RoomProperties.IsGameInProgressKey, out object value) && value is bool isInProgress)
+        {
+            OnGameInProgressChanged?.Invoke(isInProgress);
         }
     }
 
