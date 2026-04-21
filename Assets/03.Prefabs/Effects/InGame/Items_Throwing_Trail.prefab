@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 2925475929406372889}
   - component: {fileID: 2925475929406372894}
   m_Layer: 0
-  m_Name: Smoke
+  m_Name: Star
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -116,8 +116,8 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 0.75
-      minScalar: 0.5
+      scalar: 0.5
+      minScalar: 0.3
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -251,8 +251,8 @@ ParticleSystem:
     startSize:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 1
-      minScalar: 0.7
+      scalar: 0.5
+      minScalar: 0.35
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -1314,7 +1314,7 @@ ParticleSystem:
         m_NumAlphaKeys: 2
   UVModule:
     serializedVersion: 2
-    enabled: 1
+    enabled: 0
     mode: 0
     timeMode: 0
     fps: 30
@@ -4614,7 +4614,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 7840d900dc0a4ed4dbcd26e23f064dd8, type: 2}
+  - {fileID: 2100000, guid: 39029f13e4f0bd94493ed939a7feff9c, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -9464,7 +9464,7 @@ ParticleSystemRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 92f497a3f1c7b5d49ad1b2854dd5d2bd, type: 2}
+  - {fileID: 2100000, guid: f4814d2dd466a574d8746a53e0ab0443, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
