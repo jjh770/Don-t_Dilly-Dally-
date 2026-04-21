@@ -4,6 +4,7 @@ using Photon.Realtime;
 using Photon.Voice.Unity;
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [DisallowMultipleComponent]
 public class PhotonVoiceManager : MonoBehaviourPunCallbacks
@@ -146,6 +147,11 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private ESceneType GetCurrentSceneType()
     {
+        if (SceneManager.GetActiveScene().name == "Cutscene")
+        {
+            return ESceneType.Cutscene;
+        }
+
         return SceneLoadManager.Instance != null
             ? SceneLoadManager.Instance.CurrentSceneType
             : default;
@@ -234,13 +240,6 @@ public class PhotonVoiceManager : MonoBehaviourPunCallbacks
 
     private RoleType ResolveOverlayRole(Player player)
     {
-        BindRoleManager();
-
-        if (_boundRoleManager != null && _boundRoleManager.TryGetAssignedRole(player, out RoleType assignedRole))
-        {
-            return assignedRole;
-        }
-
         return RoleProperties.GetPlayerRole(player);
     }
 

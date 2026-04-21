@@ -1,6 +1,7 @@
 using Cysharp.Threading.Tasks;
 using Photon.Pun;
 using System;
+using System.Threading;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -15,6 +16,7 @@ namespace DontDillyDally.StageFlow
     public class StageFlowBootstrapper : MonoBehaviour
     {
         private const float StageFlowManagerWaitTimeoutSec = 5f;
+        private const float RoomDataReadyTimeoutSec = 5f;
         private const string WaitingRoomSceneName = "WaitingRoom";
 
         public static StageFlowBootstrapper Instance { get; private set; }
@@ -26,6 +28,7 @@ namespace DontDillyDally.StageFlow
         private GameObject _stagePrefab;
         private GameObject _spawnedStageInstance;
         private bool _isCleaningUp;
+        private CancellationTokenSource _cts;
 
         private void Awake()
         {
@@ -37,30 +40,48 @@ namespace DontDillyDally.StageFlow
 
             Instance = this;
             IsStageFlowReady = false;
+            _cts = new CancellationTokenSource();
             DontDestroyOnLoad(gameObject);
             SceneManager.sceneLoaded += OnUnitySceneLoaded;
         }
 
         private void Start()
         {
-            if (RoomDataManager.Instance == null)
+            BeginBootstrapAsync(_cts.Token).Forget();
+        }
+
+        // 방장 양도 직후 사이클 2 진입 시 RoomDataManager/StagePreloader 동기화가 Start 시점보다
+        // 한 박자 늦어 _stageData/_stagePrefab이 null로 잡히는 경우가 있다. 짧게 폴링하여 기다린다.
+        private async UniTaskVoid BeginBootstrapAsync(CancellationToken ct)
+        {
+            float deadline = Time.unscaledTime + RoomDataReadyTimeoutSec;
+
+            while (!ct.IsCancellationRequested && Time.unscaledTime < deadline)
             {
-                Debug.LogWarning("[StageFlowBootstrapper] RoomDataManager 인스턴스가 아직 준비되지 않았습니다.");
+                if (RoomDataManager.Instance != null && StagePreloader.Instance != null)
+                {
+                    StageRuntimeData stageData = RoomDataManager.Instance.CreateCurrentStageRuntimeData();
+                    GameObject stagePrefab = RoomDataManager.Instance.CurrentStagePrefab;
+
+                    if (stageData != null && stagePrefab != null)
+                    {
+                        _stageData = stageData;
+                        _stagePrefab = stagePrefab;
+                        break;
+                    }
+                }
+
+                await UniTask.Yield(ct);
+            }
+
+            if (ct.IsCancellationRequested)
+            {
                 return;
             }
 
-            _stageData = RoomDataManager.Instance.CreateCurrentStageRuntimeData();
-            _stagePrefab = RoomDataManager.Instance.CurrentStagePrefab;
-
-            if (StagePreloader.Instance == null)
+            if (_stageData == null || _stagePrefab == null || StagePreloader.Instance == null)
             {
-                Debug.LogError("[StageFlowBootstrapper] StagePreloader 인스턴스가 아직 준비되지 않았습니다.");
-                return;
-            }
-
-            if (_stageData == null)
-            {
-                Debug.LogError("[StageFlowBootstrapper] StageRuntimeData 생성에 실패했습니다.");
+                Debug.LogError($"[StageFlowBootstrapper] 부트스트랩 준비 실패 - stageData={_stageData != null}, stagePrefab={_stagePrefab != null}, preloader={StagePreloader.Instance != null}");
                 return;
             }
 
@@ -95,6 +116,20 @@ namespace DontDillyDally.StageFlow
         {
             if (PhotonNetwork.IsMasterClient)
             {
+                // Start 단계에서 null이었던 값이 Gameplay 진입 전에 동기화되었을 수 있어 다시 조회한다.
+                if (_stagePrefab == null && RoomDataManager.Instance != null)
+                {
+                    _stagePrefab = RoomDataManager.Instance.CurrentStagePrefab;
+                }
+                if (_stageData == null && RoomDataManager.Instance != null)
+                {
+                    _stageData = RoomDataManager.Instance.CreateCurrentStageRuntimeData();
+                    if (_stageData != null && StagePreloader.Instance != null)
+                    {
+                        StagePreloader.Instance.Initialize(_stageData);
+                    }
+                }
+
                 if (_stagePrefab == null)
                 {
                     Debug.LogError("[StageFlowBootstrapper] Stage Prefab이 설정되지 않았습니다.");
@@ -107,16 +142,16 @@ namespace DontDillyDally.StageFlow
 
                 if (StagePreloader.Instance != null)
                 {
-                    await StagePreloader.Instance.WaitForDataPrep(destroyCancellationToken);
+                    await StagePreloader.Instance.WaitForDataPrep(_cts.Token);
                 }
             }
 
             float deadline = Time.unscaledTime + StageFlowManagerWaitTimeoutSec;
             while (StageFlowManager.Instance == null &&
                    Time.unscaledTime < deadline &&
-                   !destroyCancellationToken.IsCancellationRequested)
+                   !_cts.Token.IsCancellationRequested)
             {
-                await UniTask.Yield(destroyCancellationToken);
+                await UniTask.Yield(_cts.Token);
             }
 
             if (StageFlowManager.Instance == null)
@@ -145,6 +180,13 @@ namespace DontDillyDally.StageFlow
 
         private void OnDestroy()
         {
+            if (_cts != null)
+            {
+                _cts.Cancel();
+                _cts.Dispose();
+                _cts = null;
+            }
+
             ReleaseResources();
             SceneManager.sceneLoaded -= OnUnitySceneLoaded;
 
