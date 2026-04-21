@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace DontDillyDally.Data
 {
-    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Collider), typeof(PhotonView))]
     public class TrashBoxInteractable : MonoBehaviourPun, IInteractable, IItemAcceptor
     {
         private readonly HashSet<int> _processingItemIds = new HashSet<int>();
@@ -98,6 +98,13 @@ namespace DontDillyDally.Data
                 return;
             }
 
+            // 멀티플레이어에서 리모트 클라이언트의 물리 lerp로 트리거가 중복 발생해도
+            // 피드백이 겹치지 않도록, 아이템 소유 클라이언트에서만 처리한다.
+            if (!CanInitiateTrashForItem(itemObject))
+            {
+                return;
+            }
+
             int itemInstanceId = itemObject.GetInstanceID();
             if (!_processingItemIds.Add(itemInstanceId))
             {
@@ -109,10 +116,51 @@ namespace DontDillyDally.Data
             PlayTrashFeedback();
         }
 
+        private static bool CanInitiateTrashForItem(ItemObject itemObject)
+        {
+            // 오프라인(룸 미참여) 상태에서는 로컬 클라이언트가 단독으로 처리한다.
+            if (!PhotonNetwork.InRoom)
+            {
+                return true;
+            }
+
+            PhotonView itemPhotonView = itemObject.PhotonView;
+            if (itemPhotonView == null)
+            {
+                return false;
+            }
+
+            return itemPhotonView.IsMine;
+        }
+
         private void PlayTrashFeedback()
         {
+            // SoundType.Local은 본인 전용 피드백이므로 리모트 동기화 대상이 아니다.
             SoundManager.Instance.Play(SFXKey.RecycleBin, SoundType.Local);
+
+            RaiseItemTrashed();
+            BroadcastItemTrashedToRemotes();
+        }
+
+        private void RaiseItemTrashed()
+        {
             ItemTrashed?.Invoke();
+        }
+
+        private void BroadcastItemTrashedToRemotes()
+        {
+            if (!PhotonNetwork.InRoom || photonView == null)
+            {
+                return;
+            }
+
+            photonView.RPC(nameof(RPC_OnItemTrashed), RpcTarget.Others);
+        }
+
+        [PunRPC]
+        private void RPC_OnItemTrashed()
+        {
+            RaiseItemTrashed();
         }
 
         private IEnumerator ReleaseProcessingLockNextFrame(int itemInstanceId)

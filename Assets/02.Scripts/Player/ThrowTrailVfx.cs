@@ -35,7 +35,7 @@ public class ThrowTrailVfx : MonoBehaviour
         }
     }
 
-    public void Stop()
+    public void Stop(bool immediate = false)
     {
         if (_isStopScheduled)
             return;
@@ -49,6 +49,14 @@ public class ThrowTrailVfx : MonoBehaviour
                 continue;
 
             system.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+
+        // 부모가 OnDisable/Destroy 경로를 타는 경우 SetParent 호출이 금지됩니다.
+        // 이때는 잔여 페이드아웃 없이 즉시 정리합니다.
+        if (immediate)
+        {
+            Destroy(gameObject);
+            return;
         }
 
         // 부모 아이템이 풀로 반환되어도 잔여 파티클이 자연스럽게 페이드아웃 되도록 부모를 분리합니다.

@@ -343,12 +343,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1792241193967303575}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.25642192, y: -0.6766741, z: 0.27389005, w: 0.63351727}
-  m_LocalPosition: {x: 0.306, y: 0.347, z: -0.018}
-  m_LocalScale: {x: 0.6, y: 0.6, z: 0.6}
+  m_LocalRotation: {x: 0.26349643, y: -0.67969716, z: 0.2662994, w: 0.6306078}
+  m_LocalPosition: {x: 0.30599996, y: -0.059592776, z: -0.01933885}
+  m_LocalScale: {x: 0.59999996, y: 0.6, z: 0.59999996}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2026366565114584179}
+  m_Father: {fileID: 7799579753919559528}
   m_LocalEulerAnglesHint: {x: 44.072, y: -93.773, z: 0}
 --- !u!33 &4771948561085244605
 MeshFilter:
@@ -1602,6 +1602,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 5536601980533250785}
+  - {fileID: 3067929766105098624}
   m_Father: {fileID: 976042427138456849}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &4517894850906975223
@@ -2565,6 +2566,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2026366565114584179}
   - component: {fileID: 3053541462391465840}
+  - component: {fileID: 1000000000000000100}
   m_Layer: 0
   m_Name: Solider
   m_TagString: Untagged
@@ -2586,7 +2588,6 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 3455588787235101272}
-  - {fileID: 3067929766105098624}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!95 &3053541462391465840
@@ -2599,7 +2600,7 @@ Animator:
   m_GameObject: {fileID: 6536501996314029870}
   m_Enabled: 1
   m_Avatar: {fileID: 9000000, guid: 571adabd431d59248ab0524b96f6d52a, type: 3}
-  m_Controller: {fileID: 9100000, guid: 79e4be3ec0f43c24c8f1e6ba093a4991, type: 2}
+  m_Controller: {fileID: 9100000, guid: 23250d73aae5241429b7e3e9f7732541, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -2611,6 +2612,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &1000000000000000100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6536501996314029870}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d86b45daafb5884cb3494c32c53a4a5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _animator: {fileID: 3053541462391465840}
+  _minInterval: 5
+  _maxInterval: 12
+  _idleStateName: Skeleton_01_Idle
 --- !u!1 &6681456612184634388
 GameObject:
   m_ObjectHideFlags: 0
