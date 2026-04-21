@@ -50,6 +50,10 @@ namespace DontDillyDally.StageFlow
             while (true)
             {
                 ct.ThrowIfCancellationRequested();
+                if (_host != null && _host.IsGameOver)
+                {
+                    return false;
+                }
 
                 _rpc?.SetRecipeIndex(recipeIndex);
                 Debug.Log($"[StageFlow]     레시피 {recipeIndex + 1} 대기 중... (트레이 제출 대기)");
@@ -59,6 +63,10 @@ namespace DontDillyDally.StageFlow
 
                 var (completedTaskIndex, tray, _) = await UniTask.WhenAny(waitForTrayTask, forceSuccessTask);
                 IsWaitingForSubmission = false;
+                if (_host != null && _host.IsGameOver)
+                {
+                    return false;
+                }
 
                 if (completedTaskIndex == 1)
                 {
@@ -78,6 +86,10 @@ namespace DontDillyDally.StageFlow
 
                     bool shouldAdvanceRecipe = _host != null &&
                         await _host.RunRecipeMiniGame(ct);
+                    if (_host != null && _host.IsGameOver)
+                    {
+                        return false;
+                    }
 
                     if (shouldAdvanceRecipe)
                     {
@@ -136,6 +148,10 @@ namespace DontDillyDally.StageFlow
                         IsWaitingForSubmission))
                 {
                     await _emergencyCoordinator.WaitForResult(ct);
+                    if (_host != null && _host.IsGameOver)
+                    {
+                        return false;
+                    }
                 }
             }
         }

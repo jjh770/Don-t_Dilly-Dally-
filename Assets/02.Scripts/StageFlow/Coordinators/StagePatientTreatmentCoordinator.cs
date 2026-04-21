@@ -54,6 +54,11 @@ namespace DontDillyDally.StageFlow
             for (int i = 0; i < stageData.Patients.Count; i++)
             {
                 ct.ThrowIfCancellationRequested();
+                if (_host != null && _host.IsGameOver)
+                {
+                    break;
+                }
+
                 _rpc.SetPatientIndex(i);
 
                 if (i > 0)
@@ -64,6 +69,11 @@ namespace DontDillyDally.StageFlow
                     _host?.SyncTimerState();
                     _rpc.SetPhase(EStagePhase.PatientTransition);
                     await UniTask.Delay(TimeSpan.FromSeconds(patientTransitionDelaySec), cancellationToken: ct);
+                    if (_host != null && _host.IsGameOver)
+                    {
+                        break;
+                    }
+
                     _rpc.SetPhase(EStagePhase.Playing);
                     _timer.Resume();
                     _host?.ResumeDrain(_host.CurrentPhase);
@@ -71,7 +81,11 @@ namespace DontDillyDally.StageFlow
                     Debug.Log("[StageFlow]   환자 전환 완료 (타이머 재개)");
                 }
 
-                await RunPatientLoop(i, stageData, ct);
+                bool isPatientSaved = await RunPatientLoop(i, stageData, ct);
+                if (!isPatientSaved)
+                {
+                    break;
+                }
             }
         }
 
@@ -88,7 +102,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 내부 환자 단위 처리 ─────────────────────────────────────
 
-        private async UniTask RunPatientLoop(int patientIndex, StageRuntimeData stageData, CancellationToken ct)
+        private async UniTask<bool> RunPatientLoop(int patientIndex, StageRuntimeData stageData, CancellationToken ct)
         {
             DiseaseData disease = stageData.Patients[patientIndex];
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 시작 | 병명: {disease.DiseaseName} | 레시피: {disease.Recipes?.Count ?? 0}단계 | 체력: {stageData.Settings.PatientSettings.InitialPatientHealth}");
@@ -111,7 +125,7 @@ namespace DontDillyDally.StageFlow
 
                 if (!isPatientSaved || (_host != null && _host.IsGameOver))
                 {
-                    return;
+                    return false;
                 }
             }
             finally
@@ -123,6 +137,7 @@ namespace DontDillyDally.StageFlow
             Debug.Log($"[StageFlow] ── 환자 {patientIndex + 1}/{stageData.Patients.Count} 치료 완료! | 병명: {disease.DiseaseName} | 남은 체력: {currentHealth}");
             StageFlowManager.Instance?.PerformanceTracker.Record(GetSurgeonPlayer(), disease, EPerformanceEventType.PatientSaved);
             stageData.SavedCount += 1;
+            return true;
         }
 
         private Player GetSurgeonPlayer()

@@ -83,7 +83,7 @@ public enum SFXKey
     Ambulance = 57,
     Infection = 58,
     PlayerRespawn = 59,
-    StampSound = 60,
+    StampSound = 62,
 }
 
 // 사운드 재생 타입.
