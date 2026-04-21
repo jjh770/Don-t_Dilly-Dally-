@@ -168,7 +168,7 @@ public class RewardView : UIPopupBase
         {
             if (clamped == 0)
             {
-                SoundManager.Instance.Play(SFXKey.Result_ZeroStar, SoundType.Local);
+                SoundManager.Instance.Play(SFXKey.ResultZeroStar, SoundType.Local);
             }
             else if (clamped == 2)
             {
@@ -188,7 +188,7 @@ public class RewardView : UIPopupBase
             seq.AppendCallback(() =>
             {
                 PlayStarReveal(_stars[index]);
-                SoundManager.Instance.Play(SFXKey.Result_StarStamp, SoundType.Local);
+                SoundManager.Instance.Play(SFXKey.ResultStarStamp, SoundType.Local);
             });
 
             if (i < clamped - 1)
