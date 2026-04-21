@@ -71,8 +71,8 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
             _settingPresenter = new SettingPresenter(_settingView, SoundManager.Instance);
             if (_settingOpenButton != null)
             {
-                _settingOpenButton.onClick.RemoveListener(_settingView.Show);
-                _settingOpenButton.onClick.AddListener(_settingView.Show);
+                _settingOpenButton.onClick.RemoveListener(OnSettingOpenClicked);
+                _settingOpenButton.onClick.AddListener(OnSettingOpenClicked);
             }
         }
 
@@ -91,6 +91,12 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         }
     }
 
+    private void OnSettingOpenClicked()
+    {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
+        _settingView.Show();
+    }
+
     private void OnDestroy()
     {
         _presenter?.Dispose();
@@ -99,7 +105,7 @@ public class WaitingRoomBootStrapper : MonoBehaviourPunCallbacks
         _settingPresenter?.Dispose();
         if (_settingOpenButton != null && _settingView != null)
         {
-            _settingOpenButton.onClick.RemoveListener(_settingView.Show);
+            _settingOpenButton.onClick.RemoveListener(OnSettingOpenClicked);
         }
         _customizingViewModel?.Dispose();
     }

@@ -54,11 +54,13 @@ public class RoomView : MonoBehaviour
 
     public void OnEnterButtonClick()
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _presenter.EnterRoom(_roomCodeInputField.text);
     }
 
     public void OnCreateButtonClick()
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _presenter.CreateRoom();
     }
 

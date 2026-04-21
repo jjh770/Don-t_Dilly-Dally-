@@ -39,7 +39,7 @@ public class SettingView : UIPopupBase
 
         if (_closeButton != null)
         {
-            _closeButton.onClick.AddListener(Hide);
+            _closeButton.onClick.AddListener(OnCloseClicked);
         } 
     }
 
@@ -62,8 +62,14 @@ public class SettingView : UIPopupBase
 
         if (_closeButton != null)
         {
-            _closeButton.onClick.RemoveListener(Hide);
+            _closeButton.onClick.RemoveListener(OnCloseClicked);
         }
+    }
+
+    private void OnCloseClicked()
+    {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
+        Hide();
     }
 
     public void Initialize(SettingPresenter presenter)
@@ -102,6 +108,7 @@ public class SettingView : UIPopupBase
 
     private void HandleQuitButtonClicked()
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _presenter?.HandleQuitButtonClicked();
     }
 
