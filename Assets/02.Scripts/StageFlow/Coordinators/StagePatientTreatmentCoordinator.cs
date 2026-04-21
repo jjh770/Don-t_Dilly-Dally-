@@ -107,7 +107,12 @@ namespace DontDillyDally.StageFlow
             try
             {
                 UniTask<bool> forceSuccessTask = _forcePatientSuccessTcs.Task;
-                await _recipeProgressCoordinator.RunRecipeLoop(disease, forceSuccessTask, ct);
+                bool isPatientSaved = await _recipeProgressCoordinator.RunRecipeLoop(disease, forceSuccessTask, ct);
+
+                if (!isPatientSaved || (_host != null && _host.IsGameOver))
+                {
+                    return;
+                }
             }
             finally
             {

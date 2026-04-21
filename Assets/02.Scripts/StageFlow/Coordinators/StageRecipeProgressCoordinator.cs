@@ -43,7 +43,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 레시피 루프 ──────────────────────────────────────────────
 
-        public async UniTask RunRecipeLoop(DiseaseData disease, UniTask<bool> forceSuccessTask, CancellationToken ct)
+        public async UniTask<bool> RunRecipeLoop(DiseaseData disease, UniTask<bool> forceSuccessTask, CancellationToken ct)
         {
             int recipeIndex = 0;
 
@@ -63,7 +63,7 @@ namespace DontDillyDally.StageFlow
                 if (completedTaskIndex == 1)
                 {
                     Debug.Log("[StageFlow]     디버그 요청으로 현재 환자를 성공 처리합니다.");
-                    return;
+                    return true;
                 }
 
                 PhotonServerManager.Instance.TryGetPlayerByActorNumber(_trayHandler.LastSubmitterActorNumber, out Player player);
@@ -89,7 +89,7 @@ namespace DontDillyDally.StageFlow
                         if (completionResult.DiseaseCured)
                         {
                             Debug.Log("[StageFlow]     ★ 질병 완치!");
-                            return;
+                            return true;
                         }
 
                         recipeIndex++;
@@ -118,7 +118,7 @@ namespace DontDillyDally.StageFlow
                 if (_host != null && _host.IsGameOver)
                 {
                     Debug.Log("[StageFlow]     !! 환자 사망 → 게임 오버");
-                    return;
+                    return false;
                 }
 
                 if (_emergencyPolicy == null || !_emergencyPolicy.ShouldTriggerOnRecipeFail(_host?.StageData))
