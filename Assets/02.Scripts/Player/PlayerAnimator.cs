@@ -8,7 +8,7 @@ public class PlayerAnimator : MonoBehaviour
     private static readonly int IsGrabbing = Animator.StringToHash("IsGrabbing");
     private static readonly int IsPushing = Animator.StringToHash("IsPushing");
     private static readonly int IsWalking = Animator.StringToHash("IsWalking");
-    private static readonly int Throw = Animator.StringToHash("Throw");
+    private static readonly int IsThrowing = Animator.StringToHash("IsThrowing");
 
     private void Awake()
     {
@@ -30,14 +30,9 @@ public class PlayerAnimator : MonoBehaviour
         _animator.SetBool(IsGrabbing, isGrabbing);
     }
 
-    public void PlayThrowAnimation()
+    public void PlayThrowAnimation(bool isThrowing)
     {
-        _animator.SetTrigger(Throw);
-    }
-
-    public void ResetThrowAnimation()
-    {
-        _animator.ResetTrigger(Throw);
+        _animator.SetBool(IsThrowing, isThrowing);
     }
 
     public void PlayPushAnimation(bool isPushing)
