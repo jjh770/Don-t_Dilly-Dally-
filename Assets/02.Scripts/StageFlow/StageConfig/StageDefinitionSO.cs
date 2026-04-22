@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace DontDillyDally.StageFlow
@@ -19,6 +20,10 @@ namespace DontDillyDally.StageFlow
         [Header("Unlock Condition")]
         [SerializeField] private int _requiredHospitalLevel = 0;
 
+        [Header("Patient Appearance")]
+        [Tooltip("이 스테이지에서만 등장하는 환자 외형 프리셋. 공통 풀과 합쳐져 랜덤 추첨됩니다.")]
+        [SerializeField] private List<PatientAppearanceSO> _stageOnlyAppearances = new();
+
         public string StageId => _stageId;
         public string StageName => string.IsNullOrWhiteSpace(_stageName) ? _stageId : _stageName;
         public Sprite StageThumbnail => _stageThumbnail;
@@ -28,6 +33,7 @@ namespace DontDillyDally.StageFlow
         public bool IsDefaultUnlocked => _requiredHospitalLevel == 0;
 
         public GameObject StagePrefab => _stagePrefab;
+        public IReadOnlyList<PatientAppearanceSO> StageOnlyAppearances => _stageOnlyAppearances;
 
         private void OnEnable()
         {

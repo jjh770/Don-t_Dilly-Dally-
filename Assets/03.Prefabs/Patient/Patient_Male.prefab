@@ -763,6 +763,7 @@ GameObject:
   m_Component:
   - component: {fileID: 6494175492576298500}
   - component: {fileID: 8975490866961098783}
+  - component: {fileID: 873657804486129184}
   m_Layer: 0
   m_Name: Patient_Male
   m_TagString: Untagged
@@ -811,6 +812,27 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &873657804486129184
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2812004023831726623}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1784778d11e87044fae90261b0dc6f2a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DontDillyDally.StageFlow.PatientAppearanceVariator
+  _earsRenderer: {fileID: 4403535995561255813}
+  _faceRenderer: {fileID: 4576891916648520078}
+  _hairRenderer: {fileID: 4443623414108357972}
+  _bodyRenderer: {fileID: 6346179427230973398}
+  _outfitRenderer: {fileID: 1910509178956154261}
+  _shortsRenderer: {fileID: 6069342938909753434}
+  _socksRenderer: {fileID: 2698882438718988416}
+  _shoesRenderer: {fileID: 691615857682381317}
+  _commonAppearances: {fileID: 0}
 --- !u!1 &2930137104755107052
 GameObject:
   m_ObjectHideFlags: 0
@@ -1200,7 +1222,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2cc0c7d80acc4114696a62f122b72098, type: 2}
+  - {fileID: 2100000, guid: 6a4c0a5109ac9314e97b0138b1203c35, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2224,7 +2246,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2cc0c7d80acc4114696a62f122b72098, type: 2}
+  - {fileID: 2100000, guid: 6a4c0a5109ac9314e97b0138b1203c35, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2392,7 +2414,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 2cc0c7d80acc4114696a62f122b72098, type: 2}
+  - {fileID: 2100000, guid: 6a4c0a5109ac9314e97b0138b1203c35, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
