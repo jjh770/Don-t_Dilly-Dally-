@@ -2,6 +2,7 @@ using System;
 
 public enum ELoadingStep
 {
+    None,
     FirebaseInit,
     PlayerDataLoad,
     AttendanceLoad,
@@ -25,6 +26,7 @@ public static class LoadingUIService
 
     public static void Hide()
     {
+        CurrentStep = ELoadingStep.None;
         IsVisible = false;
         OnHideRequested?.Invoke();
     }
