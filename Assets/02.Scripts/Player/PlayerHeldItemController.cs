@@ -29,6 +29,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 
     private PlayerAnimator _playerAnimator;
     private PlayerMovementAbility _playerMovement;
+    private PhotonView _photonView;
     private Camera _camera;
     private Collider[] _playerColliders;
     private readonly object _movementLockSource = new();
@@ -40,7 +41,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     public bool IsThrowing => _isThrowing;
     public Transform HoldPoint => _holdPoint;
 
-    public PhotonView GetInteractorPhotonView() => GetComponent<PhotonView>();
+    public PhotonView GetInteractorPhotonView() => _photonView;
     public Transform GetHandAttachPoint() => _holdPoint;
 
     public event Action<ItemObject> HeldItemChanged;
@@ -49,6 +50,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     {
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerMovement = GetComponent<PlayerMovementAbility>();
+        _photonView = GetComponent<PhotonView>();
         _camera = Camera.main;
         _playerColliders = GetComponentsInChildren<Collider>();
     }
@@ -192,12 +194,12 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             yield break;
         }
 
-        _playerAnimator?.PlayThrowAnimation();
+        _playerAnimator?.PlayThrowAnimation(true);
         yield return new WaitForSeconds(_throwDelay);
 
         if (_currentHeldInteractable is not IHoldable holdableAfterDelay)
         {
-            _playerAnimator?.ResetThrowAnimation();
+            _playerAnimator?.PlayThrowAnimation(false);
             _playerAnimator?.PlayHoldAnimation(false);
             _isThrowing = false;
             yield break;
@@ -207,7 +209,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         _currentHeldInteractable = null;
         SetCurrentHeldItem(null);
 
-        _playerAnimator?.ResetThrowAnimation();
+        _playerAnimator?.PlayThrowAnimation(false);
         _playerAnimator?.PlayHoldAnimation(false);
 
         _isThrowing = false;
@@ -414,4 +416,5 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         _currentHeldItem = newItem;
         HeldItemChanged?.Invoke(_currentHeldItem);
     }
+
 }
