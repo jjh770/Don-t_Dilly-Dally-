@@ -19,29 +19,29 @@
         },
         {
           "recipeId": "FB_001_step_02",
-          "displayName": "환부 절개 준비",
+          "displayName": "환부 세척",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "RedMedicine"
+            "FilledPotionCyan",
+            "MixedPotionGreen"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_001_step_03",
-          "displayName": "항진균 물약 도포",
+          "displayName": "각질 제거",
           "requiredMaterials": [
-            "FilledPotionCyan",
-            "MixedPotionGreen"
+            "SterilizedScalpelGreen",
+            "SterilizedScissorsSmall"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_001_step_04",
-          "displayName": "붕대 마무리",
+          "displayName": "항균 도포",
           "requiredMaterials": [
-            "Bandage",
+            "RedMedicine",
             "FilledPotionYellow"
           ],
           "order": 3,
@@ -68,28 +68,28 @@
         },
         {
           "recipeId": "FB_008_step_02",
-          "displayName": "절개 준비",
+          "displayName": "복부 절개",
           "requiredMaterials": [
             "SterilizedScalpelGreen",
-            "SterilizedPincetteStraight"
+            "SterilizedPincetteStraight",
+            "MixedPotionRed"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_008_step_03",
-          "displayName": "맹장 절제",
+          "displayName": "맹장 적출",
           "requiredMaterials": [
             "SterilizedScissorsSmall",
-            "OrganIntestine",
-            "RedMedicine"
+            "OrganIntestine"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_008_step_04",
-          "displayName": "항생 물약 투여",
+          "displayName": "내부 소독",
           "requiredMaterials": [
             "MixedPotionBlue",
             "MixedPotionGreen"
@@ -99,10 +99,10 @@
         },
         {
           "recipeId": "FB_008_step_05",
-          "displayName": "붕대 마무리",
+          "displayName": "최종 봉합",
           "requiredMaterials": [
             "Bandage",
-            "FilledPotionYellow"
+            "RedMedicine"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -128,10 +128,9 @@
         },
         {
           "recipeId": "FB_011_step_02",
-          "displayName": "외상 부위 절개",
+          "displayName": "지혈 처치",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedScissorsSmall",
+            "MixedPotionRed",
             "RedMedicine"
           ],
           "order": 1,
@@ -139,31 +138,32 @@
         },
         {
           "recipeId": "FB_011_step_03",
-          "displayName": "뼈 정렬 및 지혈",
+          "displayName": "골절 정복",
           "requiredMaterials": [
             "SterilizedBoneSaw",
             "SterilizedPincetteStraight",
-            "MixedPotionRed"
+            "SterilizedScissorsSmall"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_011_step_04",
-          "displayName": "회복 물약 투여",
+          "displayName": "조직 재생",
           "requiredMaterials": [
             "MixedPotionGreen",
-            "FilledPotionCyan"
+            "FilledPotionCyan",
+            "FilledPotionMagenta"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_011_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "고정 붕대",
           "requiredMaterials": [
             "Bandage",
-            "FilledPotionMagenta"
+            "MixedPotionBlack"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -189,8 +189,9 @@
         },
         {
           "recipeId": "FB_101_step_02",
-          "displayName": "두개 절개 처치",
+          "displayName": "두개 개봉",
           "requiredMaterials": [
+            "SterilizedBoneSaw",
             "SterilizedScalpelGreen",
             "SterilizedPincetteStraight"
           ],
@@ -199,30 +200,31 @@
         },
         {
           "recipeId": "FB_101_step_03",
-          "displayName": "지혈 물약 도포",
+          "displayName": "이물 제거",
           "requiredMaterials": [
-            "MixedPotionRed",
-            "RedMedicine"
+            "SterilizedScissorsSmall",
+            "MixedPotionRed"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_101_step_04",
-          "displayName": "회복 물약 투여",
+          "displayName": "소생 물약",
           "requiredMaterials": [
             "FilledPotionCyan",
-            "MixedPotionGreen"
+            "MixedPotionGreen",
+            "RedMedicine"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_101_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "두부 봉합",
           "requiredMaterials": [
             "Bandage",
-            "FilledPotionYellow"
+            "FilledPotionMagenta"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -248,9 +250,10 @@
         },
         {
           "recipeId": "FB_102_step_02",
-          "displayName": "독소 중화 물약",
+          "displayName": "해독 물약",
           "requiredMaterials": [
-            "FilledPotionMagenta",
+            "FilledPotionCyan",
+            "FilledPotionYellow",
             "MixedPotionBlue"
           ],
           "order": 1,
@@ -258,9 +261,9 @@
         },
         {
           "recipeId": "FB_102_step_03",
-          "displayName": "피부 절개 해독",
+          "displayName": "중화 처치",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
+            "MixedPotionGreen",
             "MixedPotionBlack"
           ],
           "order": 2,
@@ -268,10 +271,10 @@
         },
         {
           "recipeId": "FB_102_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "면역 강화",
           "requiredMaterials": [
-            "Bandage",
-            "FilledPotionCyan"
+            "RedMedicine",
+            "FilledPotionMagenta"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -297,7 +300,7 @@
         },
         {
           "recipeId": "FB_103_step_02",
-          "displayName": "붕대 제거 절개",
+          "displayName": "속박 절단",
           "requiredMaterials": [
             "SterilizedScissorsSmall",
             "SterilizedScalpelGreen"
@@ -307,20 +310,20 @@
         },
         {
           "recipeId": "FB_103_step_03",
-          "displayName": "혈액 순환 회복",
+          "displayName": "순환 회복",
           "requiredMaterials": [
             "MixedPotionRed",
-            "FilledPotionMagenta"
+            "FilledPotionCyan"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_103_step_04",
-          "displayName": "재붕대 마감",
+          "displayName": "재압박 고정",
           "requiredMaterials": [
             "Bandage",
-            "MixedPotionGreen"
+            "RedMedicine"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -346,33 +349,43 @@
         },
         {
           "recipeId": "FB_104_step_02",
-          "displayName": "장 절개 및 이물 제거",
+          "displayName": "복부 개복",
           "requiredMaterials": [
             "SterilizedScalpelGreen",
-            "SterilizedPincetteStraight",
-            "OrganIntestine"
+            "SterilizedPincetteStraight"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_104_step_03",
-          "displayName": "소화 촉진 물약",
+          "displayName": "장 세척",
           "requiredMaterials": [
+            "OrganIntestine",
             "FilledPotionYellow",
-            "MixedPotionBlue"
+            "MixedPotionGreen"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_104_step_04",
-          "displayName": "봉합 및 마감",
+          "displayName": "당 중화",
           "requiredMaterials": [
-            "SterilizedScissorsSmall",
-            "Bandage"
+            "MixedPotionBlue",
+            "FilledPotionMagenta"
           ],
           "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_104_step_05",
+          "displayName": "복부 봉합",
+          "requiredMaterials": [
+            "Bandage",
+            "RedMedicine"
+          ],
+          "order": 4,
           "requiresSterilizedTray": true
         }
       ]
@@ -396,43 +409,34 @@
         },
         {
           "recipeId": "FB_105_step_02",
-          "displayName": "골절 부위 절개",
+          "displayName": "뼈 절단 정렬",
           "requiredMaterials": [
             "SterilizedBoneSaw",
-            "SterilizedScalpelGreen"
+            "SterilizedPincetteStraight",
+            "MixedPotionRed"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_105_step_03",
-          "displayName": "뼈 고정 및 지혈",
+          "displayName": "통증 완화",
           "requiredMaterials": [
-            "SterilizedPincetteStraight",
-            "RedMedicine",
-            "MixedPotionRed"
+            "FilledPotionMagenta",
+            "MixedPotionBlack"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_105_step_04",
-          "displayName": "회복 물약 투여",
-          "requiredMaterials": [
-            "MixedPotionGreen",
-            "FilledPotionMagenta"
-          ],
-          "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_105_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "부목 고정",
           "requiredMaterials": [
             "Bandage",
-            "FilledPotionCyan"
+            "FilledPotionCyan",
+            "RedMedicine"
           ],
-          "order": 4,
+          "order": 3,
           "requiresSterilizedTray": true
         }
       ]
@@ -456,7 +460,7 @@
         },
         {
           "recipeId": "FB_106_step_02",
-          "displayName": "감염 부위 절제",
+          "displayName": "괴사 절제",
           "requiredMaterials": [
             "SterilizedScalpelGreen",
             "SterilizedScissorsSmall"
@@ -466,20 +470,21 @@
         },
         {
           "recipeId": "FB_106_step_03",
-          "displayName": "항균 물약 도포",
+          "displayName": "항진균 주입",
           "requiredMaterials": [
-            "MixedPotionBlack",
-            "FilledPotionCyan"
+            "MixedPotionGreen",
+            "FilledPotionYellow",
+            "MixedPotionBlack"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_106_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "피부 재생",
           "requiredMaterials": [
-            "Bandage",
-            "MixedPotionGreen"
+            "RedMedicine",
+            "FilledPotionCyan"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -505,7 +510,7 @@
         },
         {
           "recipeId": "FB_107_step_02",
-          "displayName": "목 압박 해제 절개",
+          "displayName": "기도 확보",
           "requiredMaterials": [
             "SterilizedScissorsSmall",
             "SterilizedPincetteStraight"
@@ -515,9 +520,9 @@
         },
         {
           "recipeId": "FB_107_step_03",
-          "displayName": "기도 개통 물약",
+          "displayName": "호흡 보조",
           "requiredMaterials": [
-            "FilledPotionMagenta",
+            "FilledPotionCyan",
             "MixedPotionBlue"
           ],
           "order": 2,
@@ -525,20 +530,20 @@
         },
         {
           "recipeId": "FB_107_step_04",
-          "displayName": "회복 처치",
+          "displayName": "신경 안정",
           "requiredMaterials": [
-            "MixedPotionRed",
-            "RedMedicine"
+            "MixedPotionBlack",
+            "FilledPotionMagenta"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_107_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "회복 확인",
           "requiredMaterials": [
-            "Bandage",
-            "FilledPotionYellow"
+            "RedMedicine",
+            "Bandage"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -564,42 +569,33 @@
         },
         {
           "recipeId": "FB_005_step_02",
-          "displayName": "해독 물약 조합",
+          "displayName": "독소 중화",
           "requiredMaterials": [
-            "FilledPotionYellow",
-            "MixedPotionGreen"
+            "MixedPotionBlue",
+            "FilledPotionYellow"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_005_step_03",
-          "displayName": "위장 안정 처치",
+          "displayName": "위장 세척",
           "requiredMaterials": [
-            "FilledPotionMagenta",
-            "MixedPotionBlue"
+            "FilledPotionCyan",
+            "MixedPotionGreen",
+            "MixedPotionBlack"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_005_step_04",
-          "displayName": "염증 절개 배출",
+          "displayName": "회복 투약",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "SterilizedScissorsLarge"
-          ],
-          "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_005_step_05",
-          "displayName": "붕대 마무리",
-          "requiredMaterials": [
-            "Bandage",
+            "FilledPotionMagenta",
             "MixedPotionRed"
           ],
-          "order": 4,
+          "order": 3,
           "requiresSterilizedTray": true
         }
       ]
@@ -623,9 +619,9 @@
         },
         {
           "recipeId": "FB_009_step_02",
-          "displayName": "해장 물약 투여",
+          "displayName": "수액 공급",
           "requiredMaterials": [
-            "FilledPotionMagenta",
+            "FilledPotionCyan",
             "FilledPotionYellow"
           ],
           "order": 1,
@@ -633,20 +629,21 @@
         },
         {
           "recipeId": "FB_009_step_03",
-          "displayName": "해독 물약 보강",
+          "displayName": "간 해독",
           "requiredMaterials": [
             "MixedPotionGreen",
-            "MixedPotionBlue"
+            "MixedPotionBlack"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_009_step_04",
-          "displayName": "붕대 고정",
+          "displayName": "안정화",
           "requiredMaterials": [
-            "Bandage",
-            "MixedPotionRed"
+            "MixedPotionRed",
+            "FilledPotionMagenta",
+            "MixedPotionBlue"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -672,7 +669,7 @@
         },
         {
           "recipeId": "FB_010_step_02",
-          "displayName": "감압 절개",
+          "displayName": "흉부 절개",
           "requiredMaterials": [
             "SterilizedScalpelGray",
             "SterilizedScissorsLarge"
@@ -682,30 +679,31 @@
         },
         {
           "recipeId": "FB_010_step_03",
-          "displayName": "회복 물약 투여",
+          "displayName": "감압 처치",
           "requiredMaterials": [
             "MixedPotionBlue",
-            "MixedPotionRed"
+            "FilledPotionCyan"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_010_step_04",
-          "displayName": "안정화 물약 주입",
+          "displayName": "폐 회복",
           "requiredMaterials": [
-            "FilledPotionMagenta",
-            "MixedPotionGreen"
+            "MixedPotionGreen",
+            "FilledPotionYellow",
+            "MixedPotionRed"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_010_step_05",
-          "displayName": "붕대 마무리",
+          "displayName": "흉부 봉합",
           "requiredMaterials": [
-            "FilledPotionCyan",
-            "Bandage"
+            "Bandage",
+            "FilledPotionMagenta"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -731,27 +729,28 @@
         },
         {
           "recipeId": "FB_201_step_02",
-          "displayName": "파편 제거 절개",
+          "displayName": "폭발 창상 절개",
           "requiredMaterials": [
             "SterilizedScalpelGray",
-            "SterilizedScissorsLarge"
+            "SterilizedScissorsLarge",
+            "MixedPotionRed"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_201_step_03",
-          "displayName": "지혈 물약 투여",
+          "displayName": "파편 중화",
           "requiredMaterials": [
-            "MixedPotionRed",
-            "FilledPotionCyan"
+            "MixedPotionBlack",
+            "FilledPotionYellow"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_201_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "고정 붕대",
           "requiredMaterials": [
             "Bandage",
             "MixedPotionGreen"
@@ -780,40 +779,41 @@
         },
         {
           "recipeId": "FB_202_step_02",
-          "displayName": "타박상 절개 배출",
+          "displayName": "내상 완화",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "MixedPotionRed"
+            "MixedPotionRed",
+            "FilledPotionMagenta"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_202_step_03",
-          "displayName": "회복 물약 투여",
+          "displayName": "쇼크 안정",
           "requiredMaterials": [
-            "FilledPotionYellow",
-            "MixedPotionBlue"
+            "FilledPotionCyan",
+            "MixedPotionBlue",
+            "MixedPotionBlack"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_202_step_04",
-          "displayName": "안정화 처치",
+          "displayName": "전신 회복",
           "requiredMaterials": [
-            "FilledPotionMagenta",
-            "MixedPotionGreen"
+            "MixedPotionGreen",
+            "FilledPotionYellow"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_202_step_05",
-          "displayName": "붕대 마무리",
+          "displayName": "압박 고정",
           "requiredMaterials": [
             "Bandage",
-            "FilledPotionCyan"
+            "SterilizedScissorsLarge"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -839,7 +839,7 @@
         },
         {
           "recipeId": "FB_203_step_02",
-          "displayName": "복막 절개",
+          "displayName": "복부 개복",
           "requiredMaterials": [
             "SterilizedScalpelGray",
             "SterilizedScissorsLarge"
@@ -849,8 +849,9 @@
         },
         {
           "recipeId": "FB_203_step_03",
-          "displayName": "소화 물약 투여",
+          "displayName": "복막 세척",
           "requiredMaterials": [
+            "FilledPotionCyan",
             "MixedPotionGreen",
             "FilledPotionYellow"
           ],
@@ -859,12 +860,23 @@
         },
         {
           "recipeId": "FB_203_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "항염 투약",
           "requiredMaterials": [
-            "Bandage",
-            "MixedPotionBlack"
+            "MixedPotionBlue",
+            "MixedPotionBlack",
+            "FilledPotionMagenta"
           ],
           "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_203_step_05",
+          "displayName": "최종 봉합",
+          "requiredMaterials": [
+            "Bandage",
+            "MixedPotionRed"
+          ],
+          "order": 4,
           "requiresSterilizedTray": true
         }
       ]
@@ -898,32 +910,22 @@
         },
         {
           "recipeId": "FB_204_step_03",
-          "displayName": "지혈 및 세척",
+          "displayName": "뇌압 감소",
           "requiredMaterials": [
             "FilledPotionCyan",
-            "SterilizedScissorsLarge"
+            "MixedPotionBlue"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_204_step_04",
-          "displayName": "회복 물약 투여",
-          "requiredMaterials": [
-            "MixedPotionBlue",
-            "FilledPotionMagenta"
-          ],
-          "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_204_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "두부 봉합",
           "requiredMaterials": [
             "Bandage",
-            "MixedPotionGreen"
+            "FilledPotionYellow"
           ],
-          "order": 4,
+          "order": 3,
           "requiresSterilizedTray": true
         }
       ]
@@ -947,7 +949,7 @@
         },
         {
           "recipeId": "FB_205_step_02",
-          "displayName": "무릎 절개",
+          "displayName": "관절 절개",
           "requiredMaterials": [
             "SterilizedScalpelGray",
             "SterilizedScissorsLarge"
@@ -957,20 +959,21 @@
         },
         {
           "recipeId": "FB_205_step_03",
-          "displayName": "연골 회복 물약",
+          "displayName": "연골 재생",
           "requiredMaterials": [
-            "MixedPotionBlue",
-            "FilledPotionCyan"
+            "MixedPotionGreen",
+            "FilledPotionMagenta",
+            "MixedPotionRed"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_205_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "관절 봉합",
           "requiredMaterials": [
             "Bandage",
-            "FilledPotionYellow"
+            "FilledPotionCyan"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -996,19 +999,20 @@
         },
         {
           "recipeId": "FB_206_step_02",
-          "displayName": "탄환 제거 절개",
+          "displayName": "관통구 확장",
           "requiredMaterials": [
             "SterilizedScalpelGray",
-            "SterilizedScissorsLarge"
+            "SterilizedScissorsLarge",
+            "MixedPotionRed"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_206_step_03",
-          "displayName": "지혈 물약 투여",
+          "displayName": "출혈 차단",
           "requiredMaterials": [
-            "MixedPotionRed",
+            "MixedPotionBlack",
             "FilledPotionMagenta"
           ],
           "order": 2,
@@ -1016,20 +1020,21 @@
         },
         {
           "recipeId": "FB_206_step_04",
-          "displayName": "소독 물약 처치",
+          "displayName": "조직 재건",
           "requiredMaterials": [
-            "MixedPotionBlack",
-            "FilledPotionCyan"
+            "MixedPotionGreen",
+            "FilledPotionCyan",
+            "FilledPotionYellow"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_206_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "압박 봉합",
           "requiredMaterials": [
             "Bandage",
-            "MixedPotionGreen"
+            "MixedPotionBlue"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -1055,42 +1060,34 @@
         },
         {
           "recipeId": "FB_207_step_02",
-          "displayName": "다발 열상 절개",
+          "displayName": "상처 정리",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "SterilizedScissorsLarge"
+            "SterilizedScissorsLarge",
+            "SterilizedScalpelGray"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_207_step_03",
-          "displayName": "지혈 물약 투여",
+          "displayName": "파상풍 예방",
           "requiredMaterials": [
-            "MixedPotionRed",
-            "MixedPotionBlue"
+            "FilledPotionYellow",
+            "MixedPotionBlack",
+            "MixedPotionGreen"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_207_step_04",
-          "displayName": "회복 물약 보강",
-          "requiredMaterials": [
-            "FilledPotionYellow",
-            "MixedPotionGreen"
-          ],
-          "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_207_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "전신 붕대",
           "requiredMaterials": [
             "Bandage",
+            "MixedPotionRed",
             "FilledPotionCyan"
           ],
-          "order": 4,
+          "order": 3,
           "requiresSterilizedTray": true
         }
       ]
@@ -1114,30 +1111,30 @@
         },
         {
           "recipeId": "FB_002_step_02",
-          "displayName": "호흡 보조",
+          "displayName": "기도 소독",
           "requiredMaterials": [
-            "GauzeBox",
-            "OrganLung"
+            "Disinfectant",
+            "GauzeBox"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_002_step_03",
-          "displayName": "소독 및 안정화",
+          "displayName": "폐 환기",
           "requiredMaterials": [
-            "Disinfectant",
-            "Bandage"
+            "OrganLung",
+            "SterilizedPincetteStraight"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_002_step_04",
-          "displayName": "비강 정리",
+          "displayName": "체온 회복",
           "requiredMaterials": [
-            "SterilizedPincetteStraight",
-            "SterilizedScissorsSmall"
+            "Bandage",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1163,30 +1160,31 @@
         },
         {
           "recipeId": "FB_003_step_02",
-          "displayName": "위 상태 확인",
+          "displayName": "복부 진정",
           "requiredMaterials": [
-            "GauzeBox",
-            "OrganLung"
+            "Disinfectant",
+            "GauzeBox"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_003_step_03",
-          "displayName": "이물질 제거",
+          "displayName": "식도 세척",
           "requiredMaterials": [
             "Disinfectant",
-            "SterilizedPincetteStraight"
+            "SterilizedPincetteStraight",
+            "OrganLung"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_003_step_04",
-          "displayName": "절개 및 마감",
+          "displayName": "위 회복",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "Bandage"
+            "Bandage",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1212,41 +1210,41 @@
         },
         {
           "recipeId": "FB_012_step_02",
-          "displayName": "전신 진단 및 소독",
+          "displayName": "흉부 개방",
           "requiredMaterials": [
-            "GauzeBox",
-            "Disinfectant"
+            "SterilizedScalpelGray",
+            "SterilizedScissorsSmall",
+            "SterilizedPincetteStraight"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_012_step_03",
-          "displayName": "복합 절개 처치",
+          "displayName": "폐 복구",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "SterilizedPincetteStraight",
-            "SterilizedScissorsSmall"
+            "OrganLung",
+            "Disinfectant"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_012_step_04",
-          "displayName": "장기 점검",
+          "displayName": "상처 덮개",
           "requiredMaterials": [
-            "OrganLung",
-            "GauzeBox"
+            "GauzeBox",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_012_step_05",
-          "displayName": "호흡 보조 및 마감",
+          "displayName": "최종 고정",
           "requiredMaterials": [
             "Bandage",
-            "OrganLung"
+            "GauzeBox"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -1272,42 +1270,33 @@
         },
         {
           "recipeId": "FB_301_step_02",
-          "displayName": "호흡 확인 및 보조",
+          "displayName": "체온 체크",
           "requiredMaterials": [
-            "GauzeBox",
-            "OrganLung"
+            "OrganLung",
+            "Disinfectant"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_301_step_03",
-          "displayName": "동상 부위 절개",
+          "displayName": "심폐 마사지",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "SterilizedPincetteStraight"
+            "GauzeBox",
+            "SterilizedPincetteStraight",
+            "Bandage"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_301_step_04",
-          "displayName": "소독 처치",
+          "displayName": "저체온 회복",
           "requiredMaterials": [
             "Disinfectant",
-            "SterilizedScissorsSmall"
+            "Bandage"
           ],
           "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_301_step_05",
-          "displayName": "붕대 마감",
-          "requiredMaterials": [
-            "Bandage",
-            "OrganLung"
-          ],
-          "order": 4,
           "requiresSterilizedTray": true
         }
       ]
@@ -1331,30 +1320,31 @@
         },
         {
           "recipeId": "FB_302_step_02",
-          "displayName": "두부 진단",
+          "displayName": "열상 세척",
           "requiredMaterials": [
-            "GauzeBox",
-            "SterilizedScissorsSmall"
+            "Disinfectant",
+            "SterilizedPincetteStraight"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_302_step_03",
-          "displayName": "안면 열상 절개",
+          "displayName": "안면 정리",
           "requiredMaterials": [
             "SterilizedScalpelGray",
-            "SterilizedPincetteStraight"
+            "SterilizedScissorsSmall",
+            "GauzeBox"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_302_step_04",
-          "displayName": "소독 및 붕대 마감",
+          "displayName": "두부 고정",
           "requiredMaterials": [
-            "Disinfectant",
-            "Bandage"
+            "Bandage",
+            "GauzeBox"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1380,7 +1370,7 @@
         },
         {
           "recipeId": "FB_303_step_02",
-          "displayName": "두부 이물 제거",
+          "displayName": "두개 절개",
           "requiredMaterials": [
             "SterilizedScalpelGray",
             "SterilizedPincetteStraight"
@@ -1390,27 +1380,27 @@
         },
         {
           "recipeId": "FB_303_step_03",
-          "displayName": "호흡 보조",
+          "displayName": "파편 제거",
           "requiredMaterials": [
-            "OrganLung",
-            "GauzeBox"
+            "SterilizedScissorsSmall",
+            "Disinfectant"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_303_step_04",
-          "displayName": "소독 처치",
+          "displayName": "멸균 거즈",
           "requiredMaterials": [
-            "Disinfectant",
-            "SterilizedScissorsSmall"
+            "GauzeBox",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_303_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "두부 봉합",
           "requiredMaterials": [
             "Bandage",
             "GauzeBox"
@@ -1439,9 +1429,9 @@
         },
         {
           "recipeId": "FB_304_step_02",
-          "displayName": "동상 부위 진단",
+          "displayName": "동상 절제",
           "requiredMaterials": [
-            "GauzeBox",
+            "SterilizedScalpelGray",
             "SterilizedScissorsSmall"
           ],
           "order": 1,
@@ -1449,9 +1439,10 @@
         },
         {
           "recipeId": "FB_304_step_03",
-          "displayName": "동상 조직 절개",
+          "displayName": "혈류 회복",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
+            "Disinfectant",
+            "GauzeBox",
             "SterilizedPincetteStraight"
           ],
           "order": 2,
@@ -1459,10 +1450,10 @@
         },
         {
           "recipeId": "FB_304_step_04",
-          "displayName": "소독 및 붕대 마감",
+          "displayName": "손발 고정",
           "requiredMaterials": [
-            "Disinfectant",
-            "Bandage"
+            "Bandage",
+            "GauzeBox"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1488,42 +1479,34 @@
         },
         {
           "recipeId": "FB_305_step_02",
-          "displayName": "간 상태 진단",
+          "displayName": "복부 절개",
           "requiredMaterials": [
-            "GauzeBox",
-            "OrganLung"
+            "SterilizedScalpelGray",
+            "SterilizedPincetteStraight",
+            "SterilizedScissorsSmall"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_305_step_03",
-          "displayName": "절개 처치",
+          "displayName": "위 세척",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "SterilizedPincetteStraight"
+            "Disinfectant",
+            "GauzeBox"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_305_step_04",
-          "displayName": "소독 및 호흡 보조",
+          "displayName": "내장 감싸기",
           "requiredMaterials": [
-            "Disinfectant",
-            "OrganLung"
+            "GauzeBox",
+            "Bandage",
+            "Disinfectant"
           ],
           "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_305_step_05",
-          "displayName": "붕대 마감",
-          "requiredMaterials": [
-            "Bandage",
-            "SterilizedScissorsSmall"
-          ],
-          "order": 4,
           "requiresSterilizedTray": true
         }
       ]
@@ -1547,27 +1530,28 @@
         },
         {
           "recipeId": "FB_306_step_02",
-          "displayName": "어깨 절개",
+          "displayName": "견관절 개방",
           "requiredMaterials": [
             "SterilizedScalpelGray",
-            "SterilizedScissorsSmall"
+            "SterilizedPincetteStraight"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_306_step_03",
-          "displayName": "인대 정렬 처치",
+          "displayName": "인대 봉합",
           "requiredMaterials": [
-            "SterilizedPincetteStraight",
-            "Disinfectant"
+            "SterilizedScissorsSmall",
+            "Disinfectant",
+            "GauzeBox"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_306_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "어깨 고정",
           "requiredMaterials": [
             "Bandage",
             "GauzeBox"
@@ -1596,40 +1580,41 @@
         },
         {
           "recipeId": "FB_307_step_02",
-          "displayName": "복부 진단",
+          "displayName": "외상 소독",
           "requiredMaterials": [
-            "GauzeBox",
-            "OrganLung"
+            "Disinfectant",
+            "SterilizedPincetteStraight"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_307_step_03",
-          "displayName": "타박 부위 절개",
+          "displayName": "폐 점검",
           "requiredMaterials": [
-            "SterilizedScalpelGray",
-            "SterilizedPincetteStraight"
+            "OrganLung",
+            "GauzeBox"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_307_step_04",
-          "displayName": "소독 처치",
+          "displayName": "열상 봉합",
           "requiredMaterials": [
-            "Disinfectant",
-            "OrganLung"
+            "SterilizedScissorsSmall",
+            "SterilizedScalpelGray",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_307_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "전신 감싸기",
           "requiredMaterials": [
             "Bandage",
-            "SterilizedScissorsSmall"
+            "GauzeBox"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -1655,30 +1640,30 @@
         },
         {
           "recipeId": "FB_004_step_02",
-          "displayName": "소독 및 이물질 제거",
+          "displayName": "상처 확인",
           "requiredMaterials": [
-            "Disinfectant",
-            "SterilizedPincetteCurved"
+            "Stethoscope",
+            "AmbuBag"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_004_step_03",
-          "displayName": "봉합 준비",
+          "displayName": "열상 봉합",
           "requiredMaterials": [
-            "SterilizedScissorsClamp",
-            "Stethoscope"
+            "SterilizedScalpelGreen",
+            "SterilizedScissorsClamp"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_004_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "손가락 붕대",
           "requiredMaterials": [
             "Bandage",
-            "SterilizedScalpelGreen"
+            "SterilizedPincetteCurved"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1704,30 +1689,30 @@
         },
         {
           "recipeId": "FB_006_step_02",
-          "displayName": "정렬 준비",
+          "displayName": "골편 정렬",
           "requiredMaterials": [
-            "Disinfectant",
-            "SterilizedPincetteCurved"
+            "SterilizedPincetteCurved",
+            "SterilizedScissorsClamp"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_006_step_03",
-          "displayName": "고정 부위 절개",
+          "displayName": "소독 처치",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "Stethoscope"
+            "Disinfectant",
+            "SterilizedScalpelGreen"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_006_step_04",
-          "displayName": "고정 마무리",
+          "displayName": "부목 고정",
           "requiredMaterials": [
             "Bandage",
-            "SterilizedScissorsClamp"
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1753,9 +1738,9 @@
         },
         {
           "recipeId": "FB_007_step_02",
-          "displayName": "폐 부위 소독",
+          "displayName": "호흡 청진",
           "requiredMaterials": [
-            "OrganLiver",
+            "Stethoscope",
             "Disinfectant"
           ],
           "order": 1,
@@ -1763,20 +1748,20 @@
         },
         {
           "recipeId": "FB_007_step_03",
-          "displayName": "감압 절개",
+          "displayName": "산소 보조",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedPincetteCurved"
+            "AmbuBag",
+            "Stethoscope"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_007_step_04",
-          "displayName": "거즈 및 붕대 마감",
+          "displayName": "회복 확인",
           "requiredMaterials": [
-            "Stethoscope",
-            "Bandage"
+            "Bandage",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1802,9 +1787,9 @@
         },
         {
           "recipeId": "FB_401_step_02",
-          "displayName": "폐 상태 확인",
+          "displayName": "심음 청진",
           "requiredMaterials": [
-            "OrganLiver",
+            "Stethoscope",
             "Disinfectant"
           ],
           "order": 1,
@@ -1812,9 +1797,9 @@
         },
         {
           "recipeId": "FB_401_step_03",
-          "displayName": "처치 및 절개",
+          "displayName": "기도 확보",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
+            "AmbuBag",
             "SterilizedPincetteCurved"
           ],
           "order": 2,
@@ -1822,10 +1807,10 @@
         },
         {
           "recipeId": "FB_401_step_04",
-          "displayName": "봉합 및 마감",
+          "displayName": "회복 안정",
           "requiredMaterials": [
-            "Stethoscope",
-            "Bandage"
+            "Bandage",
+            "Stethoscope"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1851,30 +1836,30 @@
         },
         {
           "recipeId": "FB_402_step_02",
-          "displayName": "골절 부위 절개",
+          "displayName": "심박 안정",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedScissorsClamp"
+            "AmbuBag",
+            "Stethoscope"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_402_step_03",
-          "displayName": "이물질 제거 및 소독",
+          "displayName": "신경 이완",
           "requiredMaterials": [
-            "SterilizedPincetteCurved",
-            "Disinfectant"
+            "Disinfectant",
+            "SterilizedPincetteCurved"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_402_step_04",
-          "displayName": "거즈 및 붕대 마감",
+          "displayName": "진정 붕대",
           "requiredMaterials": [
-            "Stethoscope",
-            "Bandage"
+            "Bandage",
+            "AmbuBag"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -1900,40 +1885,41 @@
         },
         {
           "recipeId": "FB_403_step_02",
-          "displayName": "복부 절개",
+          "displayName": "복부 청진",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedPincetteCurved"
+            "Stethoscope",
+            "Disinfectant"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_403_step_03",
-          "displayName": "폐 압박 확인",
+          "displayName": "위장 개방",
           "requiredMaterials": [
-            "OrganLiver",
-            "Disinfectant"
+            "SterilizedScalpelGreen",
+            "SterilizedPincetteCurved",
+            "OrganStomach"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_403_step_04",
-          "displayName": "봉합 처치",
+          "displayName": "위 봉합",
           "requiredMaterials": [
             "SterilizedScissorsClamp",
-            "Stethoscope"
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_403_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "복부 고정",
           "requiredMaterials": [
             "Bandage",
-            "SterilizedScalpelGreen"
+            "Disinfectant"
           ],
           "order": 4,
           "requiresSterilizedTray": true
@@ -1959,30 +1945,30 @@
         },
         {
           "recipeId": "FB_404_step_02",
-          "displayName": "과민 부위 절개",
+          "displayName": "피부 세척",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedScissorsClamp"
+            "Disinfectant",
+            "SterilizedPincetteCurved"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_404_step_03",
-          "displayName": "중독 부위 처치",
+          "displayName": "간 해독",
           "requiredMaterials": [
-            "SterilizedPincetteCurved",
-            "Disinfectant"
+            "OrganLiver",
+            "Stethoscope"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_404_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "전신 보호",
           "requiredMaterials": [
-            "Stethoscope",
-            "Bandage"
+            "Bandage",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
@@ -2008,37 +1994,38 @@
         },
         {
           "recipeId": "FB_405_step_02",
-          "displayName": "두부 열상 절개",
+          "displayName": "의식 확인",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedPincetteCurved"
+            "Stethoscope",
+            "AmbuBag"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_405_step_03",
-          "displayName": "소독 처치",
+          "displayName": "두피 절개",
           "requiredMaterials": [
-            "Disinfectant",
-            "SterilizedScissorsClamp"
+            "SterilizedScalpelGreen",
+            "SterilizedPincetteCurved",
+            "Disinfectant"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_405_step_04",
-          "displayName": "폐 상태 확인",
+          "displayName": "두부 봉합",
           "requiredMaterials": [
-            "OrganLiver",
-            "Stethoscope"
+            "SterilizedScissorsClamp",
+            "Disinfectant"
           ],
           "order": 3,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_405_step_05",
-          "displayName": "붕대 마감",
+          "displayName": "머리 고정",
           "requiredMaterials": [
             "Bandage",
             "Disinfectant"
@@ -2067,32 +2054,43 @@
         },
         {
           "recipeId": "FB_406_step_02",
-          "displayName": "손상 피부 절개",
+          "displayName": "장기 진단",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedScissorsClamp"
+            "Stethoscope",
+            "OrganLiver",
+            "OrganStomach"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_406_step_03",
-          "displayName": "이물질 제거 및 소독",
+          "displayName": "피부 절제",
           "requiredMaterials": [
-            "SterilizedPincetteCurved",
-            "Disinfectant"
+            "SterilizedScalpelGreen",
+            "SterilizedScissorsClamp"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_406_step_04",
-          "displayName": "붕대 마감",
+          "displayName": "화상 소독",
           "requiredMaterials": [
-            "Stethoscope",
-            "Bandage"
+            "Disinfectant",
+            "SterilizedPincetteCurved"
           ],
           "order": 3,
+          "requiresSterilizedTray": true
+        },
+        {
+          "recipeId": "FB_406_step_05",
+          "displayName": "전신 감싸기",
+          "requiredMaterials": [
+            "Bandage",
+            "Disinfectant"
+          ],
+          "order": 4,
           "requiresSterilizedTray": true
         }
       ]
@@ -2116,42 +2114,32 @@
         },
         {
           "recipeId": "FB_407_step_02",
-          "displayName": "혈관 손상 부위 절개",
+          "displayName": "혈관 청진",
           "requiredMaterials": [
-            "SterilizedScalpelGreen",
-            "SterilizedPincetteCurved"
+            "Stethoscope",
+            "Disinfectant"
           ],
           "order": 1,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_407_step_03",
-          "displayName": "소독 및 봉합 준비",
+          "displayName": "혈관 노출",
           "requiredMaterials": [
-            "Disinfectant",
-            "SterilizedScissorsClamp"
+            "SterilizedScalpelGreen",
+            "SterilizedPincetteCurved"
           ],
           "order": 2,
           "requiresSterilizedTray": true
         },
         {
           "recipeId": "FB_407_step_04",
-          "displayName": "폐 압박 확인",
+          "displayName": "혈관 봉합",
           "requiredMaterials": [
-            "OrganLiver",
-            "Stethoscope"
-          ],
-          "order": 3,
-          "requiresSterilizedTray": true
-        },
-        {
-          "recipeId": "FB_407_step_05",
-          "displayName": "붕대 마감",
-          "requiredMaterials": [
-            "Bandage",
+            "SterilizedScissorsClamp",
             "Disinfectant"
           ],
-          "order": 4,
+          "order": 3,
           "requiresSterilizedTray": true
         }
       ]
