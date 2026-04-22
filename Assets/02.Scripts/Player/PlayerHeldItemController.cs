@@ -41,7 +41,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     public bool IsThrowing => _isThrowing;
     public Transform HoldPoint => _holdPoint;
 
-    public PhotonView GetInteractorPhotonView() => GetComponent<PhotonView>();
+    public PhotonView GetInteractorPhotonView() => _photonView;
     public Transform GetHandAttachPoint() => _holdPoint;
 
     public event Action<ItemObject> HeldItemChanged;
