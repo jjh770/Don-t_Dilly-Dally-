@@ -17,7 +17,6 @@ GameObject:
   - component: {fileID: 6266976512121888385}
   - component: {fileID: 1572009220914191406}
   - component: {fileID: 3241995776377645875}
-  - component: {fileID: 142084644921686818}
   m_Layer: 0
   m_Name: CommentarySystem
   m_TagString: Untagged
@@ -183,6 +182,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CommentaryPlaybackManager
   _audioSource: {fileID: 4918364566836233242}
   _ttsManager: {fileID: 3241995776377645875}
+  _eventTypeClips: []
   _defaultDuration: 3
 --- !u!114 &2154776202298399559
 MonoBehaviour:
@@ -210,6 +210,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EventManager
   _maxEventLogCount: 20
+  _chainThreshold: 3
 --- !u!114 &1572009220914191406
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -222,7 +223,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73898e7de459ccf4eb6438a5d8937e24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LLMService
-  _apiKeyConfig: {fileID: 11400000, guid: 2e63ec1a86673754aaecc8354cbf0993, type: 2}
+  _apiKeyConfig: {fileID: 11400000, guid: 6354bde06737cf049a270cb7be729a7c, type: 2}
   _model: gemini-3.1-flash-lite-preview
   _maxTokens: 100
   _temperature: 0.7
@@ -239,20 +240,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f85a2d3809d15c4ba54b498d3b027f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TTSManager
-  _apiKeyConfig: {fileID: 11400000, guid: 2e63ec1a86673754aaecc8354cbf0993, type: 2}
+  _apiKeyConfig: {fileID: 11400000, guid: 6354bde06737cf049a270cb7be729a7c, type: 2}
   _modelId: eleven_multilingual_v2
   _stability: 0.5
   _similarityBoost: 0.75
+  _speed: 1.15
   _timeout: 15
---- !u!114 &142084644921686818
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1308071506904521794}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c89c266f743dce488d124a143191629, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CommentarySystemTest

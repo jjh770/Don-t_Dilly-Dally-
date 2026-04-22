@@ -16643,6 +16643,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 4779075976247722480, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7182292914589980166}
+    - targetCorrespondingSourceObject: {fileID: 4779075976247722480, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5222287545580357996}
   m_SourcePrefab: {fileID: 100100000, guid: 1fe6b5b71a01b694582ac02fbbcb05e5, type: 3}
 --- !u!4 &4758146499106439554 stripped
 Transform:
@@ -16688,6 +16691,24 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 0.93991494, y: 0.86833835, z: 2.3895164}
   m_Center: {x: -0.00067582744, y: 0.43416905, z: 0.006682159}
+--- !u!114 &5222287545580357996
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5279210159408831288}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5fea29bb7c508c244a1f805a5fd3fc4d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Outline
+  outlineMode: 0
+  outlineColor: {r: 1, g: 1, b: 1, a: 1}
+  outlineWidth: 2
+  precomputeOutline: 0
+  bakeKeys: []
+  bakeValues: []
 --- !u!1001 &1111587970425713171
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19498,7 +19519,7 @@ PrefabInstance:
     - target: {fileID: 2200705719280016805, guid: 4ed002d837310fd4eb0d7c1f00cbdfc0, type: 3}
       propertyPath: _apiKeyConfig
       value: 
-      objectReference: {fileID: 0}
+      objectReference: {fileID: 11400000, guid: 6354bde06737cf049a270cb7be729a7c, type: 2}
     - target: {fileID: 2264859530173616671, guid: 4ed002d837310fd4eb0d7c1f00cbdfc0, type: 3}
       propertyPath: m_Name
       value: StageFlowManager
@@ -20487,7 +20508,8 @@ PrefabInstance:
       value: 0.747
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects: []
+    m_RemovedGameObjects:
+    - {fileID: 2340760238940709094, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 7811547896717421446, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       insertIndex: -1
