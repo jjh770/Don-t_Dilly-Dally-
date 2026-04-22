@@ -70,6 +70,14 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         PhotonNetwork.ConnectUsingSettings();
     }
 
+    public void ReConnect()
+    {
+        if (!PhotonNetwork.IsConnected)
+        {
+            PhotonNetwork.ConnectUsingSettings();
+        }
+    }
+
     private void HandleConnectError(string log)
     {
         if (_isEnabled)
@@ -96,6 +104,7 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
 
             case DisconnectCause.ServerTimeout:
                 HandleConnectError("서버 연결 시간이 초과되었습니다.");
+                ReConnect();
                 break;
 
             case DisconnectCause.ClientTimeout:
@@ -106,8 +115,15 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
                 HandleConnectError($"연결이 끊어졌습니다. ({cause})");
                 break;
         }
+    }
 
-        
+    public override void OnConnected()
+    {
+        if (!_isEnabled && LoadingUIService.CurrentStep == ELoadingStep.NoInternet)
+        {
+            LoadingUIService.Hide();
+        }
+        _isEnabled = true;  
     }
 
     public override void OnConnectedToMaster()
