@@ -87,6 +87,9 @@ public enum SFXKey
     ResultZeroStar = 61,
     PatientDeathBeep = 62,
     StampSound = 63,
+    PatientStrikeVoice = 64,
+    MinigameTimer = 65,
+    MinigameSuccessUI = 66,
 }
 
 // 사운드 재생 타입.
@@ -262,6 +265,14 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     public AudioSource PlayLoop(SFXKey key)
     {
         return PlaySFX_Local(key, requireLoop: true);
+    }
+
+    // 로컬 SFX를 재생하고 수동 중단용 AudioSource 핸들을 반환합니다.
+    // 미니게임 타이머처럼 재생 도중 Stop이 필요한 one-shot 사운드에 사용하세요.
+    // RPC 동기화가 필요하면 기존 Play(key, SoundType.RPC)를 그대로 쓰세요.
+    public AudioSource PlayLocalWithHandle(SFXKey key)
+    {
+        return PlaySFX_Local(key);
     }
 
     /// <summary>현재 BGM을 정지합니다.</summary>

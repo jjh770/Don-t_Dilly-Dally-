@@ -22,8 +22,14 @@ namespace DontDillyDally.MiniGame
 
         protected TGame Game { get; private set; }
 
+        // 미니게임 진행 중 재생되는 타이머 SFX 핸들. 결과 확정/비활성화 시 Stop 된다.
+        private AudioSource _timerSfxSource;
+
         public void Initialize(IMiniGame game)
         {
+            // UI가 재활성화되며 재초기화되는 경로 대비. 이전 핸들이 남아있으면 먼저 정리.
+            StopTimerSfx();
+
             // 이전 Game 참조가 아직 살아있는 동안 서브클래스가 정리할 기회를 준다.
             OnBeforeGameChanged();
 
@@ -37,10 +43,15 @@ namespace DontDillyDally.MiniGame
             }
 
             OnInitialize();
+
+            PlayTimerSfx();
         }
 
         public void ShowResult(bool isSuccess)
         {
+            // 결과가 확정된 순간 타이머 소리를 즉시 중단.
+            StopTimerSfx();
+
             OnBeforeShowResult(isSuccess);
 
             if (_resultEffect != null)
@@ -48,6 +59,7 @@ namespace DontDillyDally.MiniGame
                 if (isSuccess)
                 {
                     _resultEffect.PlaySuccess();
+                    PlayLocalSfx(SFXKey.MinigameSuccessUI);
                 }
                 else
                 {
@@ -58,6 +70,12 @@ namespace DontDillyDally.MiniGame
 
         public abstract void UpdateView();
         public abstract void SetVisible(bool visible);
+
+        // 씬 이동, 부모 비활성화 등 예기치 못한 종료 시에도 타이머 사운드가 남지 않도록 정리.
+        protected virtual void OnDisable()
+        {
+            StopTimerSfx();
+        }
 
         // 새 Game 할당 직전. 이 시점의 Game 프로퍼티는 이전 Game을 가리킨다.
         protected virtual void OnBeforeGameChanged() { }
@@ -76,6 +94,31 @@ namespace DontDillyDally.MiniGame
             {
                 SoundManager.Instance.Play(key, SoundType.Local);
             }
+        }
+
+        private void PlayTimerSfx()
+        {
+            if (SoundManager.Instance == null)
+            {
+                return;
+            }
+
+            _timerSfxSource = SoundManager.Instance.PlayLocalWithHandle(SFXKey.MinigameTimer);
+        }
+
+        private void StopTimerSfx()
+        {
+            if (_timerSfxSource == null)
+            {
+                return;
+            }
+
+            if (_timerSfxSource.isPlaying)
+            {
+                _timerSfxSource.Stop();
+            }
+
+            _timerSfxSource = null;
         }
     }
 }
