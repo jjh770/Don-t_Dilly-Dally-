@@ -29,6 +29,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 
     private PlayerAnimator _playerAnimator;
     private PlayerMovementAbility _playerMovement;
+    private PhotonView _photonView;
     private Camera _camera;
     private Collider[] _playerColliders;
     private readonly object _movementLockSource = new();
@@ -49,6 +50,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     {
         _playerAnimator = GetComponent<PlayerAnimator>();
         _playerMovement = GetComponent<PlayerMovementAbility>();
+        _photonView = GetComponent<PhotonView>();
         _camera = Camera.main;
         _playerColliders = GetComponentsInChildren<Collider>();
     }
@@ -192,7 +194,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             yield break;
         }
 
-        _playerAnimator?.PlayThrowAnimation();
+        _photonView.RPC(nameof(RPC_PlayThrowAnimation), RpcTarget.All);
         yield return new WaitForSeconds(_throwDelay);
 
         if (_currentHeldInteractable is not IHoldable holdableAfterDelay)
@@ -413,5 +415,11 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
 
         _currentHeldItem = newItem;
         HeldItemChanged?.Invoke(_currentHeldItem);
+    }
+
+    [PunRPC]
+    private void RPC_PlayThrowAnimation()
+    {
+        _playerAnimator?.PlayThrowAnimation();
     }
 }
