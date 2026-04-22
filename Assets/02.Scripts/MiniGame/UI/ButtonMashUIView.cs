@@ -146,6 +146,12 @@ namespace DontDillyDally.MiniGame
                 _gaugeBarFill.color = _colorFull;
             }
 
+            // 시간 초과 등으로 실패한 경우 실패 효과음 재생 (다른 미니게임과 동일한 처리).
+            if (!isSuccess)
+            {
+                PlayLocalSfx(SFXKey.MiniGameFail);
+            }
+
             // 결과 연출이 시작되기 전 흔들림을 멈추고 위치를 원복한다.
             ResetShake();
         }
