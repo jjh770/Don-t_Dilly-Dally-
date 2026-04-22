@@ -194,13 +194,12 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             yield break;
         }
 
-        Debug.Log($"[ThrowSequence] Sending RPC, PhotonView: {_photonView != null}, ViewID: {_photonView?.ViewID}");
-        _photonView.RPC(nameof(RPC_PlayThrowAnimation), RpcTarget.All);
+        _playerAnimator?.PlayThrowAnimation(true);
         yield return new WaitForSeconds(_throwDelay);
 
         if (_currentHeldInteractable is not IHoldable holdableAfterDelay)
         {
-            _playerAnimator?.ResetThrowAnimation();
+            _playerAnimator?.PlayThrowAnimation(false);
             _playerAnimator?.PlayHoldAnimation(false);
             _isThrowing = false;
             yield break;
@@ -210,7 +209,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         _currentHeldInteractable = null;
         SetCurrentHeldItem(null);
 
-        _playerAnimator?.ResetThrowAnimation();
+        _playerAnimator?.PlayThrowAnimation(false);
         _playerAnimator?.PlayHoldAnimation(false);
 
         _isThrowing = false;
@@ -418,10 +417,4 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
         HeldItemChanged?.Invoke(_currentHeldItem);
     }
 
-    [PunRPC]
-    private void RPC_PlayThrowAnimation()
-    {
-        Debug.Log($"[RPC_PlayThrowAnimation] Called on {gameObject.name}, IsMine: {_photonView?.IsMine}");
-        _playerAnimator?.PlayThrowAnimation();
-    }
 }
