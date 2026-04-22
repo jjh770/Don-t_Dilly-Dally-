@@ -90,6 +90,8 @@ public enum SFXKey
     PatientStrikeVoice = 64,
     MinigameTimer = 65,
     MinigameSuccessUI = 66,
+    HospitalTruck = 67,
+    HospitalDrift = 68,
 }
 
 // 사운드 재생 타입.
