@@ -194,6 +194,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
             yield break;
         }
 
+        Debug.Log($"[ThrowSequence] Sending RPC, PhotonView: {_photonView != null}, ViewID: {_photonView?.ViewID}");
         _photonView.RPC(nameof(RPC_PlayThrowAnimation), RpcTarget.All);
         yield return new WaitForSeconds(_throwDelay);
 
@@ -420,6 +421,7 @@ public class PlayerHeldItemController : MonoBehaviour, IHeldItemInteractor
     [PunRPC]
     private void RPC_PlayThrowAnimation()
     {
+        Debug.Log($"[RPC_PlayThrowAnimation] Called on {gameObject.name}, IsMine: {_photonView?.IsMine}");
         _playerAnimator?.PlayThrowAnimation();
     }
 }
