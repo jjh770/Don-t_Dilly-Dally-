@@ -20461,12 +20461,20 @@ PrefabInstance:
       objectReference: {fileID: 1237831304137509425, guid: 65772402805d79f47ac6d0d4b55a87ad, type: 3}
     - target: {fileID: 591075841921424712, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 886498717344168205, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       propertyPath: m_Name
       value: Patient_Effects
       objectReference: {fileID: 0}
+    - target: {fileID: 3509092571405738017, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
+      propertyPath: _shoesRenderer
+      value: 
+      objectReference: {fileID: 6955720382095079003}
+    - target: {fileID: 3509092571405738017, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
+      propertyPath: _commonAppearances
+      value: 
+      objectReference: {fileID: 11400000, guid: 1747e016b55b9d14bbec2fd7ca7ce933, type: 2}
     - target: {fileID: 4135345749785574525, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       propertyPath: m_LocalPosition.x
       value: 3.9970841
@@ -20521,15 +20529,14 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7837908799557232150, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7982187875996106753, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
-    m_RemovedGameObjects:
-    - {fileID: 2340760238940709094, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
+    m_RemovedGameObjects: []
     m_AddedGameObjects:
     - targetCorrespondingSourceObject: {fileID: 7811547896717421446, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
       insertIndex: -1
@@ -20605,6 +20612,11 @@ GameObject:
 --- !u!198 &5130805134018277690 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 1335295349820124005, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
+  m_PrefabInstance: {fileID: 6175459963157781087}
+  m_PrefabAsset: {fileID: 0}
+--- !u!137 &6955720382095079003 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 3833701052865195012, guid: 9c323c3886dbc5343b0bd06e00616235, type: 3}
   m_PrefabInstance: {fileID: 6175459963157781087}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &7840792320345204258 stripped
