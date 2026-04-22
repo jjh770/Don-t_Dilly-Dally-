@@ -11,6 +11,9 @@ public class StageWaitNoticeUI : MonoBehaviour
     [SerializeField] private GameObject _prefab1;
     [SerializeField] private GameObject _prefabGo;
 
+    [Header("Data Loading")]
+    [SerializeField] private GameObject _prefabDataLoading;
+
     [Header("Animation Settings")]
     [SerializeField] private float _popScale = 1.3f;
     [SerializeField] private float _animDuration = 0.3f;
@@ -20,6 +23,7 @@ public class StageWaitNoticeUI : MonoBehaviour
     private StageFlowManager _stageFlowManager;
     private int _lastDisplayedCount = -1;
     private GameObject _currentCountdownObject;
+    private GameObject _currentDataLoadingObject;
     private bool _isGoAnimationPlaying;
 
     private void Start()
@@ -44,6 +48,7 @@ public class StageWaitNoticeUI : MonoBehaviour
         StageFlowBootstrapper.StageFlowReady -= HandleStageFlowReady;
         _disposables.Dispose();
         ClearCountdownObject();
+        ClearDataLoadingObject();
     }
 
     private bool TryBind()
@@ -91,7 +96,10 @@ public class StageWaitNoticeUI : MonoBehaviour
 
     private void RefreshUi()
     {
+        // None은 바인딩 직후 RPC_SetPhase(Loading)가 도착하기 전의 초기값 —
+        // 비마스터에서 짧은 flicker를 막기 위해 로딩으로 간주한다.
         bool isLoading = _stageFlowManager == null ||
+                         _stageFlowManager.CurrentPhase.Value == EStagePhase.None ||
                          _stageFlowManager.CurrentPhase.Value == EStagePhase.Loading;
         bool isCountdown = _stageFlowManager != null &&
                            _stageFlowManager.CurrentPhase.Value == EStagePhase.Countdown;
@@ -101,6 +109,7 @@ public class StageWaitNoticeUI : MonoBehaviour
         if (!shouldShow)
         {
             ClearCountdownObject();
+            ClearDataLoadingObject();
             _lastDisplayedCount = -1;
             return;
         }
@@ -114,8 +123,11 @@ public class StageWaitNoticeUI : MonoBehaviour
         {
             ClearCountdownObject();
             _lastDisplayedCount = -1;
+            ShowDataLoadingPrefabIfNeeded();
             return;
         }
+
+        ClearDataLoadingObject();
 
         float remainingTime = _stageFlowManager.GetRemainingCountdownTime();
         int displayCount = Mathf.CeilToInt(remainingTime);
@@ -127,6 +139,27 @@ public class StageWaitNoticeUI : MonoBehaviour
 
         _lastDisplayedCount = displayCount;
         ShowCountdownPrefab(displayCount);
+    }
+
+    private void ShowDataLoadingPrefabIfNeeded()
+    {
+        if (_currentDataLoadingObject != null || _prefabDataLoading == null)
+        {
+            return;
+        }
+
+        _currentDataLoadingObject = Instantiate(_prefabDataLoading, transform);
+    }
+
+    private void ClearDataLoadingObject()
+    {
+        if (_currentDataLoadingObject == null)
+        {
+            return;
+        }
+
+        Destroy(_currentDataLoadingObject);
+        _currentDataLoadingObject = null;
     }
 
     private void ShowCountdownPrefab(int count)

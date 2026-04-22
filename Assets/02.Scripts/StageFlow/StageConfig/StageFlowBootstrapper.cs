@@ -15,7 +15,7 @@ namespace DontDillyDally.StageFlow
     /// </summary>
     public class StageFlowBootstrapper : MonoBehaviour
     {
-        private const float StageFlowManagerWaitTimeoutSec = 5f;
+        private const float StageFlowManagerWaitTimeoutSec = 10f;
         private const float RoomDataReadyTimeoutSec = 5f;
         private const string WaitingRoomSceneName = "WaitingRoom";
 
@@ -136,14 +136,17 @@ namespace DontDillyDally.StageFlow
                     return;
                 }
 
-                // 마스터는 스테이지 프리팹을 생성하고 데이터 준비 완료까지 보장합니다.
+                // 마스터는 스테이지 프리팹을 먼저 생성해 비마스터로의 복제 지연을 줄인다.
                 CleanupSpawnedStageInstance();
                 _spawnedStageInstance = PhotonNetwork.Instantiate(_stagePrefab.name, Vector3.zero, Quaternion.identity);
+            }
 
-                if (StagePreloader.Instance != null)
-                {
-                    await StagePreloader.Instance.WaitForDataPrep(_cts.Token);
-                }
+            // 마스터/비마스터 공통 — DataPrep 완료까지 대기한다.
+            // 컷씬 Timeline이 Gemini/TTS 생성보다 짧아 씬 전환이 선행될 때,
+            // UI가 IsStageFlowReady=false 상태에서 조용히 대기하다 준비 완료 후 일괄 바인딩되도록 한다.
+            if (StagePreloader.Instance != null)
+            {
+                await StagePreloader.Instance.WaitForDataPrep(_cts.Token);
             }
 
             float deadline = Time.unscaledTime + StageFlowManagerWaitTimeoutSec;

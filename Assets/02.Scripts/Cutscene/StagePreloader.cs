@@ -217,8 +217,56 @@ public class StagePreloader : MonoBehaviourPunCallbacks
         }
         catch (Exception ex)
         {
-            Debug.LogError($"[StagePreloader] 데이터 준비 중 예외: {ex}");
+            // 여기서 그냥 종료하면 _dataPrepTcs가 resolve되지 않아 모든 클라이언트의
+            // StageFlowBootstrapper.WaitForDataPrep이 영구 대기한다.
+            // 폴백으로 환자를 채우고 완료 신호를 반드시 내보낸다.
+            Debug.LogError($"[StagePreloader] 데이터 준비 중 예외: {ex}. 폴백으로 완료 처리.");
+            EnsureFallbackPatients();
+            CompleteDataPrep();
+            if (PhotonNetwork.IsMasterClient)
+            {
+                RoomProperties.SetStageDataPrepComplete(true);
+            }
         }
+    }
+
+    // 예외 발생 시 부족한 환자 슬롯을 폴백 데이터로 채웁니다.
+    private void EnsureFallbackPatients()
+    {
+        if (StageData == null)
+        {
+            return;
+        }
+
+        int targetCount = StageData.Settings.PatientSettings.PatientCount;
+        if (StageData.Patients.Count >= targetCount)
+        {
+            return;
+        }
+
+        var usedIds = new HashSet<string>();
+        for (int i = 0; i < StageData.Patients.Count; i++)
+        {
+            if (StageData.Patients[i] != null)
+            {
+                usedIds.Add(StageData.Patients[i].DiseaseId);
+            }
+        }
+
+        List<DiseaseData> stageFallbacks = FallbackDiseaseLoader.GetByStage(StageData.StageId);
+        while (StageData.Patients.Count < targetCount)
+        {
+            DiseaseData fallback = PickUniqueFallback(stageFallbacks, usedIds, StageData.StageId);
+            if (fallback == null)
+            {
+                break;
+            }
+
+            usedIds.Add(fallback.DiseaseId);
+            StageData.Patients.Add(fallback);
+        }
+
+        Debug.LogWarning($"[StagePreloader] 폴백 환자 {StageData.Patients.Count}/{targetCount}명으로 진행");
     }
 
     // 사용되지 않은 폴백 데이터를 랜덤으로 하나 선택합니다 (Query 전용, 부수 효과 없음).
