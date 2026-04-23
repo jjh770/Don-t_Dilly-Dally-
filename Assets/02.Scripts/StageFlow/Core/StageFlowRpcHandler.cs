@@ -532,6 +532,7 @@ namespace DontDillyDally.StageFlow
         public void ResetState()
         {
             _isGameOver = false;
+            _lastReceivedStageData = null;
             _countdownStartTime.Value = 0d;
             _countdownDuration.Value = 0f;
         }
