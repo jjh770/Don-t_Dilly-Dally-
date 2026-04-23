@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.Timeline;
@@ -13,7 +12,6 @@ public class MainMenuAnimationPlayer : MonoBehaviour
 
     private int _lastTimelineIndex = -1;
     private bool _isStopping;
-    private readonly List<int> _playableTimelineIndexes = new List<int>();
 
     private void Awake()
     {
@@ -21,13 +19,6 @@ public class MainMenuAnimationPlayer : MonoBehaviour
         {
             _director = GetComponent<PlayableDirector>();
         }
-
-        BuildPlayableTimelineCache();
-    }
-
-    private void OnValidate()
-    {
-        BuildPlayableTimelineCache();
     }
 
     private void OnEnable()
@@ -100,53 +91,74 @@ public class MainMenuAnimationPlayer : MonoBehaviour
 
     private int GetRandomTimelineIndex()
     {
-        int timelineCount = _playableTimelineIndexes.Count;
+        int timelineCount = CountPlayableTimelines();
         if (!_avoidRepeat || timelineCount <= 1 || _lastTimelineIndex < 0)
         {
-            return _playableTimelineIndexes[Random.Range(0, timelineCount)];
+            return GetPlayableTimelineIndexAt(Random.Range(0, timelineCount));
         }
 
         int randomPlayableIndex = Random.Range(0, timelineCount - 1);
+        int selectedPlayableIndex = 0;
 
-        for (int i = 0; i < _playableTimelineIndexes.Count; i++)
+        for (int i = 0; i < _timelines.Length; i++)
         {
-            int timelineIndex = _playableTimelineIndexes[i];
-            if (timelineIndex == _lastTimelineIndex)
+            if (_timelines[i] == null || i == _lastTimelineIndex)
             {
                 continue;
             }
 
-            if (randomPlayableIndex == 0)
+            if (selectedPlayableIndex == randomPlayableIndex)
             {
-                return timelineIndex;
+                return i;
             }
 
-            randomPlayableIndex--;
+            selectedPlayableIndex++;
         }
 
-        return _playableTimelineIndexes[0];
+        return GetPlayableTimelineIndexAt(0);
     }
 
     private bool HasPlayableTimeline()
     {
-        return _playableTimelineIndexes.Count > 0;
+        return CountPlayableTimelines() > 0;
     }
 
-    private void BuildPlayableTimelineCache()
+    private int CountPlayableTimelines()
     {
-        _playableTimelineIndexes.Clear();
-
         if (_timelines == null)
         {
-            return;
+            return 0;
         }
 
+        int count = 0;
         for (int i = 0; i < _timelines.Length; i++)
         {
             if (_timelines[i] != null)
             {
-                _playableTimelineIndexes.Add(i);
+                count++;
             }
         }
+
+        return count;
+    }
+
+    private int GetPlayableTimelineIndexAt(int playableIndex)
+    {
+        for (int i = 0; i < _timelines.Length; i++)
+        {
+            if (_timelines[i] == null)
+            {
+                continue;
+            }
+
+            if (playableIndex == 0)
+            {
+                return i;
+            }
+
+            playableIndex--;
+        }
+
+        return 0;
     }
 }
