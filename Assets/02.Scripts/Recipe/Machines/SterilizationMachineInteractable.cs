@@ -45,6 +45,66 @@ namespace DontDillyDally.Data
         public bool IsInteracting => _operationController != null && (_operationController.IsRunning || _isCompletionPending);
         public Transform Transform => transform;
 
+        public int SlotCount => MaxSlots;
+        public bool IsDoorOpen => _operationController == null || _operationController.IsDoorOpen;
+        public bool HasAnyStoredItem => HasAnyStoredItemsWithoutCleanup();
+
+        public int OccupiedSlotCount
+        {
+            get
+            {
+                if (_slots == null)
+                {
+                    return 0;
+                }
+
+                int count = 0;
+                for (int i = 0; i < _slots.Length; i++)
+                {
+                    if (_slots[i].IsOccupied)
+                    {
+                        count++;
+                    }
+                }
+
+                return count;
+            }
+        }
+
+        public SterilizationSlotDisplayInfo GetSlotDisplayInfo(int slotIndex)
+        {
+            if (_slots == null || slotIndex < 0 || slotIndex >= _slots.Length)
+            {
+                return SterilizationSlotDisplayInfo.Empty;
+            }
+
+            SterilizationSlot slot = _slots[slotIndex];
+            ItemObject item = slot.Item;
+            if (item == null)
+            {
+                return SterilizationSlotDisplayInfo.Empty;
+            }
+
+            // 도구 멸균 대기 중: 완성될 결과 재료 아이콘을 미리 보여줍니다.
+            if (item is MixToolItem && slot.HasPendingToolResult)
+            {
+                return SterilizationSlotDisplayInfo.CreateMaterial(slot.PendingResultMaterial);
+            }
+
+            // 멸균 완료 후 생성된 결과물입니다.
+            if (item is BasicMaterialItem basicMaterial)
+            {
+                return SterilizationSlotDisplayInfo.CreateMaterial(basicMaterial.MaterialType);
+            }
+
+            if (item is TrayItem trayItem)
+            {
+                return SterilizationSlotDisplayInfo.CreateTray(trayItem.Kind);
+            }
+
+            return SterilizationSlotDisplayInfo.Empty;
+        }
+
         private void Awake()
         {
             if (_sterilizationMachine == null)
@@ -111,7 +171,7 @@ namespace DontDillyDally.Data
                 return;
             }
 
-            if (!IsDoorOpen())
+            if (!IsDoorOpen)
             {
                 HandleClosedDoorInteraction();
                 return;
@@ -612,11 +672,6 @@ namespace DontDillyDally.Data
         private bool HasAnyStoredItems()
         {
             return HasAnyStoredItemsWithoutCleanup();
-        }
-
-        private bool IsDoorOpen()
-        {
-            return _operationController == null || _operationController.IsDoorOpen;
         }
 
         private int GetFirstAvailableSlotIndex()
