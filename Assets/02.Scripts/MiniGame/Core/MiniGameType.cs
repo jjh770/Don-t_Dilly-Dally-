@@ -4,6 +4,7 @@ namespace DontDillyDally.MiniGame
     {
         ButtonMash,
         DirectionQTE,
-        PrecisionStop
+        PrecisionStop,
+        ReCaptcha
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DontDillyDally.MiniGame
 {
     // 에디터에서 키 입력으로 미니게임을 테스트하는 디버그 도구.
-    // F1: ButtonMash, F2: DirectionQTE, F3: PrecisionStop
+    // F1: ButtonMash, F2: DirectionQTE, F3: PrecisionStop, F4: ReCaptcha
     public sealed class MiniGameDebugTrigger : MonoBehaviour
     {
 #if UNITY_EDITOR
@@ -27,6 +27,10 @@ namespace DontDillyDally.MiniGame
             else if (Input.GetKeyDown(KeyCode.F3))
             {
                 LaunchDebug(MiniGameType.PrecisionStop);
+            }
+            else if (Input.GetKeyDown(KeyCode.F4))
+            {
+                LaunchDebug(MiniGameType.ReCaptcha);
             }
         }
 

@@ -13,6 +13,7 @@ namespace DontDillyDally.MiniGame
         [SerializeField] private ButtonMashConfig _buttonMashConfig;
         [SerializeField] private DirectionQTEConfig _directionQTEConfig;
         [SerializeField] private PrecisionStopConfig _precisionStopConfig;
+        [SerializeField] private ReCaptchaConfig _reCaptchaConfig;
 
         [Header("UI 참조")]
         [SerializeField] private MiniGameUIController _uiController;
@@ -107,6 +108,7 @@ namespace DontDillyDally.MiniGame
                 MiniGameType.ButtonMash => new ButtonMashMiniGame(_inputProvider),
                 MiniGameType.DirectionQTE => new DirectionQTEMiniGame(_inputProvider),
                 MiniGameType.PrecisionStop => new PrecisionStopMiniGame(_inputProvider),
+                MiniGameType.ReCaptcha => new ReCaptchaMiniGame(),
                 _ => throw new ArgumentOutOfRangeException(nameof(type))
             };
         }
@@ -134,6 +136,7 @@ namespace DontDillyDally.MiniGame
                 MiniGameType.ButtonMash => _buttonMashConfig,
                 MiniGameType.DirectionQTE => _directionQTEConfig,
                 MiniGameType.PrecisionStop => _precisionStopConfig,
+                MiniGameType.ReCaptcha => _reCaptchaConfig,
                 _ => throw new ArgumentOutOfRangeException(nameof(type))
             };
         }
