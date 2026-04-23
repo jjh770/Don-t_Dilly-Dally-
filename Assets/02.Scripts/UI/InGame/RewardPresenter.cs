@@ -11,17 +11,10 @@ public class RewardPresenter
         _view = view;
         _stageFlowManager = StageFlowManager.Instance;
 
-        SetupView();
-
         if (_stageFlowManager != null)
         {
             _stageFlowManager.OnStageRewardGranted += HandleStageRewardGranted;
         }
-    }
-
-    public void SetupView()
-    {
-        _view.InitializeReward(RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star);
     }
 
     public void ReturnWaitingRoom()
@@ -29,11 +22,23 @@ public class RewardPresenter
         PhotonServerManager.Instance.ReturnWaitingRoom();
     }
 
-    private void HandleStageRewardGranted(StageReward reward, StageResult result)
+    private void HandleStageRewardGranted(StageRewardSettlement settlement)
     {
+        _view.InitializeWallet(settlement.BeforeCoin, settlement.BeforeStar);
+
         _view.Show(() =>
         {
-            _view.PlayRewardSequence(reward.Stars, result.SurvivalRatio, RoomDataManager.Instance.Coin.Value, RoomDataManager.Instance.Star, reward.SummaryText, reward.Money - reward.MoneyDelta, reward.MoneyDelta);
+            StageReward reward = settlement.Reward;
+            StageResult result = settlement.Result;
+
+            _view.PlayRewardSequence(
+                reward.Stars,
+                result.SurvivalRatio,
+                settlement.AfterCoin,
+                settlement.AfterStar,
+                reward.SummaryText,
+                reward.Money - reward.MoneyDelta,
+                reward.MoneyDelta);
         });
     }
 

@@ -46,7 +46,7 @@ namespace DontDillyDally.StageFlow
         public event Action<bool> OnEmergencyEndedReceived;
 
         // ── 리워드 이벤트 ─────────────────────────────────────────────
-        public event Action<StageReward, StageResult> OnStageRewardGrantedReceived;
+        public event Action<StageRewardSettlement> OnStageRewardGrantedReceived;
 
         // ── 미니게임 이벤트 ─────────────────────────────────────────
         public event Action<MiniGameType> OnMiniGameRequested;
@@ -316,13 +316,17 @@ namespace DontDillyDally.StageFlow
         }
 
         // ── 보상 ────────────────────────────────────────────────────
-        public void BroadcastStageReward(StageReward reward, StageResult result)
+        public void BroadcastStageReward(StageRewardSettlement settlement)
         {
             if (PhotonNetwork.IsMasterClient)
             {
+                StageReward reward = settlement.Reward;
+                StageResult result = settlement.Result;
+
                 photonView.RPC(nameof(RPC_StageRewardGranted), RpcTarget.All,
                     reward.Stars, reward.Money, reward.MoneyDelta, reward.IsNewBest, reward.SummaryText,
-                    result.SavedCount, result.PatientCount, (int)result.Difficulty);
+                    result.SavedCount, result.PatientCount, result.Difficulty,
+                    settlement.BeforeCoin, settlement.AfterCoin, settlement.BeforeStar, settlement.AfterStar);
             }
         }
 
@@ -518,11 +522,20 @@ namespace DontDillyDally.StageFlow
         [PunRPC]
         private void RPC_StageRewardGranted(
             int stars, int money, int moneyDelta, bool isNewBest, string summary,
-            int savedCount, int patientCount, int difficulty)
+            int savedCount, int patientCount, int difficulty,
+            int beforeCoin, int afterCoin, int beforeStar, int afterStar)
         {
             var reward = new StageReward (stars, money, moneyDelta, isNewBest, summary);
             var result = new StageResult(savedCount, patientCount, difficulty);
-            OnStageRewardGrantedReceived?.Invoke(reward, result);
+            var settlement = new StageRewardSettlement(
+                reward,
+                result,
+                beforeCoin,
+                afterCoin,
+                beforeStar,
+                afterStar);
+
+            OnStageRewardGrantedReceived?.Invoke(settlement);
         }
 
         // ================================================================

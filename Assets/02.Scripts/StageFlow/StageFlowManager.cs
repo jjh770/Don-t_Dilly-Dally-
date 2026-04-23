@@ -195,9 +195,9 @@ namespace DontDillyDally.StageFlow
         {
         }
 
-        void IStageFlowCommands.PublishReward(StageReward reward, StageResult result)
+        void IStageFlowCommands.PublishReward(StageRewardSettlement settlement)
         {
-            OnStageRewardGranted?.Invoke(reward, result);
+            OnStageRewardGranted?.Invoke(settlement);
         }
 
         // ── 환자 상태 제어 제공 ──────────────────────────────────────
@@ -281,7 +281,7 @@ namespace DontDillyDally.StageFlow
 
         // ── 이벤트 ──────────────────────────────────────────────────
         public event Action<StageRuntimeData> OnStageDataChanged;
-        public event Action<StageReward, StageResult> OnStageRewardGranted;
+        public event Action<StageRewardSettlement> OnStageRewardGranted;
         public event Action OnEmergencyStarted;
         public event Action<bool> OnEmergencyEnded;
 

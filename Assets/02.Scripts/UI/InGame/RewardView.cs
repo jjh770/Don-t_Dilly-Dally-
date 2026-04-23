@@ -83,7 +83,7 @@ public class RewardView : UIPopupBase
         _presenter = presenter;
     }
 
-    public void InitializeReward(int coin, int star)
+    public void InitializeWallet(int coin, int star)
     {
         _coin.SetValueImmediate(coin);
         _star.SetValueImmediate(star);
