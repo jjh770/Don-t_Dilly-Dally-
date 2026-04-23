@@ -318,13 +318,6 @@ namespace DontDillyDally.StageFlow
         // StageFlow에 필요한 런타임 의존성과 이벤트를 초기화합니다.
         public void Initialize(StageRuntimeData stageData)
         {
-            if (!PhotonNetwork.IsMasterClient &&
-                _rpc != null &&
-                _rpc.TryGetLatestStageData(out StageRuntimeData latestStageData))
-            {
-                stageData = latestStageData;
-            }
-
             _rpc.ResetState();
 
             _stageData = stageData;
