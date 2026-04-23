@@ -9,6 +9,7 @@ public class PlayerAnimator : MonoBehaviour
     private static readonly int IsPushing = Animator.StringToHash("IsPushing");
     private static readonly int IsWalking = Animator.StringToHash("IsWalking");
     private static readonly int IsThrowing = Animator.StringToHash("IsThrowing");
+    private static readonly int IsLying = Animator.StringToHash("IsLying");
 
     private void Awake()
     {
@@ -38,5 +39,10 @@ public class PlayerAnimator : MonoBehaviour
     public void PlayPushAnimation(bool isPushing)
     {
         _animator.SetBool(IsPushing, isPushing);
+    }
+
+    public void PlayLyingAnimation(bool isLying)
+    {
+        _animator.SetBool(IsLying, isLying);
     }
 }
