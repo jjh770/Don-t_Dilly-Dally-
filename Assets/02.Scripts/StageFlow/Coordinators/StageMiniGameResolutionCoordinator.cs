@@ -15,6 +15,10 @@ namespace DontDillyDally.StageFlow
         private readonly IStageMiniGameResolutionHost _host;
         private readonly IStageMiniGameResolutionDependencies _dependencies;
 
+        // ReCaptcha는 스테이지당 한 번만 등장. 이 코디네이터는 StageFlowManager.Initialize에서
+        // 매 스테이지 새로 생성되므로 플래그 리셋이 자동으로 이뤄진다.
+        private bool _isReCaptchaUsed;
+
         public StageMiniGameResolutionCoordinator(
             StageFlowRpcHandler rpc,
             IStageMiniGameResolutionHost host,
@@ -28,7 +32,13 @@ namespace DontDillyDally.StageFlow
         // 레시피 미니게임을 실행하고 결과에 따라 후속 처리를 수행합니다.
         public async UniTask<bool> RunRecipeMiniGame(CancellationToken ct)
         {
-            MiniGameType type = MiniGameTypeExtensions.GetRandom();
+            MiniGameType type = PickMiniGameType();
+
+            if (type == MiniGameType.ReCaptcha)
+            {
+                _isReCaptchaUsed = true;
+            }
+
             int surgeonActorNumber = GetMiniGameTargetActorNumber();
             Debug.Log($"[StageFlow] 레시피 미니게임 시작: {type} | 집도의 Actor {surgeonActorNumber}");
 
@@ -79,6 +89,17 @@ namespace DontDillyDally.StageFlow
             }
 
             return false;
+        }
+
+        // 이번 스테이지에 ReCaptcha가 이미 등장했다면 해당 타입을 후보에서 제외한다.
+        private MiniGameType PickMiniGameType()
+        {
+            if (_isReCaptchaUsed)
+            {
+                return MiniGameTypeExtensions.GetRandomExcluding(MiniGameType.ReCaptcha);
+            }
+
+            return MiniGameTypeExtensions.GetRandom();
         }
 
         private int GetMiniGameTargetActorNumber()
