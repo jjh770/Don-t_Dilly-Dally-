@@ -52,14 +52,6 @@ public class CustomizingManager : MonoBehaviour, ICustomizingManager
         }
     }
 
-    private void OnDestroy()
-    {
-        if (Instance == this)
-        {
-            Instance = null;
-        }
-    }
-
     public void Initialize(ICustomizingRepository repository)
     {
         if (_catalog == null) return;

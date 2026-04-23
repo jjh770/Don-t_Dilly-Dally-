@@ -53,16 +53,11 @@ public class RobbyBootstrapper : MonoBehaviour
 
     private void OnDestroy()
     {
-        _roomPresenter?.Dispose();
-        _attendancePresenter?.Dispose();
+        _roomPresenter.Dispose();
+        _attendancePresenter.Dispose();
         _settingPresenter?.Dispose();
-
-        if (_roomView != null && _roomView.AttendancePopupButton != null && _attendancePresenter != null)
-        {
-            _roomView.AttendancePopupButton.onClick.RemoveListener(_attendancePresenter.AttendancePopupOpen);
-        }
-
-        _tutorialOpenButton?.onClick.RemoveListener(OnTutorialOpenClicked);
-        _settingOpenButton?.onClick.RemoveListener(OnSettingOpenClicked);
+        _roomView.AttendancePopupButton.onClick.RemoveListener(_attendancePresenter.AttendancePopupOpen);
+        _tutorialOpenButton.onClick.RemoveListener(OnTutorialOpenClicked);
+        _settingOpenButton.onClick.RemoveListener(OnSettingOpenClicked);
     }
 }

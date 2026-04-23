@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,7 +12,6 @@ public class SettingView : UIPopupBase
 
     [Header("Buttons")]
     [SerializeField] private Button _quitGameButton;
-    [SerializeField] private Button _logOutButton;
     [SerializeField] private Button _closeButton;
 
     private SettingPresenter _presenter;
@@ -39,11 +37,6 @@ public class SettingView : UIPopupBase
             _quitGameButton.onClick.AddListener(HandleQuitButtonClicked);
         }
 
-        if (_logOutButton != null)
-        {
-            _logOutButton.onClick.AddListener(HandleLogoutButtonClicked);
-        }
-
         if (_closeButton != null)
         {
             _closeButton.onClick.AddListener(OnCloseClicked);
@@ -67,18 +60,11 @@ public class SettingView : UIPopupBase
             _quitGameButton.onClick.RemoveListener(HandleQuitButtonClicked);
         }
 
-        if (_logOutButton != null)
-        {
-            _logOutButton.onClick.RemoveListener(HandleLogoutButtonClicked);
-        }
-
         if (_closeButton != null)
         {
             _closeButton.onClick.RemoveListener(OnCloseClicked);
         }
     }
-
-    
 
     private void OnCloseClicked()
     {
@@ -122,12 +108,8 @@ public class SettingView : UIPopupBase
 
     private void HandleQuitButtonClicked()
     {
+        SoundManager.Instance.Play(SFXKey.UIButtonClick, SoundType.Local);
         _presenter?.HandleQuitButtonClicked();
-    }
-
-    private void HandleLogoutButtonClicked()
-    {
-        _presenter?.HandleLogoutButtonClicked();
     }
 
     private static void SetSliderValue(Slider slider, float value)

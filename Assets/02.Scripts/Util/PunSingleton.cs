@@ -17,12 +17,4 @@ public class PunSingleton<T> : MonoBehaviourPunCallbacks where T : MonoBehaviour
             Destroy(gameObject);
         }
     }
-
-    protected virtual void OnDestroy()
-    {
-        if (instance == this)
-        {
-            instance = null;
-        }
-    }
 }
