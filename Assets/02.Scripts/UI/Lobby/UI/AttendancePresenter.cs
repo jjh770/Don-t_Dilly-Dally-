@@ -8,6 +8,7 @@ public class AttendancePresenter
     private AttendanceView _view;
     private IRewardRepository _rewardRepository;
     private UIPopupBase _attendancePopup;
+    private readonly PlayerDataManager _playerDataManager;
 
 
     private CancellationTokenSource _cts;
@@ -20,14 +21,22 @@ public class AttendancePresenter
         _view = view;
 
         _attendancePopup = attendancePopup;
+        _playerDataManager = PlayerDataManager.Instance;
 
-        _attendanceManager.OnAttendanceRecordLoaded += HandleDataLoaded;
-        _attendanceManager.OnAttendanceChecked += HandleAttendanceChecked;
+        if (_attendanceManager != null)
+        {
+            _attendanceManager.OnAttendanceRecordLoaded += HandleDataLoaded;
+            _attendanceManager.OnAttendanceChecked += HandleAttendanceChecked;
+        }
+
         AttendanceManager.OnAttendanceManagerReady += HandleAttendanceManagerReady;
-        PlayerDataManager.Instance.OnNicknameChanged += SetName;
+        if (_playerDataManager != null)
+        {
+            _playerDataManager.OnNicknameChanged += SetName;
+        }
 
 
-        if (_attendanceManager.IsReady)
+        if (_attendanceManager != null && _attendanceManager.IsReady)
         {
             HandleAttendanceManagerReady();
         }
@@ -35,6 +44,8 @@ public class AttendancePresenter
 
     public void OnPopupShow()
     {
+        if (_attendanceManager == null) return;
+
         ResetCTS();
         _attendanceManager.CheckAttendance(_cts.Token);
     }
@@ -55,9 +66,14 @@ public class AttendancePresenter
 
     private void HandleAttendanceManagerReady()
     {
+        if (_attendanceManager == null) return;
+
         ResetCTS(); 
 
-        SetName(PlayerDataManager.Instance.PlayerNickname);
+        if (_playerDataManager != null)
+        {
+            SetName(_playerDataManager.PlayerNickname);
+        }
 
         _attendanceManager.LoadAttendance(_cts.Token);
         _rewardRepository = _attendanceManager.RewardRepo;
@@ -102,10 +118,17 @@ public class AttendancePresenter
 
     public void Dispose()
     {
-        _attendanceManager.OnAttendanceRecordLoaded -= HandleDataLoaded;
-        _attendanceManager.OnAttendanceChecked -= HandleAttendanceChecked;
+        if (_attendanceManager != null)
+        {
+            _attendanceManager.OnAttendanceRecordLoaded -= HandleDataLoaded;
+            _attendanceManager.OnAttendanceChecked -= HandleAttendanceChecked;
+        }
+
         AttendanceManager.OnAttendanceManagerReady -= HandleAttendanceManagerReady;
-        PlayerDataManager.Instance.OnNicknameChanged -= SetName;
+        if (_playerDataManager != null)
+        {
+            _playerDataManager.OnNicknameChanged -= SetName;
+        }
 
         if (_cts != null)
         {
