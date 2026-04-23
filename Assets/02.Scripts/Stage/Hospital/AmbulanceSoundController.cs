@@ -10,6 +10,7 @@ public class AmbulanceSoundController : MonoBehaviourPunCallbacks
     [SerializeField] private float _minInterval = 30f;
     [SerializeField] private float _maxInterval = 60f;
 
+
     private Coroutine _playCycleCoroutine;
 
     private void Start()
