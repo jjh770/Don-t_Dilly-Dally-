@@ -41,11 +41,17 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     public event Action OnMasterClientChanged;
     public event Action OnOtherPlayerLeftRoom;
     private bool _isReturningToWaitingRoom;
+    private PlayerDataManager _playerDataManager;
 
     private void Start()
     {
         Connect();
-        PlayerDataManager.Instance.OnNicknameChanged += HandleNicknameChanged;
+
+        _playerDataManager = PlayerDataManager.Instance;
+        if (_playerDataManager != null)
+        {
+            _playerDataManager.OnNicknameChanged += HandleNicknameChanged;
+        }
     }
 
     public override void OnEnable()
@@ -58,7 +64,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     {
         base.OnDisable();
         PhotonNetwork.RemoveCallbackTarget(this);
-        PlayerDataManager.Instance.OnNicknameChanged -= HandleNicknameChanged;
+
+        if (_playerDataManager != null)
+        {
+            _playerDataManager.OnNicknameChanged -= HandleNicknameChanged;
+            _playerDataManager = null;
+        }
     }
     private void Connect()
     {
