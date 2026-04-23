@@ -6,17 +6,28 @@ public class RoomPresenter
 {
     private RoomView _view;
     private UIPopupBase _attendancePopup;
+    private readonly PhotonServerManager _photonServerManager;
+    private readonly PlayerDataManager _playerDataManager;
 
 
     public RoomPresenter(RoomView view, UIPopupBase attendancePopup)
     {
         _view = view;
         _attendancePopup = attendancePopup;
+        _photonServerManager = PhotonServerManager.Instance;
+        _playerDataManager = PlayerDataManager.Instance;
 
-        PhotonServerManager.Instance.OnFailedToJoinRoom += OnFailedToJoinRoom;
-        PlayerDataManager.Instance.OnDataManagerReady += OnDataManagerSet;
+        if (_photonServerManager != null)
+        {
+            _photonServerManager.OnFailedToJoinRoom += OnFailedToJoinRoom;
+        }
 
-        if (PlayerDataManager.Instance.IsReady)
+        if (_playerDataManager != null)
+        {
+            _playerDataManager.OnDataManagerReady += OnDataManagerSet;
+        }
+
+        if (_playerDataManager != null && _playerDataManager.IsReady)
         {
             OnDataManagerSet();
         }
@@ -24,17 +35,17 @@ public class RoomPresenter
 
     public void EnterRoom(string code)
     {
-        PhotonServerManager.Instance.TryJoinRoom(code);   
+        _photonServerManager?.TryJoinRoom(code);
     }
 
     public void CreateRoom()
     {
-        PhotonServerManager.Instance.CreateNewRoom();
+        _photonServerManager?.CreateNewRoom();
     }
 
     public void SetNickName(string name)
     {
-        PlayerDataManager.Instance.ChangeNickname(name);
+        _playerDataManager?.ChangeNickname(name);
     }
 
     public void SelectMyHospital(string code)
@@ -50,14 +61,17 @@ public class RoomPresenter
     public void OnDataManagerSet()
     {
         SetDropdown();
-        _view.InitializeNicknameField(PlayerDataManager.Instance.PlayerNickname);
+        if (_playerDataManager != null)
+        {
+            _view.InitializeNicknameField(_playerDataManager.PlayerNickname);
+        }
     }
 
    
     public void SetDropdown()
     {
-        if (!PlayerDataManager.Instance.IsReady) return;
-        MyHospital[] hospitals = PlayerDataManager.Instance.GetHospital();
+        if (_playerDataManager == null || !_playerDataManager.IsReady) return;
+        MyHospital[] hospitals = _playerDataManager.GetHospital();
 
         _view.SetDropdown(hospitals);
     }
@@ -65,12 +79,19 @@ public class RoomPresenter
 
     public void OnMyHospitalDeleted(string code)
     {
-        PlayerDataManager.Instance.DeleteHospital(code);
+        _playerDataManager?.DeleteHospital(code);
     }
 
     public void Dispose()
     {
-        PhotonServerManager.Instance.OnFailedToJoinRoom -= OnFailedToJoinRoom;
-        PlayerDataManager.Instance.OnDataManagerReady -= OnDataManagerSet;
+        if (_photonServerManager != null)
+        {
+            _photonServerManager.OnFailedToJoinRoom -= OnFailedToJoinRoom;
+        }
+
+        if (_playerDataManager != null)
+        {
+            _playerDataManager.OnDataManagerReady -= OnDataManagerSet;
+        }
     }
 }
