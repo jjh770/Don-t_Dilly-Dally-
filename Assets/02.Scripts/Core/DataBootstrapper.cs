@@ -29,8 +29,6 @@ public class DataBootstrapper : MonoBehaviour
 
     private void Start()
     {
-        CacheManagers();
-
         if (_firebaseInitializer == null || !_firebaseInitializer.IsFirebaseInitialized)
         {
             return;
@@ -48,8 +46,6 @@ public class DataBootstrapper : MonoBehaviour
 
     private void OnFirebaseSetComplete()
     {
-        CacheManagers();
-
         if (_firebaseInitializer == null) return;
         if (_photonServerManager == null || !_photonServerManager.IsEnabled) return;
         if (_playerDataManager == null) return;
@@ -79,8 +75,6 @@ public class DataBootstrapper : MonoBehaviour
 
     private void InitializedAttendance()
     {
-        CacheManagers();
-
         if (_firebaseInitializer == null) return;
         if (_playerDataManager == null) return;
         if (_attendanceManager == null) return;
