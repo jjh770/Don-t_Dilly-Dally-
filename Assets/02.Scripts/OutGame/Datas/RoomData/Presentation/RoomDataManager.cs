@@ -357,8 +357,10 @@ public class RoomDataManager : PunPersistentSingleton<RoomDataManager>
         oldCts?.Dispose();
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
+        base.OnDestroy();
+
         if (_cts != null)
         {
             _cts.Cancel();

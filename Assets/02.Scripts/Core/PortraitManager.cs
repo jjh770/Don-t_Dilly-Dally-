@@ -57,13 +57,14 @@ public class PortraitManager : PunPersistentSingleton<PortraitManager>
         base.OnDisable();
     }
 
-    private void OnDestroy()
+    protected override void OnDestroy()
     {
         if (Instance != this)
         {
             return;
         }
 
+        base.OnDestroy();
         UnbindCustomizingManager();
         DisposePortraitService();
     }

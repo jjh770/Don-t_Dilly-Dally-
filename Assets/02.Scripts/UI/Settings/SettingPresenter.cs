@@ -59,4 +59,9 @@ public class SettingPresenter
         Application.Quit();
 #endif
     }
+
+    public void HandleLogoutButtonClicked()
+    {
+        LogoutService.Logout();
+    }
 }

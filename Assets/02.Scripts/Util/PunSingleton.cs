@@ -3,18 +3,26 @@ using UnityEngine;
 
 public class PunSingleton<T> : MonoBehaviourPunCallbacks where T : MonoBehaviourPunCallbacks
 {
-    private static T instance;
+    private static T _instance;
 
-    public static T Instance => instance;
+    public static T Instance => _instance;
     protected virtual void Awake()
     {
-        if (instance == null)
+        if (_instance == null)
         {
-            instance = this as T;
+            _instance = this as T;
         }
-        else if (instance != this)
+        else if (_instance != this)
         {
             Destroy(gameObject);
+        }
+    }
+
+    protected virtual void OnDestroy()
+    {
+        if (_instance == this)
+        {
+            _instance = null;
         }
     }
 }

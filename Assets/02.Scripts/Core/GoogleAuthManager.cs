@@ -7,7 +7,7 @@ using Cysharp.Threading.Tasks;
 using Firebase.Auth;
 using UnityEngine;
 
-public class GoogleAuthManager : MonoBehaviour
+public class GoogleAuthManager : PersistentSingleton<GoogleAuthManager>
 {
     [SerializeField] private KeyConfig _keyConfig;
     [SerializeField] private float _timeoutInMinutes = 1.0f;
@@ -193,9 +193,16 @@ public class GoogleAuthManager : MonoBehaviour
             Debug.LogError($"Firebase 로그인 실패: {e.Message}");
         }
     }
-
-    private void OnDestroy()
+    public void Logout()
     {
+        FirebaseAuth.DefaultInstance.SignOut();
+        Debug.Log("로그아웃 완료");
+    }
+
+    protected override void OnDestroy()
+    {
+        base.OnDestroy();
+
         // ✅ 씬 전환 등으로 오브젝트 파괴 시 정리
         _cts?.Cancel();
         _cts?.Dispose();
