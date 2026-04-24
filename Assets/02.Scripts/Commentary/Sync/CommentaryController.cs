@@ -244,6 +244,22 @@ public class CommentaryController : MonoBehaviour
         _currentCommentary = null;
     }
 
+    public void ResetForNewGame()
+    {
+        _eventQueue.Clear();
+        _lastEventTimes.Clear();
+        _preGeneratedIntros.Clear();
+        _currentPatientIndex = -1;
+        _sequenceCounter = 0;
+        _isProcessing = false;
+        _isGameEnded = false;
+        _currentCommentary = null;
+
+        _syncManager?.ResetForNewGame();
+
+        Debug.Log("[CommentaryController] 새 게임을 위해 초기화됨");
+    }
+
     // ========== 환자 소개 사전 생성 (동적형) ==========
 
     public async UniTask PreGeneratePatientIntros(List<(string patientName, string diseaseName)> patients, CancellationToken ct)

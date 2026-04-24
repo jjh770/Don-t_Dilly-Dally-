@@ -163,6 +163,9 @@ namespace DontDillyDally.StageFlow
                 return;
             }
 
+            EventManager.Instance?.ResetForNewGame();
+            CommentaryController.Instance?.ResetForNewGame();
+
             StageFlowManager.Instance.Initialize(_stageData);
             IsStageFlowReady = true;
             StageFlowReady?.Invoke();
