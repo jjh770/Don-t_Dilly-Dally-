@@ -57,9 +57,9 @@ public class TTSManager : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"[TTSManager] 응답 실패: {request.error}");
-                Debug.LogError($"[TTSManager] 응답 코드: {request.responseCode}");
-                Debug.LogError($"[TTSManager] 응답 본문: {request.downloadHandler.text}");
+                Debug.LogWarning($"[TTSManager] 응답 실패: {request.error}");
+                Debug.LogWarning($"[TTSManager] 응답 코드: {request.responseCode}");
+                Debug.LogWarning($"[TTSManager] 응답 본문: {request.downloadHandler.text}");
                 return null;
             }
 
@@ -68,7 +68,7 @@ public class TTSManager : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[TTSManager] 예외: {e.Message}");
+            Debug.LogWarning($"[TTSManager] 예외: {e.Message}");
             return null;
         }
     }
