@@ -176,4 +176,13 @@ public class EventManager : MonoBehaviour
 
         return _eventLog.GetRange(startIndex, actualCount);
     }
+
+    public void ResetForNewGame()
+    {
+        _eventLog.Clear();
+        _chainAccidentTriggered = false;
+        _chainCooperationTriggered = false;
+
+        Debug.Log("[EventManager] 새 게임을 위해 초기화됨");
+    }
 }
