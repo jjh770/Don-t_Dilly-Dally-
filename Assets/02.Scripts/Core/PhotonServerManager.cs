@@ -19,6 +19,9 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
     [SerializeField]
     private int _maxPlayersPerRoom = 4;
 
+    [SerializeField]
+    private bool _soloPlayPossible = false;
+
     private const byte KickEventCode = 1;
 
     private readonly string _gameVersion = "1.0";
@@ -324,6 +327,12 @@ public class PhotonServerManager : PunPersistentSingleton<PhotonServerManager>, 
         }
 
         Player[] players = PhotonNetwork.PlayerList;
+
+        if (!_soloPlayPossible && players.Length < 2)
+        {
+            message = "혼자서는 수술방을 열 수 없습니다.";
+            return false;
+        }
 
         foreach (Player player in players)
         {
