@@ -2928,6 +2928,12 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 5422456313888924847, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1848652589315455109}
+    - targetCorrespondingSourceObject: {fileID: 9004135733044755685, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1848652589315455108}
     - targetCorrespondingSourceObject: {fileID: 430574472208022117, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 34988599}
@@ -2940,6 +2946,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 1979361173246547251, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1848652589315455101}
+    - targetCorrespondingSourceObject: {fileID: 6395537761059090816, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6353583014827886307}
+    - targetCorrespondingSourceObject: {fileID: 741267464536480570, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1848652589315455107}
   m_SourcePrefab: {fileID: 100100000, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
 --- !u!1 &1848652589315455100 stripped
 GameObject:
@@ -3045,7 +3057,7 @@ MonoBehaviour:
   m_SamplingWidth: 1
   m_SamplingScale: 1
   m_TransitionFilter: 4
-  m_TransitionRate: 0.60772645
+  m_TransitionRate: 1
   m_TransitionReverse: 0
   m_TransitionTex: {fileID: 2800000, guid: 944c3fa29663042a1bdc35546c2eda58, type: 3}
   m_TransitionTexScale: {x: 1, y: 1}
@@ -3173,6 +3185,89 @@ MonoBehaviour:
   m_DetailTexSpeed: {x: 0, y: 0}
   m_CustomRoot: {fileID: 0}
   m_Flip: 0
+--- !u!1 &1848652589315455103 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 741267464536480570, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+  m_PrefabInstance: {fileID: 1848652589315455099}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1848652589315455104 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 9004135733044755685, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+  m_PrefabInstance: {fileID: 1848652589315455099}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1848652589315455105 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 5422456313888924847, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+  m_PrefabInstance: {fileID: 1848652589315455099}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &1848652589315455106 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6395537761059090816, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
+  m_PrefabInstance: {fileID: 1848652589315455099}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1848652589315455107
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848652589315455103}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a454e1c81a703f14a9345e59a305715d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_ButtonHoverBubble
+  _hoverScale: 1.1
+  _scaleInDuration: 0.25
+  _scaleOutDuration: 0.2
+  _scaleInEase: 27
+  _scaleOutEase: 9
+  _useTremble: 0
+  _trembleAngle: 5
+  _trembleDuration: 0.3
+  _trembleVibrato: 12
+--- !u!114 &1848652589315455108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848652589315455104}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a454e1c81a703f14a9345e59a305715d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_ButtonHoverBubble
+  _hoverScale: 1.1
+  _scaleInDuration: 0.25
+  _scaleOutDuration: 0.2
+  _scaleInEase: 27
+  _scaleOutEase: 9
+  _useTremble: 0
+  _trembleAngle: 5
+  _trembleDuration: 0.3
+  _trembleVibrato: 12
+--- !u!114 &1848652589315455109
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848652589315455105}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a454e1c81a703f14a9345e59a305715d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_ButtonHoverBubble
+  _hoverScale: 1.1
+  _scaleInDuration: 0.25
+  _scaleOutDuration: 0.2
+  _scaleInEase: 27
+  _scaleOutEase: 9
+  _useTremble: 0
+  _trembleAngle: 5
+  _trembleDuration: 0.3
+  _trembleVibrato: 12
 --- !u!1001 &1897368092807319951
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3376,12 +3471,33 @@ MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 1227510411108586982, guid: 2e846916f6afed145b2d0bbfb87d5c9f, type: 3}
   m_PrefabInstance: {fileID: 1848652589315455099}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
+  m_GameObject: {fileID: 1848652589315455106}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Button
+--- !u!114 &6353583014827886307
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1848652589315455106}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a454e1c81a703f14a9345e59a305715d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI_ButtonHoverBubble
+  _hoverScale: 1.1
+  _scaleInDuration: 0.25
+  _scaleOutDuration: 0.2
+  _scaleInEase: 27
+  _scaleOutEase: 9
+  _useTremble: 0
+  _trembleAngle: 5
+  _trembleDuration: 0.3
+  _trembleVibrato: 12
 --- !u!224 &7056952973411195356 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6418905856815585592, guid: 0bd1ca820b22780439628402787dbbb9, type: 3}
