@@ -74,10 +74,15 @@ public class PlayerMovementAbility : PlayerAbility
         if (IsMovementLocked)
         {
             _currentSpeed = 0f;
-            Vector3 velocity = _rigidbody.linearVelocity;
-            velocity.x = 0f;
-            velocity.z = 0f;
-            _rigidbody.linearVelocity = velocity;
+
+            // Kinematic 상태에서는 velocity 설정 자체가 금지돼 있어 경고를 발생시킨다.
+            if (!_rigidbody.isKinematic)
+            {
+                Vector3 velocity = _rigidbody.linearVelocity;
+                velocity.x = 0f;
+                velocity.z = 0f;
+                _rigidbody.linearVelocity = velocity;
+            }
             return;
         }
 

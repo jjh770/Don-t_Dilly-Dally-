@@ -426,7 +426,13 @@ Animator:
   m_LinearVelocityBlending: 0
   m_StabilizeFeet: 0
   m_AnimatePhysics: 0
-  m_WarningMessage: 
+  m_WarningMessage: "\nBinding warning: Some generic clip(s) animate transforms that
+    are already bound by a Humanoid avatar. These transforms can only be changed
+    by Humanoid clips.\n\tTransform 'Root'\n\tTransform 'RightFoot'\n\tTransform
+    'Hips'\n\tTransform 'RightHandMiddle1'\n\tTransform 'RightHandMiddle2'\n\tTransform
+    'LeftToeBase'\n\tTransform 'LeftUpLeg'\n\tTransform 'RightHandThumb1'\n\tTransform
+    'Spine'\n\tTransform 'RightHandIndex2'\n\tand more ...\n\tFrom animation clip
+    'Female_laying'\n\tFrom animation clip 'Male_Laying'"
   m_HasTransformHierarchy: 1
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
@@ -567,6 +573,12 @@ MonoBehaviour:
   - Type: 4
     SynchronizeType: 2
     Name: IsThrowing
+  - Type: 4
+    SynchronizeType: 2
+    Name: IsLying
+  - Type: 3
+    SynchronizeType: 2
+    Name: LyingPoseIndex
   m_SynchronizeLayers:
   - SynchronizeType: 2
     LayerIndex: 0
