@@ -78,7 +78,7 @@ public class AttendancePresenter
 
         _view.SetDayList(record.TotalDays, _rewardRepository.GetRewardCount(), itemSprites);
 
-        if (record.CanCheckToday())
+        if (record.CanCheckToday() && record.TotalDays < _rewardRepository.GetRewardCount())
         {
             AttendancePopupOpen();
         }
