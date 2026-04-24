@@ -93,6 +93,7 @@ public enum SFXKey
     HospitalTruck = 67,
     HospitalDrift = 68,
     UIHover = 69,
+    Result1Star = 70,
 }
 
 // 사운드 재생 타입.
