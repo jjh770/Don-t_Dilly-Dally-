@@ -185,7 +185,7 @@ public class BGMController : PersistentSingleton<BGMController>
             return;
         }
 
-        if (!forceRestart && _currentKey == key)
+        if (!forceRestart && _currentKey == key && SoundManager.Instance.IsBGMPlaying)
         {
             return;
         }

@@ -170,6 +170,7 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
 
     public float BGMVolume => _bgmVolume;
     public float SFXVolume => _sfxVolume;
+    public bool IsBGMPlaying => _bgmSource != null && _bgmSource.isPlaying;
 
     // ──────────────────────────────────────────
     //  초기화
@@ -288,6 +289,15 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     /// <summary>현재 BGM을 정지합니다.</summary>
     public void StopBGM(bool fade = true)
     {
+        if (_bgmDuckCoroutine != null)
+        {
+            StopCoroutine(_bgmDuckCoroutine);
+            _bgmDuckCoroutine = null;
+        }
+
+        _bgmDuckMultiplier = 1f;
+        ApplyBgmVolume();
+
         if (fade) StartBGMFade(_bgmFadeDuration, 0f, () => _bgmSource.Stop());
         else _bgmSource.Stop();
     }
