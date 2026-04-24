@@ -115,17 +115,18 @@ namespace DontDillyDally.StageFlow
                 difficulty: stageData.Settings.PatientSettings.Difficulty);
 
             StageStars previousStars = RoomDataManager.Instance.GetStageStars(stageData.StageId);
-            int currentMoney = RoomDataManager.Instance.Coin.Value;
+            int beforeCoin = RoomDataManager.Instance.Coin.Value;
+            int beforeStar = RoomDataManager.Instance.Star;
             RewardNarrativeResult narrative = await _rewardEvaluator.EvaluateAsync(
                 StageFlowManager.Instance.PerformanceTracker.Events,
                 stageData.SavedCount,
                 stageData.Settings.PatientSettings.PatientCount,
                 _host?.IsGameOver ?? false,
-                currentMoney);
+                beforeCoin);
 
             RewardMoneyAdjustment finalAdjustment = narrative.HasRequestedMoneyDelta
-                ? _moneyPolicy.ApplyRequestedDelta(narrative.requestedMoneyDelta, currentMoney)
-                : _moneyPolicy.ApplyRequestedDelta(0, currentMoney);
+                ? _moneyPolicy.ApplyRequestedDelta(narrative.requestedMoneyDelta, beforeCoin)
+                : _moneyPolicy.ApplyRequestedDelta(0, beforeCoin);
 
             StageReward finalReward = _rewardSettlementService.Build(
                 result,
@@ -134,7 +135,15 @@ namespace DontDillyDally.StageFlow
                 narrative);
 
             finalReward = RoomDataManager.Instance.ApplyReward(stageData.StageId, finalReward);
-            _rpc.BroadcastStageReward(finalReward, result);
+            var settlement = new StageRewardSettlement(
+                finalReward,
+                result,
+                beforeCoin,
+                RoomDataManager.Instance.Coin.Value,
+                beforeStar,
+                RoomDataManager.Instance.Star);
+
+            _rpc.BroadcastStageReward(settlement);
 
             Debug.Log($"[StageFlow] 보상 정산 => 별: {finalReward.Stars}, 코인: {finalReward.Money - finalReward.MoneyDelta} ({finalReward.MoneyDelta}), 최고기록 갱신: {finalReward.IsNewBest}");
             Debug.Log(finalReward.SummaryText);
@@ -213,9 +222,9 @@ namespace DontDillyDally.StageFlow
             }
         }
 
-        private void HandleStageRewardGrantedReceived(StageReward reward, StageResult result)
+        private void HandleStageRewardGrantedReceived(StageRewardSettlement settlement)
         {
-            _host?.PublishReward(reward, result);
+            _host?.PublishReward(settlement);
         }
 
         private Player GetSurgeonPlayer()

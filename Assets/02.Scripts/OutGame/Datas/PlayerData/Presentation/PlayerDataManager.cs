@@ -169,10 +169,8 @@ public class PlayerDataManager : PunPersistentSingleton<PlayerDataManager>
         oldCts?.Cancel();
     }
 
-    protected override void OnDestroy()
+    private void OnDestroy()
     {
-        base.OnDestroy();
-
         if (_cts != null)
         {
             _cts.Cancel();

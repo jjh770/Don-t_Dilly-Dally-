@@ -22,7 +22,7 @@ namespace DontDillyDally.StageFlow
         void SyncTimerState();
         void ClearRoles();
         void PublishGameOver(EGameOverReason reason);
-        void PublishReward(StageReward reward, StageResult result);
+        void PublishReward(StageRewardSettlement settlement);
     }
 
     // 환자 체력과 자연 감소 제어를 묶은 공통 환자 흐름 인터페이스입니다.

@@ -92,7 +92,7 @@ namespace DontDillyDally.StageFlow
             _maxHealth = Mathf.Max(1f, stageData.Settings.PatientSettings.InitialPatientHealth);
         }
 
-        private void HandleStageRewardGranted(StageReward reward, StageResult result)
+        private void HandleStageRewardGranted(StageRewardSettlement settlement)
         {
             StopDeathSfx();
         }
