@@ -43,19 +43,19 @@ public class LLMService : MonoBehaviour
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                Debug.LogError($"[LLMService] 요청 실패: {request.error}");
-                Debug.LogError($"[LLMService] 응답 코드: {request.responseCode}");
-                Debug.LogError($"[LLMService] 응답 본문: {request.downloadHandler.text}");
-                Debug.LogError($"[LLMService] 요청 모델: {_model}");
+                Debug.LogWarning($"[LLMService] 요청 실패: {request.error}");
+                Debug.LogWarning($"[LLMService] 응답 코드: {request.responseCode}");
+                Debug.LogWarning($"[LLMService] 응답 본문: {request.downloadHandler.text}");
+                Debug.LogWarning($"[LLMService] 요청 모델: {_model}");
 
                 // 403 오류 시 가능한 원인 안내
                 if (request.responseCode == 403)
                 {
-                    Debug.LogError("[LLMService] 403 Forbidden - 가능한 원인:");
-                    Debug.LogError("  1. API Key가 유효하지 않거나 만료됨");
-                    Debug.LogError("  2. API Key에 해당 모델 사용 권한이 없음");
-                    Debug.LogError("  3. 프로젝트에서 Generative Language API가 활성화되지 않음");
-                    Debug.LogError("  4. 요청 할당량(쿼터) 초과");
+                    Debug.LogWarning("[LLMService] 403 Forbidden - 가능한 원인:");
+                    Debug.LogWarning("  1. API Key가 유효하지 않거나 만료됨");
+                    Debug.LogWarning("  2. API Key에 해당 모델 사용 권한이 없음");
+                    Debug.LogWarning("  3. 프로젝트에서 Generative Language API가 활성화되지 않음");
+                    Debug.LogWarning("  4. 요청 할당량(쿼터) 초과");
                 }
                 return null;
             }
@@ -65,7 +65,7 @@ public class LLMService : MonoBehaviour
         }
         catch (Exception e)
         {
-            Debug.LogError($"[LLMService] 예외: {e.Message}");
+            Debug.LogWarning($"[LLMService] 예외: {e.Message}");
             return null;
         }
     }

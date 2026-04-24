@@ -248,7 +248,6 @@ public class CommentaryController : MonoBehaviour
     {
         _eventQueue.Clear();
         _lastEventTimes.Clear();
-        _preGeneratedIntros.Clear();
         _currentPatientIndex = -1;
         _sequenceCounter = 0;
         _isProcessing = false;

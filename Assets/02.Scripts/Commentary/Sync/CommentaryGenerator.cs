@@ -223,8 +223,11 @@ public class CommentaryGenerator : MonoBehaviour
         string[] fallbacks = new[]
         {
             $"새 환자다. {patientName}, {diseaseName}. 준비해.",
-            $"{patientName} 환자, {diseaseName}으로 입원했어.",
-            $"다음 환자 {patientName}. {diseaseName}이야."
+            $"다음 환자 {patientName}. {diseaseName}. 수술 준비해.",
+            $"환자 들어왔어. {patientName}, {diseaseName}. 지체하지 마.",
+            $"{patientName} 환자다. {diseaseName} 증상 확인됐어.",
+            $"이번 환자 확인. 이름은 {patientName}, 병명은 {diseaseName}.",
+            $"{patientName} 환자야. {diseaseName} 상태로 들어왔어.",
         };
 
         return fallbacks[UnityEngine.Random.Range(0, fallbacks.Length)];
