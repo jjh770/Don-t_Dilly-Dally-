@@ -160,8 +160,10 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
 
     private Coroutine _bgmFadeCoroutine;
     private Coroutine _bgmDuckCoroutine;
+    private readonly HashSet<AudioSource> _activeSfxSources = new HashSet<AudioSource>();
     private readonly Dictionary<AudioSource, Coroutine> _sfxFadeCoroutines = new Dictionary<AudioSource, Coroutine>();
     private readonly Dictionary<AudioSource, float> _sfxFadeDurations = new Dictionary<AudioSource, float>();
+    private readonly Dictionary<AudioSource, Coroutine> _sfxReleaseCoroutines = new Dictionary<AudioSource, Coroutine>();
     private float _currentBgmEntryVolume = 1f;
     private float _nominalBgmVolume = 0f;
     private float _bgmDuckMultiplier = 1f;
@@ -197,13 +199,17 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
             actionOnGet: src =>
             {
                 StopTrackedSFXFade(src);
+                StopTrackedSFXRelease(src);
                 _sfxFadeDurations.Remove(src);
+                _activeSfxSources.Add(src);
                 src.gameObject.SetActive(true);
             },
             actionOnRelease: src =>
             {
                 StopTrackedSFXFade(src);
+                StopTrackedSFXRelease(src);
                 _sfxFadeDurations.Remove(src);
+                _activeSfxSources.Remove(src);
                 src.Stop();
                 src.clip = null;
                 src.loop = false;
@@ -310,7 +316,7 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     /// <summary>루프 SFX를 명시적으로 정지하고 풀에 반납합니다.</summary>
     public void StopSFX(AudioSource source, bool fade = true)
     {
-        if (source == null)
+        if (source == null || !_activeSfxSources.Contains(source))
         {
             return;
         }
@@ -325,6 +331,23 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         }
 
         StartSFXFade(source, fadeDuration, 0f, () => _sfxPool.Release(source));
+    }
+
+    /// <summary>현재 재생 중인 모든 SFX를 정지하고 풀에 반납합니다.</summary>
+    public void StopAllSFX(bool fade = false)
+    {
+        if (_activeSfxSources.Count == 0)
+        {
+            return;
+        }
+
+        AudioSource[] activeSources = new AudioSource[_activeSfxSources.Count];
+        _activeSfxSources.CopyTo(activeSources);
+
+        foreach (AudioSource source in activeSources)
+        {
+            StopSFX(source, fade);
+        }
     }
 
     public void SetBGMVolume(float volume)
@@ -430,7 +453,7 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         source.Play();
 
         if (!data.Loop)
-            StartCoroutine(ReleaseWhenDone(source, data.Duration));
+            _sfxReleaseCoroutines[source] = StartCoroutine(ReleaseWhenDone(source, data.Duration));
 
         return source;
     }
@@ -438,7 +461,13 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
     private IEnumerator ReleaseWhenDone(AudioSource source, float duration)
     {
         yield return new WaitForSeconds(duration);
-        _sfxPool.Release(source);
+
+        _sfxReleaseCoroutines.Remove(source);
+
+        if (_activeSfxSources.Contains(source))
+        {
+            _sfxPool.Release(source);
+        }
     }
 
     // ══════════════════════════════════════════
@@ -516,6 +545,20 @@ public class SoundManager : PunPersistentSingleton<SoundManager>
         {
             StopCoroutine(coroutine);
             _sfxFadeCoroutines.Remove(source);
+        }
+    }
+
+    private void StopTrackedSFXRelease(AudioSource source)
+    {
+        if (source == null)
+        {
+            return;
+        }
+
+        if (_sfxReleaseCoroutines.TryGetValue(source, out Coroutine coroutine))
+        {
+            StopCoroutine(coroutine);
+            _sfxReleaseCoroutines.Remove(source);
         }
     }
 

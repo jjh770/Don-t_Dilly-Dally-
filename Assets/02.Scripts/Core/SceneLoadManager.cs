@@ -64,6 +64,7 @@ public class SceneLoadManager : PunPersistentSingleton<SceneLoadManager>
         }
 
         SoundManager.Instance?.StopBGM();
+        SoundManager.Instance?.StopAllSFX();
 
         _nextSceneData = _sceneDataMap[type];
         _isLoading = true;
