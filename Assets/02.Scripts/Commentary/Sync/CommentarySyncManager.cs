@@ -200,4 +200,12 @@ public class CommentarySyncManager : MonoBehaviourPunCallbacks
         public int Priority;
         public string Description;
     }
+
+    public void ResetForNewGame()
+    {
+        _processedCommentaryIds.Clear();
+        _lastReceivedSequence = -1;
+
+        Debug.Log("[CommentarySyncManager] 새 게임을 위해 초기화됨");
+    }
 }
