@@ -170,6 +170,10 @@ public class RewardView : UIPopupBase
             {
                 SoundManager.Instance.Play(SFXKey.ResultZeroStar, SoundType.Local);
             }
+            else if (clamped == 1)
+            {
+                SoundManager.Instance.Play(SFXKey.Result1Star, SoundType.Local);
+            }
             else if (clamped == 2)
             {
                 SoundManager.Instance.Play(SFXKey.Result2Star, SoundType.Local);
