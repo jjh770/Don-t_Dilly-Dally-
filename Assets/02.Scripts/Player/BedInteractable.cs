@@ -4,22 +4,47 @@ using UnityEngine;
 
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(PhotonView))]
-public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
+public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks, IOutlineTargetProvider
 {
     private const int NoOccupantActorNumber = -1;
     private const int OfflineOccupantActorNumber = 1;
+    private const int InvalidSlotIndex = -1;
+    private const int DefaultPoseIndex = 0;
+    private const int DefaultSlotCount = 2;
 
-    [Header("누운 위치 / 회전 기준")]
-    [SerializeField] private Transform _liePosition;
+    [System.Serializable]
+    public class BedSlot
+    {
+        [Tooltip("플레이어가 누울 위치/회전 기준")]
+        public Transform LiePosition;
 
-    [Header("일어날 위치 (선택, 미지정 시 현재 위치 유지)")]
-    [SerializeField] private Transform _getUpPosition;
+        [Tooltip("플레이어가 일어났을 때 이동할 위치. 미지정 시 누운 자리 유지.")]
+        public Transform GetUpPosition;
+    }
 
-    public bool IsInteracting => _occupyingActorNumber > 0;
+    [Header("침대 슬롯 (배열 순서대로 1층, 2층, ...)")]
+    [SerializeField] private BedSlot[] _slots = new BedSlot[DefaultSlotCount];
+
+    [Header("누운 포즈 개수 (애니메이터의 LyingPoseIndex 범위)")]
+    [Min(1)]
+    [SerializeField] private int _lyingPoseCount = 2;
+
+    [Header("슬롯 인덱스와 동일한 포즈 사용 (꺼두면 랜덤)")]
+    [SerializeField] private bool _poseFollowsSlotIndex = false;
+
+    [Header("아웃라인을 그릴 대상 (메쉬가 있는 부모 오브젝트). 미지정 시 자기 자신.")]
+    [SerializeField] private GameObject _outlineTarget;
+
+    public GameObject OutlineTarget => _outlineTarget != null ? _outlineTarget : gameObject;
+
+    public bool IsInteracting => AreAllSlotsOccupied();
     public Transform Transform => transform;
 
-    private int _occupyingActorNumber = NoOccupantActorNumber;
+    private int[] _slotOccupantActorNumbers;
+    private int[] _slotPoseIndices;
+    private int _localSlotIndex = InvalidSlotIndex;
     private Transform _pendingInteractor;
+
     private Transform _localInteractor;
     private PlayerMovementAbility _localMovement;
     private PlayerAnimator _localAnimator;
@@ -27,6 +52,20 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
     private bool _cachedRigidbodyKinematic;
 
     private static bool IsInPhotonRoom => PhotonNetwork.InRoom;
+    private int SlotCount => _slots != null ? _slots.Length : 0;
+
+    private void Awake()
+    {
+        int slotCount = SlotCount;
+        _slotOccupantActorNumbers = new int[slotCount];
+        _slotPoseIndices = new int[slotCount];
+
+        for (int i = 0; i < slotCount; i++)
+        {
+            _slotOccupantActorNumbers[i] = NoOccupantActorNumber;
+            _slotPoseIndices[i] = DefaultPoseIndex;
+        }
+    }
 
     private void OnEnable()
     {
@@ -41,7 +80,7 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
     private void Update()
     {
-        if (_localInteractor == null)
+        if (_localSlotIndex == InvalidSlotIndex)
         {
             return;
         }
@@ -54,13 +93,20 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
     public void Interact(Transform interactor)
     {
-        if (interactor == null || _liePosition == null)
+        if (interactor == null)
         {
             return;
         }
 
-        if (IsInteracting)
+        // 이미 점유 중이거나 요청 진행 중이면 중복 요청을 막는다.
+        if (_localSlotIndex != InvalidSlotIndex || _pendingInteractor != null)
         {
+            return;
+        }
+
+        if (!HasAnyValidSlotConfigured())
+        {
+            Debug.LogWarning($"[BedInteractable] '{name}'에 LiePosition이 설정된 슬롯이 없다.", this);
             return;
         }
 
@@ -68,9 +114,7 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
         if (!IsInPhotonRoom)
         {
-            _occupyingActorNumber = OfflineOccupantActorNumber;
-            BeginLocalOccupy(interactor);
-            _pendingInteractor = null;
+            HandleOfflineOccupy(interactor);
             return;
         }
 
@@ -92,15 +136,23 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
     public void StopInteract()
     {
+        if (_localSlotIndex == InvalidSlotIndex)
+        {
+            return;
+        }
+
         if (!IsInPhotonRoom)
         {
-            EndLocalOccupy();
-            _occupyingActorNumber = NoOccupantActorNumber;
+            int slotIndex = _localSlotIndex;
+            _slotOccupantActorNumbers[slotIndex] = NoOccupantActorNumber;
+            _slotPoseIndices[slotIndex] = DefaultPoseIndex;
+            EndLocalOccupy(slotIndex);
+            _localSlotIndex = InvalidSlotIndex;
             return;
         }
 
         int localActorNumber = GetLocalActorNumber();
-        if (localActorNumber <= 0 || _occupyingActorNumber != localActorNumber)
+        if (localActorNumber <= 0)
         {
             return;
         }
@@ -147,9 +199,15 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
     }
 
     [PunRPC]
-    private void RPC_ApplyOccupantState(int actorNumber, bool isOccupied)
+    private void RPC_ApplyOccupantState(int slotIndex, int actorNumber, int poseIndex, bool isOccupied)
     {
-        _occupyingActorNumber = isOccupied ? actorNumber : NoOccupantActorNumber;
+        if (slotIndex < 0 || slotIndex >= SlotCount)
+        {
+            return;
+        }
+
+        _slotOccupantActorNumbers[slotIndex] = isOccupied ? actorNumber : NoOccupantActorNumber;
+        _slotPoseIndices[slotIndex] = isOccupied ? poseIndex : DefaultPoseIndex;
 
         int localActorNumber = GetLocalActorNumber();
         if (actorNumber != localActorNumber)
@@ -164,38 +222,96 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
                 return;
             }
 
-            BeginLocalOccupy(_pendingInteractor);
+            _localSlotIndex = slotIndex;
+            BeginLocalOccupy(_pendingInteractor, _slots[slotIndex], poseIndex);
             _pendingInteractor = null;
         }
         else
         {
-            EndLocalOccupy();
+            int releasedSlot = _localSlotIndex;
+            _localSlotIndex = InvalidSlotIndex;
+            EndLocalOccupy(releasedSlot);
         }
+    }
+
+    [PunRPC]
+    private void RPC_RejectOccupy(int actorNumber)
+    {
+        if (actorNumber != GetLocalActorNumber())
+        {
+            return;
+        }
+
+        _pendingInteractor = null;
     }
 
     private void TryGrantOccupy(int actorNumber)
     {
-        if (IsInteracting && _occupyingActorNumber != actorNumber)
+        // 마스터에서만 호출된다. 이미 이 플레이어가 어느 슬롯을 점유하고 있으면 중복 할당을 막는다.
+        if (FindSlotIndexForActor(actorNumber) != InvalidSlotIndex)
         {
             return;
         }
 
-        photonView.RPC(nameof(RPC_ApplyOccupantState), RpcTarget.AllViaServer, actorNumber, true);
+        int emptySlot = FindEmptySlotIndex();
+        if (emptySlot == InvalidSlotIndex)
+        {
+            SendRejectOccupy(actorNumber);
+            return;
+        }
+
+        int poseIndex = PickPoseIndex(emptySlot);
+        photonView.RPC(nameof(RPC_ApplyOccupantState), RpcTarget.AllViaServer, emptySlot, actorNumber, poseIndex, true);
     }
 
     private void ReleaseOccupy(int actorNumber)
     {
-        if (_occupyingActorNumber != actorNumber)
+        int slotIndex = FindSlotIndexForActor(actorNumber);
+        if (slotIndex == InvalidSlotIndex)
         {
             return;
         }
 
-        photonView.RPC(nameof(RPC_ApplyOccupantState), RpcTarget.AllViaServer, actorNumber, false);
+        photonView.RPC(nameof(RPC_ApplyOccupantState), RpcTarget.AllViaServer, slotIndex, actorNumber, DefaultPoseIndex, false);
     }
 
-    private void BeginLocalOccupy(Transform interactor)
+    private void SendRejectOccupy(int actorNumber)
     {
-        if (interactor == null || _liePosition == null)
+        if (PhotonNetwork.CurrentRoom == null)
+        {
+            return;
+        }
+
+        Player requester = PhotonNetwork.CurrentRoom.GetPlayer(actorNumber);
+        if (requester == null)
+        {
+            return;
+        }
+
+        photonView.RPC(nameof(RPC_RejectOccupy), requester, actorNumber);
+    }
+
+    private void HandleOfflineOccupy(Transform interactor)
+    {
+        int emptySlot = FindEmptySlotIndex();
+        if (emptySlot == InvalidSlotIndex)
+        {
+            _pendingInteractor = null;
+            return;
+        }
+
+        int poseIndex = PickPoseIndex(emptySlot);
+        _slotOccupantActorNumbers[emptySlot] = OfflineOccupantActorNumber;
+        _slotPoseIndices[emptySlot] = poseIndex;
+        _localSlotIndex = emptySlot;
+
+        BeginLocalOccupy(interactor, _slots[emptySlot], poseIndex);
+        _pendingInteractor = null;
+    }
+
+    private void BeginLocalOccupy(Transform interactor, BedSlot slot, int poseIndex)
+    {
+        if (interactor == null || slot == null || slot.LiePosition == null)
         {
             return;
         }
@@ -219,7 +335,7 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
             _localRigidbody.isKinematic = true;
         }
 
-        interactor.SetPositionAndRotation(_liePosition.position, _liePosition.rotation);
+        interactor.SetPositionAndRotation(slot.LiePosition.position, slot.LiePosition.rotation);
 
         if (_localMovement != null)
         {
@@ -228,15 +344,18 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
         if (_localAnimator != null)
         {
+            // 포즈 인덱스는 IsLying 전에 세팅해야 애니메이터 전이가 올바른 클립으로 진입한다.
+            _localAnimator.SetLyingPoseIndex(poseIndex);
             _localAnimator.PlayLyingAnimation(true);
         }
     }
 
-    private void EndLocalOccupy()
+    private void EndLocalOccupy(int slotIndex)
     {
         if (_localAnimator != null)
         {
             _localAnimator.PlayLyingAnimation(false);
+            _localAnimator.SetLyingPoseIndex(DefaultPoseIndex);
         }
 
         if (_localMovement != null)
@@ -249,9 +368,10 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
             _localRigidbody.isKinematic = _cachedRigidbodyKinematic;
         }
 
-        if (_getUpPosition != null && _localInteractor != null)
+        BedSlot slot = GetSlot(slotIndex);
+        if (slot != null && slot.GetUpPosition != null && _localInteractor != null)
         {
-            _localInteractor.SetPositionAndRotation(_getUpPosition.position, _getUpPosition.rotation);
+            _localInteractor.SetPositionAndRotation(slot.GetUpPosition.position, slot.GetUpPosition.rotation);
         }
 
         _localInteractor = null;
@@ -262,29 +382,36 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
     private void ReleaseLocalStateIfOccupying()
     {
-        if (_localInteractor == null)
+        if (_localSlotIndex == InvalidSlotIndex)
         {
             return;
         }
 
-        // 네트워크 상태 해제 RPC는 룸 유지 중이고 로컬이 점유자일 때만 전송한다.
-        if (IsInPhotonRoom && _occupyingActorNumber == GetLocalActorNumber())
+        int slotIndex = _localSlotIndex;
+        int localActorNumber = GetLocalActorNumber();
+
+        if (IsInPhotonRoom && localActorNumber > 0 && _slotOccupantActorNumbers != null
+            && slotIndex >= 0 && slotIndex < _slotOccupantActorNumbers.Length
+            && _slotOccupantActorNumbers[slotIndex] == localActorNumber)
         {
             if (PhotonNetwork.IsMasterClient)
             {
-                ReleaseOccupy(_occupyingActorNumber);
+                ReleaseOccupy(localActorNumber);
             }
             else if (photonView != null)
             {
-                photonView.RPC(nameof(RPC_RequestVacate), RpcTarget.MasterClient, _occupyingActorNumber);
+                photonView.RPC(nameof(RPC_RequestVacate), RpcTarget.MasterClient, localActorNumber);
             }
         }
 
-        EndLocalOccupy();
+        _localSlotIndex = InvalidSlotIndex;
+        EndLocalOccupy(slotIndex);
 
-        if (!IsInPhotonRoom)
+        if (!IsInPhotonRoom && _slotOccupantActorNumbers != null
+            && slotIndex >= 0 && slotIndex < _slotOccupantActorNumbers.Length)
         {
-            _occupyingActorNumber = NoOccupantActorNumber;
+            _slotOccupantActorNumbers[slotIndex] = NoOccupantActorNumber;
+            _slotPoseIndices[slotIndex] = DefaultPoseIndex;
         }
     }
 
@@ -295,7 +422,8 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
             return;
         }
 
-        if (_occupyingActorNumber != otherPlayer.ActorNumber)
+        int slotIndex = FindSlotIndexForActor(otherPlayer.ActorNumber);
+        if (slotIndex == InvalidSlotIndex)
         {
             return;
         }
@@ -305,13 +433,20 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
     public void OnPlayerEnteredRoom(Player newPlayer)
     {
-        // 뒤늦게 입장한 플레이어에게 현재 점유 상태를 동기화한다.
-        if (!PhotonNetwork.IsMasterClient || !IsInteracting)
+        // 마스터만 신규 입장자에게 현재 점유 상태를 동기화한다.
+        if (!PhotonNetwork.IsMasterClient || newPlayer == null || _slotOccupantActorNumbers == null)
         {
             return;
         }
 
-        photonView.RPC(nameof(RPC_ApplyOccupantState), newPlayer, _occupyingActorNumber, true);
+        for (int i = 0; i < _slotOccupantActorNumbers.Length; i++)
+        {
+            if (_slotOccupantActorNumbers[i] > 0)
+            {
+                photonView.RPC(nameof(RPC_ApplyOccupantState), newPlayer, i,
+                    _slotOccupantActorNumbers[i], _slotPoseIndices[i], true);
+            }
+        }
     }
 
     public void OnMasterClientSwitched(Player newMasterClient)
@@ -324,6 +459,104 @@ public class BedInteractable : MonoBehaviourPun, IInteractable, IInRoomCallbacks
 
     public void OnPlayerPropertiesUpdate(Player targetPlayer, ExitGames.Client.Photon.Hashtable changedProps)
     {
+    }
+
+    private bool AreAllSlotsOccupied()
+    {
+        if (_slotOccupantActorNumbers == null || _slotOccupantActorNumbers.Length == 0)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _slotOccupantActorNumbers.Length; i++)
+        {
+            if (_slotOccupantActorNumbers[i] <= 0)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private int FindEmptySlotIndex()
+    {
+        if (_slots == null)
+        {
+            return InvalidSlotIndex;
+        }
+
+        for (int i = 0; i < _slots.Length; i++)
+        {
+            if (_slots[i] == null || _slots[i].LiePosition == null)
+            {
+                continue;
+            }
+
+            if (_slotOccupantActorNumbers[i] <= 0)
+            {
+                return i;
+            }
+        }
+
+        return InvalidSlotIndex;
+    }
+
+    private int FindSlotIndexForActor(int actorNumber)
+    {
+        if (_slotOccupantActorNumbers == null)
+        {
+            return InvalidSlotIndex;
+        }
+
+        for (int i = 0; i < _slotOccupantActorNumbers.Length; i++)
+        {
+            if (_slotOccupantActorNumbers[i] == actorNumber)
+            {
+                return i;
+            }
+        }
+
+        return InvalidSlotIndex;
+    }
+
+    private int PickPoseIndex(int slotIndex)
+    {
+        int clampedCount = Mathf.Max(1, _lyingPoseCount);
+        if (_poseFollowsSlotIndex)
+        {
+            return Mathf.Clamp(slotIndex, 0, clampedCount - 1);
+        }
+
+        return UnityEngine.Random.Range(0, clampedCount);
+    }
+
+    private bool HasAnyValidSlotConfigured()
+    {
+        if (_slots == null)
+        {
+            return false;
+        }
+
+        for (int i = 0; i < _slots.Length; i++)
+        {
+            if (_slots[i] != null && _slots[i].LiePosition != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private BedSlot GetSlot(int slotIndex)
+    {
+        if (_slots == null || slotIndex < 0 || slotIndex >= _slots.Length)
+        {
+            return null;
+        }
+
+        return _slots[slotIndex];
     }
 
     private static int GetLocalActorNumber()

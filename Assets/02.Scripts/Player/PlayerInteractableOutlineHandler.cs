@@ -68,17 +68,29 @@ public class PlayerInteractableOutlineHandler : MonoBehaviour
         if (interactable is not Component component)
             return;
 
-        if (!component.TryGetComponent(out Outline outline))
+        GameObject outlineTarget = ResolveOutlineTarget(interactable, component);
+        if (outlineTarget == null)
+            return;
+
+        if (!outlineTarget.TryGetComponent(out Outline outline))
         {
             if (!enabled)
                 return;
 
-            outline = component.gameObject.AddComponent<Outline>();
+            outline = outlineTarget.AddComponent<Outline>();
         }
 
         outline.OutlineMode = _outlineMode;
         outline.OutlineColor = color ?? _defaultOutlineColor;
         outline.OutlineWidth = _outlineWidth;
         outline.enabled = enabled;
+    }
+
+    private static GameObject ResolveOutlineTarget(IInteractable interactable, Component fallback)
+    {
+        if (interactable is IOutlineTargetProvider provider && provider.OutlineTarget != null)
+            return provider.OutlineTarget;
+
+        return fallback.gameObject;
     }
 }
